@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('empresa_users', function (Blueprint $table) {
             $table->id();
-            $table->string('conta');
-            $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('empresa_id');
+            $table->string('conta')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('empresa_id')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

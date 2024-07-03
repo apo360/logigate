@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('tarifa_portuaria', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('Fk_processo');
-            $table->decimal('ep14', 18, 2);
-            $table->decimal('ep17', 18, 2);
-            $table->decimal('terminal', 18, 2);
+            $table->decimal('ep14', 18, 2)->nullable();
+            $table->decimal('ep17', 18, 2)->nullable();
+            $table->decimal('terminal', 18, 2)->nullable();
             $table->timestamps();
 
             $table->foreign('Fk_processo')->references('id')->on('processos');

@@ -14,18 +14,18 @@ return new class extends Migration
         Schema::create('importacao', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('processo_id');
-            $table->unsignedBigInteger('Fk_pais_origem');
-            $table->unsignedBigInteger('Fk_pais_destino');
-            $table->string('PortoOrigem', 100);
-            $table->string('TipoTransporte', 100);
-            $table->string('NomeTransporte', 100);
-            $table->date('DataChegada');
-            $table->string('MarcaFiscal', 50);
-            $table->string('BLC_Porte', 50);
-            $table->string('Moeda', 5);
-            $table->decimal('Cambio', 10, 2);
-            $table->decimal('ValorAduaneiro', 18, 2);
-            $table->decimal('ValorTotal', 18, 2);
+            $table->unsignedBigInteger('Fk_pais_origem')->nullable();
+            $table->unsignedBigInteger('Fk_pais_destino')->nullable();
+            $table->string('PortoOrigem', 100)->nullable();
+            $table->string('TipoTransporte', 100)->nullable();
+            $table->string('NomeTransporte', 100)->nullable();
+            $table->date('DataChegada')->nullable();
+            $table->string('MarcaFiscal', 50)->nullable();
+            $table->string('BLC_Porte', 50)->nullable();
+            $table->string('Moeda', 5)->nullable();
+            $table->decimal('Cambio', 10, 2)->nullable();
+            $table->decimal('ValorAduaneiro', 18, 2)->nullable();
+            $table->decimal('ValorTotal', 18, 2)->nullable();
             $table->timestamps();
 
             $table->foreign('processo_id')->references('id')->on('processos');

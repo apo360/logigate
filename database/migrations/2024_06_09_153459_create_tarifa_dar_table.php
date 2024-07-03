@@ -14,16 +14,16 @@ return new class extends Migration
         Schema::create('tarifa_dar', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('Fk_processo');
-            $table->integer('N_Dar');
-            $table->date('DataEntrada');
-            $table->decimal('direitos', 18, 2);
-            $table->decimal('emolumentos', 18, 2);
-            $table->decimal('iva_aduaneiro', 18, 2);
-            $table->decimal('iec', 18, 2);
-            $table->decimal('impostoEstatistico', 18, 2);
-            $table->decimal('juros_mora', 18, 2);
-            $table->decimal('multas', 18, 2);
-            $table->decimal('subtotal', 18, 2);
+            $table->integer('N_Dar')->nullable();
+            $table->date('DataEntrada')->nullable();
+            $table->decimal('direitos', 18, 2)->nullable();
+            $table->decimal('emolumentos', 18, 2)->nullable();
+            $table->decimal('iva_aduaneiro', 18, 2)->nullable();
+            $table->decimal('iec', 18, 2)->nullable();
+            $table->decimal('impostoEstatistico', 18, 2)->nullable();
+            $table->decimal('juros_mora', 18, 2)->nullable();
+            $table->decimal('multas', 18, 2)->nullable();
+            $table->decimal('subtotal', 18, 2)->nullable();
             $table->timestamps();
 
             $table->foreign('Fk_processo')->references('id')->on('processos');

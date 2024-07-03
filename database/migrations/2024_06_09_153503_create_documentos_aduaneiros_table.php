@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('documentos_aduaneiros', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('Fk_Importacao');
-            $table->string('TipoDocumento', 50);
-            $table->string('NrDocumento', 50);
-            $table->date('DataEmissao');
-            $table->string('Caminho', 255);
+            $table->string('TipoDocumento', 50)->nullable();
+            $table->string('NrDocumento', 50)->nullable();
+            $table->date('DataEmissao')->nullable();
+            $table->string('Caminho', 255)->nullable();
             $table->timestamps();
 
             $table->foreign('Fk_Importacao')->references('id')->on('importacao');

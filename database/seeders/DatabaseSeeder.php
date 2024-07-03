@@ -14,23 +14,16 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            /*
-            UserRoleSeeder::class,
-            RolesAndPermissionsSeeder::class,
+            
+            // UserRoleSeeder::class,
+            // RolesAndPermissionsSeeder::class,
+
             ProvinciasSeeder::class,
             MunicipiosSeeder::class,
             PaisesSeeder::class,
-            CustomerSeeder::class,
-            ProcessoSeeder::class,
-            ImportacaoSeeder::class,
-            MercadoriaSeeder::class,
-            
-            TarifaDARSeeder::class,
-            TarifaDUSeeder::class,
-            TarifaPortuariaSeeder::class,
-            TarifasSeeder::class,
-            DocumentosAduaneirosSeeder::class,
-            */
+            ModuleSeeder::class,
+            MenuSeeder::class,
+
         ]);
     }
 }

@@ -15,17 +15,21 @@
             </div>
 
             <div class="mt-4">
+                <x-label for="empresa" value="{{ __('Designação') }}" />
+                <select name="Designacao" id="Designacao" class="block mt-1 w-full">
+                    <option value="Despachante Oficial">Despachante</option>
+                    <option value="Praticante">Praticante</option>
+                </select>
+            </div>
+
+            <div class="mt-4">
                 <x-label for="empresa" value="{{ __('Empresa') }}" />
                 <x-input id="empresa" class="block mt-1 w-full" type="text" name="empresa" value="{{ $dados['user']['name'] }}" required />
-
-                <div class="mt-4">
-                    <x-input id="subdominio" class="block mt-1 w-full" type="text" name="subdominio" value="{{ $dados['user']['name'] }}" required />
-                </div>
             </div>
             
             <div class="mt-4">
                 <x-label for="nif" value="{{ __('NIF') }}" />
-                <x-input id="nif" class="block mt-1 w-full" type="text" name="nif" value="{{ $dados['nif'] }}" required /> <span>.logigate.ao</span>
+                <x-input id="nif" class="block mt-1 w-full" type="text" name="nif" value="{{ $dados['nif'] }}" required />
             </div>
 
             <div class="mt-4">

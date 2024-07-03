@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('mercadorias', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('Fk_Importacao');
-            $table->string('Descricao', 200);
-            $table->string('NCM_HS', 20);
-            $table->bigInteger('NCM_HS_Numero');
-            $table->integer('Quantidade');
-            $table->string('Qualificacao', 100);
-            $table->enum('Unidade', ['Kg', 'Ton'])->default('Kg');
-            $table->decimal('Peso', 10, 2);
+            $table->string('Descricao', 200)->nullable();
+            $table->string('NCM_HS', 20)->nullable();
+            $table->bigInteger('NCM_HS_Numero')->nullable();
+            $table->integer('Quantidade')->nullable();
+            $table->string('Qualificacao', 100)->nullable();
+            $table->enum('Unidade', ['Kg', 'Ton'])->default('Kg')->nullable();
+            $table->decimal('Peso', 10, 2)->nullable();
             $table->timestamps();
 
             $table->foreign('Fk_Importacao')->references('id')->on('importacao');

@@ -22,8 +22,8 @@ use App\Http\Controllers\ProcessoController;
 use App\Models\Empresa;
 use App\Models\Module;
 use Illuminate\Support\Facades\Log;
-
-Route::domain('{company}.logigate.com')->group(function () {
+/*
+Route::domain('{company}.logigate.ao')->group(function () {
     Route::get('/', function ($company) {
         Log::info("Acessando subdomínio: $company");
         $company = Empresa::where('Dominio', $company)->first();
@@ -39,7 +39,7 @@ Route::domain('{company}.logigate.com')->group(function () {
         return view('auth.erro_empresa', compact('erro'));
     });
 });
-
+*/
 Route::get('/', function () { $modulos = Module::all();
     return view('welcome', compact('modulos')); });
 

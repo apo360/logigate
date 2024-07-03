@@ -37,7 +37,7 @@ class Empresa extends Model
     // Definir relacionamento com usuários
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'empresa_user');
+        return $this->belongsToMany(User::class, 'empresa_users');
     }
 
     public function activatedModules()

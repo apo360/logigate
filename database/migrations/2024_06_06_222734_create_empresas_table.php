@@ -23,14 +23,14 @@ return new class extends Migration
             $table->text('Logotipo')->nullable();
             $table->string('Slogan')->nullable();
             $table->string('Endereco_completo');
-            $table->string('Provincia');
-            $table->string('Cidade');
-            $table->string('Dominio');
-            $table->string('Email');
+            $table->string('Provincia')->nullable();
+            $table->string('Cidade')->nullable();
+            $table->string('Dominio')->nullable();
+            $table->string('Email')->nullable();
             $table->string('Fax')->nullable();
-            $table->string('Contacto_movel');
+            $table->string('Contacto_movel')->nullable();
             $table->string('Contacto_fixo')->nullable();
-            $table->string('Sigla');
+            $table->string('Sigla')->nullable();
             $table->timestamps();
         });
     }

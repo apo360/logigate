@@ -4,6 +4,8 @@ namespace App\Actions\Fortify;
 
 use App\Models\Empresa;
 use App\Models\User;
+use App\Models\ActivatedModule;
+use App\Models\Subscricao;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
@@ -45,19 +47,31 @@ class CreateNewUser implements CreatesNewUsers
         // Cria a empresa que administrador vai gerir
         $empresa = Empresa::create([
             'Empresa' => $input['empresa'],
-            'Designacao' => 'Despachante Oficial',
+            'Designacao' => $input['Designacao'],
             'NIF' => $input['nif'],
             'Cedula' => $input['cedula'],
             'Endereco_completo' => $input['endereco'],
-            'Dominio' => $input['subdominio'],
         ]);
 
         // Generate the conta code
         $currentYear = Carbon::now()->year;
         $companyCount = Empresa::count();
-        $contaCode = 'LGi' . str_pad($companyCount + 1, 4, '0', STR_PAD_LEFT) . $currentYear . 'XYZ'; // 'XYZ' can be replaced with any desired suffix
+        $contaCode = 'LGi' . str_pad($companyCount + 1, 4, '0', STR_PAD_LEFT) . $currentYear; // 'XYZ' can be replaced with any desired suffix
 
         $user->empresas()->attach($empresa->id, ['conta' => $contaCode]);
+
+        Subscricao::create([
+            'empresa_id' => $empresa->id,
+            'modulo_id' => 1,
+            'data_expiracao' => now()->addYear(),
+            'status' => 'ATIVA'
+        ]);
+
+        ActivatedModule::create([
+            'module_id' => 1,
+            'empresa_id' => $empresa->id,
+            'activation_date' => now(),
+        ]);
 
         // Atribuir permissões de Administrador...
         $role = Role::findOrCreate('admin');

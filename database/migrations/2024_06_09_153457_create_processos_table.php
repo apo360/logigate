@@ -16,8 +16,8 @@ return new class extends Migration
             $table->string('NrProcesso', 100);
             $table->string('ContaDespacho', 150)->nullable();
             $table->string('RefCliente', 200)->nullable();
-            $table->string('Descricao', 200);
-            $table->date('DataAbertura');
+            $table->string('Descricao', 200)->nullable();
+            $table->date('DataAbertura')->nullable();
             $table->date('DataFecho')->nullable();
             $table->enum('TipoProcesso', ['Importação', 'Exportação']);
             $table->string('Situacao', 50)->default('Em processamento');

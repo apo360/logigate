@@ -46,6 +46,8 @@ class CustomerController extends Controller
             $user = Auth::user();
 
             $custValidate = $request->validated();
+            
+            $custValidate['AccountID'] = '0';
 
             $custValidate['user_id'] = $user->id;
 

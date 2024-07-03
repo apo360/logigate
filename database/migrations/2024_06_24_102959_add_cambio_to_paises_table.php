@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('paises', function (Blueprint $table) {
-            $table->decimal('cambio', 15, 2)->after('moeda'); // Adicionando a coluna 'cambio'
+            $table->decimal('cambio', 15, 2)->default(1.00)->after('moeda'); // Adicionando a coluna 'cambio'
             $table->date('data_cambio')->default('2000-01-01')->after('cambio'); // Adicionando a coluna 'data_cambio'
         });
     }
