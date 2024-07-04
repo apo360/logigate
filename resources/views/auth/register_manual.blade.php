@@ -20,6 +20,7 @@
             color: red;
         }
     </style>
+
     <x-authentication-card>
         <x-slot name="logo">
             <x-authentication-card-logo />
@@ -32,7 +33,7 @@
 
             <div class="mt-4">
                 <x-label for="cedula" value="{{ __('Cedula') }}" />
-                <x-input id="cedula" class="block mt-1 w-full" type="text" name="cedula" value="{{ $dados['cedula'] }}" required readonly />
+                <x-input id="cedula" class="block mt-1 w-full" type="text" name="cedula" required />
             </div>
 
             <div class="mt-4">
@@ -45,37 +46,39 @@
 
             <div class="mt-4">
                 <x-label for="empresa" value="{{ __('Empresa') }}" />
-                <x-input id="empresa" class="block mt-1 w-full" type="text" name="empresa" value="{{ $dados['user']['name'] }}" required />
+                <x-input id="empresa" class="block mt-1 w-full" type="text" name="empresa" required />
             </div>
             
             <div class="mt-4">
                 <x-label for="nif" value="{{ __('NIF') }}" />
-                <x-input id="nif" class="block mt-1 w-full" type="text" name="nif" value="{{ $dados['nif'] }}" required />
+                <x-input id="nif" class="block mt-1 w-full" type="text" name="nif" required />
             </div>
 
             <div class="mt-4">
                 <x-label for="endereco" value="{{ __('Endereço') }}" />
-                <x-input id="endereco" class="block mt-1 w-full" type="text" name="endereco" value="{{ $dados['endereco'] }}" required />
+                <x-input id="endereco" class="block mt-1 w-full" type="text" name="endereco" required autocomplete="address" />
             </div>
 
             <div class="mt-4">
                 <x-label for="name" value="{{ __('Nome Completo (Representante)') }}" />
-                <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required />
+                <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autocomplete="name" />
             </div>
 
             <div class="mt-4">
                 <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" value="{{ $dados['user']['email'] }}" required autocomplete="username" />
+                <x-input id="email" class="block mt-1 w-full" type="email" name="email" required autocomplete="username" />
             </div>
 
             <div class="mt-4">
                 <x-label for="password" value="{{ __('Password') }}" />
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
+                <div id="password-strength" class="mt-1"></div>
             </div>
 
             <div class="mt-4">
                 <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
                 <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
+                <div id="password-match" class="mt-1"></div>
             </div>
 
             @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
@@ -107,72 +110,4 @@
         </form>
     </x-authentication-card>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const passwordInput = document.getElementById('password');
-            const confirmPasswordInput = document.getElementById('password_confirmation');
-            const strengthIndicator = document.getElementById('password-strength');
-            const matchIndicator = document.getElementById('password-match');
-
-            function checkPasswordStrength(password) {
-                let strength = 'weak';
-                const regexStrong = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-                const regexMedium = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/;
-
-                if (regexStrong.test(password)) {
-                    strength = 'strong';
-                } else if (regexMedium.test(password)) {
-                    strength = 'medium';
-                }
-
-                return strength;
-            }
-
-            function updateStrengthIndicator(strength) {
-                strengthIndicator.textContent = '';
-                strengthIndicator.classList.remove('strength-weak', 'strength-medium', 'strength-strong');
-
-                if (strength === 'weak') {
-                    strengthIndicator.textContent = 'Senha Fraca';
-                    strengthIndicator.classList.add('strength-weak');
-                } else if (strength === 'medium') {
-                    strengthIndicator.textContent = 'Senha Média';
-                    strengthIndicator.classList.add('strength-medium');
-                } else if (strength === 'strong') {
-                    strengthIndicator.textContent = 'Senha Forte';
-                    strengthIndicator.classList.add('strength-strong');
-                }
-            }
-
-            function checkPasswordMatch(password, confirmPassword) {
-                return password === confirmPassword;
-            }
-
-            function updateMatchIndicator(isMatching) {
-                matchIndicator.textContent = '';
-                matchIndicator.classList.remove('match', 'no-match');
-
-                if (isMatching) {
-                    matchIndicator.textContent = 'As senhas correspondem';
-                    matchIndicator.classList.add('match');
-                } else {
-                    matchIndicator.textContent = 'As senhas não correspondem';
-                    matchIndicator.classList.add('no-match');
-                }
-            }
-
-            passwordInput.addEventListener('input', function () {
-                const strength = checkPasswordStrength(passwordInput.value);
-                updateStrengthIndicator(strength);
-
-                const isMatching = checkPasswordMatch(passwordInput.value, confirmPasswordInput.value);
-                updateMatchIndicator(isMatching);
-            });
-
-            confirmPasswordInput.addEventListener('input', function () {
-                const isMatching = checkPasswordMatch(passwordInput.value, confirmPasswordInput.value);
-                updateMatchIndicator(isMatching);
-            });
-        });
-    </script>
 </x-guest-layout>

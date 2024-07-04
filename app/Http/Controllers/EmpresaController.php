@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DatabaseErrorHandler;
 use App\Models\Empresa;
+use App\Models\Municipio;
+use App\Models\Provincia;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -51,7 +55,9 @@ class EmpresaController extends Controller
      */
     public function edit(Empresa $empresa)
     {
-        return view('empresa.edit', compact('empresa'));
+        $provincias = Provincia::all();
+        $cidades = Municipio::all();
+        return view('empresa.edit', compact('empresa', 'provincias', 'cidades'));
     }
 
     /**
@@ -59,35 +65,36 @@ class EmpresaController extends Controller
      */
     public function update(Request $request, Empresa $empresa)
     {
-        $request->validate([
-            'CodFactura' => 'required|string|max:20',
-            'CodProcesso' => 'required|string|max:20',
-            'Empresa' => 'required|string|max:200',
-            'NIF' => 'required|string|max:50|unique:empresas,NIF,' . $empresa->id,
-            'Cedula' => 'nullable|string|max:30|unique:empresas,Cedula,' . $empresa->id,
-            'Logotipo' => 'nullable|file|image|max:2048',
-            'Slogan' => 'nullable|string|max:100',
-            'Endereco_completo' => 'required|string|max:200',
-            'Provincia' => 'required|string|max:100',
-            'Cidade' => 'required|string|max:100',
-            'Dominio' => 'required|string|max:100',
-            'Email' => 'required|email|max:100',
-            'Fax' => 'nullable|string|max:100',
-            'Contacto_movel' => 'required|string|max:100',
-            'Contacto_fixo' => 'nullable|string|max:100',
-            'Sigla' => 'required|string|max:45',
-        ]);
+        try {
+            $request->validate([
+                // 'Logotipo' => 'nullable|file|image|max:2048',
+                'Slogan' => 'nullable|string|max:100',
+                'Endereco_completo' => 'required|string|max:200',
+                'Provincia' => 'required|string|max:100',
+                'Cidade' => 'required|string|max:100',
+                'Fax' => 'nullable|string|max:100',
+                'Contacto_fixo' => 'nullable|string|max:100',
+            ]);
+    
+            $empresa->fill($request->all());
+    
+            /*if ($request->hasFile('Logotipo')) {
+                $path = $request->file('Logotipo')->store('logotipos', 'public');
+                $empresa->Logotipo = $path;
+            }*/
+    
+            $empresa->save();
 
-        $empresa->fill($request->all());
+            return response()->json([
+                'message' => 'Empresa actualizada com Sucesso',
+            ], 200);
 
-        if ($request->hasFile('Logotipo')) {
-            $path = $request->file('Logotipo')->store('logotipos', 'public');
-            $empresa->Logotipo = $path;
-        }
+        } catch (QueryException $e) { 
 
-        $empresa->save();
+            return DatabaseErrorHandler::handle($e, $request);
+        } 
 
-        return redirect()->route('empresas.index')->with('success', 'Empresa atualizada com sucesso.');
+        // 
     }
 
     /**

@@ -4,8 +4,6 @@
             <x-authentication-card-logo />
         </x-slot>
 
-        <x-validation-errors class="mb-4" />
-
         <form action="{{ route('cedula.verificar') }}" method="post">
             @csrf
 
@@ -32,6 +30,19 @@
                 </x-button>
             </div>
         </form>
+
+        @if ($errors->any())
+            <div class = ''>
+
+                <ul class="mt-3 list-disc list-inside text-sm text-red-600">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+
+                <p class="mt-4 font-medium text-red-600">{{ __('Pretende dar sequência ao cadastro manual?.') }} <a href="{{route('verificar.manual')}}" class="text-green-600">SIM</a></p>
+            </div>
+        @endif
 
     </x-authentication-card>
 </x-guest-layout>

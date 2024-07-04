@@ -57,7 +57,7 @@
                             <div class="block px-4 py-2 text-xs text-gray-400">
                                 {{ __($empresa->Empresa) }}
                             </div>
-                            <x-dropdown-link href="{{ route('empresas.show', $empresa->id) }}">
+                            <x-dropdown-link href="{{ route('empresas.edit', $empresa->id) }}">
                                 {{ __('Perfil Empresa') }}
                             </x-dropdown-link>
                             <x-dropdown-link href="{{ route('subscribe.view', $empresa->id) }}">

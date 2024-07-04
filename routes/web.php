@@ -22,29 +22,16 @@ use App\Http\Controllers\ProcessoController;
 use App\Models\Empresa;
 use App\Models\Module;
 use Illuminate\Support\Facades\Log;
-/*
-Route::domain('{company}.logigate.ao')->group(function () {
-    Route::get('/', function ($company) {
-        Log::info("Acessando subdomínio: $company");
-        $company = Empresa::where('Dominio', $company)->first();
 
-        if ($company) {
-            Log::info("Redirecionando para login para a empresa: $company->nome");
-            return redirect()->route('login');
-        }
-
-        Log::error("Empresa não encontrada para o subdomínio: $company");
-
-        $erro = "Empresa não encontrada para o subdomínio";
-        return view('auth.erro_empresa', compact('erro'));
-    });
-});
-*/
 Route::get('/', function () { $modulos = Module::all();
     return view('welcome', compact('modulos')); });
 
     Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
+    Route::get('Registo', function(){
+        return view('auth.register_manual');
+    })->name('verificar.manual');
     Route::post('Verificar-Cedula', [CedulaController::class, 'validar'])->name('cedula.verificar');
+    
 
     Route::resources(['modulos' => ModuleController::class]);
 

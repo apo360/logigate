@@ -8,10 +8,4 @@
             @endforeach
         </ul>
     </div>
-
-    <script>
-        @foreach ($errors->all() as $error)
-            toastr.error('{{ $error }}');
-        @endforeach
-    </script>
 @endif
