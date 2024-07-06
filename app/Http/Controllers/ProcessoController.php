@@ -12,6 +12,7 @@ use App\Models\Exportador;
 use App\Models\Importacao;
 use App\Models\Mercadoria;
 use App\Models\Pais;
+use App\Models\PautaAduaneira;
 use App\Models\Processo;
 use App\Models\views\ProcessosView;
 use Illuminate\Database\QueryException;
@@ -37,6 +38,22 @@ class ProcessoController extends Controller
             ->where('IdEmpresa', Auth::user()->empresas->first()->id ?? null)->get(); // Paginação com 10 itens por página
 
         return view('processos.index', compact('processos'));
+    }
+
+    public function buscarProcesso(Request $request)
+    {
+        $numeroProcesso = $request->input('processo_search');
+        $processo = Processo::where('NrProcesso', $numeroProcesso)->first();
+
+        if ($processo) {
+            $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
+        } else {
+            $mercadorias = collect(); // Retorna uma coleção vazia se não houver processo encontrado
+        }
+
+        $pautaAduaneira = PautaAduaneira::all();
+
+        return view('processos.du', compact('mercadorias', 'numeroProcesso', 'pautaAduaneira'));
     }
 
 
@@ -216,5 +233,29 @@ class ProcessoController extends Controller
     public function autorizacao(){
 
         return view('processos.autorizacao_regulamentacao');
+    }
+
+    public function du_electronico(){
+        return view('processos.du');
+    }
+
+    public function atualizarCodigoAduaneiro(Request $request)
+    {
+        $data = $request->validate([
+            'mercadoria_id' => 'required|array',
+            'mercadoria_id.*' => 'exists:mercadorias,id',
+            'codigo_aduaneiro' => 'required|array',
+            'codigo_aduaneiro.*' => 'string|max:255',
+        ]);
+
+        foreach ($data['mercadoria_id'] as $index => $id) {
+            $mercadoria = Mercadoria::find($id);
+            if ($mercadoria) {
+                $mercadoria->codigo_aduaneiro = $data['codigo_aduaneiro'][$index];
+                $mercadoria->save();
+            }
+        }
+
+        return redirect()->back()->with('success', 'Códigos aduaneiros atualizados com sucesso!');
     }
 }
