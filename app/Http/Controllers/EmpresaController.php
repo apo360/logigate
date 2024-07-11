@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\DatabaseErrorHandler;
 use App\Models\Empresa;
+use App\Models\EmpresaBanco;
 use App\Models\Municipio;
 use App\Models\Provincia;
 use Illuminate\Database\QueryException;
@@ -57,7 +58,10 @@ class EmpresaController extends Controller
     {
         $provincias = Provincia::all();
         $cidades = Municipio::all();
-        return view('empresa.edit', compact('empresa', 'provincias', 'cidades'));
+        $ibans = IbanController::getBankDetails();
+        $contas = EmpresaBanco::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        //response()->json($
+        return view('empresa.edit', compact('empresa', 'provincias', 'cidades', 'ibans', 'contas'));
     }
 
     /**
