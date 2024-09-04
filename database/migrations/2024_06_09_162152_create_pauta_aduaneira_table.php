@@ -13,14 +13,16 @@ return new class extends Migration
     {
         Schema::create('pauta_aduaneira', function (Blueprint $table) {
             $table->id();
-            $table->string('codigo', 50);
+            $table->string('codigo', 50)->default('0');
             $table->string('descricao', 250);
-            $table->string('uq', 20);
-            $table->string('rg', 20);
-            $table->string('sadc', 20);
-            $table->string('ua', 20);
-            $table->string('requisitos', 200);
-            $table->string('observacao', 200);
+            $table->string('uq', 20)->default('0');
+            $table->string('rg', 20)->default('0');
+            $table->string('sadc', 20)->default('0');
+            $table->string('ua', 20)->default('0');
+            $table->string('requisitos', 200)->default('0');
+            $table->string('observacao', 200)->default('0');
+            $table->string('iva', 5)->default('0');
+            $table->string('ieq', 5)->default('0');
             $table->timestamps();
         });
     }

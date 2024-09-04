@@ -18,11 +18,17 @@ class DatabaseSeeder extends Seeder
             // UserRoleSeeder::class,
             // RolesAndPermissionsSeeder::class,
 
-            ProvinciasSeeder::class,
+            /*ProvinciasSeeder::class,
             MunicipiosSeeder::class,
             PaisesSeeder::class,
             ModuleSeeder::class,
             MenuSeeder::class,
+            PortosSeeder::class,
+            ProductTypeSeeder::class,
+            ProductExemptionReasonSeeder::class,
+            InvoiceTypesSeeder::class,
+            RegiaoAduaneirasSeeder::class,
+            EstanciasSeeder::class,*/
 
         ]);
     }

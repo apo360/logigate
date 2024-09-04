@@ -46,28 +46,64 @@
         }
 
     </style>
-    <div class="container">
-        <br>
-        <hr>
+    <div class="" style="padding: 10px;"> 
+
         <div class="card">
             <div class="card-header">
+                <div class="float-left"></div>
                 <div class="float-right">
                     <!-- Botão Cadastro de Processos -->
-                    <div class="mb-2">
-                        <a href="{{ route('processos.create') }}" class="btn btn-primary btn-sm">Processos</a>
+                    <div class="">
+                        <a href="{{ route('processos.create') }}" class="btn btn-primary btn-sm mb-3">Novo Processo</a>
+                        <a href="">Licenciamento</a>
+                        <a href="" class="btn btn-success btn-sm mb-3">Exportar Dados</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <x-input type="text" id="search" placeholder="Pesquisar por Cliente, NIF, Nº Processo" class="form-control" />
+                    </div>
+                    <div class="col-md-2">
+                        <x-input type="date" id="search_date" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <select name="Situacao" class="form-control">
+                            <option value="" selected>Todos</option>
+                            <option value="Aberto">Aberto</option>
+                            <option value="Em curso">Em curso</option>
+                            <option value="Alfandega">Alfandega</option>
+                            <option value="Desafaldegamento">Desafaldegamento</option>
+                            <option value="Inspensão">Inspensão</option>
+                            <option value="Terminal">Terminal</option>
+                            <option value="Retido">Retido</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <!-- Adicione outras opções conforme necessário -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select id="sort_by" class="form-control">
+                            <option value="">Ordenar por...</option>
+                            <option value="data_asc">Data Ascendente</option>
+                            <option value="data_desc">Data Descendente</option>
+                            <option value="nome_asc">Nome Ascendente</option>
+                            <option value="nome_desc">Nome Descendente</option>
+                            <option value="nif">NIF</option>
+                        </select>
                     </div>
                 </div>
             </div>
         </div>
         
         <div class="card">
-            <div class="card-header">
-
-            </div>
 
             <div class="card-body">
                 <!-- Tabela de Processos -->
-                <table id="example1" class="table table-hover table-bordered">
+                <table id="example1" class="table table-hover">
                     <thead>
                         <tr>
                             <th>Acções</th>
@@ -84,13 +120,25 @@
                             <tr>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ route('processos.show', $processo->id) }}" class="btn btn-sm btn-primary"> <i class="fas fa-eye"></i> </a>
-                                        <a href="{{ route('processos.edit', $processo->id) }}" class="btn btn-sm btn-warning"> <i class="fas fa-edit"></i> </a>
-                                        <form action="{{ route('processos.destroy', $processo->id) }}" method="POST" style="display: inline-block;">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('processos.destroy', $processo->id) }}"> <i class="fas fa-trash"></i> </button>
-                                        </form>
+                                        <div class="btn-group" role="group">
+                                            <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Opções
+                                            </button>
+                                            <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                                <li><a href="{{ route('processos.show', $processo->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Visualizar</a></li>
+                                                <li><a href="{{ route('processos.edit', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
+                                                <li><a href="" class="dropdown-item">  <i class="fas fa-file-xml"></i> DU Electronico</a></li>
+                                                <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Factura</a></li>
+                                                <li>
+                                                    <form action="{{ route('processos.destroy', $processo->id) }}" method="POST" style="display: inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('processos.destroy', $processo->id) }}"> <i class="fas fa-trash"></i> Eliminar </button>
+                                                    </form>
+                                                </li>
+
+                                            </ul>
+                                        </div>
                                     </div>
                                 </td>
                                 <td>{{ $processo->NrProcesso }}</td>

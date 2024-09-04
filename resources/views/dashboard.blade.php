@@ -10,24 +10,30 @@
             <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
                 <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h2 class="text-lg font-semibold mb-2">Processos</h2>
-                        <p>Total: {{ \App\Models\Processo::where('empresa_id', auth()->user()->empresas->first()->id)->count() }}</p>
-                        <canvas id="processosChart"></canvas>
-                        <a href="#" class="text-indigo-600">Ver todos</a>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold mb-2">Processos</h2>
+                            <p>Total: {{ \App\Models\Processo::where('empresa_id', auth()->user()->empresas->first()->id)->count() }}</p>
+                            <canvas id="processosChart"></canvas>
+                            <a href="#" class="text-indigo-600">Ver todos</a>
+                        </div>
                     </div>
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h2 class="text-lg font-semibold mb-2">Clientes</h2>
-                        <p>Total: {{ \App\Models\Customer::where('empresa_id', auth()->user()->empresas->first()->id)->count() }}</p>
-                        <canvas id="processesByCustomerChart"></canvas>
-                        <a href="#" class="text-indigo-600">Ver todos</a>
+                    <div class="col-md-4">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold mb-2">Clientes</h2>
+                            <p>Total: {{ \App\Models\Customer::where('empresa_id', auth()->user()->empresas->first()->id)->count() }}</p>
+                            <canvas id="processesByCustomerChart"></canvas>
+                            <a href="#" class="text-indigo-600">Ver todos</a>
+                        </div>
                     </div>
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h2 class="text-lg font-semibold mb-2">Países</h2>
-                        <p>Total: {{ \App\Models\Pais::count() }}</p>
-                        <canvas id="topCountriesChart"></canvas>
-                        <a href="#" class="text-indigo-600">Ver todos</a>
+                    <div class="col-md-4">
+                        <div class="bg-white p-4 rounded-lg shadow">
+                            <h2 class="text-lg font-semibold mb-2">Países</h2>
+                            <p>Total: {{ \App\Models\Pais::count() }}</p>
+                            <canvas id="topCountriesChart"></canvas>
+                            <a href="#" class="text-indigo-600">Ver todos</a>
+                        </div>
                     </div>
                 </div>
             </div>

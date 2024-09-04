@@ -6,12 +6,16 @@ use App\Exports\CustomersExport;
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\CustomerRequest;
 use App\Imports\CustomersImport;
+use App\Models\ContaCorrente;
 use App\Models\Customer;
+use App\Models\SalesInvoice;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CustomerController extends Controller
 {
@@ -20,7 +24,8 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        //
+        $customers = Customer::all();
+        return view('customer.customer_pesquisar', compact('customers'));
     }
 
     /**
@@ -28,7 +33,9 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        //
+        // chamar a stored procedure
+        $newCustomerCode = Customer::generateNewCode();
+        return view('customer.create', compact('newCustomerCode'));
     }
 
     /**
@@ -84,7 +91,8 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
-        //
+        $customer = Customer::findOrFail($customer->id);
+        return view('customer.customer_show', compact('customer'));
     }
 
     /**
@@ -152,6 +160,78 @@ class CustomerController extends Controller
 
             return DatabaseErrorHandler::handle($e, $request);
         }
+    }
+
+    public function index_conta()
+    {
+        // Listar todos os clientes
+        $clientes = Customer::all();
+        $resultados = [];
+
+        // Inicializar as variaveis (Totais gerais)
+        $totalSaldo = 0;
+        $totalDividaCorrente = 0;
+        $totalDividaVencida = 0;
+
+        foreach ($clientes as $cliente) {
+            // Obter todas as transações da conta corrente do cliente
+            $transacoes = ContaCorrente::where('cliente_id', $cliente->id)->orderBy('data', 'desc')->get();
+
+            // Calcular o saldo
+            $saldo = $transacoes->sum(function ($transacao) {
+                return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
+            });
+
+            // Inicializar variaveis de dívidas
+            $dividaCorrente = 0;
+            $dividaVencida = 0;
+
+            // Obter as faturas associadas ao cliente, se houver
+            $facturas = SalesInvoice::where('customer_id', $cliente->id)->get();
+
+            if ($facturas->isNotEmpty()) {
+                foreach ($facturas as $invoice) {
+                    $grossTotal = $invoice->salesdoctotal->gross_total ?? 0;
+
+                    if ($invoice->invoice_date_end >= Carbon::now()) {
+                        $dividaCorrente += $grossTotal;
+                    } else {
+                        $dividaVencida += $grossTotal;
+                    }
+                }
+            }
+
+            // Somente armazena resultados para clientes com valores diferentes de zero
+            if ($saldo != 0 || $dividaCorrente != 0 || $dividaVencida != 0) {
+                $resultados[] = [
+                    'cliente' => $cliente,
+                    'saldo' => $saldo,
+                    'dividaCorrente' => $dividaCorrente,
+                    'dividaVencida' => $dividaVencida,
+                ];
+            }
+
+            // Atualizar totais gerais
+            $totalSaldo += $saldo;
+            $totalDividaCorrente += $dividaCorrente;
+            $totalDividaVencida += $dividaVencida;
+        }
+
+        return view('customer.index_conta_c', compact('resultados', 'totalSaldo', 'totalDividaCorrente', 'totalDividaVencida'));
+    }
+
+    public function conta($id){
+
+        $cliente = Customer::findOrFail($id);
+        
+        $transacoes = ContaCorrente::where('cliente_id', $id)->orderBy('data', 'desc')->get();
+
+        // Calcular o saldo baseado nas transações
+        $saldo = $transacoes->sum(function ($transacao) {
+            return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
+        });
+
+        return view('customer.conta_c', compact('cliente', 'transacoes', 'saldo'));
     }
 
     public function import(Request $request)

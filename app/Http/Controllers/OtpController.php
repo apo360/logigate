@@ -28,12 +28,12 @@ class OtpController extends Controller
         ]);
 
         // Envia o OTP por email (substitua pelo seu próprio método de envio)
-        /*Mail::raw("Seu código OTP é: $otp", function ($message) use ($user) {
+        Mail::raw("Seu código de confirmação é: $otp", function ($message) use ($user) {
             $message->to($user->email)
-                    ->subject('Seu código OTP');
-        });*/
+                    ->subject('Logigate Aduaneiro - Código de confirmação');
+        });
 
-        return back()->with('message', 'Código OTP enviado para seu email.');
+        return back()->with('message', 'Código de confirmação enviado para seu email!.');
     }
 
     public function verifyOtp(Request $request)

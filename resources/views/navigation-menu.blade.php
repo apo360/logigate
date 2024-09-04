@@ -64,7 +64,7 @@
                                 {{ __('Subscrição') }}
                             </x-dropdown-link>
                         @endforeach
-                        <x-dropdown-link href="{{ route('profile.show') }}">
+                        <x-dropdown-link href="{{ route('usuarios.index') }}">
                             {{ __('Usuarios') }}
                         </x-dropdown-link>
                         <x-dropdown-link href="{{ route('profile.show') }}">
@@ -92,12 +92,15 @@
                         <div class="border-t border-gray-200"></div>
 
                         <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
+                         <!-- Logout Form -->
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
-                            <x-dropdown-link href="{{ route('logout') }}">
-                                {{ __('Sair') }}
-                            </x-dropdown-link>
                         </form>
+
+                        <!-- Logout Link -->
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            Sair
+                        </a>
                     </x-slot>
                 </x-dropdown>
             </div>

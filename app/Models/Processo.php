@@ -23,6 +23,7 @@ class Processo extends Model
         'user_id',
         'empresa_id',
         'exportador_id',
+        'estancia_id',
         // Adicione outros campos fillable conforme necessário
     ];
 
@@ -64,6 +65,11 @@ class Processo extends Model
     public function cliente()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    public function estancia()
+    {
+        return $this->belongsTo(Estancia::class, 'estancia_id');
     }
 
     public function user()
@@ -207,4 +213,10 @@ class Processo extends Model
     {
         return $this->hasOne(TarifaDU::class, 'Fk_processo');
     }
+
+    public function historico()
+    {
+        return $this->hasMany(HistoricoProcesso::class);
+    }
+
 }

@@ -59,7 +59,7 @@ class ExportadorController extends Controller
                 return response()->json([
                     'message' => 'Exportador adicionado com Sucesso',
                     'exportador_id' => $newExportador->id,
-                    'codCli' => $newExportador->CustomerTaxID,
+                    'codCli' => $newExportador->ExportadorTaxID,
                 ], 200);
             } else {
                 // Redirect to 'form.edit' for the main form

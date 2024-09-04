@@ -9,8 +9,6 @@ class Mercadoria extends Model
 {
     use HasFactory;
 
-    use HasFactory;
-
     protected $fillable = [
         'Fk_Importacao',
         'Descricao',

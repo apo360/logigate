@@ -53,12 +53,12 @@ class Customer extends Model
      * Define the "invoices" relationship. Each customer can have multiple invoices.
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    /*
+    
     public function invoices()
     {
-        return $this->hasMany(SalesInvoice::class, 'CustomerID');
+        return $this->hasMany(SalesInvoice::class, 'customer_id');
     }
-*/
+
     /**
      * Define the "processes" relationship. Each customer can have multiple processes.
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
@@ -70,6 +70,10 @@ class Customer extends Model
 
     public function empresa(){
         return $this->hasMany(Empresa::class, 'empresa_id');
+    }
+
+    public function contaCorrente(){
+        return $this->belongsTo(ContaCorrente::class, 'cliente_id');
     }
 
 }

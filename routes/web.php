@@ -11,8 +11,10 @@ use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\Roles;
 use App\Http\Controllers\ArquivoController;
 use App\Http\Controllers\CedulaController;
+use App\Http\Controllers\ContaCorrenteController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\ExportadorController;
 use App\Http\Controllers\IbanController;
 use App\Http\Controllers\MenuController;
@@ -21,18 +23,35 @@ use App\Http\Controllers\MigracaoController;
 use App\Http\Controllers\ModuleSubscriptionController;
 use App\Http\Controllers\PaisController;
 use App\Http\Controllers\ProcessoController;
+use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\UserController;
 use App\Models\Empresa;
 use App\Models\Module;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 Route::get('/', function () { $modulos = Module::all();
     return view('welcome', compact('modulos')); });
 
     Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
-    Route::get('Registo', function(){
-        return view('auth.register_manual');
-    })->name('verificar.manual');
+    Route::get('Registo', function(){ return view('auth.register_manual'); })->name('verificar.manual');
     Route::post('Verificar-Cedula', [CedulaController::class, 'validar'])->name('cedula.verificar');
+
+    Route::post('/logout', function () {
+        Auth::logout();
+        return redirect('/');
+    })->name('logout');
+
+    Route::get('/send-test-email', function() {
+        Mail::raw('Teste de envio de email com AWS SES', function ($message) {
+            $message->to('dti@hongayetu.com')
+                    ->subject('Teste de Email');
+        });
+    
+        return 'Email enviado!';
+    });
+    
 
     Route::resources(['modulos' => ModuleController::class]);
 
@@ -41,24 +60,35 @@ Route::get('/', function () { $modulos = Module::all();
     Route::post('/resend-otp', [OtpController::class, 'sendOtp'])->middleware('auth');
 
     Route::middleware(['auth:sanctum', config('jetstream.auth_session'), EnsureOtpIsVerified::class])->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         
-        Route::resource('permissions', PermissionsController::class)->middleware('role');
-
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
+        
         Route::resources([
-            'roles' => Roles::class,
-            'modules' => ModuleController::class,
             'activated-modules' => ActivatedModuleController::class,
-            'menus' => MenuController::class,
-            'processos' => ProcessoController::class,
-            'customers' => CustomerController::class,
-            'exportadors' => ExportadorController::class,
             'arquivos' => ArquivoController::class,
-            'processos' => ProcessoController::class,
+            'customers' => CustomerController::class,
+            'documentos' => DocumentoController::class,
             'empresas' => EmpresaController::class,
+            'exportadors' => ExportadorController::class,
+            'menus' => MenuController::class,
             'mercadorias' => MercadoriaController::class,
+            'modules' => ModuleController::class,
+            'permissions' => PermissionsController::class,
+            'processos' => ProcessoController::class,
+            'roles' => Roles::class,
+            'usuarios' => UserController::class,
         ]);
+
+        Route::get('customer/conta_corrente/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
+        Route::get('customers/{id}/conta_corrente', [CustomerController::class, 'conta'])->name('cliente.cc');
+        //Route::get('processos/{id}/documentos/factura', [DocumentoController::class, 'create'])->name('documentos.create');
             
+        Route::prefix('customer/conta_corrente')->group(function () {
+            Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
+            Route::post('/store/{cliente_id}', [ContaCorrenteController::class, 'store'])->name('conta_corrente.store');
+        });
+
         // Rotas específicas de usuários e funções
         Route::prefix('users/{user}')->group(function () {
             Route::get('assign-role', [UserRoleController::class, 'showAssignRoleForm'])->name('users.showAssignRoleForm');
@@ -76,6 +106,9 @@ Route::get('/', function () { $modulos = Module::all();
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/imprimir', [ProcessoController::class, 'print'])->name('processos.print');
+        Route::post('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
+        Route::post('processo/gerar-txt/{IdProcesso}', [ProcessoController::class, 'GerarTxT'])->name('gerar.txt');
+
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
         Route::post('/subscricao/pagamentos', [ModuleSubscriptionController::class, 'pay'])->name('payment.pay');
@@ -85,5 +118,12 @@ Route::get('/', function () { $modulos = Module::all();
         Route::post('empresa/importar/clientes', [MigracaoController::class, 'importCustomers'])->name('import.customers');
         Route::post('empresa/importar/exportadores', [MigracaoController::class, 'importExportadores'])->name('import.exportadores');
         Route::post('empresa/importar/processos', [MigracaoController::class, 'importProcessos'])->name('import.processos');
-    });
 
+        Route::get('processos/report/{ProcessoID}/visualizar', [RelatorioController::class, 'generateReport'])->name('processos.print');
+        // Documentos
+        Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'InvoicesSales'])->name('documento.print');
+        Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');
+        Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
+        Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
+        Route::post('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
+    });

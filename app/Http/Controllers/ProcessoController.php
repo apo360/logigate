@@ -8,17 +8,22 @@ use App\Http\Requests\DARRequest;
 use App\Http\Requests\PortuariaRequest;
 use App\Http\Requests\TarifaDURequest;
 use App\Models\Customer;
+use App\Models\Estancia;
 use App\Models\Exportador;
 use App\Models\Importacao;
 use App\Models\Mercadoria;
 use App\Models\Pais;
 use App\Models\PautaAduaneira;
+use App\Models\Porto;
 use App\Models\Processo;
 use App\Models\views\ProcessosView;
+use App\Models\RegiaoAduaneira;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use SimpleXMLElement;
 
 class ProcessoController extends Controller
 {
@@ -47,15 +52,16 @@ class ProcessoController extends Controller
 
         if ($processo) {
             $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
+            $mercadoriasAgrupadas = $mercadorias->groupBy('codigo_aduaneiro');
         } else {
             $mercadorias = collect(); // Retorna uma coleção vazia se não houver processo encontrado
+            $mercadoriasAgrupadas = collect();
         }
 
         $pautaAduaneira = PautaAduaneira::all();
 
-        return view('processos.du', compact('mercadorias', 'numeroProcesso', 'pautaAduaneira'));
+        return view('processos.du', compact('mercadorias', 'processo','numeroProcesso', 'pautaAduaneira', 'mercadoriasAgrupadas'));
     }
-
 
     /**
      * Show the form for creating a new resource.
@@ -66,13 +72,27 @@ class ProcessoController extends Controller
         $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
         $NewProcesso = Processo::generateNewProcesso(); // Inicializar com novo código de processo
         $paises = Pais::all();
+        $estancias = Estancia::all();
+        $regioes = RegiaoAduaneira::all();
+        $portos = Porto::all();
         
         // chamar a stored procedure
         $newCustomerCode = Customer::generateNewCode();
         $newExportadorCode = Exportador::generateNewCode();
 
         // Retornar uma view com o formulário para criar um novo processo
-        return view('processos.create', compact('clientes', 'exportador', 'NewProcesso', 'paises', 'newCustomerCode', 'newExportadorCode'));
+        return view('processos.create', 
+        compact(
+            'clientes', 
+            'exportador', 
+            'NewProcesso', 
+            'paises', 
+            'newCustomerCode', 
+            'newExportadorCode',
+            'estancias',
+            'regioes',
+            'portos'
+        ));
     }
 
     /**
@@ -95,8 +115,9 @@ class ProcessoController extends Controller
                 'Descricao' => 'nullable|string|max:200',
                 'DataAbertura' => 'required|date',
                 'TipoProcesso' => 'required|string|max:100',
-                'Situacao' => 'required|string|in:Em processamento,Desembarcado,Retido,Concluido',
+                'Situacao' => 'required|string',
                 'exportador_id' => 'required|string',
+                'estancia_id' => 'required|string',
             ]);
     
             $processo_request['user_id'] = $user->id;
@@ -106,28 +127,19 @@ class ProcessoController extends Controller
             $processo = Processo::create($processo_request);
 
             // Cria a importação
-            $importacao = Importacao::create([
+            Importacao::create([
                 'processo_id' => $processo->id,
                 'Fk_pais_origem' => $request->input('Fk_pais'),
                 'PortoOrigem' => $request->input('PortoOrigem'),
                 'TipoTransporte' => $request->input('TipoTransporte'),
                 'NomeTransporte' => $request->input('NomeTransporte'),
                 'DataChegada' => $request->input('DataChegada'),
-                'MarcaFiscal' => $request->input('MarcaFiscal'),
-                'BLC_Porte' => $request->input('BLC_Porte'),
-                'Moeda' => $request->input('Moeda'),
-                'FOB' => $request->input('FOB'), 
-                'Freight' => $request->input('Freight'), //Frete
-                'Insurance' => $request->input('Insurance'), // Seguro
-                'Cambio' => $request->input('Cambio'),
-                'ValorAduaneiro' => $request->input('ValorAduaneiro'),
-                'ValorTotal' => $request->input('ValorTotal'),
             ]);
 
             DB::commit();
 
             // Redirecione para a página de listagem de processos com uma mensagem de sucesso
-            return redirect()->route('processos.index')->with('success', 'Processo inserido com sucesso!');
+            return redirect()->route('processos.edit', $processo->id)->with('success', 'Processo inserido com sucesso!');
         } catch (QueryException $e) {
             return DatabaseErrorHandler::handle($e, $request);
         }
@@ -143,8 +155,18 @@ class ProcessoController extends Controller
     public function show($processoID)
     {
         $processo = Processo::findOrFail($processoID);
-        $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
-        return view('processos.show', compact('processo', 'mercadorias'));
+
+        if ($processo) {
+            $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
+            $mercadoriasAgrupadas = $mercadorias->groupBy('codigo_aduaneiro');
+        } else {
+            $mercadorias = collect(); // Retorna uma coleção vazia se não houver processo encontrado
+            $mercadoriasAgrupadas = collect();
+        }
+
+        $pautaAduaneira = PautaAduaneira::all();
+
+        return view('processos.show', compact('processo', 'mercadorias', 'pautaAduaneira', 'mercadoriasAgrupadas'));
     }
 
     /**
@@ -155,14 +177,14 @@ class ProcessoController extends Controller
         $processo = Processo::findOrFail($processoID);
         
         $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get(); // Obtenha a relação 'mercadoria'
-        
-        return view('processos.edit', compact('processo', 'mercadorias'));
+        $paises = Pais::all();
+        return view('processos.edit', compact('processo', 'mercadorias', 'paises'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $ProcessoRequest,  DARRequest $DARRequest, TarifaDURequest $DURequest, PortuariaRequest $Portuaria, $processoID)
+    public function update(Request $ProcessoRequest, TarifaDURequest $DURequest, PortuariaRequest $Portuaria, $processoID)
     {
         
         try {
@@ -175,7 +197,19 @@ class ProcessoController extends Controller
                 'Situacao' => $ProcessoRequest->input('Situacao'),
             ]); // Dados do Processo
 
-            TarifaDARController::storeOrUpdate($DARRequest, $processoID); //Tarifas do DAR
+            Importacao::where('processo_id', $processoID)->update([
+                'MarcaFiscal' => $ProcessoRequest->input('MarcaFiscal'),
+                'BLC_Porte' => $ProcessoRequest->input('BLC_Porte'),
+                'Moeda' => $ProcessoRequest->input('Moeda'),
+                'FOB' => $ProcessoRequest->input('FOB'), 
+                'Freight' => $ProcessoRequest->input('Freight'), //Frete
+                'Insurance' => $ProcessoRequest->input('Insurance'), // Seguro
+                'Cambio' => $ProcessoRequest->input('Cambio'),
+                'ValorAduaneiro' => $ProcessoRequest->input('ValorAduaneiro'),
+                'ValorTotal' => $ProcessoRequest->input('ValorTotal'),
+            ]); // Dados do Importação
+
+            // TarifaDARController::storeOrUpdate($DARRequest, $processoID); //Tarifas do DAR
 
             TarifaPortuariaController::storeOrUpdate($Portuaria, $processoID); //Tarifas Portuarias
 
@@ -257,5 +291,49 @@ class ProcessoController extends Controller
         }
 
         return redirect()->back()->with('success', 'Códigos aduaneiros atualizados com sucesso!');
+    }
+
+    public function GerarXml($IdProcesso) {
+
+        $processo = Processo::where('id', $IdProcesso)->first();
+        $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
+        $mercadoriasAgrupadas = $mercadorias->groupBy('codigo_aduaneiro');
+        $pautaAduaneira = PautaAduaneira::all();
+
+        $xml = new SimpleXMLElement('<MercadoriasAgrupadas/>');
+    
+        foreach ($mercadoriasAgrupadas as $codigoAduaneiro => $mercadorias) {
+            $codigoNode = $xml->addChild('CodigoAduaneiro');
+            $codigoNode->addAttribute('codigo', $codigoAduaneiro);
+            $descricao = $pautaAduaneira->firstWhere('codigo', $codigoAduaneiro)->descricao;
+            $codigoNode->addChild('Descricao', $descricao);
+    
+            $quantidadeTotal = 0;
+            $fobTotal = 0;
+    
+            foreach ($mercadorias as $mercadoria) {
+                $mercadoriaNode = $codigoNode->addChild('Mercadoria');
+                $mercadoriaNode->addChild('Descricao', $mercadoria->Descricao);
+                $mercadoriaNode->addChild('Quantidade', $mercadoria->Quantidade);
+                $mercadoriaNode->addChild('PrecoUnitario', $mercadoria->preco_unitario);
+                $mercadoriaNode->addChild('FOB', $mercadoria->preco_total);
+    
+                $quantidadeTotal += $mercadoria->Quantidade;
+                $fobTotal += $mercadoria->preco_total;
+            }
+    
+            $codigoNode->addChild('QuantidadeTotal', $quantidadeTotal);
+            $codigoNode->addChild('FOBTotal', $fobTotal);
+        }
+    
+        $xmlString = $xml->asXML();
+        $filename = 'mercadorias_agrupadas_' . date('Ymd_His') . '.xml';
+        Storage::put('public/' . $filename, $xmlString);
+    
+        return response()->download(storage_path('app/public/' . $filename));
+    }
+
+    public function GerarTxT($IdProcesso){
+
     }
 }
