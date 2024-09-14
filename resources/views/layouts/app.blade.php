@@ -50,23 +50,28 @@
             <!-- Menu Header (Navbar) -->
             @livewire('navigation-menu')
             <!-- /.Menu Header (Navbar) -->
-            <!-- Page Heading -->
-            @if (isset($header))
-                <header class="bg-dark shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endif
+            
             <!-- Menu Aside -->
             <x-menu-aside />
 
             <main class="content-wrapper">
-                <!-- Incluir componentes de validação -->
-                @include('components.validation-errors')
-                @include('components.validation-success')
+                <!-- Page Heading -->
+                @if (isset($header))
+                    <header class="bg-dark shadow">
+                        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                            {{ $header }}
+                        </div>
+                    </header>
+                @endif
+                
+                <div style="padding: 10px;">
+                    <!-- Incluir componentes de validação -->
+                    @include('components.validation-errors')
+                    @include('components.validation-success')
 
-                {{ $slot }}
+                    {{ $slot }}
+                </div>
+                
             </main>
         </div>
 

@@ -10,6 +10,7 @@ class Produto extends Model
 {
     use HasFactory;
 
+    protected $table = "produtos";
     // Defina uma propriedade para identificar qual tabela os atributos pertencem
     protected $tableIdentifier = ''; // Por padrão, nenhum identificador
 

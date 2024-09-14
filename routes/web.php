@@ -23,13 +23,12 @@ use App\Http\Controllers\MigracaoController;
 use App\Http\Controllers\ModuleSubscriptionController;
 use App\Http\Controllers\PaisController;
 use App\Http\Controllers\ProcessoController;
+use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\UserController;
 use App\Models\Empresa;
 use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 Route::get('/', function () { $modulos = Module::all();
     return view('welcome', compact('modulos')); });
@@ -42,16 +41,6 @@ Route::get('/', function () { $modulos = Module::all();
         Auth::logout();
         return redirect('/');
     })->name('logout');
-
-    Route::get('/send-test-email', function() {
-        Mail::raw('Teste de envio de email com AWS SES', function ($message) {
-            $message->to('dti@hongayetu.com')
-                    ->subject('Teste de Email');
-        });
-    
-        return 'Email enviado!';
-    });
-    
 
     Route::resources(['modulos' => ModuleController::class]);
 
@@ -78,11 +67,15 @@ Route::get('/', function () { $modulos = Module::all();
             'processos' => ProcessoController::class,
             'roles' => Roles::class,
             'usuarios' => UserController::class,
+            'produtos' => ProdutoController::class,
         ]);
 
         Route::get('customer/conta_corrente/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
         Route::get('customers/{id}/conta_corrente', [CustomerController::class, 'conta'])->name('cliente.cc');
         //Route::get('processos/{id}/documentos/factura', [DocumentoController::class, 'create'])->name('documentos.create');
+
+        // Rota para Inserir Grupo/Categoria de Produtos
+        Route::post('/produto/grupo/insert', [ProdutoController::class, 'InsertGrupo'])->name('insert.grupo.produto');
             
         Route::prefix('customer/conta_corrente')->group(function () {
             Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
@@ -126,4 +119,8 @@ Route::get('/', function () { $modulos = Module::all();
         Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
         Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
         Route::post('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
+
+        // API
+        Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
+        Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']);
     });

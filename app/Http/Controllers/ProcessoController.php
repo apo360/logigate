@@ -184,7 +184,7 @@ class ProcessoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $ProcessoRequest, TarifaDURequest $DURequest, PortuariaRequest $Portuaria, $processoID)
+    public function update(Request $ProcessoRequest, TarifaDURequest $DURequest, PortuariaRequest $Portuaria, $processoID, DARRequest $DARRequest)
     {
         
         try {
@@ -209,7 +209,7 @@ class ProcessoController extends Controller
                 'ValorTotal' => $ProcessoRequest->input('ValorTotal'),
             ]); // Dados do Importação
 
-            // TarifaDARController::storeOrUpdate($DARRequest, $processoID); //Tarifas do DAR
+            TarifaDARController::storeOrUpdate($DARRequest, $processoID); //Tarifas do DAR
 
             TarifaPortuariaController::storeOrUpdate($Portuaria, $processoID); //Tarifas Portuarias
 
@@ -335,5 +335,19 @@ class ProcessoController extends Controller
 
     public function GerarTxT($IdProcesso){
 
+    }
+
+    public function getProcessesByIdAndStatus($ProcessoId, $status)
+    {
+        // Find processes with the specified customer ID and status
+        $processos = Processo::where('ProcessoID', $ProcessoId)->where('Situacao', $status)->get();
+    
+        // You can return the processes as a JSON response
+        return response()->json([
+            'processos' => $processos,
+            'cliente' => $processos->first()->cliente, // Assuming all processes belong to the same customer
+            'mercadorias' => $processos->flatMap->mercadorias,
+            'cobranca' => $processos->first()->cobrado
+        ]);
     }
 }

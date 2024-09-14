@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class DARRequest extends FormRequest
+class ServicoProdutoRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,15 +22,11 @@ class DARRequest extends FormRequest
     public function rules()
     {
         return [
-            'Fk_processo' => 'int',
-            'N_Dar' => 'string|max:20',
-            'direitos' => 'numeric',
-            'emolumentos' => 'numeric',
-            'iva_aduaneiro' => 'numeric',
-            'iec' => 'numeric',
-            'juros_mora' => 'numeric',
-            'multas' => 'numeric',
-            'subtotal' => 'numeric',
+            'ProductType' => 'required|in:P,S,O,E,I',
+            'ProductCode' => 'required|string|max:60',
+            'ProductDescription' => 'required|string|max:200',
+            'ProductNumberCode' => 'nullable|string',
+            'ProductGroup' => 'nullable|integer',
         ];
     }
 }

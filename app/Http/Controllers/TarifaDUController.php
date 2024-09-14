@@ -19,7 +19,7 @@ class TarifaDUController extends Controller
             
             if($processo->du){
                 // Actualizar a TarifaDU
-                TarifaDU::where('Fk_processo', $processo->ProcessoID)->update($request->validated());
+                TarifaDU::where('Fk_processo', $processo->id)->update($request->validated());
             }else{
                 // Inserir a TarifaDU
                 TarifaDU::create($request->validated());

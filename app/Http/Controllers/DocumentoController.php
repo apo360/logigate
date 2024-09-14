@@ -82,22 +82,34 @@ class DocumentoController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $clientes = Customer::all();
-
-        $newCustomerCode = Customer::generateNewCode();
-
-        $produtos = DB::table('Listar_Produtos')->get();
-
         $tipoDocumentos = DB::table('InvoiceType')->get();
-
-        return view('Documentos.create_documento_2', compact('clientes', 'tipoDocumentos', 'produtos', 'newCustomerCode'));
+        $produtos = DB::table('Listar_Produtos')->get();
         
-        /*$processo = Processo::findOrFail($id);
-        $produtos = Produto::all();
-        return view('Documentos.create_documento_2', compact('processo', 'produtos'));*/
+        // Verifica se o parâmetro 'id' está presente no request
+        if ($request->has('id')) {
+            $id = $request->input('id');
+            
+            // Busca o processo ou dado relacionado ao id
+            $processo = Processo::findOrFail($id); // Encontrar o processo pelo ID
+            
+            // Filtra os produtos do tipo 'S' (serviço)
+            $Servico = $produtos->where('ProductType', 'S');
+            
+            // Retorna a view associada quando o 'id' existe
+            return view('Documentos.create_documento', compact('processo', 'produtos', 'Servico', 'tipoDocumentos'));
+        } else {
+            // Retorna a view padrão de criação quando não há 'id'
+            $clientes = Customer::all();
+
+            // Gera novo código para o cliente
+            $newCustomerCode = Customer::generateNewCode();
+
+            return view('Documentos.create_documento_2', compact('clientes', 'tipoDocumentos', 'produtos', 'newCustomerCode'));
+        }
     }
+
 
     /**
      * Store a newly created resource in storage.
@@ -161,16 +173,23 @@ class DocumentoController extends Controller
                         $produto_price = str_replace(',', '.', $produto_price); // Substitui vírgula por ponto
                         $produto_price = floatval($produto_price); // Converte para float
 
-                        SalesLine::create([
-                            'line_number' => $key + 1,
-                            'documentoID' => $salesInvoice->id,
-                            'productID' => $dadosDaLinha['productId'],
-                            'quantity' => $dadosDaLinha['quantidade'],
-                            'unit_of_measure' => 'uni',
-                            'unit_price' => $dadosDaLinha['preco'],
-                            'tax_point_date' => Carbon::now()->toDateTimeString(),
-                            'credit_amount' => $produto_price,
-                        ]);
+                        $produtoID = Produto::where('ProductCode', $dadosDaLinha['productId'])->first();
+                        
+                        try {
+                            SalesLine::create([
+                                'line_number' => $key + 1,
+                                'documentoID' => $salesInvoice->id,
+                                'productID' => $produtoID->id,
+                                'quantity' => $dadosDaLinha['quantidade'],
+                                'unit_of_measure' => 'uni',
+                                'unit_price' => $dadosDaLinha['preco'],
+                                'tax_point_date' => Carbon::now()->toDateTimeString(),
+                                'credit_amount' => $produto_price,
+                            ]);
+                        } catch (QueryException $e) {
+                            return DatabaseErrorHandler::handle($e, $request);
+                        }
+                        
 
                         // Calculo da taxa de cada produto
                         $tax_produto = ($dadosDaLinha['imposto'] != 0 ? $dadosDaLinha['imposto'] / 100 : 0) * $produto_price;
@@ -179,10 +198,10 @@ class DocumentoController extends Controller
                         $SumTax += $tax_produto;
 
                         // Somatório dos preços de produtos sem o iva
-                        $SumNetTotal += $produto_price - $tax_produto;
+                        $SumNetTotal += $produto_price;
 
                         // Somatório dos preços de produtos com o iva
-                        $SumGrossTotal += $produto_price;
+                        $SumGrossTotal += $produto_price+$tax_produto;
                     } 
                 }
             }

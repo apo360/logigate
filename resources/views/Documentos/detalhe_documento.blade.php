@@ -57,119 +57,106 @@
     </style>
 
     <div style="padding: 10px;">
-        @if(session('success'))
-            <div class="card card-default">
-                <div class="font-medium text-green-600">{{ __('Sucesso!') }}</div>
-
-                <p class="mt-3 text-sm text-green-600">
-                    {{ session('success') }}
-                </p>
-            </div>
-        @endif
-
-        <br>
 
         <div class="card">
-    <div class="row">
-        <div class="col-md-8">
-            <header class="mb-4">
-                <h4>{{$documento->invoice_no}}</h4>
-                <hr>
-                <p class="mb-2">
-                    <strong>Tax ID: {{$documento->customer->CustomerTaxID}}</strong><br>
-                    {{$documento->customer->CompanyName}}<br>
-                    <i class="fas fa-phone"></i> {{$documento->customer->Telephone}}<br>
-                    <i class="fas fa-envelope"></i> {{$documento->customer->Email}}<br>
-                    <i class="fas fa-map-marker-alt"></i> {{$documento->customer->endereco ? $documento->customer->endereco->AddressDetail : 'Sem endereço'}}
-                </p>
-            </header>
+            <div class="row">
+                <div class="col-md-8">
+                    <header class="mb-4">
+                        <h4>{{$documento->invoice_no}}</h4>
+                        <hr>
+                        <p class="mb-2">
+                            <strong>Tax ID: {{$documento->customer->CustomerTaxID}}</strong><br>
+                            {{$documento->customer->CompanyName}}<br>
+                            <i class="fas fa-phone"></i> {{$documento->customer->Telephone}}<br>
+                            <i class="fas fa-envelope"></i> {{$documento->customer->Email}}<br>
+                            <i class="fas fa-map-marker-alt"></i> {{$documento->customer->endereco ? $documento->customer->endereco->AddressDetail : 'Sem endereço'}}
+                        </p>
+                    </header>
 
-            <section class="invoice-details mb-4">
-                <h5>Documento</h5>
-                <table class="table table-sm table-bordered">
-                    <thead class="thead-light">
-                        <tr>
-                            <th>Data</th>
-                            <th>Documento</th>
-                            <th>Facturação</th>
-                            <th>Pago</th>
-                            <th>Data de Pagamento</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{$documento->invoice_date}}</td>
-                            <td>{{$documento->invoice_no}}</td>
-                            <td>{{$documento->salesdoctotal->gross_total ?? '0.00'}} Kz</td>
-                            <td>{{$documento->salesdoctotal->montante_pagamento ?? '0.00'}} Kz</td>
-                            <td>{{$documento->salesdoctotal->data_pagamento ?? ''}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
+                    <section class="invoice-details mb-4">
+                        <h5>Documento</h5>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Documento</th>
+                                    <th>Facturação</th>
+                                    <th>Pago</th>
+                                    <th>Data de Pagamento</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{$documento->invoice_date}}</td>
+                                    <td>{{$documento->invoice_no}}</td>
+                                    <td>{{$documento->salesdoctotal->gross_total ?? '0.00'}} Kz</td>
+                                    <td>{{$documento->salesdoctotal->montante_pagamento ?? '0.00'}} Kz</td>
+                                    <td>{{$documento->salesdoctotal->data_pagamento ?? ''}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
 
-            <section class="document-actions mb-4">
-                <h5>Detalhes</h5>
-                <div class="d-flex justify-content-between">
-                    <a href="#" id="add-new-client-button" data-toggle="modal" data-target="#ListItemModal" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-box-open"></i> Itens
-                    </a>
-                    <a href="#" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-receipt"></i> Impostos
-                    </a>
-                    <a href="#" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-percentage"></i> Montante Retidos
-                    </a>
-                    <span class="text-muted"><i class="fas fa-user"></i> Operador: {{$documento->user->name}}</span>
+                    <section class="document-actions mb-4">
+                        <h5>Detalhes</h5>
+                        <div class="d-flex justify-content-between">
+                            <a href="#" id="add-new-client-button" data-toggle="modal" data-target="#ListItemModal" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-box-open"></i> Itens
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-receipt"></i> Impostos
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-percentage"></i> Montante Retidos
+                            </a>
+                            <span class="text-muted"><i class="fas fa-user"></i> Operador: {{$documento->user->name}}</span>
+                        </div>
+                    </section>
+
+                    <section class="related-documents mb-4">
+                        <h5>Documentos Relacionados</h5>
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                                <th>Data</th>
+                                <th>Documento</th>
+                                <th>Estado</th>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section class="related-documents mb-4">
+                        <textarea class="form-control" cols="30" rows="4" placeholder="Observações"></textarea>
+                    </section>
                 </div>
-            </section>
-
-            <section class="related-documents mb-4">
-                <h5>Documentos Relacionados</h5>
-                <table class="table table-sm table-bordered">
-                    <thead class="thead-light">
-                        <th>Data</th>
-                        <th>Documento</th>
-                        <th>Estado</th>
-                    </thead>
-                    <tbody>
-
-                    </tbody>
-                </table>
-            </section>
-
-            <section class="related-documents mb-4">
-                <textarea class="form-control" cols="30" rows="4" placeholder="Observações"></textarea>
-            </section>
-        </div>
-        <div class="col-md-4">
-            <div class="btn-group-vertical w-100 action-buttons">
-                <a href="{{ route('documento.print', ['invoiceNo' => $documento->id]) }}" class="btn btn-sm btn-primary mb-2">
-                    <i class="fas fa-print"></i> Imprimir
-                </a>
-                <button type="button" class="btn btn-sm btn-secondary mb-2">
-                    <i class="fas fa-envelope"></i> Enviar por Email
-                </button>
-                <a href="{{ route('documento.download', ['invoiceNo' => $documento->id]) }}" class="btn btn-sm btn-primary mb-2">
-                    <i class="fas fa-download"></i> Download
-                </a>
-                <button type="button" class="btn btn-sm btn-secondary mb-2">
-                    <i class="fas fa-bell"></i> Notificar na App
-                </button>
-                @if($documento->invoiceType->Code == 'FT' || $documento->invoiceType->Code == 'FG')
-                    <a href="{{ route('documento.ViewPagamento', ['id' => $documento->id]) }}" class="btn btn-sm btn-success mb-2">
-                        <i class="fas fa-credit-card"></i> Efectuar Pagamento
-                    </a>
-                @endif
-                <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger">
-                    <i class="fas fa-times-circle"></i> Anular Factura
-                </a>
+                <div class="col-md-4">
+                    <div class="btn-group-vertical w-100 action-buttons">
+                        <a href="{{ route('documento.print', ['invoiceNo' => $documento->id]) }}" class="btn btn-sm btn-primary mb-2">
+                            <i class="fas fa-print"></i> Imprimir
+                        </a>
+                        <button type="button" class="btn btn-sm btn-secondary mb-2">
+                            <i class="fas fa-envelope"></i> Enviar por Email
+                        </button>
+                        <a href="{{ route('documento.download', ['invoiceNo' => $documento->id]) }}" class="btn btn-sm btn-primary mb-2">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                        <button type="button" class="btn btn-sm btn-secondary mb-2">
+                            <i class="fas fa-bell"></i> Notificar na App
+                        </button>
+                        @if($documento->invoiceType->Code == 'FT' || $documento->invoiceType->Code == 'FG')
+                            <a href="{{ route('documento.ViewPagamento', ['id' => $documento->id]) }}" class="btn btn-sm btn-success mb-2">
+                                <i class="fas fa-credit-card"></i> Efectuar Pagamento
+                            </a>
+                        @endif
+                        <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-times-circle"></i> Anular Factura
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
-
-
 
     </div>
 

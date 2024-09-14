@@ -1,8 +1,9 @@
+<x-app-layout>
 <head>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="...">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="..."> -->
     <!-- Bootstrap JavaScript (popper.js is required) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="..." crossorigin="anonymous"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="..." crossorigin="anonymous"></script> -->
 
     <style>
             .body-doc {
@@ -63,12 +64,16 @@
             }
     </style>
 </head>
-
-<x-app-layout>
     <div class="card">
         <div class="card-header d-flex justify-content-between">
             <span>Número do Processo: {{ $processo->NrProcesso }}</span>
             <div class="btn-group">
+                <a class="btn btn-outline-secondary" href="{{ route('processos.index') }}">
+                    {{ __('Pesquisar') }}
+                </a>
+                <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}">
+                    {{ __('Imprimir') }}
+                </a>
                 <a href="{{ route('processos.show', $processo->id) }}" class="btn btn-outline-secondary">
                     <i class="fas fa-eye"></i> Visualizar
                 </a>
@@ -77,9 +82,10 @@
                         <i class="fas fa-filter"></i> Opções
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                        <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"><i class="fas fa-eye"></i> Add Processo</a></li>
+                        <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"><i class="fas fa-eye"></i> Factura</a></li>
                         <li><a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id ?? 0]) }}" class="dropdown-item"><i class="fas fa-file"></i> Imprimir Emolumentos</a></li>
                         <li><a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id ?? 0]) }}" class="dropdown-item"><i class="fas fa-file"></i> Requisição</a></li>
+                        <li><a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id ?? 0]) }}" class="dropdown-item"><i class="fas fa-file"></i> Licenciamento (txt)</a></li>
 
                     </ul>
                 </div>
@@ -88,16 +94,6 @@
     </div>
 
     <x-validation-errors class="mb-4" />
-
-    @if(session('success'))
-        <div>
-            <div class="font-medium text-green-600">{{ __('Sucesso!') }}</div>
-
-            <p class="mt-3 text-sm text-green-600">
-                {{ session('success') }}
-            </p>
-        </div>
-    @endif
 
     <div class="" style="padding: 10px;">
         <form action="{{ route('processos.update', $processo->id) }}" method="POST">
@@ -115,18 +111,6 @@
                                         <strong>Cliente : </strong> <span>{{ $processo->cliente->CompanyName }}</span>
                                         <strong>Ref/Factura : </strong> <span>{{ $processo->RefCliente }}</span>
                                         <input type="hidden" name="Fk_processo" id="Fk_processo" value="{{ $processo->id }}">
-                                    </div>
-                                    <div class="float-right">
-                                        <div class="btn-group">
-                                            <div class="input-group-append">
-                                                <a class="btn btn-dark" href="{{ route('processos.index') }}">
-                                                    {{ __('Pesquisar') }}
-                                                </a>
-                                                <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}">
-                                                    {{ __('Imprimir') }}
-                                                </a>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -157,10 +141,7 @@
                                     <button class="nav-link active" id="mercadoria-tab" data-bs-toggle="tab" data-bs-target="#mercadoria" type="button" role="tab" aria-controls="mercadoria" aria-selected="true">Mercadorias</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="false">Emolumentos</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="false">Taxas Portuárias</button>
+                                    <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="false">Emolumentos/ T. Portuárias</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Documentos</button>
@@ -170,8 +151,8 @@
                             <div class="tab-content">
                                 <div class="tab-pane active" id="mercadoria" role="tabpanel" aria-labelledby="mercadoria-tab">
                                     <a class="btn btn-primary mt-2" data-bs-toggle="modal" href="#exampleModalToggle" role="button">Mercadorias</a>
-                                    <a class="btn btn-primary mt-2" data-bs-toggle="modal" href="#" role="button">DU</a>
-                                    <table class="table table-sm table-bordered mt-3">
+                                    
+                                    <table class="table table-sm table-flex table-flex--autocomplete mt-3">
                                         <thead>
                                             <tr>
                                                 <th>Código</th>
@@ -215,32 +196,22 @@
                                         </tbody>
                                     </table>
 
+                                    <div class="row mt-4">
+                                        <div class="col-md-4">
+                                            <label for="FOB">FOB</label>
+                                            <input type="text" class="form-control" id="FOB" name="FOB" value="{{$FOB}}" oninput="calculateValorAduaneiro()">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="Freight">Frete</label>
+                                            <input type="text" class="form-control" name="Freight" id="Freight" placeholder="Freight (Frete)" value="{{$processo->importacao->Freight ?? '0.00'}}" oninput="calculateValorAduaneiro()">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="Insurance">Seguro</label>
+                                            <input type="text" class="form-control" id="Insurance" name="Insurance" placeholder="Insurance (Seguro)" value="{{$processo->importacao->Insurance ?? '0.00'}}" oninput="calculateValorAduaneiro()">
+                                        </div>
+                                    </div>
                                     <table class="mt-4">
                                         <tbody>
-                                            <tr>
-                                                <td>
-                                                    <label for="">FOB</label>
-                                                </td>
-                                                <td>
-                                                    <input type="text" class="form-control" id="FOB" name="FOB" value="{{$FOB}}" oninput="calculateValorAduaneiro()">
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <label for="Freight">Frete</label>
-                                                </td>
-                                                <td>
-                                                    <input type="text" class="form-control" name="Freight" id="Freight" placeholder="Freight (Frete)" value="{{$processo->importacao->Freight ?? '0.00'}}" oninput="calculateValorAduaneiro()">
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>
-                                                    <label for="Insurance">Seguro</label>
-                                                </td>
-                                                <td>
-                                                    <input type="text" class="form-control" id="Insurance" name="Insurance" placeholder="Insurance (Seguro)" value="{{$processo->importacao->Insurance ?? '0.00'}}" oninput="calculateValorAduaneiro()">
-                                                </td>
-                                            </tr>
                                             <tr>
                                                 <td>
                                                     <label for="">CIF</label>
@@ -350,11 +321,6 @@
                                     
                                 </div>
                                 
-                                <div class="tab-pane" id="messages" role="tabpanel" aria-labelledby="messages-tab">
-                                    
-                                    
-                                </div>
-                                
                                 <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                                     <div class="col-md-12 mt-4">
                                         
@@ -389,9 +355,12 @@
                                     <select name="Moeda" id="Moeda" class="form-control" required>
                                         <option value="">Selecionar</option>
                                         @foreach($paises->filter(function($pais) { return $pais->cambio > 0; }) as $pais)
-                                            <option value="{{ $pais->moeda }}" data-cambio="{{ $pais->cambio }}"> {{$pais->moeda}}</option>
+                                            <option value="{{ $pais->moeda }}" data-cambio="{{ $pais->cambio }}" {{ $pais->moeda == $processo->importacao->Moeda ? 'selected' : '' }}>
+                                                {{$pais->moeda}}
+                                            </option>
                                         @endforeach
                                     </select>
+
                                     @error('Moeda')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -420,16 +389,6 @@
                                     <label for="impostoEstatistico">Imposto Estatístico (10%)</label>
                                     <input type = "decimal"  id = "impostoEstatistico" name = "impostoEstatistico" class="form-control total-input" value="{{$processo->dar ? $processo->dar->impostoEstatistico : '0.00'}}" readonly>
                                 </div>
-                            </div>
-
-                            <div class="mt-4">
-                                <label for="desconto">Desconto (%)</label>
-                                <input type="number" step="0.01" name="desconto" id="desconto" class="form-control total-input" value="0.00">
-                            </div>
-
-                            <div class="mt-4">
-                                <label for="TotalComDesconto">Total com Desconto</label>
-                                <input type="text" id="total-com-desconto" class="form-control" readonly value="0.00" readonly>
                             </div>
 
                             <div class="form-group">
@@ -504,9 +463,22 @@
                         
                         <button type="submit" class="btn btn-sm btn-primary mt-4" id="saveMercadoriaButton">Salvar Mercadoria</button>
                     </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Adicionar Mercadoria</button>
+                    <script>
+                        document.getElementById('Quantidade').addEventListener('input', calculateTotal);
+                        document.getElementById('preco_unitario').addEventListener('input', calculateTotal);
+
+                        function calculateTotal() {
+                            // Obter os valores de quantidade e preço unitário
+                            var quantidade = parseFloat(document.getElementById('Quantidade').value) || 0;
+                            var precoUnitario = parseFloat(document.getElementById('preco_unitario').value) || 0;
+                            
+                            // Calcular o preço total
+                            var precoTotal = quantidade * precoUnitario;
+                            
+                            // Atribuir o valor calculado ao campo de preço total
+                            document.getElementById('preco_total').value = precoTotal.toFixed(2);
+                        }
+                    </script>
                 </div>
             </div>
         </div>
@@ -514,6 +486,8 @@
 
     <!-- Ensure you have included jQuery and Bootstrap JS at the end of the body tag -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
     <script>
 
@@ -582,7 +556,7 @@
             function calcularValores() {
                 // Obter os valores dos campos
                 var vHonarios = parseFloat($('[name="honorario"]').val()) || 0;
-
+                
                 var valorAduaneiro = $('#valorAduaneiro').val();
                 var direitos = $('#direitos').val();
                 var EmolumentoAduaneiro = $('#emolumentos').val();
@@ -604,6 +578,7 @@
         });
     </script>
 
+    <!-- Scrip para inserção de documentos -->
     <script>
         const dropArea = document.getElementById('drop-area');
         const fileList = document.querySelector('#file-list ul');
@@ -761,8 +736,8 @@
             }
         });
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
-
+    
+    <!-- Calcular o valor aduaneiro em função do Cambio -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const moedaSelect = document.getElementById('Moeda');
@@ -785,7 +760,7 @@
     <script>
         $(document).ready(function () {
             // Função para calcular os valores com base na taxa de câmbio
-            function calcularValores() {
+            function calcular() {
                 // Obter os valores dos campos
                 var valorAduaneiroUSD = parseFloat($('[name="ValorAduaneiro"]').val()) || 0;
                 var taxaCambio = parseFloat($('[name="Cambio"]').val()) || 1;
@@ -793,18 +768,24 @@
                 // Calcular o Valor Total em AOA
                 var valorTotalAOA = valorAduaneiroUSD * taxaCambio;
 
+                var IvaAduaneiro = valorTotalAOA*0.14; // 14% dos valores aduaneiros
+
+                var ImpostoAduaneiro = valorTotalAOA*0.10; // 10% dos valores aduaneiros
+
                 // Atualizar os campos
                 $('[name="ValorTotal"]').val(valorTotalAOA.toFixed(2));
+                $('[name="iva_aduaneiro"]').val(IvaAduaneiro.toFixed(2));
+                $('[name="impostoEstatistico"]').val(ImpostoAduaneiro.toFixed(2));
             } 
 
 
             // Adicionar um ouvinte de evento para o campo Cambio
             $('[name="Cambio"]').on('input', function () {
-                calcularValores();
+                calcular();
             });
 
             // Chame a função inicialmente para configurar os valores iniciais
-            calcularValores();
+            calcular();
         });
     </script>
 

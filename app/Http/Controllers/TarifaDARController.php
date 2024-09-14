@@ -26,7 +26,7 @@ class TarifaDARController extends Controller
         } catch (QueryException $e) {
             // Lidar com erros de consulta, se necessário
             Log::error('Erro ao salvar TarifaDAR: ' . $e->getMessage());
-            return DatabaseErrorHandler::handle($e);
+            return DatabaseErrorHandler::handle($e, $request);
         }
     }
 }

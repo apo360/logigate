@@ -97,6 +97,12 @@
                     @endforeach
                 @endif
                 <li class="nav-item">
+                    <a href="{{ route('produtos.index') }}" class="nav-link">
+                    <i class="nav-icon fas fa-users"></i>
+                    <p> Produtos/Serviços </p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="#" class="nav-link">
                         <i class="nav-icon fas fa-file-invoice"></i> <p>Gestão de Faturação <i class="right fas fa-angle-left"></i></p>
                     </a>

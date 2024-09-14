@@ -8,6 +8,7 @@ use App\Http\Requests\CustomerRequest;
 use App\Imports\CustomersImport;
 use App\Models\ContaCorrente;
 use App\Models\Customer;
+use App\Models\Processo;
 use App\Models\SalesInvoice;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -245,5 +246,21 @@ class CustomerController extends Controller
     public function export()
     {
         return Excel::download(new CustomersExport, 'customers.xlsx');
+    }
+
+    // Pegar processos por cliente.
+    public function getProcessoByCustomer($CustomerId, $status){
+        $processo = Processo::where('customer_id', $CustomerId)->where('Situacao', $status)->get();
+        
+        return response()->json(['processo' => $processo]); 
+    }
+
+
+    public function obterUltimoClienteAdicionado()
+    {
+        // Lógica para obter o ID do último cliente adicionado
+        $ultimoCliente = Customer::latest()->first();
+        
+        return response()->json(['cliente_id' => $ultimoCliente->id]);
     }
 }

@@ -1,48 +1,51 @@
-<!DOCTYPE html>
-<style>
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        display: none;
-    }
-
-    .modal-aside {
-        position: fixed;
-        top: 0;
-        right: -600px; /* Adjust as needed based on the desired width of the modal */
-        width: 600px; /* Adjust as needed based on the desired width of the modal */
-        height: 100%;
-        background-color: #fff;
-        transition: right 0.3s ease-out;
-        z-index: 10000;
-    }
-
-    #list-types {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        max-height: 30vh; /* Adjust as needed */
-        overflow-y: auto;
-        background-color: #fff;
-        transition: right 0.3s ease-out;
-        display: none;
-        z-index: 9999;
-        /* Add additional styling for the modal */
-    }
-
-    #list-types.active {
-        display: block;
-    }
-
-</style>
 
 <x-app-layout>
+    <head>
+        <style>
+            .modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1050;
+                display: none;
+            }
+
+            .modal-aside {
+                position: fixed;
+                top: 0;
+                right: -600px; /* Adjust as needed based on the desired width of the modal */
+                width: 600px; /* Adjust as needed based on the desired width of the modal */
+                height: 100%;
+                background-color: #fff;
+                transition: right 0.3s ease-out;
+                z-index: 10000;
+            }
+
+            #list-types {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                max-height: 30vh; /* Adjust as needed */
+                overflow-y: auto;
+                background-color: #fff;
+                transition: right 0.3s ease-out;
+                display: none;
+                z-index: 9999;
+                /* Add additional styling for the modal */
+            }
+
+            #list-types.active {
+                display: block;
+            }
+
+        </style>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    </head>
+    
     <form action="{{ route('documentos.store') }}" method="POST">
         @csrf
         <div class="col-md-12">
@@ -108,7 +111,6 @@
 
                                 <div id="processos-list" class="processos-list"></div>
                             </div>
-
                         </div>
                     </div>
 
@@ -142,13 +144,13 @@
                                                     <tr class="no-border">
                                                         <th width="40"></th>
                                                         <th width="40"></th>
-                                                        <th class="text-left" width="30%">Cod</th>
-                                                        <th class="text-left" width="20%">Descrição</th>
-                                                        <th class="text-right" width="10%">Desc.</th>
+                                                        <th class="text-left" width="17%">Cod</th>
+                                                        <th class="text-left" width="30%">Descrição</th>
+                                                        <th class="text-right" width="10%">Desc (%/Kz)</th>
                                                         <th class="text-right" width="10%">Taxa %</th>
-                                                        <th class="text-right" width="10%">P.Unit.</th>
-                                                        <th class="text-right" width="8%">Qtd.</th>
-                                                        <th class="text-right" width="15%">Total</th>
+                                                        <th class="text-right" width="10%">P.Unit</th>
+                                                        <th class="text-right" width="8%">Qtd</th>
+                                                        <th class="text-right" width="15%">Sub-Total</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -162,12 +164,10 @@
                                                         <td class="text-right" id="desconto-valor">0.00 Kz</td>
                                                     </tr>
                                                     <tr id="document-total-pay">
-                                                        <th colspan="3">Total </th>
+                                                        <th colspan="3">Total Geral</th>
                                                         <th> </th>
                                                         <th class="text-right total">0.00 Kz</th>
                                                     </tr>
-                                                    <!-- Linha de desconto -->
-                                                    
                                                 </tfoot>
                                             </table>
                                             <input type="hidden" name="valorgeralservico" id="valorgeralservico" value="">
@@ -280,13 +280,27 @@
                                         </div>
                                     </div>
 
-                                    <!-- Para o tipo FR mostra os seguintes campos -->
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label for="pagamentos">Modo de Pagamento</label>
                                             <select name="pagamentos" id="pagamentos" class="form-control">
+                                                <option value="A vista">A vista</option>
+                                                <option value="A prazo">A prazo</option>
+                                                <option value="Crédito">Crédito</option>
+                                                <option value="Débito">Débito</option>
+                                                <option value="Avença">Avença</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Para o tipo FR mostra os seguintes campos -->
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="pagamentos">Forma de Pagamento</label>
+                                            <select name="pagamentos" id="pagamentos" class="form-control">
                                                 <option value="dinheiro">Dinheiro</option>
                                                 <option value="multibanco">Multibanco</option>
+                                                <option value="multibanco">Cartão de Debido</option>
                                                 <option value="transferencia">Transferência Bancaria</option>
                                             </select>
                                         </div>
@@ -295,14 +309,14 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label for="pagamentos">Montante</label>
-                                            <input type="text">
+                                            <input type="text" class="form-control" name="montante_pagamento" id="montante_pagamento">
                                         </div>
                                     </div>
 
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label for="pagamentos">Data de Pagamento</label>
-                                            <input type="date">
+                                            <input type="date" class="form-control" name="data_pagamento" id="data_pagamento">
                                         </div>
                                     </div>
 
@@ -323,13 +337,11 @@
                             </div>
 
                             <div class="card-footer">
-                            <x-button class="btn btn-default ">
-                                        <i class="fas fa-user-plus btn-icon" style="color: #0170cf;"></i> {{ __('Emitir Factura') }}
-                                    </x-button>
+                                <x-button class="btn btn-dark ">
+                                    <i class="fas fa-user-plus btn-icon" style="color: #0170cf;"></i> {{ __('Emitir Factura') }}
+                                </x-button>
                             </div>
-                            
                         </div>
-
                     </div>
                 </div>
                 <!-- //Definições do Documento -->
@@ -406,44 +418,332 @@
     </div>
     <!-- //Modal para adicionar novo cliente -->
 
-    <!-- Modal para Listar os Produtos / Serviços -->
+    <!-- Modal Overlay para Listar os Produtos / Serviços -->
     <div class="modal-overlay" id="modal-overlay" tabindex="-1" aria-label="Fechar modal"></div>
     <aside class="modal-aside" id="modal-aside" aria-labelledby="modal-title" role="dialog">
-        <div class="header-service">
-            <div class="row">
-                <div class="col-md-6">
-                    <h3 id="modal-title">Selecionar Produto/Serviço</h3>
-                    <input type="search" name="product-search" id="product-search" class="form-control" aria-label="Pesquisar produtos ou serviços">
+        <div class="card card-navy">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 id="modal-title" class="mb-0">Selecionar Produto/Serviço</h4>
+                <a href="#" class="btn btn-sm btn-default" id="create-product-button">Criar</a> <!-- Botão para abrir o modal de cadastro de Produto -->
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <select name="categories-search" id="categories-search" class="form-control" aria-label="Filtrar por categoria">
+                            <option value="">Selecionar Categoria</option>
+                            <option value="Categorias">Categorias</option>
+                            <option value="Produtos">Produtos</option>
+                            <option value="Serviços">Serviços</option>
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <input type="search" name="product-search" id="product-search" class="form-control" placeholder="Pesquisar produtos ou serviços" aria-label="Pesquisar produtos ou serviços">
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <button type="button" aria-label="Filtrar por categorias">Categorias</button>
-                    <button type="button" aria-label="Filtrar por serviços">Serviços</button>
-                    <button type="button" aria-label="Filtrar por produtos">Produtos</button>
-                </div>
+                <ul class="list-group">
+                    @foreach($produtos as $produto)
+                        <li class="list-group-item d-flex justify-content-between align-items-center modal-product-item" aria-label="{{ $produto->ProductDescription }}">
+                            <a href="#" class="event d-flex align-items-center" data-id="{{ $produto->Id }}" data-code="{{ $produto->ProductCode }}" data-title="{{ $produto->ProductDescription }}" data-type="{{ $produto->ProductType }}" data-price="{{ $produto->venda }}" data-tax="{{ $produto->imposto }}">
+                                <span class="mr-3 product-code">{{ $produto->ProductCode }}</span>
+                                <span class="mr-auto product-description">{{ $produto->ProductDescription }}</span>
+                                <span class="product-price">{{ number_format($produto->venda, 2, ',', '.') }} Kz</span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
         </div>
-        <div class="body-service">
-            <ul>
-                @foreach($produtos as $produto)
-                    <li class="modal-product-item" aria-label="{{ $produto->ProductDescription }}">
-                        <a href="#" class="event" data-id="{{ $produto->Id }}" data-code="{{ $produto->ProductCode }}" data-title="{{ $produto->ProductDescription }}" data-type="{{ $produto->ProductType }}" data-price="{{ $produto->venda }}" data-tax="{{ $produto->imposto }}">
-                            <span class="product-code">{{ $produto->ProductCode }}</span>
-                            <span class="product-description">{{ $produto->ProductDescription }}</span>
-                            <span class="product-price">{{ $produto->venda }}</span>
-                        </a>
-                    </li>
-                @endforeach
-            </ul>
+    </aside>
+
+    <!-- Modal Overlay para Criar Produtos / Serviços -->
+    <div class="modal-overlay" id="create-product-modal-overlay" tabindex="-1" aria-label="Fechar modal"></div>
+    <aside class="modal-aside" id="create-product-modal-aside" aria-labelledby="create-product-title" role="dialog">
+        <div class="card card-navy">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 id="create-product-title" class="mb-0">Criar Produto/Serviço</h4>
+                <button type="button" class="close" aria-label="Fechar" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="create-product-form" class="" action="" method="">
+                    <!-- Nome do Produto / Serviço -->
+                    <div class="form-group">
+                        <label for="product-name">Nome do Produto/Serviço</label>
+                        <input type="text" class="form-control" id="product-name" name="product-name" placeholder="Insira o nome do produto/serviço" required>
+                    </div>
+
+                    <!-- Código do Produto -->
+                    <div class="form-group">
+                        <label for="product-code">Código do Produto</label>
+                        <input type="text" class="form-control" id="product-code" name="product-code" placeholder="Insira o código do produto">
+                    </div>
+
+                    <!-- Categoria do Produto -->
+                    <div class="form-group">
+                        <label for="product-category">Categoria</label>
+                        <select class="form-control" id="product-category" name="product-category" required>
+                            <option value="">Selecionar Categoria</option>
+                            <option value="Produtos">Produtos</option>
+                            <option value="Serviços">Serviços</option>
+                        </select>
+                    </div>
+
+                    <!-- Preço do Produto -->
+                    <div class="form-group">
+                        <label for="product-price">Preço de Venda (Kz)</label>
+                        <input type="number" class="form-control" id="product-price" name="product-price" placeholder="Insira o preço de venda" step="0.01" required>
+                    </div>
+
+                    <!-- Imposto -->
+                    <div class="form-group">
+                        <label for="product-tax">Imposto (%)</label>
+                        <input type="number" class="form-control" id="product-tax" name="product-tax" placeholder="Insira a porcentagem de imposto" step="0.01" required>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Produto/Serviço</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </aside>
-    <!-- //Modal para Listar os Produtos / Serviços -->
 
+    <!-- Script para controlar a abertura e o fechamento do modal -->
+    <script>
+        $(document).ready(function() {
+            // Função para fechar todos os modais
+            function closeAllModals() {
+                $('.modal-overlay, .modal-aside').hide(); // Oculta todos os modais
+            }
+
+            // Abrir o modal de criar produto/serviço
+            $('#create-product-button').on('click', function(e) {
+                e.preventDefault();
+                closeAllModals(); // Fecha todos os outros modais
+                $('#create-product-modal-overlay, #create-product-modal-aside').show(); // Exibe o modal de criação
+            });
+
+            // Fechar modal ao clicar no botão de fechar
+            $('.close, [data-dismiss="modal"]').on('click', function() {
+                closeAllModals();
+            });
+        });
+    </script>
+    
+    <!-- Modal Overlay para editar os Produtos / Serviços -->
+    <div class="modal-overlay" id="edit-product-modal-overlay" tabindex="-1" aria-label="Fechar modal"></div>
+    <aside class="modal-aside" id="edit-product-modal-aside" aria-labelledby="edit-product-title" role="dialog">
+        <div class="card card-navy">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 id="edit-product-title" class="mb-0">Editar Produto/Serviço</h4>
+                <button type="button" class="close" aria-label="Fechar" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="edit-product-form">
+                    <!-- Nome do Produto / Serviço -->
+                    <div class="form-group">
+                        <label for="edit-product-name">Nome do Produto/Serviço</label>
+                        <input type="text" class="form-control" id="edit-product-name" name="edit-product-name" placeholder="Nome do produto/serviço" required>
+                    </div>
+
+                    <!-- Código do Produto -->
+                    <div class="form-group">
+                        <label for="edit-product-code">Código do Produto</label>
+                        <input type="text" class="form-control" id="edit-product-code" name="edit-product-code" placeholder="Código do produto" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-qntidade-tax">Quantidade do Produto</label>
+                        <input type="number" class="form-control" id="edit-qntidade-tax" name="edit-qntidade-tax" placeholder="Preço de venda" step="0.01" required>
+                    </div>
+                    
+                    <!-- Preço do Produto -->
+                    <div class="form-group">
+                        <label for="edit-product-price">Preço de Venda (Kz)</label>
+                        <input type="number" class="form-control" id="edit-product-price" name="edit-product-price" placeholder="Preço de venda" step="0.01" required>
+                    </div>
+
+                    <!-- Imposto -->
+                    <div class="form-group">
+                        <label for="edit-product-tax">Imposto (%)</label>
+                        <input type="number" class="form-control" id="edit-product-tax" name="edit-product-tax" placeholder="Imposto" step="0.01" required>
+                    </div>
+
+                    <!-- Desconto -->
+                    <div class="form-group">
+                        <label for="edit-descount-tax">Desconto (%)</label>
+                        <input type="number" class="form-control" id="edit-descount-tax" name="edit-descount-tax" placeholder="Imposto" step="0.01" required>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirm-edit-btn">Confirmar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </aside>
 
 </x-app-layout>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script>
+    // Validação do formulario
+    document.getElementById('document-form').addEventListener('submit', function(event) {
+        // Verificar se um cliente foi selecionado
+        var clienteEscolhido = document.getElementById('cliente_choose').value;
+        if (!clienteEscolhido) {
+            alert('Por favor, selecione um cliente.');
+            event.preventDefault(); // Impede o envio do formulário
+            return;
+        }
+
+        // Verificar se há ao menos uma linha na tabela de produtos
+        var table = document.getElementById('document-products').getElementsByTagName('tbody')[0];
+        if (table.rows.length === 0) {
+            alert('Por favor, adicione pelo menos um produto/serviço.');
+            event.preventDefault(); // Impede o envio do formulário
+            return;
+        }
+
+        // Se ambas as validações passarem, o formulário será enviado
+    });
+    
+    // Funções para adicionar dados nas tabelas
+    function adicionarProdutoATabela(productId, productCode, productName, quantidade, imposto, preco, desconto) {
+
+        var total = preco * quantidade;
+
+        var desc_total = total - (total*(desconto/100));
+
+        $('#valorgeralservico').val(total);
+        var newRow = '<tr data-product-id="' + productId + '">' +
+            '<td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td></td>' +
+            '<td><i class="fas fa-edit editRow " style="color:cyan;"></i></td>' +
+            '<td class="text-left product-code">' + productCode + '</td>' +
+            '<td class="text-left product-name">' + productName + '</td>' +
+            '<td class="text-right product-descount">'+ desconto +'</td>' +
+            '<td class="text-right product-tax">' + imposto + '</td>' +
+            '<td class="text-right product-price">' + preco + '</td>' +
+            '<td class="text-right product-qntidade">' + quantidade + '</td>' +
+            '<td class="text-right product-subtotal">' + desc_total + '</td>' +
+            '</tr>';
+
+        $('#document-products tbody').append(newRow);
+
+        atualizarTaxas(imposto, total)
+
+    }
+
+    // Atualizar o Total Geral somando os subtotais
+    function updateTotal() {
+        var total = 0;
+        $('#document-products tbody tr').each(function() {
+            var subtotal = parseFloat($(this).find('.product-subtotal').text()) || 0;
+            var tax = parseFloat($(this).find('.product-tax').text()) || 0;
+
+            // Calcular o IVA (taxa) como um percentual do subtotal
+            var iva = subtotal * (tax / 100);
+
+            // Somar o subtotal + IVA ao total geral
+            total += subtotal + iva;
+        });
+
+        // Atualizar o valor do total geral no HTML
+        $('.total').text(total.toFixed(2) + ' Kz');
+        $('#valorgeralservico').val(total.toFixed(2)); // Para uso em um input hidden, se necessário
+    }
+
+    // Actualizar as Taxas
+    function calculateTaxes() {
+        var taxSummary = {}; // Objeto para armazenar o resumo das taxas (base e valores de IVA)
+        var totalIva = 0; // Armazena o IVA total
+        var totalComIva = 0; // Total com IVA
+
+        $('#document-products tbody tr').each(function() {
+            var subtotal = parseFloat($(this).find('.product-subtotal').text()) || 0;
+            var taxRate = parseFloat($(this).find('.product-tax').text()) || 0;
+
+            // Se a taxa já existe no resumo de impostos, atualiza a base e o IVA
+            if (taxSummary[taxRate]) {
+                taxSummary[taxRate].base += subtotal;
+                taxSummary[taxRate].iva += subtotal * (taxRate / 100);
+            } else {
+                // Se for uma nova taxa, cria um novo objeto para essa taxa
+                taxSummary[taxRate] = {
+                    base: subtotal,
+                    iva: subtotal * (taxRate / 100)
+                };
+            }
+
+            // Calcula o IVA total e o total com IVA
+            totalIva += subtotal * (taxRate / 100);
+            totalComIva += subtotal + (subtotal * (taxRate / 100));
+        });
+
+        // Limpar a tabela de impostos antes de inserir novos valores
+        $('#document-taxas tbody').empty();
+
+        // Inserir o resumo dos impostos na tabela #document-taxas
+        for (var tax in taxSummary) {
+            var row = `<tr>
+                <td class="text-left">${tax}%</td>
+                <td class="text-right">${taxSummary[tax].base.toFixed(2)} Kz</td>
+                <td class="text-right">${taxSummary[tax].iva.toFixed(2)} Kz</td>
+                <td class="text-right">${(taxSummary[tax].base + taxSummary[tax].iva).toFixed(2)} Kz</td>
+            </tr>`;
+            $('#document-taxas tbody').append(row);
+        }
+
+        // Atualizar o valor total geral e impostos no HTML
+        $('.total').text(totalComIva.toFixed(2) + ' Kz');
+        $('#valorgeralservico').val(totalComIva.toFixed(2)); // Para uso em um input hidden, se necessário
+    }
+
+    // ---------------------------
+    function atualizarCampoHidden() {
+        var dadosTabela = [];
+
+        $('#document-products tbody tr').each(function () {
+            var productId = $(this).data('product-id');
+            var productCode = $(this).find('td:eq(2)').text();
+            var productName = $(this).find('td:eq(3)').text();
+            var desconto = $(this).find('td:eq(4)').text();
+            var imposto = $(this).find('td:eq(5)').text();
+            var preco = $(this).find('td:eq(6)').text();
+            var quantidade = $(this).find('td:eq(7)').text();
+            var total = $(this).find('td:eq(8)').text();
+
+            dadosTabela.push({
+                productId: productId,
+                productCode: productCode,
+                productName: productName,
+                quantidade: quantidade,
+                imposto: imposto,
+                preco: preco,
+                desconto: desconto,
+                total: total
+            });
+        });
+
+        // Atualizar o valor do campo de input hidden
+        $('#dadostabela').val(JSON.stringify(dadosTabela));
+    }
+
+    // Função para remover a linha da tabela
+    function removeRow(button) {
+        $(button).closest('tr').remove();
+
+        updateTotal();
+        calculateTaxes();
+        atualizarCampoHidden();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Obtém a data de hoje
         var hoje = new Date();
@@ -497,105 +797,11 @@
             $listTypes.toggleClass('active');
         });
 
-        $(document).on('click', '#modal-aside .body-service ul li', function() {
-            // Obter dados do produto do item clicado
-            var productId = $(this).find('.event').data('id');
-            var productName = $(this).find('.event').data('title');
-            var productCode = $(this).find('.event').data('code');
-            var productType =  $(this).find('.event').data('type');
-            var productPrice =  $(this).find('.event').data('price');
-            var productTax =  $(this).find('.event').data('tax');
-
-            // Se o tipo de produto for "P" (Presumo que "P" significa Produto)
-            if (productType === 'P') {
-                // Abra uma janela auxiliar para pedir a quantidade
-                var quantidade = prompt('Informe a quantidade do produto:', '1');
-
-                // Verifique se o usuário forneceu uma quantidade válida
-                if (quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
-                    // Adicione o produto à tabela com a quantidade fornecida
-                    adicionarProdutoATabela(productId, productCode, productName, quantidade, productTax, productPrice);
-                    atualizarCampoHidden();
-                } else {
-                    // Informe ao usuário que a quantidade é inválida ou não foi fornecida
-                    alert('Quantidade inválida. O produto não foi adicionado.');
-                }
-            } else {
-                // Se o tipo de produto não for "P", adicione o produto à tabela com a quantidade padrão (1)
-                adicionarProdutoATabela(productId, productCode, productName, 1, productTax, productPrice);
-            }
-
-            // Fechar o modal
-            $('#modal-overlay').fadeOut();
-            $('#modal-aside').css('right', '-600px');
-        });
-
-        function adicionarProdutoATabela(productId, productCode, productName, quantidade, imposto, preco) {
-            // Lógica para adicionar o produto à tabela
-            // Você precisa implementar a lógica específica para a sua tabela
-            // Aqui, vou adicionar uma nova linha à tabela de exemplo
-            var total = preco*quantidade;
-            $('#valorgeralservico').val(total);
-            var newRow = '<tr data-product-id="' + productId + '">' +
-                '<td></td>' +
-                '<td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td>' +
-                '<td class="text-left">' + productCode + '</td>' +
-                '<td class="text-left">' + productName + '</td>' +
-                '<td class="text-right">0</td>' +
-                '<td class="text-right">' + imposto + '</td>' +
-                '<td class="text-right">' + preco + '</td>' +
-                '<td class="text-right">' + quantidade + '</td>' +
-                '<td class="text-right geraltotal">' + total + '</td>' +
-                '</tr>';
-
-            $('#document-products tbody').append(newRow);
-
-            // Atualizar descontos...
-            atualizarDescontos();
-            // Atualizar taxas...
-            atualizarTaxas(imposto, total)
-            // ...
-
-            // Você pode chamar outras funções aqui para atualizar a interface conforme necessário
-        }
-
-        // Função para remover a linha da tabela
-        function removeRow(button) {
-            $(button).closest('tr').remove();
-
-            atualizarCampoHidden();
-        }
-
-        function atualizarCampoHidden() {
-            var dadosTabela = [];
-
-            $('#document-products tbody tr').each(function () {
-                var productId = $(this).data('product-id');
-                var productCode = $(this).find('td:eq(2)').text();
-                var productName = $(this).find('td:eq(3)').text();
-                var quantidade = $(this).find('td:eq(7)').text();
-                var imposto = $(this).find('td:eq(5)').text();
-                var preco = $(this).find('td:eq(6)').text();
-                var total = $(this).find('td:eq(8)').text();
-
-                dadosTabela.push({
-                    productId: productId,
-                    productCode: productCode,
-                    productName: productName,
-                    quantidade: quantidade,
-                    imposto: imposto,
-                    preco: preco,
-                    total: total
-                });
-            });
-
-            // Atualizar o valor do campo de input hidden
-            $('#dadostabela').val(JSON.stringify(dadosTabela));
-        }
     });
 
 </script>
 
+<!-- Script para calcular a Data de Vencimento -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var tipoVencimento = document.getElementById('tipo_vencimento');
@@ -624,6 +830,7 @@
 
         switch (tipo) {
             case 'hoje':
+                dataVencimento.setDate(hoje.getDate() + 0);
                 break;
             case '15':
                 dataVencimento.setDate(hoje.getDate() + 15);
@@ -647,24 +854,148 @@
     }
 </script>
 
-
+<!-- Script para controlar a abertura e o fechamento dos modais -->
 <script>
-    $(document).ready(function() {
-        var $modalOverlay = $('#modal-overlay');
-        var $modalAside = $('#modal-aside');
+        $(document).ready(function() {
+            // Referências aos elementos de overlay e modal
+            var $modalOverlay = $('#modal-overlay');
+            var $modalAside = $('#modal-aside');
+            var $createProductOverlay = $('#create-product-modal-overlay');
+            var $createProductModal = $('#create-product-modal-aside');
+            var $editProductOverlay = $('#edit-product-modal-overlay');
+            var $editProductModal = $('#edit-product-modal-aside');
+            var $editProductForm = $('#edit-product-form');
 
-        $('#office-add-services').click(function(e) {
-            e.preventDefault();
-            $modalOverlay.fadeIn();
-            $modalAside.css('right', '0');
-        });
+            // Função para fechar todos os modais
+            function closeAllModals() {
+                // Fecha os modais de listagem e criação
+                $modalOverlay.fadeOut();
+                $modalAside.css('right', '-600px');
+                $createProductOverlay.fadeOut();
+                $createProductModal.css('right', '-600px');
+            }
 
-        $modalOverlay.click(function() {
-            $modalOverlay.fadeOut();
-            $modalAside.css('right', '-600px');
+            // Abrir o modal de listagem de produtos
+            $('#office-add-services').click(function(e) {
+                e.preventDefault();
+                closeAllModals(); // Fecha qualquer outro modal
+                $modalOverlay.fadeIn(); // Mostra o overlay de listagem
+                $modalAside.css('right', '0'); // Mostra o modal de listagem
+            });
+
+            // Fechar modal de listagem ao clicar no overlay
+            $modalOverlay.click(function() {
+                $modalOverlay.fadeOut();
+                $modalAside.css('right', '-600px');
+            });
+
+            // Abrir o modal de criar produto
+            $('#create-product-button').click(function(e) {
+                e.preventDefault();
+                closeAllModals(); // Fecha qualquer outro modal
+                $createProductOverlay.fadeIn(); // Mostra o overlay de criação
+                $createProductModal.css('right', '0'); // Mostra o modal de criação
+            });
+
+            // Fechar modal de criação ao clicar no overlay
+            $createProductOverlay.click(function() {
+                $createProductOverlay.fadeOut();
+                $createProductModal.css('right', '-600px');
+            });
+
+            // Função para abrir o modal de edição com dados
+            function openEditModal(product) {
+                $('#edit-product-name').val(product.name);
+                $('#edit-product-code').val(product.code);
+                $('#edit-product-price').val(product.price);
+                $('#edit-product-tax').val(product.tax);
+
+                $editProductOverlay.fadeIn();
+                $editProductModal.css('right', '0');
+            }
+
+            // Função para fechar o modal de edição
+            function closeEditModal() {
+                $editProductOverlay.fadeOut();
+                $editProductModal.css('right', '-600px');
+            }
+
+            // 1º: Abrir modal ao clicar no produto/serviço da lista de produtos
+            $('.modal-product-item a').click(function(e) {
+                e.preventDefault();
+
+                var product = {
+                    name: $(this).data('title'),
+                    code: $(this).data('code'),
+                    price: $(this).data('price'),
+                    tax: $(this).data('tax'),
+                    qnt: 1
+                };
+                openEditModal(product);
+            });
+
+            // 2º: Abrir modal de edição após criar o produto (simulação)
+            $('#create-product-form').submit(function(e) {
+                e.preventDefault();
+                // Simular criação do produto (chamadas AJAX, etc.)
+                var newProduct = {
+                    name: $('#product-name').val(),
+                    code: $('#product-code').val(),
+                    price: $('#product-price').val(),
+                    tax: $('#product-tax').val()
+                };
+                // Após criar, abrir o modal de edição
+                openEditModal(newProduct);
+            });
+
+            // 3º: Abrir modal ao clicar no botão de edição da tabela HTML
+            $('#document-products').on('click', '.editRow', function() {
+
+                var row = $(this).closest('tr');
+
+                var product = {
+                    name: row.find('.product-name').text(),
+                    code: row.find('.product-code').text(),
+                    price: row.find('.product-price').text(),
+                    tax: row.find('.product-tax').text(),
+                    qnt: $('.product-qntidade').val(),
+                    descount: $('.product-descount').val()
+                };
+                openEditModal(product);
+                
+            });
+
+            // Ação ao clicar no botão de confirmar no modal de edição
+            $('#confirm-edit-btn').click(function() {
+                var updatedProduct = {
+                    name: $('#edit-product-name').val(),
+                    code: $('#edit-product-code').val(),
+                    price: $('#edit-product-price').val(),
+                    tax: $('#edit-product-tax').val(),
+                    qnt: $('#edit-qntidade-tax').val(),
+                    descount: $('#edit-descount-tax').val()
+                };
+
+                // Atualizar a tabela HTML.
+
+                adicionarProdutoATabela(updatedProduct.code, updatedProduct.code, updatedProduct.name, updatedProduct.qnt, updatedProduct.tax, updatedProduct.price, updatedProduct.descount)
+
+                updateTotal(); // Recalcular o total geral
+
+                calculateTaxes(); // Recalcular o total das taxas
+
+                atualizarCampoHidden();
+                
+                closeEditModal(); // Fecha o modal
+            });
+
+            // Fechar modal ao clicar no overlay
+            $editProductOverlay.click(function() {
+                closeEditModal();
+            });
         });
-    });
 </script>
+
 
 <script>
 
@@ -745,6 +1076,7 @@
         
     }
     
+    // Para o Caso dos Clientes Estarem Relacionados com processos...
     $(document).ready(function() {
         // Handle the input event on #cliente_choose
         $('#cliente_choose').on('input', function() {
@@ -754,7 +1086,7 @@
             $('#processos-list').empty();
 
             // Send AJAX GET request to retrieve processos data
-            $.get('/api/customers/'+selectedCliente+'/Pendente', function(response) {
+            $.get('/customers/'+selectedCliente+'/Pendente', function(response) {
                 var processos = response.processo;
 
                 // Check if processos data is available
@@ -782,7 +1114,7 @@
             var selectedProcesso = $(this).val();
 
             // Get the value of the Label selected
-            $.get('/api/processos/'+selectedProcesso+'/Pendente', function(response) {
+            $.get('processos/'+selectedProcesso+'/Pendente', function(response) {
                 const data = response;
 
                 // Limpar o corpo da tabela antes de preenchê-la com novos dados
@@ -800,8 +1132,8 @@
                     const totalGeral = formatarNumero(valor);
                     const row = `
                         <tr>
-                            <td></td>
-                            <td><td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td></td>
+                            <td><i class="fas fa-trash" style="color:red;" onclick="EditRow(this)"></i></td>
+                            <td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td>
                             <td class="text-left">Despacho Aduaneiro</td>
                             <td class="text-left">${mercadoriasHTML}</td>
                             <td class="text-right">0</td>
@@ -822,26 +1154,9 @@
 
                 $('#document-total-pay .total').text(parseFloat(totalGeralRodape).toFixed(2) + ' Kz');
 
-                atualizarTaxas(14,totalGeralRodape);
+                // atualizarTaxas(14,totalGeralRodape);
             }, 'json');
         });
 
-        $(document).on('click', '#modal-aside .body-service ul li', function() {
-            // Obter dados do produto do item clicado
-            var productId = $(this).find('.event').data('id');
-            var productName = $(this).find('.event').data('title');
-
-            // Adicionar produto à tabela
-            adicionarProdutoATabela(productId, productName);
-
-            // Fechar o modal
-            $('#modal-overlay').fadeOut();
-            $('#modal-aside').css('right', '-600px');
-        });
-
-        $('#document-products, input[name="desconto_percetagem"], input[name="desconto_numerario"]').on('change', function() {
-            
-            atualizarDescontos();
-        });
     });
 </script>
