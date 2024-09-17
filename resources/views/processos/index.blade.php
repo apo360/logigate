@@ -53,9 +53,9 @@
                 <div class="float-left"></div>
                 <div class="float-right">
                     <!-- Botão Cadastro de Processos -->
-                    <div class="">
+                    <div class="btn-group">
                         <a href="{{ route('processos.create') }}" class="btn btn-primary btn-sm mb-3">Novo Processo</a>
-                        <a href="">Licenciamento</a>
+                        <a href="" class="btn btn-sm mb-3">Licenciamento</a>
                         <a href="" class="btn btn-success btn-sm mb-3">Exportar Dados</a>
                     </div>
                 </div>

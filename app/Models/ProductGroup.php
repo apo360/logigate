@@ -8,4 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class ProductGroup extends Model
 {
     use HasFactory;
+
+    protected $table = 'product_groups';
+
+    protected $fillable = [
+        'descricao',
+    ];
+
+    public $timestamps = true;
 }

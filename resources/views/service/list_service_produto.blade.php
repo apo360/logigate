@@ -1,4 +1,3 @@
-
 <x-app-layout>
     <div class="py-12">
 
@@ -17,7 +16,7 @@
                             <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
                                 <li><a href="" class="dropdown-item"><i class="fas fa-download"></i> Importar (xlsx, csv)</a></li>
                                 <li><a href="" class="dropdown-item"><i class="fas fa-upload"></i> Exportar (xlsx, csv)</a></li>
-                                <li><a href="" class="dropdown-item"><i class="fas fa-file"></i> Tabela de Preços</a></li>
+                                <li><a href="" class="dropdown-item"><i class="fas fa-file-pdf"></i> Tabela de Preços</a></li>
                             </ul>
                         </div>
                     </div>
@@ -65,12 +64,26 @@
 
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
             <div class="card">
+                <div class="card-header">
+                    <div class="float-left">
+                        <div class="btn-group">
+                            <a href="" class="btn btn-sm btn-default"> <i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="" class="btn btn-sm btn-default"> <i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="" class="btn btn-sm btn-default"><i class="fas fa-file-pdf"></i> PDF</a>
+                            <a href="" class="btn btn-sm btn-default"><i class="fas fa-print"></i> Imprimir</a>
+                        </div>
+                    </div>
+                    <div class="float-right">
+                        <span>Nº de Produtos: {{count($products)}}</span>
+                    </div>
+                </div>
                 <div class="card-body">
                     <table class="table table-sm table-stripped">
                         <thead>
                             <th></th>
                             <th>Tipo|Ref</th>
                             <th>Descrição</th>
+                            <th>Categoria</th>
                             <th>Preço S/Taxa</th>
                             <th>Taxa</th>
                             <th>Preço Venda</th>
@@ -79,12 +92,12 @@
                         <tbody>
                             <!-- products -->
                             @foreach($products as $product)
-                            <tr id="productRow_{{ $product->Id }}" >
+                            <tr id="productRow_{{ $product->id }}" >
                                 <td>
-                                    <a href="{{ route('produtos.edit', $product->Id) }}" style='margin:5px;' title="Editar Produto">
+                                    <a href="{{ route('produtos.edit', $product->id) }}" style='margin:5px;' title="Editar Produto">
                                             <i class="fas fa-edit"></i>
                                     </a>
-                                    <a onclick="deleteProduct({{ $product->Id }})" data-id="{{ $product->Id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
+                                    <a onclick="deleteProduct({{ $product->id }})" data-id="{{ $product->id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
                                         <i class="fas fa-trash" style="color: salmon;"></i>
                                     </a>
                                     <a href="">
@@ -93,6 +106,7 @@
                                 </td>
                                 <td>{{ $product->ProductType }} | {{ $product->ProductCode }}</td>
                                 <td>{{ $product->ProductDescription }}</td>
+                                <td>{{ $product->ProductGroup ?? 'Sem Categoria' }}</td>
                                 <td>{{ number_format(floatval($product->venda_sem_iva), 2, ',','.') }} Kz</td>
                                 <td>{{ number_format(floatval($product->imposto), 2, ',','.') }} %</td>
                                 <td>{{ number_format(floatval($product->venda), 2, ',','.') }} Kz</td>
