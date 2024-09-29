@@ -23,38 +23,58 @@
 
                 @php
                     $empresa = auth()->user()->empresas->first(); // Assumindo que a empresa está associada ao usuário autenticado
+                    
                     $modulosAtivados = $empresa->subscricoes()->where('status', 'ATIVA')->pluck('modulo_id');
-                    $menus = \App\Models\Menu::whereIn('module_id', $modulosAtivados)
-                                ->orderBy('order_priority')->get()->groupBy('module_id');
+                    
+                    $menus = \App\Models\Menu::whereIn('module_id', $modulosAtivados)->orderBy('order_priority')->get()->groupBy('module_id');
+                    
                     $menusPrincipais = $menus->flatMap(function($moduleMenus) {
                         return $moduleMenus->where('parent_id', null);
                     });
+
                     $totalMenusPrincipais = $menusPrincipais->count();
                 @endphp
 
                 @if($modulosAtivados->count() === 1 || $totalMenusPrincipais <= 10)
                     @foreach($menusPrincipais as $menuPrincipal)
-                    <li class="nav-item">
-                        <a href="{{ route($menuPrincipal->route) }}" class="nav-link {{ request()->routeIs($menuPrincipal->route) ? 'active' : '' }}">
-                        <i class="nav-icon {{$menuPrincipal->icon}}"></i>
-                        <p>{{ __($menuPrincipal->menu_name) }}</p>
-                        </a>
-                        @php
-                        $submenus = $menuPrincipal->children; // Assumindo que você tem uma relação definida para submenus
-                        @endphp
-                        @if($submenus->count() > 0)
-                        <ul class="nav nav-treeview">
-                            @foreach($submenus as $submenu)
-                            <li class="nav-item">
-                                <a href="{{ route($submenu->route) }}" class="nav-link {{ request()->routeIs($submenu->route) ? 'active' : '' }}">
-                                <i class="{{$submenu->icon}} nav-icon"></i>
-                                <p>{{ __($submenu->menu_name) }}</p>
-                                </a>
-                            </li>
-                            @endforeach
-                        </ul>
-                        @endif
-                    </li>
+                        <li class="nav-item">
+                            @if($menuPrincipal->route == '#')
+                                <a href="#" class="nav-link">
+                            @else
+                                <a href="{{ route($menuPrincipal->route) }}" class="nav-link {{ request()->routeIs($menuPrincipal->route) ? 'active' : '' }}">
+                            @endif
+                                <i class="nav-icon {{$menuPrincipal->icon}}"></i>
+                                <p>{{ __($menuPrincipal->menu_name) }} @if ($menuPrincipal->children->count() > 0) <i class="right fas fa-angle-left"></i> @endif </p>
+                            </a>
+                            @if ($menuPrincipal->children->count() > 0)
+                                <ul class="nav nav-treeview">
+                                    @foreach($menuPrincipal->children as $submenu)
+                                    <li class="nav-item">
+                                        @if($submenu->route == '#')
+                                            <a href="#" class="nav-link">
+                                        @else
+                                            <a href="{{ route($submenu->route) }}" class="nav-link {{ request()->routeIs($submenu->route) ? 'active' : '' }}">
+                                        @endif 
+                                            <i class="{{$submenu->icon}} nav-icon"></i>
+                                            <p>{{ __($submenu->menu_name) }} @if ($submenu->children->count() > 0) <i class="right fas fa-angle-left"></i> @endif </p>
+                                        </a>
+                                        @if ($submenu->children->count() > 0)
+                                            <ul class="nav nav-treeview">
+                                                @foreach($submenu->children as $sub_submenu)
+                                                    <li class="nav-item">
+                                                        <a href="{{ route($sub_submenu->route) }}" class="nav-link {{ request()->routeIs($sub_submenu->route) ? 'active' : '' }}">
+                                                            <i class="{{$sub_submenu->icon}} nav-icon"></i>
+                                                            <p>{{ __($sub_submenu->menu_name) }}</p>
+                                                        </a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </li>
                     @endforeach
                 @else
                     @foreach($menus as $moduleId => $menusDoModulo)
@@ -73,7 +93,7 @@
                             @if(is_null($menu->parent_id))
                             <li class="nav-item">
                                 <a href="{{ route($menu->route) }}" class="nav-link {{ request()->routeIs($menu->route) ? 'active' : '' }}">
-                                <p>{{ __($menu->menu_name) }}</p>
+                                    <p>{{ __($menu->menu_name) }}</p>
                                 </a>
                                 @php
                                 $submenus = $menu->submenus; // Assumindo que você tem uma relação definida para submenus
@@ -96,53 +116,7 @@
                     </li>
                     @endforeach
                 @endif
-                <li class="nav-item">
-                    <a href="{{ route('produtos.index') }}" class="nav-link">
-                    <i class="nav-icon fas fa-users"></i>
-                    <p> Produtos/Serviços </p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-file-invoice"></i> <p>Gestão de Faturação <i class="right fas fa-angle-left"></i></p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item"><a href="{{ route('documentos.create') }}" class="nav-link"><i class="nav-icon fas fa-file-invoice"></i>Emitir Facturas</a></li>
-                        <li class="nav-item"><a href="{{ route('documentos.index') }}" class="nav-link"><i class="nav-icon fas fa-exclamation-triangle"></i> Faturação</a></li>
-                        <li class="nav-item"><a href="#" class="nav-link"><i class="nav-icon fas fa-file-export"></i> Relatórios</a></li>
-                        
-                    </ul>
-                </li>
-                <li class="nav-item has-treeview">
-                    <a href="#" class="nav-link">
-                        <i class="nav-icon fas fa-user-group"></i>
-                        <p>
-                            {{ __('Clientes') }}
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-user-magnifying-glass"></i>
-                            <p>{{ __('Cliente') }}</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('customers.listagem_cc') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-user-search"></i>
-                            <p>{{ __('Conta Corrente') }}</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-            <!-- <li class="nav-item">
-                <a href="{{ route('dashboard.rh') }}" class="nav-link">
-                <i class="nav-icon fas fa-users"></i>
-                <p> Recursos Humanos </p>
-                </a>
-            </li> -->
+                
 
             <li class="nav-item has-treeview">
                 <a href="#" class="nav-link">
@@ -154,21 +128,17 @@
                 </a>
                 <ul class="nav nav-treeview">
                     <li class="nav-item">
-                        <a href="{{ route('customers.index') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-magnifying-glass"></i>
-                        <p>{{ __('Mapa de Impostos e Tarifas') }}</p>
+                        <a href="{{ route('customers.index') }}" 
+                        class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                            <p>{{ __('Mapa de Impostos e Tarifas') }}</p>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="{{ route('customers.listagem_cc') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-search"></i>
-                        <p>{{ __('Mapa de Retenção') }}</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('customers.listagem_cc') }}" class="nav-link {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-user-search"></i>
-                        <p>{{ __('Pauta Aduaneira') }}</p>
+                        <a href="{{ route('customers.listagem_cc') }}" 
+                        class="nav-link {{ request()->routeIs('customers.listagem_cc') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-file-alt"></i>
+                            <p>{{ __('Pauta Aduaneira') }}</p>
                         </a>
                     </li>
                 </ul>

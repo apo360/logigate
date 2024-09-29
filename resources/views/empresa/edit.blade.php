@@ -1,5 +1,10 @@
 <x-app-layout>
-    <br>
+<x-breadcrumb :items="[
+    ['name' => 'Dashboard', 'url' => route('dashboard')],
+    ['name' => 'Empresa', 'url' => route('empresas.show', $empresa->id)],
+    ['name' => 'Editar Empresa', 'url' => '']
+]" separator="/" />
+
     <div class="row mt-4" style="padding-left: 20px;">
         <div class="col-md-3 card">
             <div class="card-header">
@@ -10,42 +15,50 @@
             <!-- Profile Photo -->
             <div class="card-body">
 
-            <div class="col-span-6 sm:col-span-4">
-                <!-- Profile Photo File Input -->
-                <input type="file" id="photo" class="hidden" />
+                <div class="col-span-6 sm:col-span-4">
+                    <!-- Profile Photo File Input -->
+                    <input type="file" id="logotipo" name="logotipo" accept="image/*" class="hidden">
 
-                <label for="photo" value="{{ __('Photo') }}"></label>
+                    <label for="logotipo" value="{{ __('Carregar Logotipo') }}"></label>
 
-                <!-- Current Profile Photo -->
-                <div class="mt-2" id="current-photo">
-                    <img src="{{ $empresa->Logotipo }}" alt="{{ $empresa->Empresa }}" class="rounded-full h-20 w-20 object-cover">
+                    <!-- Current Profile Photo -->
+                    <div class="mt-2" id="current-photo">
+                        <img src="{{ asset($empresa->Logotipo) }}" alt="{{ $empresa->Empresa }}" class="rounded-full h-40 w-40 object-cover">
+                    </div>
+
+                    <!-- New Profile Photo Preview -->
+                    <div class="mt-2" id="new-photo-preview">
+                        <span class="block rounded-full w-40 h-40 bg-cover bg-no-repeat bg-center" id="photo-preview"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- Button to select new photo -->
+                            <a class="mt-2 btn btn-sm btn-success" id="select-new-photo">
+                                {{ __('Selecionar Imagem') }}
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Button to remove the current photo -->
+                            @if ($empresa->Logotipo)
+                                <a class="mt-2 btn btn-sm btn-danger" id="remove-photo">
+                                    {{ __('Remover Imagem') }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                    <!-- Display error messages -->
+                    <div class="mt-2" id="photo-error"></div>
                 </div>
 
-                <!-- New Profile Photo Preview -->
-                <div class="mt-2" id="new-photo-preview" style="display: none;">
-                    <span class="block rounded-full w-20 h-20 bg-cover bg-no-repeat bg-center" id="photo-preview"></span>
-                </div>
-
-                <button class="mt-2 me-2" type="button" id="select-new-photo">
-                    {{ __('Select A New Photo') }}
-                </button>
-
-                @if ($empresa->Logotipo)
-                    <button type="button" class="mt-2" id="remove-photo">
-                        {{ __('Remove Photo') }}
-                    </button>
-                @endif
-
-                <div class="mt-2" id="photo-error"></div>
-            </div>
-
-            <x-section-border />
-            <p>{{ $empresa->Designacao }} : {{ $empresa->Empresa }}</p>
-            <p>Cedula: {{ $empresa->Cedula }}</p>
-            <p>NIF: {{ $empresa->NIF }}</p>
+                <x-section-border />
+                <p>{{ $empresa->Designacao }} : {{ $empresa->Empresa }}</p>
+                <p>Cedula: {{ $empresa->Cedula }}</p>
+                <p>NIF: {{ $empresa->NIF }}</p>
 
             </div>
         </div>
+
         <div class="col-md-7">
             <div class="card">
                 <div class="card-header">
@@ -59,12 +72,17 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="banco-tab" data-bs-toggle="tab" data-bs-target="#banco" type="button" role="tab" aria-controls="banco" aria-selected="false">Banco</button>
                         </li>
+                        <li>
+                            <button class="nav-link" id="doc-tab" data-bs-toggle="tab" data-bs-target="#doc" type="button" role="doc" aria-selected="false">Documenetos</button>
+                        </li>
                     </ul>
+
                     <div class="tab-content" id="myTabContent">
                         <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-                            <form  id="formEmpresa" action="{{ route('empresas.update', $empresa->id) }}" method="POST">
+                            <form id="formEmpresa" action="{{ route('empresas.update', $empresa->id) }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
+
                                 <!-- Campos de edição da empresa -->
                                 <div class="form-group">
                                     <label for="Slogan">Slogan:</label>
@@ -77,7 +95,7 @@
                                             <label for="NIF">Província:</label>
                                             <select name="Provincia" id="Provincia" class="form-control">
                                                 @foreach($provincias as $provincia)
-                                                    <option value=" {{ $provincia->id}}"> {{ $provincia->Nome}} </option>
+                                                    <option value="{{ $provincia->id }}"> {{ $provincia->Nome }} </option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -85,16 +103,16 @@
 
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="NIF">Municipio:</label>
+                                            <label for="NIF">Município:</label>
                                             <select name="Cidade" id="Cidade" class="form-control">
                                                 @foreach($cidades as $cidade)
-                                                    <option value=" {{ $cidade->id}}"> {{ $cidade->Nome}} </option>
+                                                    <option value="{{ $cidade->id }}"> {{ $cidade->Nome }} </option>
                                                 @endforeach
                                             </select>
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -109,39 +127,50 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="Email">Email:</label>
                                     <input type="text" class="form-control" id="Email" name="Email" value="{{ auth()->user()->email }}" disabled>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="Endereco_completo"> Endereço Completo:</label>
+                                    <label for="Endereco_completo">Endereço Completo:</label>
                                     <input type="text" class="form-control" id="Endereco_completo" name="Endereco_completo" value="{{ $empresa->Endereco_completo }}">
                                 </div>
-                                <!-- Adicione outros campos da empresa conforme necessário -->
+
                                 <button type="submit" class="btn btn-primary">Salvar</button>
                             </form>
                         </div>
+
                         <div class="tab-pane fade" id="banco" role="tabpanel" aria-labelledby="banco-tab">
-                            <span>Cadastrar todas as contas bancarias necessárias para documentos e facturas</span>
+                            <span>Cadastrar todas as contas bancárias necessárias para documentos e faturas</span>
                             <form id="FormBanco" action="{{ route('banco.inserir') }}" method="post">
+                                @csrf
                                 <label for="banco-select">Banco</label>
                                 <select name="banco" id="banco-select" class="form-control">
                                     @foreach($ibans as $iban)
-                                        <option value="{{$iban['sname']}}" data-code="{{$iban['code']}}">
-                                            {{$iban['sname']}} - {{$iban['fname']}}
+                                        <option value="{{ $iban['sname'] }}" data-code="{{ $iban['code'] }}">
+                                            {{ $iban['sname'] }} - {{ $iban['fname'] }}
                                         </option>
                                     @endforeach
                                 </select>
+                                <div class="row mt-2">
+                                    <div class="col-md-8">
+                                        <div class="form-group">
+                                            <label for="iban-input">IBAN</label>
+                                            <input type="text" id="iban-input" name="iban-input" class="form-control" />
+                                        </div>
+                                    </div>
 
-                                <label for="iban-input">IBAN (AO06)</label>
-                                <x-input type="text" id="iban-input" name="iban-input" />
-
-                                <label for="conta-input">Conta</label>
-                                <x-input type="text" id="conta-input" name="conta-input" />
-
-                                <x-button>{{ __('Inserir') }}</x-button>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label for="conta-input">Conta</label>
+                                            <input type="text" id="conta-input" name="conta-input" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary mt-2">Inserir</button>
                             </form>
 
                             <div class="mt-4 card">
@@ -161,19 +190,42 @@
                                             @if($contas->count() > 0)
                                                 @foreach($contas as $conta)
                                                     <tr>
-                                                        <td>{{ $conta->code_banco}}</td>
-                                                        <td>{{ $conta->iban}}</td>
-                                                        <td>{{ $conta->conta}}</td>
+                                                        <td>{{ $conta->code_banco }}</td>
+                                                        <td>{{ $conta->iban }}</td>
+                                                        <td>{{ $conta->conta }}</td>
                                                     </tr>
                                                 @endforeach
                                             @else
-                                                <tr> <td> Sem Conta bancaria registados</td> </tr>
+                                                <tr> 
+                                                    <td colspan="3">Sem Conta bancária registrada</td>
+                                                </tr>
                                             @endif
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="tab-pane fade" id="doc" role="tabpanel" aria-labelledby="doc-tab">
+                            
+                            <span>
+                                Se a empresa tiver outros documentos como certificados, licenças ou comprovativos, pode adicionar esses arquivos.
+                            </span>
+
+                            <div class="form-group">
+                                <label for="">Tipo de Documentos</label>
+                                <select name="type_doc" id="type_doc">
+                                    <option value="">Selecionar</option>
+                                    <option value="">Certificado</option>
+                                    <option value="">Licenças</option>
+                                    <option value="">Comprovativos</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="documents">Documentos</label>
+                                <input type="file" name="documents[]" id="documents" multiple>
+                                <div id="document-preview" class="mt-2"></div>
+                            </div>
 
                         </div>
                     </div>
@@ -185,6 +237,7 @@
     <style>
         .rounded-full {
             border-radius: 50%;
+            width: 50px;
         }
         .object-cover {
             object-fit: cover;
@@ -194,84 +247,142 @@
         }
     </style>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
         $(document).ready(function() {
-            const photoInput = $('#photo');
-            const photoPreview = $('#photo-preview');
-            const currentPhoto = $('#current-photo');
-            const newPhotoPreview = $('#new-photo-preview');
-            const photoError = $('#photo-error');
 
-            $('#select-new-photo').click(function(e) {
-                e.preventDefault();
-                photoInput.click();
-            });
-
-            photoInput.change(function() {
-                const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        photoPreview.css('background-image', 'url(' + e.target.result + ')');
-                        newPhotoPreview.show();
-                        currentPhoto.hide();
-                    };
-                    reader.readAsDataURL(file);
+            // Validação em tempo real
+            $('#Endereco_completo').on('input', function() {
+                var nome = $(this).val();
+                if (nome.length < 3) {
+                    $('#nome-error').text('O Endereço deve ter pelo menos 3 caracteres.');
+                } else {
+                    $('#nome-error').text('');
                 }
             });
 
-            $('#remove-photo').click(function() {
-                // Adicione a lógica para remover a foto aqui, se necessário
-                // Isso geralmente envolvia uma chamada ao servidor em Livewire
+            $('#documents').on('change', function() {
+                $('#document-preview').html('');
+                for (let i = 0; i < this.files.length; i++) {
+                    let file = this.files[i];
+                    $('#document-preview').append('<p>' + file.name + '</p>');
+                }
             });
-        });
-    </script>
+            
+            // Abrir o seletor de arquivos quando clicar no botão
+            $('#select-new-photo').on('click', function (e) {
+                e.preventDefault();
+                $('#logotipo').click();
+            });
 
-    <script>
-        $(document).ready(function() {
-            $('.form-control').select2();
-        });
-    </script>
+            // Mostrar o preview da nova imagem selecionada
+            $('#logotipo').change(function () {
+                var input = this;
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
 
-    <!-- <script> 
-        // Selecione o formulário
-        const formE = document.getElementById('FormBanco');
+                    reader.onload = function (e) {
+                        $('#new-photo-preview').show(); // Exibe a área de preview
+                        $('#photo-preview').css('background-image', 'url(' + e.target.result + ')'); // Define a imagem de fundo
+                    }
 
-        // Adicione um event listener para o envio do formulário
-        formE.addEventListener('submit', async (event) => {
-            // Impedir o envio padrão do formulário
-            event.preventDefault();
+                    reader.readAsDataURL(input.files[0]);
+                }
+            });
 
-            // Enviar o formulário via AJAX
-            const formData = new FormData(formE);
-            const url = formE.action;
+            // Remover foto atual
+            $('#remove-photo').click(function() {
+                photoPreview.hide();
+                currentPhoto.hide();
+                newPhotoPreview.hide();
+                photoError.text('Logotipo removido. Não se esqueça de carregar uma nova imagem antes de salvar.');
+            });
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
+            // Quando a imagem for alterada, faz a submissão via AJAX
+            $('#logotipo').change(function () {
+                // Verifica se um arquivo foi selecionado
+                if ($('#logotipo')[0].files.length === 0) {
+                    $('#photo-error').html('Por favor, selecione uma imagem.');
+                    return;
+                }
+
+                var formData = new FormData();
+                formData.append('logotipo', $('#logotipo')[0].files[0]);
+
+                // Incluir o token CSRF no cabeçalho da requisição
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
                 });
 
-                // Verificar se a resposta é bem-sucedida
-                if (response.ok) {
-                    // Converter a resposta para JSON
-                    const data = await response.json();
+                $.ajax({
+                    url: "{{ route('empresa.logotipo') }}", // URL correta para salvar o logotipo
+                    type: 'POST',
+                    data: formData,
+                    processData: false, // Necessário para enviar o FormData corretamente
+                    contentType: false, // Não deixe o jQuery definir o contentType automaticamente
+                    success: function (response) {
+                        if (response.newLogoUrl) {
+                            // Substitua a imagem antiga pelo logotipo novo após a submissão
+                            $('#current-photo img').attr('src', response.newLogoUrl);
 
-                    // Exibir a mensagem de retorno usando Toastr
-                    toastr.success(data.message); // Exibir mensagem de sucesso
-                } else {
-                    // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
-                    toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-                }
-            } catch (error) {
-                console.error('Erro ao enviar formulário:', error);
-                // Em caso de erro, exibir uma mensagem de erro genérica
-                toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-            }
+                            // Limpa o preview da nova imagem
+                            $('#new-photo-preview').hide();
+                            $('#photo-error').html('');
+                        } else {
+                            $('#photo-error').html('Erro ao carregar o logotipo. Por favor, tente novamente.');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        // Mostrar mensagem de erro se houver falha
+                        $('#photo-error').html('Erro ao carregar a imagem. Por favor, tente novamente.');
+                    }
+                });
+            });
+
+            // Validação de IBAN com base no código Logotipo banco selecionado
+            $('#banco-select').change(function() {
+                const bancoCode = $(this).find(':selected').data('code');
+                $('#iban-input').val(`AO06.${bancoCode}.`);
+            });
+
+            // Submissão de formulário de banco via AJAX
+            $('#FormBanco').submit(function(e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        toastr.success('Conta bancária adicionada com sucesso.');
+                    },
+                    error: function() {
+                        toastr.error('Erro ao adicionar conta bancária.');
+                    }
+                });
+            });
+
+            // Carregar cidades com base na província selecionada
+            $('#Provincia').change(function() {
+                const provinciaId = $(this).val();
+                $.ajax({
+                    url: `/cidades/${provinciaId}`,
+                    method: 'GET',
+                    success: function(response) {
+                        const cidadeSelect = $('#Cidade');
+                        cidadeSelect.empty();
+                        response.cidades.forEach(function(cidade) {
+                            cidadeSelect.append(`<option value="${cidade.id}">${cidade.Nome}</option>`);
+                        });
+                    }
+                });
+            });
         });
-    </script>
--->
-    <script>
+
         document.addEventListener('DOMContentLoaded', function () {
             const ibanInput = document.getElementById('iban-input');
             const bancoSelect = document.getElementById('banco-select');

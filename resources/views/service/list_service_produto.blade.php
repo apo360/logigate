@@ -92,12 +92,12 @@
                         <tbody>
                             <!-- products -->
                             @foreach($products as $product)
-                            <tr id="productRow_{{ $product->id }}" >
+                            <tr id="productRow_{{ $product->Id }}" >
                                 <td>
-                                    <a href="{{ route('produtos.edit', $product->id) }}" style='margin:5px;' title="Editar Produto">
+                                    <a href="{{ route('produtos.edit', $product->Id) }}" style='margin:5px;' title="Editar Produto">
                                             <i class="fas fa-edit"></i>
                                     </a>
-                                    <a onclick="deleteProduct({{ $product->id }})" data-id="{{ $product->id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
+                                    <a onclick="deleteProduct({{ $product->Id }})" data-id="{{ $product->Id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
                                         <i class="fas fa-trash" style="color: salmon;"></i>
                                     </a>
                                     <a href="">

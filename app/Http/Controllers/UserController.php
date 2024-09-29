@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmpresaUser;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -13,9 +17,14 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Obtém o usuário autenticado
-        $iduser = Auth::user();
-        $users = EmpresaUser::where('empresa_id', $iduser->empresas->first()->id);
+        // Obter a empresa do usuário autenticado
+        $empresaId = Auth::user()->empresas->first()->id;
+
+        // Buscar os usuários que pertencem à empresa específica
+        $users = User::whereHas('empresas', function ($query) use ($empresaId) {
+            $query->where('empresa_id', $empresaId);
+        })->with('roles')->get();
+
         return view('usuario.index', compact('users'));
     }
 
@@ -24,7 +33,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        //
+        $roles = Role::all(); // Obter todos os papéis disponíveis
+        return view('usuario.create', compact('roles'));
     }
 
     /**
@@ -32,7 +42,29 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'role' => 'required' // Papel é obrigatório
+        ]);
+
+        // Criar o usuário
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        EmpresaUser::create([
+            'empresa_id' => Auth::user()->empresas->first()->id,
+            'user_id' => $user->id
+        ]);
+
+        // Atribuir o papel
+        $user->assignRole($request->role);
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuário cadastrado com sucesso!');
     }
 
     /**
@@ -65,5 +97,19 @@ class UserController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    // Formulário para adicionar permissões ao usuário
+    public function editPermissions(User $user)
+    {
+        $permissions = Permission::all(); // Obter todas as permissões
+        return view('usuario.permissions', compact('user', 'permissions'));
+    }
+
+    // Armazenar as permissões do usuário
+    public function storePermissions(Request $request, User $user)
+    {
+        $user->syncPermissions($request->permissions); // Sincronizar permissões
+        return redirect()->route('usuarios.index')->with('success', 'Permissões atribuídas com sucesso!');
     }
 }

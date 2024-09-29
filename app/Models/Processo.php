@@ -83,6 +83,14 @@ class Processo extends Model
     }
 
     /**
+     * Relacionamento com a Mercadorias.
+     */
+    public function procLicenMercadorias()
+    {
+        return $this->hasMany(ProcessoLicenciamentoMercadoria::class, 'processo_id');
+    }
+
+    /**
      * Gera um novo código de processo sequencial a cada ano.
      *
      * @return string

@@ -43,6 +43,33 @@ class EmpresaController extends Controller
         //
     }
 
+    public function storeLogo(Request $request)
+    {
+        $request->validate([
+            'logotipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        try {
+            if ($request->hasFile('logotipo')) {
+                // Defina o caminho onde a imagem será salva
+                $imagePath = $request->file('logotipo')->store('logos', 'public');
+    
+                // Salve o caminho da imagem no banco de dados
+                $empresa = Empresa::where('id', Auth::user()->empresas->first()->id)->update(['Logotipo' => '/storage/' . $imagePath]);
+
+                return response()->json(['newLogoUrl' => asset($empresa->Logotipo)]);
+            }
+        } catch (QueryException $e) { 
+            return DatabaseErrorHandler::handle($e, $request);
+            return response()->json(['error' => 'Falha ao carregar o logotipo'], 400);
+            
+        } 
+        
+
+        
+    }
+
+
     /**
      * Display the specified resource.
      */
@@ -82,23 +109,13 @@ class EmpresaController extends Controller
     
             $empresa->fill($request->all());
     
-            /*if ($request->hasFile('Logotipo')) {
-                $path = $request->file('Logotipo')->store('logotipos', 'public');
-                $empresa->Logotipo = $path;
-            }*/
-    
             $empresa->save();
 
-            return response()->json([
-                'message' => 'Empresa actualizada com Sucesso',
-            ], 200);
+            return redirect()->back()->with('success', 'Empresa actualizada com Sucesso.');
 
         } catch (QueryException $e) { 
-
             return DatabaseErrorHandler::handle($e, $request);
         } 
-
-        // 
     }
 
     /**

@@ -17,6 +17,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\ExportadorController;
 use App\Http\Controllers\IbanController;
+use App\Http\Controllers\LicenciamentoController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MercadoriaController;
 use App\Http\Controllers\MigracaoController;
@@ -68,10 +69,13 @@ Route::get('/', function () { $modulos = Module::all();
             'roles' => Roles::class,
             'usuarios' => UserController::class,
             'produtos' => ProdutoController::class,
+            'licenciamentos' => LicenciamentoController::class,
         ]);
 
         Route::get('customer/conta_corrente/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
         Route::get('customers/{id}/conta_corrente', [CustomerController::class, 'conta'])->name('cliente.cc');
+        Route::get('customers/avenca/listagem', [CustomerController::class, 'avenca_list'])->name('cliente.listagem.avenca');
+        Route::get('customers/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
         //Route::get('processos/{id}/documentos/factura', [DocumentoController::class, 'create'])->name('documentos.create');
 
         // Rota para Inserir Grupo/Categoria de Produtos
@@ -89,6 +93,9 @@ Route::get('/', function () { $modulos = Module::all();
             Route::post('remove-role', [UserRoleController::class, 'removeRole'])->name('users.removeRole');
         });
 
+        Route::get('/users/{user}/permissions', [UserController::class, 'editPermissions'])->name('usuarios.permissions');
+        Route::post('/users/{user}/permissions', [UserController::class, 'storePermissions'])->name('usuarios.permissions.store');
+
         Route::get('empresa/cambios', [PaisController::class, 'list_cambios'])->name('empresa.cambio');
         Route::put('empresa/cambios/actualizar', [PaisController::class, 'update'])->name('cambios.update');
 
@@ -99,8 +106,9 @@ Route::get('/', function () { $modulos = Module::all();
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/imprimir', [ProcessoController::class, 'print'])->name('processos.print');
-        Route::post('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
-        Route::post('processo/gerar-txt/{IdProcesso}', [ProcessoController::class, 'GerarTxT'])->name('gerar.txt');
+        Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
+        Route::get('processo/gerar-txt/{IdProcesso}', [ProcessoController::class, 'GerarTxT'])->name('gerar.txt');
+        Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
 
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
@@ -111,6 +119,7 @@ Route::get('/', function () { $modulos = Module::all();
         Route::post('empresa/importar/clientes', [MigracaoController::class, 'importCustomers'])->name('import.customers');
         Route::post('empresa/importar/exportadores', [MigracaoController::class, 'importExportadores'])->name('import.exportadores');
         Route::post('empresa/importar/processos', [MigracaoController::class, 'importProcessos'])->name('import.processos');
+        Route::post('empresa/logotipo/inserir', [EmpresaController::class, 'storeLogo'])->name('empresa.logotipo');
 
         Route::get('processos/report/{ProcessoID}/visualizar', [RelatorioController::class, 'generateReport'])->name('processos.print');
         // Documentos
@@ -119,6 +128,7 @@ Route::get('/', function () { $modulos = Module::all();
         Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
         Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
         Route::post('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
+        
 
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);

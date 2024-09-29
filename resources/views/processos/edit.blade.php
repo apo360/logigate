@@ -1,97 +1,108 @@
 <x-app-layout>
-<head>
-    <!-- Bootstrap CSS -->
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="..."> -->
-    <!-- Bootstrap JavaScript (popper.js is required) -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="..." crossorigin="anonymous"></script> -->
+    <head>
+        <style>
+                .body-doc {
+                    font-family: Arial, sans-serif;
+                    background-color: #f0f0f0;
+                    margin: 0;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                }
 
-    <style>
-            .body-doc {
-                font-family: Arial, sans-serif;
-                background-color: #f0f0f0;
-                margin: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }
+                .upload-container {
+                    text-align: center;
+                    background-color: #ffffff;
+                    border: 2px dashed #ccc;
+                    padding: 20px;
+                    border-radius: 10px;
+                    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+                }
 
-            .upload-container {
-                text-align: center;
-                background-color: #ffffff;
-                border: 2px dashed #ccc;
-                padding: 20px;
-                border-radius: 10px;
-                box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            }
+                .progress-bar {
+                    width: 0;
+                    height: 10px;
+                    background-color: #3498db;
+                    border-radius: 5px;
+                    transition: width 0.3s ease-in-out;
+                }
 
-            .progress-bar {
-                width: 0;
-                height: 10px;
-                background-color: #3498db;
-                border-radius: 5px;
-                transition: width 0.3s ease-in-out;
-            }
+                #drop-area.active {
+                    background-color: #e0e0e0;
+                }
 
-            #drop-area.active {
-                background-color: #e0e0e0;
-            }
+                #file-list ul {
+                    list-style: none;
+                    padding: 0;
+                }
 
-            #file-list ul {
-                list-style: none;
-                padding: 0;
-            }
+                #file-list ul li {
+                    margin: 5px 0;
+                    padding: 5px;
+                    background-color: #f5f5f5;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                    cursor: move;
+                }
 
-            #file-list ul li {
-                margin: 5px 0;
-                padding: 5px;
-                background-color: #f5f5f5;
-                border: 1px solid #ddd;
-                border-radius: 5px;
-                cursor: move;
-            }
+                .button-arquivo {
+                    background-color: #3498db;
+                    color: #fff;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
 
-            .button-arquivo {
-                background-color: #3498db;
-                color: #fff;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-            }
-
-            input[type="file"] {
-                display: none;
-            }
-    </style>
-</head>
+                input[type="file"] {
+                    display: none;
+                }
+        </style>
+    </head>
     <div class="card">
-        <div class="card-header d-flex justify-content-between">
-            <span>Número do Processo: {{ $processo->NrProcesso }}</span>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><strong>Número do Processo:</strong> {{ $processo->NrProcesso }}</span>
             <div class="btn-group">
                 <a class="btn btn-outline-secondary" href="{{ route('processos.index') }}">
-                    {{ __('Pesquisar') }}
+                    <i class="fas fa-search"></i> {{ __('Pesquisar') }}
                 </a>
-                <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}">
-                    {{ __('Imprimir') }}
+                <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}" target="_blank">
+                    <i class="fas fa-print"></i> {{ __('Imprimir') }}
                 </a>
                 <a href="{{ route('processos.show', $processo->id) }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-eye"></i> Visualizar
+                    <i class="fas fa-eye"></i> {{ __('Visualizar') }}
                 </a>
                 <div class="btn-group" role="group">
                     <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-filter"></i> Opções
+                        <i class="fas fa-filter"></i> {{ __('Opções') }}
                     </button>
                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                        <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"><i class="fas fa-eye"></i> Factura</a></li>
-                        <li><a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id ?? 0]) }}" class="dropdown-item"><i class="fas fa-file"></i> Imprimir Emolumentos</a></li>
-                        <li><a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id ?? 0]) }}" class="dropdown-item"><i class="fas fa-file"></i> Requisição</a></li>
-                        <li><a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id ?? 0]) }}" class="dropdown-item"><i class="fas fa-file"></i> Licenciamento (txt)</a></li>
-
+                        <li>
+                            <a href="{{ route('documentos.create', ['id' => $processo->id]) }}" class="dropdown-item">
+                                <i class="fas fa-file-invoice"></i> {{ __('Factura') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}" class="dropdown-item" target="_blank">
+                                <i class="fas fa-file-alt"></i> {{ __('Asyscuda') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('processo.print.requisicao', ['IdProcesso' => $processo->id]) }}" class="dropdown-item" target="_blank">
+                                <i class="fas fa-file-pdf"></i> {{ __('Requisição') }}
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item" target="_blank">
+                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
+
 
     <x-validation-errors class="mb-4" />
 
@@ -530,7 +541,7 @@
             const totalComDesconto = total - (total * (desconto / 100));
 
             // Atualizar o valor do campo TOTALGERAL
-            document.getElementById('TOTALGERAL').value = (total - desconto).toFixed(2);
+            document.getElementById('TOTALGERAL').value = totalComDesconto.toFixed(2);
             document.getElementById('total-com-desconto').value = totalComDesconto.toFixed(2);
         }
         
@@ -607,7 +618,8 @@
 
         // Validar o tipo de arquivo
         function validateFileType(file) {
-            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/msword', 'application/vnd.ms-excel'];
+
             return allowedTypes.includes(file.type);
         }
 
@@ -707,27 +719,16 @@
 
                 // Verificar se a resposta é bem-sucedida
                 if (response.ok) {
-                    // Converter a resposta para JSON
                     const data = await response.json();
-
-                    // Exibir a mensagem de retorno usando Toastr
-                    toastr.success(data.message); // Exibir mensagem de sucesso
-                    $("#addMercadoriaForm")[0].reset();  // Reset form
-                    $('#exampleModalToggle2').modal('hide');  // Hide modal
-
-                    // Fechar o modal e voltar para a lista
-                    let addMercadoriaModal = new bootstrap.Modal(document.getElementById('exampleModalToggle2'));
-                    addMercadoriaModal.hide();
-                    let listMercadoriasModal = new bootstrap.Modal(document.getElementById('exampleModalToggle'));
-                    listMercadoriasModal.show();
-
-                    // Resetar o formulário
-                    form.reset();
+                    toastr.success(data.message);
+                    // Limpar o formulário após o sucesso
+                    formE.reset();
                     document.getElementById('preco_unitario').value = '0.00';
                     document.getElementById('preco_total').value = '0.00';
+                    // Atualizar a lista de mercadorias sem recarregar a página (opcional)
+                    refreshMercadoriaList();
                 } else {
-                    // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
-                    toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
+                    toastr.error("Erro ao salvar a mercadoria.");
                 }
             } catch (error) {
                 console.error('Erro ao enviar formulário:', error);
@@ -735,6 +736,12 @@
                 toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
             }
         });
+
+        async function refreshMercadoriaList() {
+            const response = await fetch('/mercadorias/list'); // Substitua pela sua rota de listagem
+            const mercadorias = await response.json();
+            // Atualize a tabela ou lista de mercadorias aqui
+        }
     </script>
     
     <!-- Calcular o valor aduaneiro em função do Cambio -->

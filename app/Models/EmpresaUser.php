@@ -12,8 +12,13 @@ class EmpresaUser extends Model
 
     protected $table = "empresa_users";
 
-    public function usuarios() : HasMany
+    public function usuarios()
     {
-        return $this->hasMany(User::class, 'user_id');
+        return $this->hasMany(User::class, 'user_id', 'id');
+    }
+
+    public function empresa()
+    {
+        return $this->hasMany(Empresa::class, 'empresa_id');
     }
 }

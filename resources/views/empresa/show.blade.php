@@ -1,4 +1,9 @@
 <x-app-layout>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Empresa', 'url' => route('empresas.edit', $empresa->id)],
+        ['name' => 'Visualisar Empresa', 'url' => '']
+    ]" separator="/" />
     <div class="container">
         <div class="card">
             <div class="card-header">

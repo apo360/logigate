@@ -8,12 +8,15 @@ use Illuminate\View\Component;
 
 class breadcrumb extends Component
 {
+    public $items;
+    public $separator;
     /**
      * Create a new component instance.
      */
-    public function __construct()
+    public function __construct($items = [], $separator = '>')
     {
-        //
+        $this->items = $items;
+        $this->separator = $separator;
     }
 
     /**

@@ -1,4 +1,3 @@
-
 <x-app-layout>
     <x-slot name="header">
         <x-breadcrumb title="Novo Processo" breadcrumb="Novo Processo" />
@@ -151,7 +150,7 @@
 
                             <div class="row">
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="DataAbertura">Data de Abertura:</label>
+                                    <label for="DataAbertura">Abertura do Processo:</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-calendar"></i></span>
@@ -164,7 +163,7 @@
                                 </div>
 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="Situacao">Situação:</label>
+                                    <label for="Situacao">Estado do Processo:</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-country"></i></span>
@@ -188,6 +187,8 @@
                                 </div>
                             </div>
                             
+                            <hr>
+                            <span style="color: red;">Descrição e Origem da Mercadoria</span>
                             <div class="row">
                                 <div class="form-group mt-4 col-md-6">
                                     <label for="Descricao">Descrição:</label>
@@ -201,7 +202,9 @@
                                         @enderror
                                     </div>
                                 </div>
+                            </div>
 
+                            <div class="row">
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="Fk_pais">País de Origem</label>
                                     <div class="input-group">
@@ -214,6 +217,37 @@
                                             @endforeach
                                         </select>
                                         @error('Fk_pais')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="PortoOrigem">(Aero)Porto de Origem</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-plane"></i></span>
+                                        </div>
+                                        <x-input type="text" name="PortoOrigem" class="form-control rounded-md shadow-sm" list="porto" required />
+                                        <datalist id="porto">
+                                            @foreach($portos as $porto)
+                                                <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
+                                            @endforeach
+                                        </datalist>
+                                        @error('PortoOrigem')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="DataPartida">Data de Partida:</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                        </div>
+                                        <x-input type="date" name="DataPartida" class="form-control rounded-md shadow-sm" />
+                                        @error('DataPartida')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -233,6 +267,8 @@
                                 </div>
                             </div>
 
+                            <hr>
+                            <span style="color: red;">Dados do Transporte</span>
                             <div class="row">
                                 <div class="form-group mt-4 col-md-5">
                                     <label for="NomeTransporte">Nome do Transporte</label>
@@ -270,18 +306,17 @@
                                 </div>
                                 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="PortoOrigem">(Aero)Porto de Origem</label>
+                                    <label for="NacTransporte">Nacionalidade</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                         </div>
-                                        <x-input type="text" name="PortoOrigem" class="form-control rounded-md shadow-sm" list="porto" required />
-                                        <datalist id="porto">
-                                            @foreach($portos as $porto)
-                                                <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
+                                        <select name="NacTransporte" class="form-control" id="NacTransporte" >
+                                            @foreach($paises as $pais)
+                                                <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
                                             @endforeach
-                                        </datalist>
-                                        @error('PortoOrigem')
+                                        </select>
+                                        @error('NacTransporte')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>

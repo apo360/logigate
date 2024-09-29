@@ -24,7 +24,7 @@ class Importacao extends Model
         'Moeda',
         'Cambio',
         'ValorAduaneiro',
-        'ValorTotal',
+        'ValorTotal', // CIF
         'FOB', 
         'Freight', //Frete
         'Insurance', // Seguro
@@ -64,7 +64,7 @@ class Importacao extends Model
         return $this->belongsTo(Pais::class, 'Fk_pais_origem');
     }
 
-    public function destino()
+    public function destino() 
     {
         return $this->belongsTo(Pais::class, 'Fk_pais_destino');
     }

@@ -145,7 +145,6 @@ class ProcessoController extends Controller
         }
     }
 
-
     /**
      * Display the specified resource.
      */
@@ -333,8 +332,50 @@ class ProcessoController extends Controller
         return response()->download(storage_path('app/public/' . $filename));
     }
 
-    public function GerarTxT($IdProcesso){
+    public function GerarTxT($IdProcesso)
+    {
+        // Buscando o processo pelo ID
+        $processo = Processo::findOrFail($IdProcesso);
+        $importacao = $processo->importacao;  // Supondo que importacao seja um relacionamento
+        $mercadorias = $importacao->mercadorias;  // Supondo que mercadorias seja um relacionamento
 
+        $peso_bruto = 0;
+        $FOB = $importacao->FOB;
+        $Frete = $importacao->Freight;
+        $Seguro = $importacao->Insurance;
+        $CIF = $FOB + $Frete + $Seguro;
+
+        // Linha 0 - Cabeçalho do processo
+        $linha0 = "0|" . count($mercadorias) . "|{$processo->estancia_id}|{$processo->cliente->CompanyName}|{$processo->empresa->Empresa}|{$processo->empresa->Cedula}|{$processo->empresa->Email}|{$processo->RefCliente}|||||||||||||||||||||||||||||";
+        
+        // Linha 2 - Adições de mercadorias
+        $adicoes = [];
+        foreach ($mercadorias as $key => $adicao) {
+            $ordem = $key + 1;
+            $peso_bruto += $adicao->Peso;
+            
+            // Calculando Frete e Seguro proporcionais
+            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete) 
+                        + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
+            
+            // Criando a linha de adição
+            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->Quantidade}||{$importacao->origem->codigo}|{$adicao->Peso}|{$importacao->Moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||{$adicao->Unidade}|||||||||||||||||||";
+        }
+
+        // Linha 1 - Informações do exportador e transporte
+        $linha1 = "1|{$processo->exportador->ExportadorTaxID}|{$processo->exportador->Exportador}|{$processo->cliente->CustomerTaxID}||{$processo->empresa->Cedula}|{$importacao->TipoTransporte}||||A19 32077|//|LAD|{$processo->TipoDocumento}|{$processo->estancia->cod_estancia}|" . count($mercadorias) . "|{$peso_bruto}||||GATT|RD|051|F|1|{$processo->Descricao}||||{$importacao->origem->codigo}{$importacao->PortoOrigem}|{$importacao->origem->codigo}|AO||||";
+        
+
+        // Montando o conteúdo completo
+        $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);
+
+        // Nome do arquivo
+        $nomeArquivo = 'licenciamento_' . $processo->NrProcesso . '.txt';
+
+        // Criando e retornando o arquivo .txt para download
+        return response($conteudo)
+            ->header('Content-Type', 'text/plain')
+            ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
     }
 
     public function getProcessesByIdAndStatus($ProcessoId, $status)
