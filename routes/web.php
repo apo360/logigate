@@ -30,9 +30,9 @@ use App\Http\Controllers\UserController;
 use App\Models\Empresa;
 use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Auth\PasswordController;
 
-Route::get('/', function () { $modulos = Module::all();
-    return view('welcome', compact('modulos')); });
+    Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
 
     Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
     Route::get('Registo', function(){ return view('auth.register_manual'); })->name('verificar.manual');
@@ -43,14 +43,20 @@ Route::get('/', function () { $modulos = Module::all();
         return redirect('/');
     })->name('logout');
 
-    Route::resources(['modulos' => ModuleController::class]);
-
     Route::get('/verify-otp', [OtpController::class, 'showVerifyOtpForm'])->middleware('auth');
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('confirmaOtp')->middleware('auth');
     Route::post('/resend-otp', [OtpController::class, 'sendOtp'])->middleware('auth');
 
-    Route::middleware(['auth:sanctum', config('jetstream.auth_session'), EnsureOtpIsVerified::class])->group(function () {
+    Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change')->middleware('check.password.changed');
+    Route::post('re/password/change', [PasswordController::class, 'changePassword'])->name('password.change.store')->middleware('check.password.changed');
+    
+    Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(function () {
         
+        // Sistema de Controlle de usuarios. 
+        Route::get('/usuarios/block/{id}', [UserController::class, 'block'])->name('usuarios.block');
+        Route::get('/usuarios/unblock/{id}', [UserController::class, 'unblock'])->name('usuarios.unblock');
+        Route::get('/usuarios/resert/{id}', [UserController::class, 'resert_pass'])->name('usuarios.resetPassword');
+
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
         
@@ -70,6 +76,7 @@ Route::get('/', function () { $modulos = Module::all();
             'usuarios' => UserController::class,
             'produtos' => ProdutoController::class,
             'licenciamentos' => LicenciamentoController::class,
+            'modulos' => ModuleController::class,
         ]);
 
         Route::get('customer/conta_corrente/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
@@ -129,7 +136,6 @@ Route::get('/', function () { $modulos = Module::all();
         Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
         Route::post('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
         
-
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
         Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']);

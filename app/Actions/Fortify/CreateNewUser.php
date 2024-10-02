@@ -73,7 +73,7 @@ class CreateNewUser implements CreatesNewUsers
         ]);
 
         // Atribuir permissões de Administrador...
-        $role = Role::findOrCreate('admin');
+        $role = Role::findOrCreate('Adminstrador');
 
         // Atribua o papel ao usuário
         $user->assignRole($role);

@@ -57,6 +57,7 @@ class UserController extends Controller
         ]);
 
         EmpresaUser::create([
+            'conta' => Auth::user()->empresas->first()->conta,
             'empresa_id' => Auth::user()->empresas->first()->id,
             'user_id' => $user->id
         ]);
@@ -72,7 +73,8 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $user = User::with('roles', 'audits')->findOrFail($id);  // Recupera o usuário com suas roles e auditorias
+        return view('usuario.show', compact('user'));
     }
 
     /**
@@ -111,5 +113,28 @@ class UserController extends Controller
     {
         $user->syncPermissions($request->permissions); // Sincronizar permissões
         return redirect()->route('usuarios.index')->with('success', 'Permissões atribuídas com sucesso!');
+    }
+
+    public function block($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_blocked = true;
+        $user->save();
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuário bloqueado com sucesso!');
+    }
+
+    public function unblock($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_blocked = false;
+        $user->save();
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuário desbloqueado com sucesso!');
+    }
+
+    public function resert_pass($id){
+        // Palavra-Passe a ser reiniciada, vai enviar no email do 
+        // usuario a nova palavra-passe ou enviar um link para reiniciar a password
     }
 }
