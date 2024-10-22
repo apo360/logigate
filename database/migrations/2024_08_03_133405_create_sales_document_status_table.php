@@ -19,10 +19,14 @@ return new class extends Migration
             $table->datetime('invoice_available_date')->nullable();
             $table->unsignedBigInteger('source_id');
             $table->string('source_billing', 1)->nullable();
+            $table->string('detalhe')->nullable();
+            $table->string('motivo')->nullable();
+            $table->unsignedBigInteger('source_cancel_id');
             $table->timestamps();
 
             $table->foreign('source_id')->references('id')->on('users');
             $table->foreign('documentoID')->references('id')->on('sales_invoice');
+            $table->foreign('source_cancel_id')->references('id')->on('users');
         });
     }
 

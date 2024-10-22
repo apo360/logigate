@@ -18,7 +18,13 @@ return new class extends Migration
 	        $table->string('ProductGroup', 10);
 	        $table->string('ProductDescription', 200);
 	        $table->string('ProductNumberCode', 100);
+            $table->string('imagem_path', 200)->nullable();
+            $table->unsignedBigInteger('empresa_id')->nullable()->after('id');
+
             $table->timestamps();
+
+            // Definindo a chave estrangeira que faz referência à tabela empresas
+            $table->foreign('empresa_id')->references('id')->on('empresas')->onDelete('cascade');
         });
     }
 

@@ -34,11 +34,13 @@ return new class extends Migration
             $table->char('imposto_retido', 3)->nullable();
             $table->string('motivo_retencao', 60)->nullable();
             $table->decimal('montante_retencao', 10, 2)->default(0.00);
+            $table->unsignedBigInteger('empresa_id');
             $table->timestamps();
 
             $table->foreign('customer_id')->references('id')->on('customers');
             $table->foreign('source_id')->references('id')->on('users');
             $table->foreign('invoice_type_id')->references('id')->on('invoice_types');
+            $table->foreign('empresa_id')->references('id')->on('empresas');
         });
     }
 

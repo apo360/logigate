@@ -25,8 +25,7 @@ return new class extends Migration
             $table->string('motivo_retencao', 60)->nullable();
             $table->decimal('montante_retencao', 10, 2)->nullable();
             $table->timestamps();
-
-            $table->foreign('payment_mechanism_id')->references('Id')->on('payment_mechanism');
+            
             $table->foreign('documentoID')->references('id')->on('sales_invoice');
         });
     }

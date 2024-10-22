@@ -14,9 +14,11 @@ return new class extends Migration
         Schema::create('portos', function (Blueprint $table) {
             $table->id();
             $table->string('continente');
-            $table->string('pais');
-            $table->string('porto');
-            $table->string('link');
+            $table->string('pais')->nullable();
+            $table->string('porto')->nullable();
+            $table->string('link')->nullable();
+            $table->string('sigla')->nullable();
+            
             $table->timestamps();
         });
     }
