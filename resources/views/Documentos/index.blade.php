@@ -1,9 +1,9 @@
 <x-app-layout>
+    <x-breadcrumb :items="[
+            ['name' => 'Dashboard', 'url' => route('dashboard')],
+            ['name' => 'Facturação', 'url' => route('documentos.index')]
+        ]" separator="/" />
     <div class="container">
-        <x-slot name="header">
-            <x-breadcrumb title="Facturação" breadcrumb="Facturação" />
-        </x-slot>
-        <br>
 
         <div class="row">
             <div class="col-md-4">

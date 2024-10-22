@@ -9,7 +9,9 @@ use App\Models\EmpresaUser;
 use App\Models\Estancia;
 use App\Models\Exportador;
 use App\Models\Licenciamento;
+use App\Models\LicenciamentoRascunho;
 use App\Models\Mercadoria;
+use App\Models\MercadoriaAgrupada;
 use App\Models\Pais;
 use App\Models\PautaAduaneira;
 use App\Models\Porto;
@@ -70,7 +72,6 @@ class LicenciamentoController extends Controller
     public function store(LicenciamentoRequest $request)
     {
         // Todos os dados já foram validados pelo StoreLicenciamentoRequest
-
         try {
             DB::beginTransaction();
             // Obtém o usuário autenticado
@@ -79,14 +80,17 @@ class LicenciamentoController extends Controller
             $licenciamento_request = $request->validated();
 
             $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
+            $licenciamento_request['peso_bruto'] = 0.00;
+            $licenciamento_request['adicoes'] = 0;
 
             // Criar licenciamento (código será gerado automaticamente pelo Model)
             $licenciamento = Licenciamento::create($licenciamento_request);
 
             DB::commit();
 
-        // Redirecionar após a criação com uma mensagem de sucesso
-        return redirect()->route('licenciamentos.index', $licenciamento->id)->with('success', 'Licenciamento criado com sucesso!');
+            // Redirecionar após a criação com uma mensagem de sucesso
+            return redirect()->route('mercadorias.create', ['licenciamento_id' => $licenciamento->id])->with('success', 'Licenciamento criado com sucesso!');
+
         } 
         catch (QueryException $th) {
             return DatabaseErrorHandler::handle($th, $request);
@@ -94,13 +98,41 @@ class LicenciamentoController extends Controller
         
     }
 
+    public function storeDraft(Request $request){
+
+        try {
+            DB::beginTransaction();
+
+            // Obtém o usuário autenticado
+            $user = Auth::user();
+
+            $licenciamento_rascunho = $request->all();
+
+            $licenciamento_rascunho['empresa_id'] = $user->empresas->first()->id;
+            
+            $rascunho = LicenciamentoRascunho::create($licenciamento_rascunho);
+
+            DB::commit();
+
+            return redirect()->back()->with('warning', 'Licenciamento Salvo como Rascunho');
+        } catch (QueryException $th) {
+            return DatabaseErrorHandler::handle($th, $request);
+        }
+    }
+
     /**
      * Display the specified resource.
      */
+
     public function show(Licenciamento $licenciamento)
     {
-        //
+        // Buscar o licenciamento pelo ID
+        $licenciamento = Licenciamento::with('mercadorias')->findOrFail($licenciamento->id);
+
+        // Retornar a view com os dados do licenciamento
+        return view('processos.licenciamento_show', compact('licenciamento'));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -153,21 +185,28 @@ class LicenciamentoController extends Controller
     {
         // Buscando o processo pelo ID
         $licenciamento = Licenciamento::findOrFail($Idlice);
-        $mercadorias = $importacao->mercadorias;  // Supondo que mercadorias seja um relacionamento
+
+        // Verificando se os campos Frete e Seguro estão preenchidos
+        if (empty($licenciamento->frete) || empty($licenciamento->seguro)) {
+            // Redirecionar de volta com uma mensagem de erro
+            return redirect()->back()->with('error', 'Os campos Frete e Seguro precisam ser preenchidos antes de gerar o licenciamento.');
+        }
+
+        $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
 
         $FOB = $licenciamento->fob_total;
         $Frete = $licenciamento->frete;
         $Seguro = $licenciamento->seguro;
 
         // Linha 0 - Cabeçalho do processo
-        $linha0 = "0|" . count($mercadorias) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
+        $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
         
         // Linha 1 - Informações do exportador e transporte
-        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->nacionalidade_transporte}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadorias) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$licenciamento->pais_origem}{$licenciamento->porto_origem}|{$licenciamento->pais_origem}|AO||||";
+        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->nacionalidade_transporte}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$licenciamento->pais_origem}{$licenciamento->porto_origem}|{$licenciamento->pais_origem}|AO||||";
         
         // Linha 2 - Adições de mercadorias
         $adicoes = [];
-        foreach ($mercadorias as $key => $adicao) {
+        foreach ($mercadoriaAgrupada as $key => $adicao) {
             $ordem = $key + 1;
             
             // Calculando Frete e Seguro proporcionais
@@ -177,7 +216,7 @@ class LicenciamentoController extends Controller
             $CIF = $frete_seguro + $adicao->preco_total;
             
             // Criando a linha de adição
-            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->Quantidade}||{$licenciamento->pais_origem}|{$adicao->Peso}|{$licenciamento->moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||{$adicao->Unidade}|||||||||||||||||||";
+            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->quantidade_total}||{$licenciamento->pais_origem}|{$adicao->peso_total}|{$licenciamento->moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||Kg|||||||||||||||||||";
         }
 
         // Montando o conteúdo completo
@@ -185,6 +224,9 @@ class LicenciamentoController extends Controller
 
         // Nome do arquivo
         $nomeArquivo = 'licenciamento_' . $licenciamento->codigo_licenciamento . '.txt';
+
+        $licenciamento->txt_gerado = 1;
+        $licenciamento->save();
 
         // Criando e retornando o arquivo .txt para download
         return response($conteudo)

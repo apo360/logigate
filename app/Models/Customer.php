@@ -76,4 +76,10 @@ class Customer extends Model
         return $this->belongsTo(ContaCorrente::class, 'cliente_id');
     }
 
+    public function avencas(){
+        return $this->hasMany(CustomerAvenca::class);
+    }
+
+
 }
+

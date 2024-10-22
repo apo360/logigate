@@ -98,4 +98,6 @@ class SalesInvoice extends Model implements Auditable
             return 'Por Pagar';
         }
     }
+
+    // Eventos para realizar sempre que o controller ou model for usado no backend
 }

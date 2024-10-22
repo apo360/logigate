@@ -7,7 +7,7 @@
         <meta name="author" content="Apolinário Ferreira Ernesto" />
         <title>Logigate - Inicie com Logigate</title>
         <!-- Favicon-->
-        <link rel="icon" type="image/x-icon" href="" />
+        <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}" />
         <!-- Custom Google font-->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,14 +22,17 @@
             <!-- Navigation-->
             <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
                 <div class="container px-5">
-                    <a class="navbar-brand" href="index.html"><span class="fw-bolder text-primary">LogiGate</span></a>
+                
+                    <a class="navbar-brand" href="index.html">
+                        <img src="{{ asset('dist/img/LOGIGATE.png') }}" alt="LogiGate" class="brand-image img-circle elevation-3" style="opacity: .8; max-width: 120px;">
+                    </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
                     <div class="collapse navbar-collapse" id="navbarSupportedContent">
                         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
                             <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{route('modulos.index')}}">Modulos</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Planos</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Calculadora</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#">Markteplace</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{{ route('consultar.licenciamento') }}">Consulta</a></li>
                             <li class="nav-item"><a class="nav-link" href="#">Suporte ao Cliente</a></li>
                             @if (Route::has('login'))
                                 @auth
@@ -42,7 +45,7 @@
                                     </li>
                                     @if (Route::has('register'))
                                         <li class="nav-item">
-                                            <a href="{{ route('cedula') }}" class="nav-link btn btn-outline-dark">Experimente Grátis</a>
+                                            <a href="{{ route('register') }}" class="nav-link btn btn-outline-dark">Experimente Grátis</a>
                                         </li>
                                     @endif
                                 @endauth
@@ -60,7 +63,7 @@
                             <div class="text-center text-xxl-start">
                                 <div class="badge bg-gradient-primary-to-secondary text-white mb-4"><div class="text-uppercase">Processos Aduaneiro &middot; Facturação &middot; Logistica</div></div>
                                 <div class="fs-3 fw-light text-muted">Posso ajudar na sua gestão </div>
-                                <h1 class="display-3 fw-bolder mb-5"><span class="text-gradient d-inline">30 Dias Gratuitos Sem Compromisso</span></h1>
+                                <h1 class="display-3 fw-bolder mb-5"><span class="text-gradient d-inline">15 Dias Gratuitos Sem Compromisso</span></h1>
                                 <div class="d-grid gap-3 d-sm-flex justify-content-sm-center justify-content-xxl-start mb-3">
                                     <a class="btn btn-primary btn-lg px-5 py-3 me-sm-3 fs-6 fw-bolder" href="{{ route('cedula') }}">Experimente Grátis</a>
                                     <a class="btn btn-outline-dark btn-lg px-5 py-3 fs-6 fw-bolder" href="projects.html">Planos</a>
@@ -231,24 +234,86 @@
             </section>
 
             <!-- Reason -->
-            <section class="bg-light bg_reason">
-                <h2>Some Reasons</h2>
-                <h1>Porque o Logigate</h1>
+            <section class="bg-light bg_reason py-5">
+                <div class="container px-5">
+                    <h2 class="text-center">Por Que Escolher Logigate?</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h3>Automatização Completa</h3>
+                            <p>Nosso software permite que você automatize seus processos aduaneiros e de faturação, reduzindo o tempo e os erros manuais.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>Integração Simplificada</h3>
+                            <p>Integrado com sistemas de logística e CRM, o Logigate conecta suas operações em uma única plataforma.</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3>Suporte 24/7</h3>
+                            <p>Com nossa equipe dedicada de suporte, você nunca estará sozinho para resolver problemas ou tirar dúvidas.</p>
+                        </div>
+                    </div>
+                </div>
             </section>
+
 
             <!-- Planos -->
-            <section class="bg-light bg_reason">
-                <h3>Os melhores planos para a sua Empresa</h3>
-                <h2>Planos adequados ao seu negocio</h2>
+            <section class="bg-light bg_plans py-5">
+                <div class="container px-5">
+                    <h2 class="text-center">Escolha o Melhor Plano para Sua Empresa</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Plano Básico</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Inclui funcionalidades essenciais para a gestão de processos aduaneiros.</p>
+                                    <p><strong>$19.99/mês</strong></p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="btn btn-primary">Escolher Plano</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Plano Avançado</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Funcionalidades avançadas com suporte a múltiplos usuários e relatórios.</p>
+                                    <p><strong>$49.99/mês</strong></p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="btn btn-primary">Escolher Plano</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h3>Plano Premium</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>O plano completo com todas as funcionalidades e suporte prioritário.</p>
+                                    <p><strong>$99.99/mês</strong></p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="#" class="btn btn-primary">Escolher Plano</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
+            <!-- xbxxvkcndkcncknkfsnksdnskfs -->
             <section class="bg-light py-5">
                 <div class="container px-5">
                     <div class="row gx-5 justify-content-center">
                         <div class="col-xxl-8">
                             <div class="text-center my-5">
                                 <h2 class="display-5 fw-bolder"><span class="text-gradient d-inline">Logigate</span></h2>
-                                <p class="lead fw-light mb-4">É um software de Processos Aduaneiros e Facturação Online.</p>
+                                <p class="lead fw-light mb-4">É um software de gestão para Processos Aduaneiros e Facturação Online.</p>
                                 <p class="text-muted">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugit dolorum itaque qui unde quisquam consequatur autem. Eveniet quasi nobis aliquid cumque officiis sed rem iure ipsa! Praesentium ratione atque dolorem?</p>
                                 <div class="d-flex justify-content-center fs-2 gap-4">
                                     <a class="text-gradient" href="#!"><i class="bi bi-twitter"></i></a>

@@ -1,6 +1,7 @@
 <x-app-layout>
 <form action="{{ route('documentos.update', $documento) }}" method="POST">
     @csrf
+    @method('PUT')
     <!-- Motivo de devolução -->
     <div class="container">
         <div class="row">
@@ -15,7 +16,6 @@
         <label for="metodo_devolucao">Método de Devolução de Valores</label>
         <select class="form-control" id="metodo_devolucao" name="metodo_devolucao" required>
             <option value="dinheiro">Dinheiro</option>
-            <option value="cartao">Cartão</option>
             <option value="transferencia">Transferência</option>
             <option value="conta_corrente">Manter em Conta Corrente</option>
         </select>
@@ -28,6 +28,7 @@
     </div>
             </div>
             <div class="col-md-8">
+                <input type="hidden" name="document_type" id="document_type" value="NC">
                 NC Nota de Credito <br>
                 {{ $documento->invoice_no}} <br>
                 Emitido por : {{$documento->user->name}}
@@ -67,7 +68,7 @@
     </div>
 
     <!-- Botão para adicionar mais itens -->
-    <button type="button" class="btn btn-primary" id="add_item">Adicionar Item</button>
+    <button class="btn btn-primary" id="add_item">Adicionar Item</button>
 
     <!-- Botão de submissão -->
     <button type="submit" class="btn btn-success">Submeter Nota de Crédito</button>

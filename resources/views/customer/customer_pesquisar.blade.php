@@ -30,9 +30,11 @@
 </style>
 
 
-    <x-slot name="header">
-        <x-breadcrumb title="Pesquisar Clientes" breadcrumb="Pesquisar Clientes" />
-    </x-slot>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Clientes', 'url' => route('customers.index')],
+        ['name' => 'Pesquisar Clientes' , 'url' => '']
+    ]" separator="/" />
     <br>
     <div class="container mt-5">
         <div class="card card-navy">

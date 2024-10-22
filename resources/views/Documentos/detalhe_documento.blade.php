@@ -63,6 +63,8 @@
                 <div class="col-md-8">
                     <header class="mb-4">
                         <h4>{{$documento->invoice_no}}</h4>
+                        <h4>{{$documento->invoice_date_end}}</h4>
+                        
                         <hr>
                         <p class="mb-2">
                             <strong>Tax ID: {{$documento->customer->CustomerTaxID}}</strong><br>

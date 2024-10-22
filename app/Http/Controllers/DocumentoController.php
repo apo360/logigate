@@ -6,7 +6,10 @@ use App\Helpers\DatabaseErrorHandler;
 use App\Models\Customer;
 use App\Models\Documento;
 use App\Models\InvoiceType;
+use App\Models\Licenciamento;
+use App\Models\MetodoPagamento;
 use App\Models\Processo;
+use App\Models\ProcLicenFactura;
 use App\Models\Produto;
 use App\Models\SalesDocTotal;
 use App\Models\SalesInvoice;
@@ -74,9 +77,40 @@ class DocumentoController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        //
+    public function index(){
+
+        $invoices = SalesInvoice::all();
+
+        $faturasPagas = SalesDocTotal::whereNotNull('data_pagamento')->count();
+        $faturasPorPagar = SalesDocTotal::whereNull('data_pagamento')->count();
+        $faturasEmAtraso = SalesDocTotal::whereNull('data_pagamento')->where('data_pagamento', '<', now())->count();
+
+        $tableData = [
+            'headers' => ['Tipo', 'Número da Fatura', 'Cliente', 'Total', 'Status',''],
+            'rows' => [],
+        ];
+
+        foreach ($invoices as $key => $fatura ) {
+            $tableData['rows'][] = [
+                '<div id="doc-header-type" data-href="#/office/change/">
+                    <div style="background: gray; " class="doc-type-circle doc-type inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md ">
+                    '.$fatura->invoiceType->Code.'
+                    </div> 
+                </div>',
+                $fatura->invoice_no,
+                $fatura->customer->CompanyName ?? '',
+                $fatura->salesdoctotal->gross_total ?? '0.00',
+                $fatura->getStatusAttribute(),
+                '
+                   <div class="inline-flex">
+                    <a href="'.route('documentos.show', $fatura).'" class="btn btn-sm "><i class="fas fa-eye"></i></a>
+                    <a href="'.route('documento.print', $fatura->id).'" class="btn btn-sm "><i class="fas fa-print"></i></a>
+                   </div>         
+                ',
+            ];
+        }
+
+        return view('Documentos.index', compact('tableData','invoices','faturasPagas', 'faturasPorPagar', 'faturasEmAtraso'));
     }
 
     /**
@@ -84,30 +118,59 @@ class DocumentoController extends Controller
      */
     public function create(Request $request)
     {
-        $tipoDocumentos = DB::table('InvoiceType')->get();
-        $produtos = DB::table('Listar_Produtos')->get();
+        $tipoDocumentos = DB::table('invoice_types')->get();
         
         // Verifica se o parâmetro 'id' está presente no request
-        if ($request->has('id')) {
-            $id = $request->input('id');
+        if ($request->has('licenciamento_id')) {
+            $id = $request->input('licenciamento_id');
+            $licenciamento = Licenciamento::Find($id);
+
+            // 
+            $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->get();
             
             // Busca o processo ou dado relacionado ao id
             $processo = Processo::findOrFail($id); // Encontrar o processo pelo ID
             
-            // Filtra os produtos do tipo 'S' (serviço)
-            $Servico = $produtos->where('ProductType', 'S');
-            
             // Retorna a view associada quando o 'id' existe
-            return view('Documentos.create_documento', compact('processo', 'produtos', 'Servico', 'tipoDocumentos'));
+            return view('Documentos.create_documento', compact('licenciamento', 'produtos', 'tipoDocumentos'));
         } else {
+            
+            $produtos = DB::table('Listar_Produtos')->get();
+
             // Retorna a view padrão de criação quando não há 'id'
-            $clientes = Customer::all();
+            $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
 
             // Gera novo código para o cliente
             $newCustomerCode = Customer::generateNewCode();
 
             return view('Documentos.create_documento_2', compact('clientes', 'tipoDocumentos', 'produtos', 'newCustomerCode'));
         }
+    }
+
+    // Metodo para criar o documento com parametros
+    public function createParams($licenciamento_id = null, $processo_id = null){
+
+        // Inicializa variáveis para controle
+        $licenciamento = null; $processo = null; $cliente = null;
+        $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->get();
+
+        // Verifica se o licenciamento_id foi passado
+        if ($licenciamento_id) 
+        { 
+            $licenciamento = Licenciamento::find($licenciamento_id);
+            $detalhe = "Licenciamento cod." . $licenciamento->codigo_licenciamento;
+            $cliente = $licenciamento->cliente;
+        }
+
+        // Verifica se o processo_id foi passado
+        if ($processo_id) { 
+            $processo = Processo::find($processo_id);
+            $detalhe = "Processo cod." . $processo->id;
+            $cliente = $processo->cliente;
+        }
+        
+        return view('Documentos.create_documento', compact('produtos', '$cliente'));
+
     }
 
 
@@ -141,6 +204,31 @@ class DocumentoController extends Controller
                 'system_entry_date' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
                 'customer_id' => $request->input('customer_id'), 
             ]);
+
+           // Verificar se existe licenciamento ou processo no request
+            if (!empty($request->input('licenciamento_id'))) {
+                
+                Licenciamento::where('id', $request->input('licenciamento_id'))->update([
+                    'Nr_factura' => $salesInvoice->invoice_no,
+                    'status_fatura' => 'emitida'
+                ]);
+
+                ProcLicenFactura::create([
+                    'empresa_id' => Auth::user()->empresas->first()->id,
+                    'licenciamento_id' => $request->input('licenciamento_id'),
+                    'processo_id' => null,
+                    'fatura_id' => $salesInvoice->id,
+                    'status_fatura' => 'emitida'
+                ]);
+            } elseif (!empty($request->input('processo_id'))) {
+                ProcLicenFactura::create([
+                    'empresa_id' => Auth::user()->empresas->first()->id,
+                    'licenciamento_id' => null,
+                    'processo_id' => $request->input('processo_id'),
+                    'fatura_id' => $salesInvoice->id,
+                    'status_fatura' => 'emitida'
+                ]);
+            }
 
             SalesStatus::create([
                 'documentoID' => $salesInvoice->id,
@@ -249,22 +337,65 @@ class DocumentoController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(SalesInvoice $documento){
+
         return view('Documentos.ncredito_documento', compact('documento'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Documento $documento)
+    public function update(Request $request, SalesInvoice $documento)
     {
-        //
+        // Criar uma NC (Documento Anulado)
+        $invoiceTypeID = (new InvoiceType())->getID($request->input('document_type'));
+
+        $result = DB::select("CALL GenerateInvoiceNo(?,?)", [$invoiceTypeID, Auth::user()->empresas->first()->id]);
+
+        $salesInvoice = SalesInvoice::create([
+            'invoice_no' => $result[0]->InvoiceNo,
+            'hash' => '0',
+            'hash_control' => '0',
+            'period' => 1,
+            'invoice_date' => Carbon::now()->toDateTimeString(),
+            'invoice_date_end' => Carbon::now()->toDateTimeString(),
+            'self_billing_indicator' => 0,
+            'cash_vat_scheme_indicator' => 0,
+            'third_parties_billing_indicator' => 0,
+            'invoice_type_id' => $invoiceTypeID,
+            'source_id' => Auth::user()->id,
+            'system_entry_date' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
+            'customer_id' => $documento->cliente->id, 
+        ]);
+
+        if($documento->salesstatus->invoice_status == 'N'){
+            SalesStatus::where('documentoID', $documento->id)->update([
+                'documentoID' => $documento->id,
+                'invoice_status' => 'A',
+                'invoice_status_date' => Carbon::now()->toDateTimeString(),
+                'source_cancel_id' => Auth::user()->id,
+                'detalhe' => $request->input('detalhes_fatura'), 
+                'motivo'  => $request->input('motivo_devolucao'),
+            ]);
+        }
+
+        // Assinar o campo Hash
+        $this->signAndSaveHash($salesInvoice->id);
+        
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Documento $documento)
+    public function destroy(SalesInvoice $documento)
     {
         //
+    }
+
+    public function ViewPagamento($id){
+
+        // Verificar se o usuario que está em sessão pertence a empresa em sessão
+        $salesInvoice = SalesInvoice::findOrFail($id);
+        $meios = MetodoPagamento::all();
+        return view('Documentos.pagamento', compact('salesInvoice', 'meios'));
     }
 }

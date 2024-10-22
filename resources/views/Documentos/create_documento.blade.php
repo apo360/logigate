@@ -43,8 +43,16 @@
 </style>
 
 <x-app-layout>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')],
+        ['name' => 'Visualizar Licenciamento', 'url' => route('licenciamentos.show', $licenciamento->id)],
+        ['name' => 'Emitir Factura', 'url' => route('documentos.create', ['licenciamento_id' => $licenciamento->id])]
+    ]" separator="/" />
+
     <form action="{{ route('documentos.store') }}" method="POST">
         @csrf
+        <input type="hidden" name="licenciamento_id" id="licenciamento_id" value="{{ $licenciamento->id }}">
         <div class="col-md-12">
             <div class="row hfluid">
                 <!-- Documentos -->
@@ -71,9 +79,9 @@
 
                                 <div class="flex float-right">
                                     <label for="customer_id">Cliente:</label>
-                                    <p>{{ $processo->cliente->CustomerTaxID }}</p>
-                                    {{ $processo->cliente->CompanyName }}
-                                    <input type="hidden" name="customer_id" id="cliente_choose" value="{{ $processo->cliente->id }}" >
+                                    <p>{{ $licenciamento->cliente->CustomerTaxID }}</p>
+                                    {{ $licenciamento->cliente->CompanyName }}
+                                    <input type="hidden" name="customer_id" id="cliente_choose" value="{{ $licenciamento->cliente->id }}" >
                                 </div>
                             </div>
                         </div>
@@ -283,47 +291,62 @@
         </div>
     </form>
 
-    <!-- Modal para Listar os Produtos / Serviços -->
-    <div class="modal-overlay" id="modal-overlay"></div>
-        <aside class="modal-aside" id="modal-aside">
-            <!-- Modal content here -->
-            <div class="header-service">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h3>Selecionar Produto/Serviço</h3>
-                        <input type="search" name="" id="" class="form-control">
-                    </div>
-                    <div class="col-md-6">
-                        <x-button>
-                            <a href="">Categorias</a>
-                        </x-button>
-                        <x-button>
-                            <a href="">Produtos</a>
-                        </x-button>
-                    </div>
-                </div>
+    <!-- Modal Overlay para editar os Produtos / Serviços -->
+    <div class="modal-overlay" id="edit-product-modal-overlay" tabindex="-1" aria-label="Fechar modal"></div>
+    <aside class="modal-aside" id="edit-product-modal-aside" aria-labelledby="edit-product-title" role="dialog">
+        <div class="card card-navy">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 id="edit-product-title" class="mb-0">Editar Produto/Serviço</h4>
+                <button type="button" class="close" aria-label="Fechar" data-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-            <div class="body-service">
-                <ul>
-                    <li class="item side-product-item stock-">
-                        <a href="#" class="event" data-id="2" data-code="IN001" data-title="Inerentes" data-type="S" data-price="{{$processo->du->inerentes}}" data-tax="5">
-                            <span class="title">IN001</span>
-                            <span class="title">Inerentes</span> - 
-                            <span class="venda">{{$processo->du->inerentes}}</span>
-                        </a>
-                    </li>
-                    <li class="item side-product-item stock-">
-                        <a href="#" class="event" data-id="1" data-code="HN001" data-title="Honarios" data-type="S" data-price="{{$processo->du->honorario}}" data-tax="14">
-                            <span class="title">HN001</span>
-                            <span class="title">Honorarios</span> - 
-                            <span class="venda">{{$processo->du->honorario}}</span>
-                        </a>
-                    </li>
-                </ul>
+            <div class="card-body">
+                <form id="edit-product-form">
+                    <!-- Nome do Produto / Serviço -->
+                     <!-- Código do Produto -->
+                    <div class="form-group">
+                        <label for="edit-product-code">Código do Produto</label>
+                        <input type="text" class="form-control" id="edit-product-code" name="edit-product-code" placeholder="Código do produto" value="S001" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-product-name">Nome do Produto/Serviço</label>
+                        <input type="text" class="form-control" id="edit-product-name" name="edit-product-name" placeholder="Nome do produto/serviço" value="Licenciamento {{ $licenciamento->codigo_licenciamento }}" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-qntidade-tax">Quantidade do Produto</label>
+                        <input type="number" class="form-control" id="edit-qntidade-tax" name="edit-qntidade-tax" placeholder="Quantidade" step="0.01" required value="1">
+                    </div>
+                    
+                    <!-- Preço do Produto -->
+                    <div class="form-group">
+                        <label for="edit-product-price">Preço de Venda (Kz)</label>
+                        <input type="number" class="form-control" id="edit-product-price" name="edit-product-price" placeholder="Preço de venda" step="0.01" required>
+                    </div>
+
+                    <!-- Imposto -->
+                    <div class="form-group">
+                        <label for="edit-product-tax">Imposto (%)</label>
+                        <input type="number" class="form-control" id="edit-product-tax" name="edit-product-tax" placeholder="Imposto" step="0.01" value="14">
+                    </div>
+
+                    <!-- Desconto -->
+                    <div class="form-group">
+                        <label for="edit-descount-tax">Desconto (%)</label>
+                        <input type="number" class="form-control" id="edit-descount-tax" name="edit-descount-tax" placeholder="Descontos" step="0.01" required>
+                    </div>
+
+                    <!-- Botões -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary" id="confirm-edit-btn">Confirmar</button>
+                    </div>
+                </form>
             </div>
-            
-        </aside>
-    <!-- //Modal para Listar os Produtos / Serviços -->
+        </div>
+    </aside>
 
 </x-app-layout>
 
@@ -335,24 +358,143 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Obtém a data de hoje
         var hoje = new Date();
-        // Formata a data para o formato "YYYY-MM-DD"
-        var dataFormatada = hoje.toISOString().slice(0, 10);
+
+        // Formata a data para o formato "YYYY-MM-DD" (compatível com o campo date do HTML)
+        var dataFormatada = hoje.toISOString().slice(0,10);
+
         // Define o valor da data no campo "datahoje"
         document.getElementById('invoice_date').value = dataFormatada;
-
-        // Adiciona o produto do processo à tabela
-        adicionarProdutoATabela(
-            '{{$processo->id}}',
-            'S|Desp.Aduaneiro',
-            'Honorários do <br> processo <br>{{$processo->NrProcesso}}',
-            1,
-            14,
-            '{{$processo->du->honorario+$processo->du->honorario_iva}}'
-        );
-
-        // Chama a função para atualizar campo hidden
-        atualizarCampoHidden();
     });
+
+    // Funções para adicionar dados nas tabelas
+    function adicionarProdutoATabela(productId, productCode, productName, quantidade, imposto, preco, desconto) {
+
+        var total = preco * quantidade;
+
+        var desc_total = total - (total*(desconto/100));
+
+        $('#valorgeralservico').val(total);
+        var newRow = '<tr data-product-id="' + productId + '">' +
+            '<td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td></td>' +
+            '<td><i class="fas fa-edit editRow " style="color:cyan;"></i></td>' +
+            '<td class="text-left product-code">' + productCode + '</td>' +
+            '<td class="text-left product-name">' + productName + '</td>' +
+            '<td class="text-right product-descount">'+ desconto +'</td>' +
+            '<td class="text-right product-tax">' + imposto + '</td>' +
+            '<td class="text-right product-price">' + preco + '</td>' +
+            '<td class="text-right product-qntidade">' + quantidade + '</td>' +
+            '<td class="text-right product-subtotal">' + desc_total + '</td>' +
+            '</tr>';
+
+        $('#document-products tbody').append(newRow);
+
+        atualizarTaxas(imposto, total)
+
+    }
+
+    // Atualizar o Total Geral somando os subtotais
+    function updateTotal() {
+        var total = 0;
+        $('#document-products tbody tr').each(function() {
+            var subtotal = parseFloat($(this).find('.product-subtotal').text()) || 0;
+            var tax = parseFloat($(this).find('.product-tax').text()) || 0;
+
+            // Calcular o IVA (taxa) como um percentual do subtotal
+            var iva = subtotal * (tax / 100);
+
+            // Somar o subtotal + IVA ao total geral
+            total += subtotal + iva;
+        });
+
+        // Atualizar o valor do total geral no HTML
+        $('.total').text(total.toFixed(2) + ' Kz');
+        $('#valorgeralservico').val(total.toFixed(2)); // Para uso em um input hidden, se necessário
+    }
+
+    // Actualizar as Taxas
+    function calculateTaxes() {
+        var taxSummary = {}; // Objeto para armazenar o resumo das taxas (base e valores de IVA)
+        var totalIva = 0; // Armazena o IVA total
+        var totalComIva = 0; // Total com IVA
+
+        $('#document-products tbody tr').each(function() {
+            var subtotal = parseFloat($(this).find('.product-subtotal').text()) || 0;
+            var taxRate = parseFloat($(this).find('.product-tax').text()) || 0;
+
+            // Se a taxa já existe no resumo de impostos, atualiza a base e o IVA
+            if (taxSummary[taxRate]) {
+                taxSummary[taxRate].base += subtotal;
+                taxSummary[taxRate].iva += subtotal * (taxRate / 100);
+            } else {
+                // Se for uma nova taxa, cria um novo objeto para essa taxa
+                taxSummary[taxRate] = {
+                    base: subtotal,
+                    iva: subtotal * (taxRate / 100)
+                };
+            }
+
+            // Calcula o IVA total e o total com IVA
+            totalIva += subtotal * (taxRate / 100);
+            totalComIva += subtotal + (subtotal * (taxRate / 100));
+        });
+
+        // Limpar a tabela de impostos antes de inserir novos valores
+        $('#document-taxas tbody').empty();
+
+        // Inserir o resumo dos impostos na tabela #document-taxas
+        for (var tax in taxSummary) {
+            var row = `<tr>
+                <td class="text-left">${tax}%</td>
+                <td class="text-right">${taxSummary[tax].base.toFixed(2)} Kz</td>
+                <td class="text-right">${taxSummary[tax].iva.toFixed(2)} Kz</td>
+                <td class="text-right">${(taxSummary[tax].base + taxSummary[tax].iva).toFixed(2)} Kz</td>
+            </tr>`;
+            $('#document-taxas tbody').append(row);
+        }
+
+        // Atualizar o valor total geral e impostos no HTML
+        $('.total').text(totalComIva.toFixed(2) + ' Kz');
+        $('#valorgeralservico').val(totalComIva.toFixed(2)); // Para uso em um input hidden, se necessário
+    }
+
+    // ---------------------------
+    function atualizarCampoHidden() {
+        var dadosTabela = [];
+
+        $('#document-products tbody tr').each(function () {
+            var productId = $(this).data('product-id');
+            var productCode = $(this).find('td:eq(2)').text();
+            var productName = $(this).find('td:eq(3)').text();
+            var desconto = $(this).find('td:eq(4)').text();
+            var imposto = $(this).find('td:eq(5)').text();
+            var preco = $(this).find('td:eq(6)').text();
+            var quantidade = $(this).find('td:eq(7)').text();
+            var total = $(this).find('td:eq(8)').text();
+
+            dadosTabela.push({
+                productId: productId,
+                productCode: productCode,
+                productName: productName,
+                quantidade: quantidade,
+                imposto: imposto,
+                preco: preco,
+                desconto: desconto,
+                total: total
+            });
+        });
+
+        // Atualizar o valor do campo de input hidden
+        $('#dadostabela').val(JSON.stringify(dadosTabela));
+    }
+
+    // Função para remover a linha da tabela
+    function removeRow(button) {
+        $(button).closest('tr').remove();
+
+        updateTotal();
+        calculateTaxes();
+        atualizarCampoHidden();
+    }
 
     $(document).ready(function() {
         var $listTypes = $('#list-types');
@@ -395,44 +537,11 @@
             $listTypes.css('top', cardTitleHeight);
             $listTypes.toggleClass('active');
         });
-
-        $(document).on('click', '#modal-aside .body-service ul li', function() {
-            // Obter dados do produto do item clicado
-            var productId = $(this).find('.event').data('id');
-            var productName = $(this).find('.event').data('title');
-            var productCode = $(this).find('.event').data('code');
-            var productType =  $(this).find('.event').data('type');
-            var productPrice =  $(this).find('.event').data('price');
-            var productTax =  $(this).find('.event').data('tax');
-
-            // Se o tipo de produto for "P" (Presumo que "P" significa Produto)
-            if (productType === 'P') {
-                // Abra uma janela auxiliar para pedir a quantidade
-                var quantidade = prompt('Informe a quantidade do produto:', '1');
-
-                // Verifique se o usuário forneceu uma quantidade válida
-                if (quantidade !== null && !isNaN(quantidade) && quantidade > 0) {
-                    // Adicione o produto à tabela com a quantidade fornecida
-                    adicionarProdutoATabela(productId, productCode, productName, quantidade, productTax, productPrice);
-                    atualizarCampoHidden();
-                } else {
-                    // Informe ao usuário que a quantidade é inválida ou não foi fornecida
-                    alert('Quantidade inválida. O produto não foi adicionado.');
-                }
-            } else {
-                // Se o tipo de produto não for "P", adicione o produto à tabela com a quantidade padrão (1)
-                adicionarProdutoATabela(productId, productCode, productName, 1, productTax, productPrice);
-            }
-
-            // Fechar o modal
-            $('#modal-overlay').fadeOut();
-            $('#modal-aside').css('right', '-600px');
-        });
     });
 
 </script>
 
-<!-- Script para calcular as datas em função do tipo de vencimento -->
+<!-- Script para calcular a Data de Vencimento -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var tipoVencimento = document.getElementById('tipo_vencimento');
@@ -461,6 +570,7 @@
 
         switch (tipo) {
             case 'hoje':
+                dataVencimento.setDate(hoje.getDate() + 0);
                 break;
             case '15':
                 dataVencimento.setDate(hoje.getDate() + 15);
@@ -484,57 +594,88 @@
     }
 </script>
 
+<!-- Script para controlar a abertura e o fechamento dos modais -->
 <script>
     $(document).ready(function() {
+
+        // Referências aos elementos de overlay e modal
         var $modalOverlay = $('#modal-overlay');
         var $modalAside = $('#modal-aside');
+        var $editProductOverlay = $('#edit-product-modal-overlay');
+        var $editProductModal = $('#edit-product-modal-aside');
 
-        $('#office-add-services').click(function(e) {
-            e.preventDefault();
-            $modalOverlay.fadeIn();
-            $modalAside.css('right', '0');
-        });
+        // Função para abrir o modal de edição com dados
+        function openEditModal(product) {
+            $editProductOverlay.fadeIn();
+            $editProductModal.css('right', '0');
+        }
 
-        $modalOverlay.click(function() {
+        openEditModal(); // Como carregar o licenciamento como parametro
+
+        // Função para fechar todos os modais
+        function closeAllModals() {
+            // Fecha os modais de listagem e criação
             $modalOverlay.fadeOut();
             $modalAside.css('right', '-600px');
+        }
+
+        // Função para fechar o modal de edição
+        function closeEditModal() {
+            $editProductOverlay.fadeOut();
+            $editProductModal.css('right', '-600px');
+        }
+
+        // 3º: Abrir modal ao clicar no botão de edição da tabela HTML
+        $('#document-products').on('click', '.editRow', function() {
+
+            var row = $(this).closest('tr');
+
+            var product = {
+                name: row.find('.product-name').text(),
+                code: row.find('.product-code').text(),
+                price: row.find('.product-price').text(),
+                tax: row.find('.product-tax').text(),
+                qnt: $('.product-qntidade').val(),
+                descount: $('.product-descount').val()
+            };
+            openEditModal(product);
+            
         });
+
+        // Ação ao clicar no botão de confirmar no modal de edição
+        $('#confirm-edit-btn').click(function() {
+            var updatedProduct = {
+                name: $('#edit-product-name').val(),
+                code: $('#edit-product-code').val(),
+                price: $('#edit-product-price').val(),
+                tax: $('#edit-product-tax').val(),
+                qnt: $('#edit-qntidade-tax').val(),
+                descount: $('#edit-descount-tax').val()
+            };
+
+            // Atualizar a tabela HTML.
+
+            adicionarProdutoATabela(updatedProduct.code, updatedProduct.code, updatedProduct.name, updatedProduct.qnt, updatedProduct.tax, updatedProduct.price, updatedProduct.descount)
+
+            updateTotal(); // Recalcular o total geral
+
+            calculateTaxes(); // Recalcular o total das taxas
+
+            atualizarCampoHidden();
+            
+            closeEditModal(); // Fecha o modal
+
+        });
+
+        // Fechar modal ao clicar no overlay
+        $editProductOverlay.click(function() {
+            closeEditModal();
+        });
+
+        
     });
-</script>
 
-<script>
-    function adicionarProdutoATabela(productId, productCode, productName, quantidade, imposto, preco) {
-        // Lógica para adicionar o produto à tabela
-        // Você precisa implementar a lógica específica para a sua tabela
-        // Aqui, vou adicionar uma nova linha à tabela de exemplo
-        var total = preco*quantidade;
-        $('#valorgeralservico').val(total);
-        var newRow = '<tr data-product-id="' + productId + '">' +
-            '<td></td>' +
-            '<td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td>' +
-            '<td class="text-left">'+ productCode + '</td>' +
-            '<td class="text-left">' + productName + '</td>' +
-            '<td class="text-right">0</td>' +
-            '<td class="text-right">' + imposto + '</td>' +
-            '<td class="text-right">' + formatarNumero(preco) + '</td>' +
-            '<td class="text-right">' + quantidade + '</td>' +
-            '<td class="text-right geraltotal">' + total + '</td>' +
-            '</tr>';
-
-        $('#document-products tbody').append(newRow);
-        // Atualizar descontos...
-        atualizarDescontos();
-        // Atualizar taxas...
-        atualizarTaxas(imposto, total);
-    }
-
-    // Função para remover a linha da tabela
-    function removeRow(button) {
-        $(button).closest('tr').remove();
-
-        atualizarCampoHidden();
-    }
-
+    // ---------------------------
     function atualizarCampoHidden() {
         var dadosTabela = [];
 
@@ -542,9 +683,10 @@
             var productId = $(this).data('product-id');
             var productCode = $(this).find('td:eq(2)').text();
             var productName = $(this).find('td:eq(3)').text();
-            var quantidade = $(this).find('td:eq(7)').text();
+            var desconto = $(this).find('td:eq(4)').text();
             var imposto = $(this).find('td:eq(5)').text();
             var preco = $(this).find('td:eq(6)').text();
+            var quantidade = $(this).find('td:eq(7)').text();
             var total = $(this).find('td:eq(8)').text();
 
             dadosTabela.push({
@@ -554,13 +696,17 @@
                 quantidade: quantidade,
                 imposto: imposto,
                 preco: preco,
+                desconto: desconto,
                 total: total
             });
         });
 
         // Atualizar o valor do campo de input hidden
         $('#dadostabela').val(JSON.stringify(dadosTabela));
-    }//
+    }
+</script>
+
+<script>
 
     function formatarNumero(numero) {
         // Converte o número para uma string formatada
@@ -583,8 +729,8 @@
         $('#document-products tbody tr').each(function() {
 
             const total = vartotal;
-            const base = vartotal/1.14;
-            const iva = total - base;
+            const iva = vartotal * (taxa / 100);
+            const base = vartotal - iva;
 
             totalBase += base;
             totalIVA += iva;
@@ -638,104 +784,5 @@
         $('#document-products .document-desconto #desconto-valor').text(formatarNumero(descontoTotal));
         
     }
-    
-    $(document).ready(function() {
-        // Handle the input event on #cliente_choose
-        $('#cliente_choose').on('input', function() {
-            var selectedCliente = $(this).val();
-
-            // Clear previous processos list
-            $('#processos-list').empty();
-
-            // Send AJAX GET request to retrieve processos data
-            $.get('/api/customers/'+selectedCliente+'/Pendente', function(response) {
-                var processos = response.processo;
-
-                // Check if processos data is available
-                if (processos && processos.length > 0) {
-                    // Iterate over each processo and generate HTML
-                    processos.forEach(function(processo) {
-                        var radioId = 'radio_' + processo.ProcessoID;
-                        var corpHtml = '<div class="line pointer doc-type-list border-left border-left-FT">' +
-                            '<input type="radio" id="type_' + radioId + '" name="processos" value="' + processo.ProcessoID + '">' +
-                            '<label for="type_' + radioId + '">' + processo.RefCliente + '</label>' +
-                            '<span for="type_' + radioId + '">' + processo.Status + '</span>' +
-                            '</div>';
-
-                        // Append the generated HTML to #processos-list
-                        $('#processos-list').append(corpHtml);
-                    });
-                } else {
-                    $('#processos-list').text('Nenhum processo encontrado.');
-                }
-            }, 'json');
-        });
-
-        $(document).on('change', 'input[name="processos"]', function() {
-            // Get the value of the selected input:radio
-            var selectedProcesso = $(this).val();
-
-            // Get the value of the Label selected
-            $.get('/api/processos/'+selectedProcesso+'/Pendente', function(response) {
-                const data = response;
-
-                // Limpar o corpo da tabela antes de preenchê-la com novos dados
-                $('#document-products tbody').empty();
-
-                // Iterar pelos processos
-                data.processos.forEach(function(processo) {
-                    const mercadoriasHTML = processo.mercadorias.map(function(mercadoria) {
-                        return `Importação - <span>${mercadoria.marcas}</span><br>${mercadoria.designacao}<br><br>`;
-                    }).join('');
-
-                    $('#valorgeralservico').val(processo.cobrado.TOTALGERAL);
-                    const valor = parseFloat(processo.cobrado.TOTALGERAL);
-
-                    const totalGeral = formatarNumero(valor);
-                    const row = `
-                        <tr>
-                            <td></td>
-                            <td><td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td></td>
-                            <td class="text-left">Despacho Aduaneiro</td>
-                            <td class="text-left">${mercadoriasHTML}</td>
-                            <td class="text-right">0</td>
-                            <td class="text-right">14%</td>
-                            <td class="text-right">${totalGeral}</td>
-                            <td class="text-right">1</td>
-                            <td class="text-right geraltotal">${totalGeral}</td>
-                        </tr>
-                    `;
-
-                    $('#document-products tbody').append(row);
-                });
-
-                // Calcular e preencher o total geral no rodapé
-                const totalGeralRodape = data.processos.reduce(function(sum, processo) {
-                    return sum + parseFloat(processo.cobrado.TOTALGERAL);
-                }, 0);
-
-                $('#document-total-pay .total').text(parseFloat(totalGeralRodape).toFixed(2) + ' Kz');
-
-                atualizarTaxas(14,totalGeralRodape);
-            }, 'json');
-        });
-
-        $(document).on('click', '#modal-aside .body-service ul li', function() {
-            // Obter dados do produto do item clicado
-            var productId = $(this).find('.event').data('id');
-            var productName = $(this).find('.event').data('title');
-
-            // Adicionar produto à tabela
-            adicionarProdutoATabela(productId, productName);
-
-            // Fechar o modal
-            $('#modal-overlay').fadeOut();
-            $('#modal-aside').css('right', '-600px');
-        });
-
-        $('#document-products, input[name="desconto_percetagem"], input[name="desconto_numerario"]').on('change', function() {
-            
-            atualizarDescontos();
-        });
-    });
+ 
 </script>

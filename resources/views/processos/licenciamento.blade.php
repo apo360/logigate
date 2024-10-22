@@ -1,4 +1,11 @@
 <x-app-layout>
+
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')],
+        ['name' => 'Novo Licenciamento', 'url' => route('licenciamentos.create')]
+    ]" separator="/" />
+
     <div class="row">
         <div class="col-9">
             <form action="{{ route('licenciamentos.store') }}" method="POST">
@@ -32,7 +39,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-check"></i></span>
                                     </div>
-                                    <select id="tipo_declaracao" name="tipo_declaracao" required class="form-control">
+                                    <select id="tipo_declaracao" name="tipo_declaracao" required class="form-control" value="{{ old('tipo_declaracao') }}">
                                         <option value="">Selecionar</option>
                                         <option value="11">Importação Definitiva</option>
                                         <option value="21">Exportação Definitiva</option>
@@ -48,7 +55,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-check"></i></span>
                                     </div>
-                                    <select name="estancia_id" id="estancia_id" class="form-control">
+                                    <select name="estancia_id" id="estancia_id" class="form-control" value="{{ old('estancia_id') }}">
                                         <option value="">Selecionar</option>
                                         @foreach($estancias as $estancia)
                                             <option value="{{ $estancia->id }}" data-code="{{ $estancia->cod_estancia }}" data-desc="{{ $estancia->desc_estancia }}">{{ $estancia->desc_estancia }}</option>
@@ -99,7 +106,7 @@
                         <div class="row">
                             <div class="form-group mt-4 col-md-3">
                                 <label for="factura_proforma">Factura Proforma do cliente</label>
-                                <input type="text" id="factura_proforma" name="factura_proforma" required class="form-control">
+                                <input type="text" id="factura_proforma" name="factura_proforma" required class="form-control" value="{{ old('factura_proforma') }}">
                             </div>
 
                             <div class="form-group mt-4 col-md-3">
@@ -138,7 +145,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-country"></i></span>
                                     </div>
-                                    <select name="tipo_transporte" class="form-control rounded-md shadow-sm" id="tipo_transporte" required>
+                                    <select name="tipo_transporte" class="form-control rounded-md shadow-sm" id="tipo_transporte" value="{{ old('tipo_transporte') }}" required>
                                         <option value="">Selecionar</option>
                                         <option value="1">Maritimo</option>
                                         <option value="2">Ferroviário</option>
@@ -157,7 +164,7 @@
 
                             <div class="form-group mt-4 col-md-3">
                                 <label for="registo_transporte">Registo do Transporte:</label>
-                                <input type="text" id="registo_transporte" name="registo_transporte" required class="form-control">
+                                <input type="text" id="registo_transporte" name="registo_transporte" required class="form-control" value="{{ old('registo_transporte') }}">
                             </div>
 
                             <div class="form-group mt-4 col-md-3">
@@ -166,7 +173,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                     </div>
-                                    <select name="nacionalidade_transporte" class="form-control" id="nacionalidade_transporte" >
+                                    <select name="nacionalidade_transporte" class="form-control" id="nacionalidade_transporte" value="{{ old('nacionalidade_transporte') }}">
                                         @foreach($paises as $pais)
                                             <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
                                         @endforeach
@@ -179,7 +186,7 @@
 
                             <div class="form-group mt-4 col-md-3">
                                 <label for="manifesto">Manifesto</label>
-                                <input type="text" id="manifesto" name="manifesto" class="form-control">
+                                <input type="text" id="manifesto" name="manifesto" class="form-control" value="{{ old('manifesto') }}">
                             </div>
                         </div>
 
@@ -190,7 +197,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-check"></i></span>
                                     </div>
-                                    <select id="moeda" name="moeda" required class="form-control">
+                                    <select id="moeda" name="moeda" required class="form-control" value="{{ old('moeda') }}">
                                         <option value="">Selecionar</option>
                                         @foreach($paises->filter(function($pais) { return $pais->cambio > 0; }) as $pais)
                                             <option value="{{ $pais->moeda }}">
@@ -205,7 +212,7 @@
                             </div>
                             <div class="form-group mt-4 col-md-3">
                                 <label for="data_entrada">Data de Chegada</label>
-                                <input type="date" id="data_entrada" name="data_entrada" class="form-control">
+                                <input type="date" id="data_entrada" name="data_entrada" class="form-control" value="{{ old('data_entrada') }}">
                             </div>
 
                             <div class="form-group mt-4 col-md-3">
@@ -214,7 +221,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                     </div>
-                                    <x-input type="text" name="porto_entrada" class="form-control rounded-md shadow-sm" list="porto" required />
+                                    <x-input type="text" name="porto_entrada" class="form-control rounded-md shadow-sm" value="{{ old('porto_entrada') }}" list="porto" required />
                                     <datalist id="porto">
                                         @foreach($portos as $porto)
                                             <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
@@ -230,33 +237,53 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <label for="metodo_avaliacao">Método de Avaliação:</label>
-                                <select id="metodo_avaliacao" name="metodo_avaliacao" required class="form-control">
+                                <select id="metodo_avaliacao" name="metodo_avaliacao" required class="form-control" value="{{ old('metodo_avaliacao') }}">
                                     <option value="GATT">GATT</option>
                                     <option value="Outro">Outro</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <label for="forma_pagamento">Forma de Pagamento:</label>
-                                <select id="forma_pagamento" name="forma_pagamento" required class="form-control">
+                                <select id="forma_pagamento" name="forma_pagamento" required class="form-control" value="{{ old('forma_pagamento') }}">
                                     <option value="RD">RD</option>
                                     <option value="Outro">Outro</option>
                                 </select>
                             </div>
-                            <div class="col-md-2">
+                            <div class="col-md-3">
                                 <label for="codigo_banco">Código do Banco</label>
-                                <select name="codigo_banco" id="codigo_banco" class="form-control select2" required>
+                                <select name="codigo_banco" id="codigo_banco" class="form-select select2" value="{{ old('codigo_banco') }}" required >
                                     <option value=""></option>
                                     @foreach($ibans as $iban)
                                         <option value="{{$iban['code']}}" data-code="{{$iban['code']}}">
-                                            {{$iban['sname']}} - {{$iban['code']}}
+                                            {{$iban['code']}} - {{$iban['fname']}} ({{$iban['sname']}})
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
+                        </div>
+
+                        <div class = "row">
+                            <div class="form-group col-md-3">
+                                <label for="porto_origem">Porto de Origem</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-plane"></i></span>
+                                    </div>
+                                    <x-input type="text" name="porto_origem" class="form-control rounded-md shadow-sm" list="porto" required />
+                                    <datalist id="porto">
+                                        @foreach($portos as $porto)
+                                            <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
+                                        @endforeach
+                                    </datalist>
+                                    @error('porto_origem')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div> <!-- callcenter@ensa.co.ao -->
+                            </div>
 
                             <div class="form-group col-md-3">
                                 <label for="codigo_volume">Código do Volume:</label>
-                                <select id="codigo_volume" name="codigo_volume" required class="form-control">
+                                <select id="codigo_volume" name="codigo_volume" required class="form-control" value="{{ old('codigo_volume') }}">
                                     <option value="B">B - Carga Granel</option>
                                     <option value="F">F - Contentor Carregado</option>
                                     <option value="G">G - Carga Geral</option>
@@ -265,112 +292,17 @@
                                 </select>
                             </div>
                             
-                            <div class="form-group col-md-2">
+                            <div class="form-group col-md-3">
                                 <label for="qntd_volume">Quantidade de Volumes</label>
-                                <input type="number" id="qntd_volume" name="qntd_volume" required class="form-control">
+                                <input type="number" id="qntd_volume" name="qntd_volume" required class="form-control" value="{{ old('qntd_volume') }}">
                             </div>
-                        </div>
-
-                        <hr>
-                        <span>Mercadorias</span>
-                        <div class="row">
-                            <div class="row">
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="porto_origem">(Aero)Porto de Entrada</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-plane"></i></span>
-                                        </div>
-                                        <x-input type="text" name="porto_origem" class="form-control rounded-md shadow-sm" list="porto" required />
-                                        <datalist id="porto">
-                                            @foreach($portos as $porto)
-                                                <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
-                                            @endforeach
-                                        </datalist>
-                                        @error('porto_origem')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div> <!-- callcenter@ensa.co.ao -->
-                                </div>
-
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="frete">Frete</label>
-                                    <input type="text" id="frete" name="frete" required class="form-control">
-                                    @error('frete')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="seguro">Seguro</label>
-                                    <input type="text" id="seguro" name="seguro" required class="form-control">
-                                    @error('seguro')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="card card-navy">
-                                    <div class="card-header justify-between h-16">
-                                        <div class="card-title flex"> <span>Mercadorias</span> </div>
-
-                                        <div class="flex float-right">
-                                        
-                                            <a href="#" id="office-add-services" class="event button" data-toggle="modal" data-target="#mercadoriaModal">
-                                                <span class="icon-edit icon"></span>Add Mercadoria
-                                            </a>
-                                        </div>
-                                    </div>
-
-                                    <div class="card-body">
-                                        <input type="hidden" name="dadostabela" id="dadostabela" value="">
-                                        <table id="mercadoriasTable" class="table table-sm table-flex table-flex--autocomplete">
-                                            <thead>
-                                                <tr>
-                                                    <th class="text-left" width="5%">#</th>
-                                                    <th class="text-left" width="20%">Cód. Aduaneiro</th>
-                                                    <th>Mercadoria</th>
-                                                    <th>Uni</th>
-                                                    <th>Qtd</th>
-                                                    <th>Peso (kg)</th>
-                                                    <th>P. Unitário</th>
-                                                    <th>FOB</th>
-                                                    <th width="40"> <i class="fas fa-action"></i> </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <!-- Aqui os itens serão inseridos dinamicamente -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <div class="card-footer">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <label for="fob_total">FOB Total</label>
-                                                <input type="text" id="fob_total" name="fob_total" required class="form-control" readonly>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label for="peso_bruto">Peso Bruto</label>
-                                                <input type="text" id="peso_bruto" name="peso_bruto" required class="form-control" readonly>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label for="adicoes">Qtd de Adições</label>
-                                                <input type="text" id="adicoes" name="adicoes" required class="form-control" readonly>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
                         </div>
 
                     </div>
 
                     <div class="card-footer">
                         <div class="row">
-                            
-                        <button type="submit" class="btn btn-dark">Gerar Licenciamento</button>
-                            
+                            <button type="submit" class="btn btn-dark">Gerar Licenciamento</button>
                         </div>
                     </div>
 
@@ -411,206 +343,9 @@
         </div>
     </div>
 
-    <!-- Modal -->
-    <div class="modal fade" id="mercadoriaModal" tabindex="-1" role="dialog" aria-labelledby="mercadoriaModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="mercadoriaModalLabel">Adicionar Mercadoria</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="mercadoriaForm">
-                        <div class="form-group">
-                            <label for="codigo_aduaneiro">Código Aduaneiro</label>
-                            <input type="text" id="codigo_aduaneiro" name="codigo_aduaneiro" class="form-control" required list = "pauta_list">
-                            <datalist id="pauta_list">
-                                @foreach($pautaAduaneira as $pauta)
-                                    <option value="{{ $pauta->codigo }}">{{ $pauta->descricao }}</option>
-                                @endforeach
-                            </datalist>
-                        </div>
-                        <div class="form-group">
-                            <label for="descricao_m">Descrição</label>
-                            <input type="text" id="descricao_m" name="descricao_m" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="quantidade">Quantidade</label>
-                            <input type="number" id="quantidade" name="quantidade" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="peso">Peso (kg)</label>
-                            <input type="number" id="peso" name="peso" step="0.01" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="p_unitario">Preço Unitário</label>
-                            <input type="number" id="p_unitario" name="p_unitario" step="0.01" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="fob">FOB (Preço)</label>
-                            <input type="number" id="fob" name="fob" step="0.01" class="form-control" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="unidade">Unidade</label>
-                                    <select name="unidade" id="unidade" required class="form-control">
-                                        <option value="">Selecionar</option>
-                                        <option value="un">Unidade</option>
-                                        <option value="cx">Caixa</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="unidade">Qualificação</label>
-                                    <select name="Qualificacao" id="Qualificacao" class="form-control">
-                                        <option value="">Selecionar</option>
-                                        <option value="cont">Contentor</option>
-                                        <option value="auto">Automóvel</option>
-                                        <option value="outro">Outro</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        
-
-                        
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button type="button" id="saveMercadoria" class="btn btn-primary">Salvar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts necessários (jQuery, Bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-    <script>
-        $(document).ready(function() {
-            let rowCount = 0;
-            let pesoTotal = 0;
-            let fobTotal = 0;
-
-            // Função para adicionar mercadoria
-            $('#saveMercadoria').on('click', function() {
-                const codigoAduaneiro = $('#codigo_aduaneiro').val();
-                const descricao = $('#descricao_m').val();  // Descrição da Mercadoria
-                const quantidade = $('#quantidade').val();
-                const peso = parseFloat($('#peso').val());
-                const p_unitario = parseFloat($('#p_unitario').val());
-                const fob = parseFloat($('#fob').val());
-                const unidade = $('#unidade').val();
-
-                if (codigoAduaneiro && quantidade && peso && fob && unidade) {
-                    rowCount++;  // Incrementa contador de linhas
-                    pesoTotal += peso;  // Atualiza peso total
-                    fobTotal += fob;  // Atualiza FOB total
-
-                    // Adiciona nova linha na tabela
-                    $('#mercadoriasTable tbody').append(`
-                        <tr>
-                            <td>${rowCount}</td>
-                            <td>${codigoAduaneiro}</td>
-                            <td>${descricao}</td>
-                            <td>${unidade}</td>
-                            <td>${quantidade}</td>
-                            <td>${peso.toFixed(2)}</td>
-                            <td>${p_unitario.toFixed(2)}</td>
-                            <td>${fob.toFixed(2)}</td>
-                            <td><a class="btn btn-sm removeMercadoria"><i class="fas fa-trash" style ="color:darkred;"></i></a></td>
-                        </tr>
-                    `);
-
-                    atualizarValores();  // Atualiza os totais
-
-                    // Fecha o modal e limpa o formulário
-                    $('#mercadoriaModal').modal('hide');
-                    $('#mercadoriaForm')[0].reset();
-                } else {
-                    alert('Preencha todos os campos');
-                }
-            });
-
-            // Função para remover mercadoria
-            $(document).on('click', '.removeMercadoria', function() {
-                const row = $(this).closest('tr');
-                const peso = parseFloat(row.find('td:nth-child(4)').text());
-                const fob = parseFloat(row.find('td:nth-child(5)').text());
-
-                // Atualiza os totais após remoção
-                pesoTotal -= peso;
-                fobTotal -= fob;
-                row.remove();
-                rowCount--;  // Decrementa contador de linhas
-                atualizarValores();  // Atualiza os valores
-
-                // Atualiza a ordem das linhas
-                atualizarOrdem();
-            });
-
-            // Função para atualizar os valores de peso, FOB total e quantidade de adições
-            function atualizarValores() {
-                $('#peso_bruto').val(pesoTotal.toFixed(2));
-                $('#fob_total').val(fobTotal.toFixed(2));
-                $('#adicoes').val(rowCount);
-
-                // Atualiza FOB total com frete e seguro
-                const frete = parseFloat($('#frete').val()) || 0;
-                const seguro = parseFloat($('#seguro').val()) || 0;
-                const fobComFreteSeguro = fobTotal + frete + seguro;
-                $('#fob_total').val(fobComFreteSeguro.toFixed(2));
-            }
-
-            // Atualiza a ordem das mercadorias na tabela
-            function atualizarOrdem() {
-                $('#mercadoriasTable tbody tr').each(function(index) {
-                    $(this).find('td:first').text(index + 1);
-                });
-            }
-
-            // Atualiza os valores totais ao alterar frete ou seguro
-            $('#frete, #seguro').on('input', function() {
-                atualizarValores();
-            });
-
-            // ----------Actualizar Campo Hidden da tabela-----------------
-            function atualizarCampoHidden() {
-                var dadosTabela = [];
-
-                $('#document-products tbody tr').each(function () {
-                    var mercadoriaOrdem = $(this).find('td:eq(0)').text();
-                    var CodeAduaneiro = $(this).find('td:eq(1)').text();
-                    var Descricao = $(this).find('td:eq(2)').text();
-                    var unidade = $(this).find('td:eq(3)').text();
-                    var quantidade = $(this).find('td:eq(4)').text();
-                    var peso = $(this).find('td:eq(5)').text();
-                    var p_unitario = $(this).find('td:eq(6)').text();
-                    var fob = $(this).find('td:eq(7)').text();
-
-                    dadosTabela.push({
-                        mercadoriaOrdem: mercadoriaOrdem,
-                        CodeAduaneiro: CodeAduaneiro,
-                        Descricao: Descricao,
-                        unidade: unidade,
-                        quantidade: quantidade,
-                        peso: peso,
-                        p_unitario: p_unitario,
-                        fob: fob
-                    });
-                });
-
-                // Atualizar o valor do campo de input hidden
-                $('#dadostabela').val(JSON.stringify(dadosTabela));
-            }
-        });
-    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -672,6 +407,26 @@
                 allowClear: true
             });
         });
+
+        $(document).ready(function() {
+            // Função que envia automaticamente o rascunho a cada 60 segundos
+            setInterval(function() {
+                var formData = $('#licenciamento-form').serialize();
+
+                $.ajax({
+                    url: "{{ route('licenciamento.rascunho.store') }}",
+                    method: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        console.log('Rascunho salvo automaticamente.');
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Erro ao salvar rascunho automaticamente.');
+                    }
+                });
+            }, 60000); // Salva automaticamente a cada 60 segundos
+        });
+
     </script>
 
 </x-app-layout>

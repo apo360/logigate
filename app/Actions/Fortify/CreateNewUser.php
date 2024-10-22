@@ -7,15 +7,19 @@ use App\Mail\ConfirmationMail;
 use App\Models\Empresa;
 use App\Models\User;
 use App\Models\ActivatedModule;
+use App\Models\EmpresaUser;
+use App\Models\Representante;
 use App\Models\Subscricao;
 use Carbon\Carbon;
-use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
 use Spatie\Permission\Models\Role;
+use Illuminate\Validation\ValidationException;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -28,6 +32,7 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input)
     {
+        // Validação dos dados de entrada
         Validator::make($input, [
             'empresa' => ['required', 'string', 'max:255'],
             'nif' => ['nullable', 'string', 'max:50', 'unique:empresas'],
@@ -37,57 +42,97 @@ class CreateNewUser implements CreatesNewUsers
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : ['nullable'],
         ])->validate();
 
-        $user = User::create([
-            'name' => $input['name'],
-            'email' => $input['email'],
-            'password' => Hash::make($input['password']),
-        ]);
-
-        // Cria a empresa que administrador vai gerir
-        $empresa = Empresa::create([
-            'Empresa' => $input['empresa'],
-            'Designacao' => $input['Designacao'],
-            'NIF' => $input['nif'],
-            'Cedula' => $input['cedula'],
-            'Endereco_completo' => $input['endereco'],
-        ]);
-
-        // Para gerar o código de conta da empresa
+        // Gerar o código da conta da empresa
         $currentYear = Carbon::now()->year;
         $companyCount = Empresa::count();
-        $contaCode = 'LGi' . str_pad($companyCount + 1, 4, '0', STR_PAD_LEFT) . $currentYear; // 'LGi' can be replaced with any desired suffix
+        $contaCode = 'LGi' . str_pad($companyCount + 1, 4, '0', STR_PAD_LEFT) . $currentYear;
 
-        $user->empresas()->attach($empresa->id, ['conta' => $contaCode]);
+        try {
+            // Iniciar a transação
+            DB::beginTransaction();
 
-        Subscricao::create([
-            'empresa_id' => $empresa->id,
-            'modulo_id' => 1,
-            'data_expiracao' => now()->addYear(),
-            'status' => 'ATIVA'
-        ]);
+            // Cria a empresa que o administrador vai gerir
+            $empresa = Empresa::create([
+                'conta' => $contaCode,
+                'Empresa' => $input['empresa'],
+                'Designacao' => 'Despachante Oficial',
+                'NIF' => $input['nif'],
+                'Cedula' => $input['cedula'],
+                'Endereco_completo' => $input['endereco'],
+                'Provincia' => $input['provincia'],
+                'Cidade' => $input['cidade'], // Corrigido para 'Cidade'
+            ]);
 
-        ActivatedModule::create([
-            'module_id' => 1,
-            'empresa_id' => $empresa->id,
-            'activation_date' => now(),
-        ]);
+            // Introduzir dados do Representante
+            Representante::create([
+                'nome' => $input['name'],
+                'apelido' => $input['apelido'],
+                'telefone' => $input['telefone'],
+                'tipo' => $input['tipo_representante'],
+                'empresa_id' => $empresa->id,
+            ]);
 
-        // Atribuir permissões de Administrador...
-        $role = Role::findOrCreate('Adminstrador');
+            // Criar dados do Usuário
+            $user = User::create([
+                'name' => $input['name'],
+                'email' => $input['email'],
+                'password' => Hash::make($input['password']),
+            ]);
 
-        // Atribua o papel ao usuário
-        $user->assignRole($role);
+            // Dados do Relacionamento
+            EmpresaUser::create([
+                'empresa_id' => $empresa->id,
+                'user_id' => $user->id,
+            ]);
 
+            // Criar a subscrição
+            Subscricao::create([
+                'empresa_id' => $empresa->id,
+                'modulo_id' => 1,
+                'data_expiracao' => now()->addMonth(),
+                'status' => 'ATIVA',
+            ]);
 
-        $otp = rand(100000, 999999); // Gera um OTP de 6 dígitos
+            // Ativar o módulo
+            ActivatedModule::create([
+                'module_id' => 1,
+                'empresa_id' => $empresa->id,
+                'activation_date' => now(),
+            ]);
 
-        User::where('id', $user->id)->update([
-            'otp' => $otp,
-            'otp_expires_at' => Carbon::now()->addMinutes(30), // Expira em 30 minutos
-        ]);
-        // Enviar o e-mail de confirmação
-        Mail::to($user->email)->send(new ConfirmationMail($otp));
+            // Atribuir permissões de Administrador
+            $role = Role::findOrCreate('Administrador');
+            $user->assignRole($role);
 
-        return $user;
+            // Gerar OTP
+            $otp = rand(100000, 999999); // Gera um OTP de 6 dígitos
+            User::where('id', $user->id)->update([
+                'otp' => $otp,
+                'otp_expires_at' => Carbon::now()->addMinutes(30), // Expira em 30 minutos
+            ]);
+
+            // Enviar o e-mail de confirmação
+            Mail::to($user->email)->send(new ConfirmationMail($otp));
+
+            // Confirmar a transação
+            DB::commit();
+
+            return $user;
+        } catch (\Throwable $th) {
+            // Reverter a transação em caso de erro
+            DB::rollBack();
+
+            // Registra o erro no log
+            Log::error('Erro ao criar empresa e usuário.', [
+                'error' => $th->getMessage(),
+                'input' => $input,
+                'trace' => $th->getTraceAsString(),
+            ]);
+
+            // Lançar exceção para o usuário com uma mensagem genérica
+            throw ValidationException::withMessages([
+                'error' => 'Ocorreu um erro ao criar a empresa. Tente novamente mais tarde.',
+            ]);
+        }
     }
 }

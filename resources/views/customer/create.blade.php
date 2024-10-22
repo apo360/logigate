@@ -1,7 +1,9 @@
 <x-app-layout>
-    <x-slot name="header">
-        <x-breadcrumb title="Cadastro de Cliente" breadcrumb="Cadastro de Cliente" />
-    </x-slot>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => {{__('Clientes')}}, 'url' => route('customers.index')],
+        ['name' => {{__('Novo Cliente')}} , 'url' => '']
+    ]" separator="/" />
     <br>
     <div class="container">
         <div class="row">
@@ -67,46 +69,45 @@
                                         </div>
                                     </div>
 
+                                    <div class="mb-3">
+                                        <x-label for="PostalCode" :value="__('Código Postal')" />
+                                        <x-input id="PostalCode" class="form-control" type="text" name="PostalCode" :value="old('PostalCode')" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="PostalCode" :value="__('Código Postal')" />
-            <x-input id="PostalCode" class="form-control" type="text" name="PostalCode" :value="old('PostalCode')" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="Province" :value="__('Província')" />
+                                        <x-input id="Province" class="form-control" type="text" name="Province" :value="old('Province')" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="Province" :value="__('Província')" />
-            <x-input id="Province" class="form-control" type="text" name="Province" :value="old('Province')" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="Country" :value="__('País')" />
+                                        <x-input id="Country" class="form-control" type="text" name="Country" :value="old('Country')" value="AOA" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="Country" :value="__('País')" />
-            <x-input id="Country" class="form-control" type="text" name="Country" :value="old('Country')" value="AOA" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="Telephone" :value="__('Telefone')" />
+                                        <x-input id="Telephone" class="form-control" type="text" name="Telephone" :value="old('Telephone')" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="Telephone" :value="__('Telefone')" />
-            <x-input id="Telephone" class="form-control" type="text" name="Telephone" :value="old('Telephone')" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="Fax" :value="__('Fax')" />
+                                        <x-input id="Fax" class="form-control" type="text" name="Fax" :value="old('Fax')" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="Fax" :value="__('Fax')" />
-            <x-input id="Fax" class="form-control" type="text" name="Fax" :value="old('Fax')" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="Email" :value="__('Email')" />
+                                        <x-input id="Email" class="form-control" type="email" name="Email" :value="old('Email')" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="Email" :value="__('Email')" />
-            <x-input id="Email" class="form-control" type="email" name="Email" :value="old('Email')" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="Website" :value="__('Website')" />
+                                        <x-input id="Website" class="form-control" type="text" name="Website" :value="old('Website')" required />
+                                    </div>
 
-        <div class="mb-3">
-            <x-label for="Website" :value="__('Website')" />
-            <x-input id="Website" class="form-control" type="text" name="Website" :value="old('Website')" required />
-        </div>
-
-        <div class="mb-3">
-            <x-label for="SelfBillingIndicator" :value="__('Indicador de Autofaturação')" />
-            <x-input id="SelfBillingIndicator" class="form-control" type="text" name="SelfBillingIndicator" :value="old('SelfBillingIndicator')" required />
-        </div>
+                                    <div class="mb-3">
+                                        <x-label for="SelfBillingIndicator" :value="__('Indicador de Autofaturação')" />
+                                        <x-input id="SelfBillingIndicator" class="form-control" type="text" name="SelfBillingIndicator" :value="old('SelfBillingIndicator')" required />
+                                    </div>
                                     
                                 </div>
                             </div>

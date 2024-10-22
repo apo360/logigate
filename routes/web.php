@@ -31,8 +31,16 @@ use App\Models\Empresa;
 use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\CustomerAvencaController;
+use App\Http\Controllers\WebPage\RastreamentoController;
 
+    /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
+    // Exibir o formulário de consulta
+    Route::get('/consultar-licenciamento', [RastreamentoController::class, 'consultarLicenciamento'])->name('consultar.licenciamento');
+
+    // Processar a pesquisa do código
+    Route::post('/consultar-licenciamento', [RastreamentoController::class, 'resultadoConsulta'])->name('resultado.consulta');
 
     Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
     Route::get('Registo', function(){ return view('auth.register_manual'); })->name('verificar.manual');
@@ -77,7 +85,16 @@ use App\Http\Controllers\Auth\PasswordController;
             'produtos' => ProdutoController::class,
             'licenciamentos' => LicenciamentoController::class,
             'modulos' => ModuleController::class,
+            'avenca' => CustomerAvencaController::class,
         ]);
+
+        // Rota personalizada para criar mercadorias com licenciamento ou processo
+        Route::get('/mercadorias/create/{licenciamento_id?}/{processo_id?}', [MercadoriaController::class, 'create'])->name('mercadorias.createWithParams');
+        // web.php
+        Route::get('get-codigo-aduaneiro/{cod_pauta}', [MercadoriaController::class, 'getCodigosAduaneiros'])->name('pauta.get');
+
+        // Rota o Rascunho do Licenciamento
+        Route::post('licenciamento/rascunho', [LicenciamentoController::class, 'storeDraft'])->name('licenciamento.rascunho.store');
 
         Route::get('customer/conta_corrente/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
         Route::get('customers/{id}/conta_corrente', [CustomerController::class, 'conta'])->name('cliente.cc');
@@ -114,7 +131,7 @@ use App\Http\Controllers\Auth\PasswordController;
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/imprimir', [ProcessoController::class, 'print'])->name('processos.print');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
-        Route::get('processo/gerar-txt/{IdProcesso}', [ProcessoController::class, 'GerarTxT'])->name('gerar.txt');
+        Route::get('processo/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
 
 

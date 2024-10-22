@@ -9,9 +9,9 @@ class MetodoPagamento extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['metodo', 'descricao'];
+    protected $fillable = ['Code', 'Descriptions'];
 
-    protected $table = "metodos_pagamento";
+    protected $table = "PaymentMechanism";
 
     public function pagamentos()
     {

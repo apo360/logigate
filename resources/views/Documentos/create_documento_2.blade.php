@@ -76,24 +76,23 @@
                             </div>
 
                             <!--  Lista de Tipos de Documentos-->
-                            <div id="list-types" class="hfluid">
+                            <div id="list-types" class="hfluid" style="display: none;"> <!-- Inicialmente oculto -->
                                 <div class="">
                                     <div class="doc-header list-header">
-                                        @foreach($tipoDocumentos->pluck('Grupo')->unique() as $key => $tipoGrupo)
-                                            <div class="doc-header-group-item">{{$tipoGrupo}}</div>
-                                            <ul class="list list-unstyled doc-header-list">
-                                                @foreach($tipoDocumentos->where('Grupo', $tipoGrupo) as $index => $item)
-                                                    <li class="line pointer doc-type-list border-left border-left-FT">
-                                                        <input type="radio" id="type_{{$item->Code}}" name="register" value="{{$item->Code}}" {{$key === 0 && $index === 0 ? 'checked' : ''}}>
-                                                        <label for="type_{{$item->Code}}">{{$item->Descriptions}}</label>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        @endforeach
+                                        <ul class="list list-unstyled doc-header-list">
+                                            @foreach($tipoDocumentos as $index => $item)
+                                                <li class="line pointer doc-type-list border-left border-left-FT">
+                                                    <input type="radio" id="type_{{$item->Code}}" name="register" value="{{$item->Code}}" {{$index === 0 ? 'checked' : ''}}>
+                                                    <label for="type_{{$item->Code}}">
+                                                        {{$item->Descriptions}} 
+                                                        <i class="fa"></i> <!-- Ícone para marcação -->
+                                                    </label>
+                                                </li>
+                                            @endforeach
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
-                            <!-- //Lista de Tipos de Documentos -->
 
                             <div class="card-body">
                                 <label for="customer_id">Selecione o Cliente</label>
@@ -131,9 +130,10 @@
                                     <div class="row">
                                         <div class="col-md-12">
                                             <div id="has-no-products" class="text-center"> 
-                                                <span class="icon-bullet_list icon-4x"></span> 
+                                                <span class="icon-list_alt" style="color: #ccc;"> <i class="fas fa-list-alt" style="font-size: 64px; color: navy;"></i> </span>  
                                                 <br> Não existem itens associados ao documento. <br> 
                                                 <a href="#" id="office-add-services" class="event button">
+                                                    <!-- Adicionar aqui um icon medio e no centro tipo itens vazio ou lista vazia -->
                                                     <span class="icon-plus icon"> Adicionar Novo Item </span>
                                                 </a>
                                             </div>
@@ -300,7 +300,7 @@
                                             <select name="pagamentos" id="pagamentos" class="form-control">
                                                 <option value="dinheiro">Dinheiro</option>
                                                 <option value="multibanco">Multibanco</option>
-                                                <option value="multibanco">Cartão de Debido</option>
+                                                <option value="debito">Cartão de Debido</option>
                                                 <option value="transferencia">Transferência Bancaria</option>
                                             </select>
                                         </div>
@@ -337,7 +337,7 @@
                             </div>
 
                             <div class="card-footer">
-                                <x-button class="btn btn-dark ">
+                                <x-button class="btn btn-dark " id="submit-button">
                                     <i class="fas fa-user-plus btn-icon" style="color: #0170cf;"></i> {{ __('Emitir Factura') }}
                                 </x-button>
                             </div>
@@ -590,11 +590,14 @@
         </div>
     </aside>
 
+    <!-- Scripts necessários (jQuery, Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </x-app-layout>
 
+<!-- Script de validação do Formulario -->
 <script>
     // Validação do formulario
-    document.getElementById('document-form').addEventListener('submit', function(event) {
+    document.getElementById('submit-button').addEventListener('click', function(event) {
         // Verificar se um cliente foi selecionado
         var clienteEscolhido = document.getElementById('cliente_choose').value;
         if (!clienteEscolhido) {
@@ -612,6 +615,7 @@
         }
 
         // Se ambas as validações passarem, o formulário será enviado
+        document.getElementById('document-form').submit(); // Envia o formulário
     });
     
     // Funções para adicionar dados nas tabelas
@@ -754,51 +758,39 @@
         // Define o valor da data no campo "datahoje"
         document.getElementById('invoice_date').value = dataFormatada;
     });
+</script>
 
+<!-- Script para listar os Tipos de Facturas.  -->
+<script>
     $(document).ready(function() {
-        var $listTypes = $('#list-types');
+        var $listTypes = $('#list-types'); // Lista de tipos de documentos
 
-        // Handle the change event on input:radio elements
+        // Função para alternar a visibilidade da lista de tipos de documentos
+        $('#office-change-doctype').click(function(e) {
+            e.preventDefault(); // Evita que o link execute o comportamento padrão
+
+            // Alterna entre mostrar e esconder a lista
+            $listTypes.toggle(); 
+        });
+
+        // Evento de mudança nos inputs do tipo "radio"
         $('input[name="register"]').change(function(e) {
-            // Get the selected code and description
+            // Pega o código e a descrição do tipo de documento selecionado
             var code = $(this).val();
-            var description = $(this).next('label').text();
+            var description = $(this).next('label').text().trim();
 
-            // Update the modal content
+            // Atualiza o título do tipo de documento e outros campos relevantes
             $('#doc-type-title').text(description);
             $('.doc-type-circle').text(code);
             $('#document_type').val(code);
 
-            // Stop the event from propagating to the parent elements
-            e.stopPropagation();
+            // Remove a classe 'fa-check' de todos os ícones
+            $('label > i.fa').removeClass('fa-check');
 
-            // Remove the 'active' class from the modal
-            $listTypes.removeClass('active');
-
-            // Add the 'fa-check' class to the selected radio button's label
-            setTimeout(() => {
-                $('#' + $(this).attr('id') + ' + label > i').addClass('fa-check');
-            }, 150);
-        })
-        .focusout(function(event) {
-            // Check if the radio button is not checked on focus out
-            if (!$('#' + event.target.id).is(':checked')) {
-                $($('.doc-type-circle')[2]).addClass('selected');
-            } else {
-                $($('.doc-type-circle')[2]).removeClass('selected');
-            }
+            // Adiciona a classe 'fa-check' no ícone do item selecionado
+            $(this).next('label').find('i').addClass('fa-check');
         });
-
-        // Handle the click event on the 'Alterar' link
-        $('#office-change-doctype').click(function(e) {
-            e.preventDefault();
-            var cardTitleHeight = $('.card-title').outerHeight();
-            $listTypes.css('top', cardTitleHeight);
-            $listTypes.toggleClass('active');
-        });
-
     });
-
 </script>
 
 <!-- Script para calcular a Data de Vencimento -->
@@ -856,146 +848,145 @@
 
 <!-- Script para controlar a abertura e o fechamento dos modais -->
 <script>
-        $(document).ready(function() {
-            // Referências aos elementos de overlay e modal
-            var $modalOverlay = $('#modal-overlay');
-            var $modalAside = $('#modal-aside');
-            var $createProductOverlay = $('#create-product-modal-overlay');
-            var $createProductModal = $('#create-product-modal-aside');
-            var $editProductOverlay = $('#edit-product-modal-overlay');
-            var $editProductModal = $('#edit-product-modal-aside');
-            var $editProductForm = $('#edit-product-form');
+    $(document).ready(function() {
+        // Referências aos elementos de overlay e modal
+        var $modalOverlay = $('#modal-overlay');
+        var $modalAside = $('#modal-aside');
+        var $createProductOverlay = $('#create-product-modal-overlay');
+        var $createProductModal = $('#create-product-modal-aside');
+        var $editProductOverlay = $('#edit-product-modal-overlay');
+        var $editProductModal = $('#edit-product-modal-aside');
+        var $editProductForm = $('#edit-product-form');
 
-            // Função para fechar todos os modais
-            function closeAllModals() {
-                // Fecha os modais de listagem e criação
-                $modalOverlay.fadeOut();
-                $modalAside.css('right', '-600px');
-                $createProductOverlay.fadeOut();
-                $createProductModal.css('right', '-600px');
-            }
+        // Função para fechar todos os modais
+        function closeAllModals() {
+            // Fecha os modais de listagem e criação
+            $modalOverlay.fadeOut();
+            $modalAside.css('right', '-600px');
+            $createProductOverlay.fadeOut();
+            $createProductModal.css('right', '-600px');
+        }
 
-            // Abrir o modal de listagem de produtos
-            $('#office-add-services').click(function(e) {
-                e.preventDefault();
-                closeAllModals(); // Fecha qualquer outro modal
-                $modalOverlay.fadeIn(); // Mostra o overlay de listagem
-                $modalAside.css('right', '0'); // Mostra o modal de listagem
-            });
-
-            // Fechar modal de listagem ao clicar no overlay
-            $modalOverlay.click(function() {
-                $modalOverlay.fadeOut();
-                $modalAside.css('right', '-600px');
-            });
-
-            // Abrir o modal de criar produto
-            $('#create-product-button').click(function(e) {
-                e.preventDefault();
-                closeAllModals(); // Fecha qualquer outro modal
-                $createProductOverlay.fadeIn(); // Mostra o overlay de criação
-                $createProductModal.css('right', '0'); // Mostra o modal de criação
-            });
-
-            // Fechar modal de criação ao clicar no overlay
-            $createProductOverlay.click(function() {
-                $createProductOverlay.fadeOut();
-                $createProductModal.css('right', '-600px');
-            });
-
-            // Função para abrir o modal de edição com dados
-            function openEditModal(product) {
-                $('#edit-product-name').val(product.name);
-                $('#edit-product-code').val(product.code);
-                $('#edit-product-price').val(product.price);
-                $('#edit-product-tax').val(product.tax);
-
-                $editProductOverlay.fadeIn();
-                $editProductModal.css('right', '0');
-            }
-
-            // Função para fechar o modal de edição
-            function closeEditModal() {
-                $editProductOverlay.fadeOut();
-                $editProductModal.css('right', '-600px');
-            }
-
-            // 1º: Abrir modal ao clicar no produto/serviço da lista de produtos
-            $('.modal-product-item a').click(function(e) {
-                e.preventDefault();
-
-                var product = {
-                    name: $(this).data('title'),
-                    code: $(this).data('code'),
-                    price: $(this).data('price'),
-                    tax: $(this).data('tax'),
-                    qnt: 1
-                };
-                openEditModal(product);
-            });
-
-            // 2º: Abrir modal de edição após criar o produto (simulação)
-            $('#create-product-form').submit(function(e) {
-                e.preventDefault();
-                // Simular criação do produto (chamadas AJAX, etc.)
-                var newProduct = {
-                    name: $('#product-name').val(),
-                    code: $('#product-code').val(),
-                    price: $('#product-price').val(),
-                    tax: $('#product-tax').val()
-                };
-                // Após criar, abrir o modal de edição
-                openEditModal(newProduct);
-            });
-
-            // 3º: Abrir modal ao clicar no botão de edição da tabela HTML
-            $('#document-products').on('click', '.editRow', function() {
-
-                var row = $(this).closest('tr');
-
-                var product = {
-                    name: row.find('.product-name').text(),
-                    code: row.find('.product-code').text(),
-                    price: row.find('.product-price').text(),
-                    tax: row.find('.product-tax').text(),
-                    qnt: $('.product-qntidade').val(),
-                    descount: $('.product-descount').val()
-                };
-                openEditModal(product);
-                
-            });
-
-            // Ação ao clicar no botão de confirmar no modal de edição
-            $('#confirm-edit-btn').click(function() {
-                var updatedProduct = {
-                    name: $('#edit-product-name').val(),
-                    code: $('#edit-product-code').val(),
-                    price: $('#edit-product-price').val(),
-                    tax: $('#edit-product-tax').val(),
-                    qnt: $('#edit-qntidade-tax').val(),
-                    descount: $('#edit-descount-tax').val()
-                };
-
-                // Atualizar a tabela HTML.
-
-                adicionarProdutoATabela(updatedProduct.code, updatedProduct.code, updatedProduct.name, updatedProduct.qnt, updatedProduct.tax, updatedProduct.price, updatedProduct.descount)
-
-                updateTotal(); // Recalcular o total geral
-
-                calculateTaxes(); // Recalcular o total das taxas
-
-                atualizarCampoHidden();
-                
-                closeEditModal(); // Fecha o modal
-            });
-
-            // Fechar modal ao clicar no overlay
-            $editProductOverlay.click(function() {
-                closeEditModal();
-            });
+        // Abrir o modal de listagem de produtos
+        $('#office-add-services').click(function(e) {
+            e.preventDefault();
+            closeAllModals(); // Fecha qualquer outro modal
+            $modalOverlay.fadeIn(); // Mostra o overlay de listagem
+            $modalAside.css('right', '0'); // Mostra o modal de listagem
         });
-</script>
 
+        // Fechar modal de listagem ao clicar no overlay
+        $modalOverlay.click(function() {
+            $modalOverlay.fadeOut();
+            $modalAside.css('right', '-600px');
+        });
+
+        // Abrir o modal de criar produto
+        $('#create-product-button').click(function(e) {
+            e.preventDefault();
+            closeAllModals(); // Fecha qualquer outro modal
+            $createProductOverlay.fadeIn(); // Mostra o overlay de criação
+            $createProductModal.css('right', '0'); // Mostra o modal de criação
+        });
+
+        // Fechar modal de criação ao clicar no overlay
+        $createProductOverlay.click(function() {
+            $createProductOverlay.fadeOut();
+            $createProductModal.css('right', '-600px');
+        });
+
+        // Função para abrir o modal de edição com dados
+        function openEditModal(product) {
+            $('#edit-product-name').val(product.name);
+            $('#edit-product-code').val(product.code);
+            $('#edit-product-price').val(product.price);
+            $('#edit-product-tax').val(product.tax);
+
+            $editProductOverlay.fadeIn();
+            $editProductModal.css('right', '0');
+        }
+
+        // Função para fechar o modal de edição
+        function closeEditModal() {
+            $editProductOverlay.fadeOut();
+            $editProductModal.css('right', '-600px');
+        }
+
+        // 1º: Abrir modal ao clicar no produto/serviço da lista de produtos
+        $('.modal-product-item a').click(function(e) {
+            e.preventDefault();
+
+            var product = {
+                name: $(this).data('title'),
+                code: $(this).data('code'),
+                price: $(this).data('price'),
+                tax: $(this).data('tax'),
+                qnt: 1
+            };
+            openEditModal(product);
+        });
+
+        // 2º: Abrir modal de edição após criar o produto (simulação)
+        $('#create-product-form').submit(function(e) {
+            e.preventDefault();
+            // Simular criação do produto (chamadas AJAX, etc.)
+            var newProduct = {
+                name: $('#product-name').val(),
+                code: $('#product-code').val(),
+                price: $('#product-price').val(),
+                tax: $('#product-tax').val()
+            };
+            // Após criar, abrir o modal de edição
+            openEditModal(newProduct);
+        });
+
+        // 3º: Abrir modal ao clicar no botão de edição da tabela HTML
+        $('#document-products').on('click', '.editRow', function() {
+
+            var row = $(this).closest('tr');
+
+            var product = {
+                name: row.find('.product-name').text(),
+                code: row.find('.product-code').text(),
+                price: row.find('.product-price').text(),
+                tax: row.find('.product-tax').text(),
+                qnt: $('.product-qntidade').val(),
+                descount: $('.product-descount').val()
+            };
+            openEditModal(product);
+            
+        });
+
+        // Ação ao clicar no botão de confirmar no modal de edição
+        $('#confirm-edit-btn').click(function() {
+            var updatedProduct = {
+                name: $('#edit-product-name').val(),
+                code: $('#edit-product-code').val(),
+                price: $('#edit-product-price').val(),
+                tax: $('#edit-product-tax').val(),
+                qnt: $('#edit-qntidade-tax').val(),
+                descount: $('#edit-descount-tax').val()
+            };
+
+            // Atualizar a tabela HTML.
+
+            adicionarProdutoATabela(updatedProduct.code, updatedProduct.code, updatedProduct.name, updatedProduct.qnt, updatedProduct.tax, updatedProduct.price, updatedProduct.descount)
+
+            updateTotal(); // Recalcular o total geral
+
+            calculateTaxes(); // Recalcular o total das taxas
+
+            atualizarCampoHidden();
+            
+            closeEditModal(); // Fecha o modal
+        });
+
+        // Fechar modal ao clicar no overlay
+        $editProductOverlay.click(function() {
+            closeEditModal();
+        });
+    });
+</script>
 
 <script>
 
@@ -1075,88 +1066,5 @@
         $('#document-products .document-desconto #desconto-valor').text(formatarNumero(descontoTotal));
         
     }
-    
-    // Para o Caso dos Clientes Estarem Relacionados com processos...
-    $(document).ready(function() {
-        // Handle the input event on #cliente_choose
-        $('#cliente_choose').on('input', function() {
-            var selectedCliente = $(this).val();
-
-            // Clear previous processos list
-            $('#processos-list').empty();
-
-            // Send AJAX GET request to retrieve processos data
-            $.get('/customers/'+selectedCliente+'/Pendente', function(response) {
-                var processos = response.processo;
-
-                // Check if processos data is available
-                if (processos && processos.length > 0) {
-                    // Iterate over each processo and generate HTML
-                    processos.forEach(function(processo) {
-                        var radioId = 'radio_' + processo.ProcessoID;
-                        var corpHtml = '<div class="line pointer doc-type-list border-left border-left-FT">' +
-                            '<input type="radio" id="type_' + radioId + '" name="processos" value="' + processo.ProcessoID + '">' +
-                            '<label for="type_' + radioId + '">' + processo.RefCliente + '</label>' +
-                            '<span for="type_' + radioId + '">' + processo.Status + '</span>' +
-                            '</div>';
-
-                        // Append the generated HTML to #processos-list
-                        $('#processos-list').append(corpHtml);
-                    });
-                } else {
-                    $('#processos-list').text('Nenhum processo encontrado.');
-                }
-            }, 'json');
-        });
-
-        $(document).on('change', 'input[name="processos"]', function() {
-            // Get the value of the selected input:radio
-            var selectedProcesso = $(this).val();
-
-            // Get the value of the Label selected
-            $.get('processos/'+selectedProcesso+'/Pendente', function(response) {
-                const data = response;
-
-                // Limpar o corpo da tabela antes de preenchê-la com novos dados
-                $('#document-products tbody').empty();
-
-                // Iterar pelos processos
-                data.processos.forEach(function(processo) {
-                    const mercadoriasHTML = processo.mercadorias.map(function(mercadoria) {
-                        return `Importação - <span>${mercadoria.marcas}</span><br>${mercadoria.designacao}<br><br>`;
-                    }).join('');
-
-                    $('#valorgeralservico').val(processo.cobrado.TOTALGERAL);
-                    const valor = parseFloat(processo.cobrado.TOTALGERAL);
-
-                    const totalGeral = formatarNumero(valor);
-                    const row = `
-                        <tr>
-                            <td><i class="fas fa-trash" style="color:red;" onclick="EditRow(this)"></i></td>
-                            <td><i class="fas fa-trash" style="color:red;" onclick="removeRow(this)"></i></td>
-                            <td class="text-left">Despacho Aduaneiro</td>
-                            <td class="text-left">${mercadoriasHTML}</td>
-                            <td class="text-right">0</td>
-                            <td class="text-right">14%</td>
-                            <td class="text-right">${totalGeral}</td>
-                            <td class="text-right">1</td>
-                            <td class="text-right geraltotal">${totalGeral}</td>
-                        </tr>
-                    `;
-
-                    $('#document-products tbody').append(row);
-                });
-
-                // Calcular e preencher o total geral no rodapé
-                const totalGeralRodape = data.processos.reduce(function(sum, processo) {
-                    return sum + parseFloat(processo.cobrado.TOTALGERAL);
-                }, 0);
-
-                $('#document-total-pay .total').text(parseFloat(totalGeralRodape).toFixed(2) + ' Kz');
-
-                // atualizarTaxas(14,totalGeralRodape);
-            }, 'json');
-        });
-
-    });
+ 
 </script>

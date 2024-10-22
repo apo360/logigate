@@ -70,9 +70,9 @@
                             <a href="#" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#resetPasswordModal{{ $user->id }}">Reiniciar Senha</a>
                         </td>
                     </tr>
-<!-- Ensure you have included jQuery and Bootstrap JS at the end of the body tag -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+                    <!-- Ensure you have included jQuery and Bootstrap JS at the end of the body tag -->
+                    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
                     <!-- Modal para desbloquear -->
                     <div class="modal fade" id="unblockModal{{ $user->id }}" tabindex="-1" role="dialog" aria-labelledby="unblockModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">

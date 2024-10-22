@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -106,6 +107,10 @@ class Licenciamento extends Model
     }
 
 
+    public function mercadorias()
+    {
+        return $this->hasMany(Mercadoria::class, 'licenciamento_id');
+    }
 
     // Métodos auxiliares
 
@@ -121,7 +126,7 @@ class Licenciamento extends Model
 
         // Impedir a alteração de moeda se houver uma fatura emitida ou paga
         static::updating(function ($licenciamento) {
-            if ($licenciamento->faturas()->whereIn('status_fatura', ['emitida', 'paga'])->exists()) {
+            if ($licenciamento->procLicenFaturas()->whereIn('status_fatura', ['emitida', 'paga'])->exists()) {
                 if ($licenciamento->isDirty('moeda')) {
                     throw new \Exception('Não é permitido alterar a moeda pois uma fatura já foi emitida ou paga.');
                 }
@@ -129,6 +134,16 @@ class Licenciamento extends Model
         });
     }
 
+    public function getEstadoLicenciamentoAttribute() {
+        if ($this->txt_gerado == 0) {
+            return 'Por licenciar';
+        } elseif ($this->txt_gerado == 1 && $this->procLicenFaturas->where('status_fatura', 'paga')->isNotEmpty()) {
+            return 'Licenciado';
+        } else {
+            return 'Em licenciamento';
+        }
+    }
+    
     // Função para gerar o código único e sequencial
     public static function generateCodigoLicenciamento($empresaId)
     {
@@ -146,9 +161,9 @@ class Licenciamento extends Model
             $novoCodigo = 1;
         }
 
-        // Formata o código (por exemplo, EMP001-0001, onde EMP001 é o código da empresa)
-        $codigoEmpresa = 'HYL-' . str_pad($empresaId, 3, '0', STR_PAD_LEFT);
-        $codigoLicenciamento = $codigoEmpresa . '-' . str_pad($novoCodigo, 4, '0', STR_PAD_LEFT);
+        // Formata o código (por exemplo, HYLC-001-0001, onde EMP001 é o código da empresa)
+        $codigoEmpresa = 'HYLC-' . str_pad($empresaId, 3, '0', STR_PAD_LEFT);
+        $codigoLicenciamento = $codigoEmpresa . '-' . str_pad($novoCodigo, 5, '0', STR_PAD_LEFT) .'/'. Carbon::now()->format('y');
 
         return $codigoLicenciamento;
     }

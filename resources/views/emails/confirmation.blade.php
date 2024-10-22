@@ -51,10 +51,12 @@
 </head>
 <body>
     <div class="container">
-        <h1>Seu Código de Confirmação</h1>
-        <p>Use o código abaixo para confirmar seu email:</p>
-        <p class="code">{{ $code }}</p>
-        <p class="footer">Se você não solicitou este código, por favor, ignore este e-mail.</p>
+    <h1>Bem-vindo!</h1>
+    <h1>Seu Código de Confirmação</h1>
+    <p>Seu código de confirmação é <strong class="code">{{ $otp }}</strong>. Use este código para confirmar a sua conta.</p>
+    <p class="footer">Se você não solicitou este código, por favor, ignore este e-mail.</p>
+    <p>Atenciosamente,<br>Equipe da Aplicação</p>
+    <p>Olá,</p>
     </div>
 </body>
 </html>

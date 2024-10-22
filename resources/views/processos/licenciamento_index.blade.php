@@ -1,19 +1,18 @@
 <x-app-layout>
     <div class="py-12">
-        <x-slot name="header">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Pesquisa de Licenciamentos') }}
-            </h2>
-        </x-slot>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')]
+    ]" separator="/" />
 
         <div class="card">
             <div class="card-header">
                 <div class="float-left"></div>
                 <div class="float-right">
                     <div class="btn-group">
-                        <a href="{{ route('licenciamentos.create') }}" class="btn btn-sm btn-primary">Novo Licenciamento</a>
-                        <a href="{{ route('licenciamentos.create') }}" class="btn btn-sm btn-primary">Impotação</a>
-                        <a href="{{ route('licenciamentos.create') }}" class="btn btn-sm btn-primary">Exportação</a>
+                        <a href="{{ route('licenciamentos.create') }}" class="btn btn-sm btn-primary"> <i class="fas fa-plus-circle"></i> Licenciamento</a>
+                        <a href="{{ route('licenciamentos.create') }}" class="btn btn-sm btn-default"> <i class="fas fa-download"></i> Impotação</a>
+                        <a href="{{ route('licenciamentos.create') }}" class="btn btn-sm btn-default"> <i class="fas fa-upload"></i> Exportação</a>
                     </div>
                 </div>
             </div>
@@ -25,16 +24,12 @@
                     <div class="col-md-4">
                         <x-input type="text" id="search" placeholder="Pesquisar Licenciamento por: Referência, Cliente, Exportador" class="form-control" />
                     </div>
-                    <div class="col-md-2">
-                        <select name="taxa_iva" id="taxa_iva" class="form-control">
-                            <option value="" selected>Todas as Taxas</option>
-                    
-                        </select>
-                    </div>
                     <div class="col-md-3">
                         <select name="status_factura" id="status_factura" class="form-control">
-                            <option value="" selected>Todos os Tipos</option>
-                            
+                            <option value="" selected>Estado</option>
+                            <option value="">Facturas Emitidas C/ Licenciamento</option>
+                            <option value="">Facturas Emitidas S/ Licenciamento</option>
+                            <option value="">Facturas Pagas</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -73,7 +68,8 @@
                                 <th>Cliente</th>
                                 <th>Exportador</th>
                                 <th>Descrição</th>
-                                <th>Status Fatura</th>
+                                <th>Estado</th>
+                                <th>Factura</th>
                                 <th>Ações</th>
                             </tr>
                         </thead>
@@ -84,26 +80,29 @@
                                 <td>{{ $licenciamento->cliente->CompanyName }}</td>
                                 <td>{{ $licenciamento->exportador->Exportador }}</td>
                                 <td>{{ $licenciamento->descricao }}</td>
+                                <td>{{ $licenciamento->estado_licenciamento }}</td>
+
                                 <!-- Exibir status da fatura -->
                                 @if($licenciamento->procLicenFaturas->isNotEmpty())
                                     @php
-                                        // Verificar o status da fatura mais recente
                                         $statusFatura = $licenciamento->procLicenFaturas->last()->status_fatura;
                                     @endphp
-                                    <td>{{ ucfirst($statusFatura) }}</td>
+                                    <td>{{ ucfirst($statusFatura) }} <br>
+                                        <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span>
+                                    </td>
                                 @else
                                     <td>Sem Fatura</td>
                                 @endif
                                 <td>
                                     <!-- Mostrar ou desativar o botão de edição com base no status da fatura -->
                                     @if ($licenciamento->procLicenFaturas->whereIn('status_fatura', ['emitida', 'paga'])->isNotEmpty())
-                                        <button class="btn btn-secondary" disabled>Editar</button>
+                                        <a href="#" class="" disabled>Editar</a>
                                     @else
-                                        <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class="btn btn-primary">Editar</a>
+                                        <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class=""> <i class="fas fa-edit"></i> Editar</a>
                                     @endif
 
                                     <!-- Mostrar botão para visualizar detalhes -->
-                                    <a href="{{ route('licenciamentos.show', $licenciamento->id) }}" class="btn btn-info">Visualizar</a>
+                                    <a href="{{ route('licenciamentos.show', $licenciamento->id) }}" class=""> <i class="fas fa-eye"></i> Visualizar</a>
                                 </td>
                             </tr>
                             @endforeach
@@ -119,41 +118,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        $(document).ready(function() {
-            // Capturar eventos de mudança nos filtros
-            $('#search, #ProductType, #sort_by').on('change keyup', function() {
-                fetchLicenciamentos();
-            });
-
-            // Função para buscar licenciamentos com AJAX
-            function fetchLicenciamentos() {
-                var search = $('#search').val();
-                var productType = $('#ProductType').val();
-                var sortBy = $('#sort_by').val();
-
-                $.ajax({
-                    url: "",  // Rota para o backend
-                    type: 'GET',
-                    data: {
-                        search: search,
-                        productType: productType,
-                        sortBy: sortBy
-                    },
-                    success: function(response) {
-                        // Substituir a tabela com os dados filtrados
-                        $('#licenciamentos_table').html(response.html);
-
-                        // Atualizar a contagem de licenciamentos
-                        $('#count').text(response.count);
-
-                        // Atualizar links de paginação
-                        $('#pagination_links').html(response.pagination);
-                    }
-                });
-            }
-        });
-
-    </script>
 </x-app-layout>

@@ -3,53 +3,37 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class ConfirmationMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    use Queueable, SerializesModels;
-
-    public $confirmationCode;
-
-    public function __construct($confirmationCode)
-    {
-        $this->confirmationCode = $confirmationCode;
-    }
+    public $otp; // A variável para armazenar o código OTP
 
     /**
-     * Get the message envelope.
-     */
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: 'Seu Código de Confirmação',
-        );
-    }
-
-    /**
-     * Get the message content definition.
-     */
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.confirmation',
-            with: ['code' => $this->confirmationCode],
-        );
-    }
-
-    /**
-     * Get the attachments for the message.
+     * Create a new message instance.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return void
      */
-    public function attachments(): array
+    public function __construct($otp)
     {
-        return [];
+        // Atribuir o OTP passado para a variável de classe
+        $this->otp = $otp;
+    }
+
+    /**
+     * Build the message.
+     *
+     * @return $this
+     */
+    public function build()
+    {
+        return $this->subject('Confirmação de Conta - Seu Código OTP')
+                    ->view('emails.confirmation') // O nome da view de e-mail
+                    ->with([
+                        'otp' => $this->otp, // Passando o OTP para a view
+                    ]);
     }
 }

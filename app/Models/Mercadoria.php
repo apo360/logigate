@@ -21,11 +21,44 @@ class Mercadoria extends Model
         'preco_unitario',
         'preco_total',
         'codigo_aduaneiro',
+        'marca',
+        'modelo',
+        'chassis',
+        'ano_fabricacao',
+        'potencia',
+        'licenciamento_id',
+        'subcategoria_id',
+
+        // 'volume'
+        // 'hs_code',
     ];
 
     public function importacao()
     {
         return $this->belongsTo(Importacao::class, 'Fk_Importacao');
+    }
+
+    public function categoria_mercadoria(){
+
+        $categoria = [
+            'num' => 1, 'desc' => 'Animais Vivos e Produtos do Reino Animal',
+            'num' => 2, 'desc' => 'Produtos do Reino Vegetal',
+            'num' => 3, 'desc' => 'Gorduras e Óleos Animais, Vegetais ou de Origem Microbiana...',
+            'num' => 4, 'desc' => 'Produtos das Indústrias Alimentares; Bebidas, Líquidos...',
+            'num' => 5, 'desc' => 'Produtos Minerais',
+            'num' => 6, 'desc' => 'Produtos das Indústrias Químicas ou das Indústrias Conexas',
+        ];
+    }
+
+    public function mercadoria_seccao(){
+
+        $seccao = [
+            'num' => 01, 'desc' => 'Animais Vivos', 'categoria' => '1',
+            'num' => 02, 'desc' => 'Carnes e miudezas, comestíveis', 'categoria' => '1',
+            'num' => 03, 'desc' => 'Peixes e crustáceos, moluscos e outros invertebrados aquáticos', 'categoria' => '1',
+            'num' => 04, 'desc' => 'Leite e laticínios; ovos de aves; mel natural; produtos comestíveis de origem animal', 'categoria' => '1',
+            'num' => 05, 'desc' => 'Outros produtos de origem animal, não especificados nem compreendidos noutros Caítulos', 'categoria' => '1',
+        ];
     }
 
     /**
@@ -49,5 +82,26 @@ class Mercadoria extends Model
     // Função auxiliar para calcular o valor aduaneiro
     public static function calcularValorAduaneiro($precoTotal, $freteMercadoria, $seguroMercadoria) {
         return $precoTotal + $freteMercadoria + $seguroMercadoria;
+    }
+
+    // Se necessário, podemos definir mutators ou acessors para formatar valores
+    public function setValorUnitarioAttribute($value)
+    {
+        $this->attributes['preco_unitario'] = round($value, 2); // Arredondar para 2 casas decimais
+    }
+
+    public function setFreteAttribute($value)
+    {
+        $this->attributes['frete'] = round($value, 2);
+    }
+
+    public function setSeguroAttribute($value)
+    {
+        $this->attributes['seguro'] = round($value, 2);
+    }
+
+    public function getValorTotalAttribute()
+    {
+        return $this->attributes['quantidade'] * $this->attributes['preco_unitario'];
     }
 }
