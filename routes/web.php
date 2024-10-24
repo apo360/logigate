@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
 use App\Http\Controllers\WebPage\RastreamentoController;
+use App\Http\Controllers\PautaAduaneiraController;
 
     /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
@@ -87,6 +88,12 @@ use App\Http\Controllers\WebPage\RastreamentoController;
             'modulos' => ModuleController::class,
             'avenca' => CustomerAvencaController::class,
         ]);
+
+        
+
+        Route::get('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import_view'])->name('pauta.import');
+        Route::post('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import'])->name('pauta.import.submit');
+
 
         // Rota personalizada para criar mercadorias com licenciamento ou processo
         Route::get('/mercadorias/create/{licenciamento_id?}/{processo_id?}', [MercadoriaController::class, 'create'])->name('mercadorias.createWithParams');

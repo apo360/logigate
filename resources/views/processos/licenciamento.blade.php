@@ -343,9 +343,208 @@
         </div>
     </div>
 
+    <!-- Modal para adicionar novo cliente -->
+    <div class="modal fade" id="newClientModal" tabindex="-1" role="dialog" aria-labelledby="newClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-aside" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newClientModalLabel">Novo Cliente</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="formNovoCliente" action="{{ route('customers.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="CustomerID" value="{{ $newCustomerCode }}" id="CustomerID">
+                        <input type="hidden" name="formType" value="modal">
+                        <div class="mt-4">
+                            <x-label for="CustomerTaxID" value="{{ __('NIF') }}" />
+                            <x-input-button namebutton="Validar NIF" idButton="CustomerTaxID" type="text" name="CustomerTaxID" value="000000" />
+                        </div>
+                        <div class="mt-4">
+                            <x-label for="CompanyName" value="{{ __('Cliente') }}" />
+                            <x-input id="CompanyName" class="block mt-1 w-full" type="text" name="CompanyName" required autofocus autocomplete="CompanyName" />
+                        </div>
+                    
+                        <div class="mt-4">
+                            <x-label for="Telephone" value="{{ __('Telefone') }}" />
+                            <x-input id="Telephone" class="block mt-1 w-full" type="text" name="Telephone" required autofocus autocomplete="Telephone" />
+                        </div>
+                        <div class="mt-4">
+                            <x-label for="Email" value="{{ __('Email') }}" />
+                            <x-input id="Email" class="block mt-1 w-full" type="email" name="Email" autocomplete="Email" />
+                        </div>
+                        <div class="mt-4">
+                            <x-label for="Email" value="{{ __('Metodo de Pagamento') }}" />
+                            <select name="pagamento" id="pagamento" class="block mt-1 w-full form-control">
+                                <option value="">Pronto Pagamento</option>
+                                <option value="15">Pagamento 15 dias</option>
+                                <option value="30">Pagamento 30 dias</option>
+                                <option value="45">Pagamento 45 dias</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <input type="submit" class="btn btn-primary" id="btt_cliente_add" value="Salvar Cliente">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para adicionar novo exportador -->
+    <div class="modal fade" id="newExportadorModal" tabindex="-1" role="dialog" aria-labelledby="newExportdorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-aside" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newClientModalLabel">Novo Exportador</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="formNovoExportador" action="{{ route('exportadors.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="ExportadorID" value="{{ $newExportadorCode }}" id="ExportadorID">
+                        <input type="hidden" name="formType" value="modal">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mt-4">
+                                    <x-label for="ExportadorTaxID" value="{{ __('NIF') }}" />
+                                    <x-input-button namebutton="Validar NIF" idButton="ExportadorTaxID" type="text" name="ExportadorTaxID" value="000000" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mt-4">
+                                    <x-label for="Pais" value="{{ __('Pais') }}" />
+                                    <select name="Pais" class="form-control" id="Pais">
+                                        @foreach($paises as $pais)
+                                            <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+
+                        <div class="mt-4">
+                            <x-label for="Exportador" value="{{ __('Exportador') }}" />
+                            <x-input id="Exportador" class="block mt-1 w-full" type="text" name="Exportador" required autofocus autocomplete="Exportador" />
+                        </div>
+                    
+                        <div class="mt-4">
+                            <x-label for="Endereco" value="{{ __('Endereço') }}" />
+                            <x-input id="Endereco" class="block mt-1 w-full" type="text" name="Endereco" required autofocus autocomplete="Endereco" />
+                        </div>
+
+                        <div class="mt-4">
+                            <x-label for="Telefone" value="{{ __('Telefone') }}" />
+                            <x-input id="Telefone" class="block mt-1 w-full" type="text" name="Telefone" required autofocus autocomplete="Telefone" />
+                        </div>
+                        <div class="mt-4">
+                            <x-label for="Email" value="{{ __('Email') }}" />
+                            <x-input id="Email" class="block mt-1 w-full" type="email" name="Email" autocomplete="Email" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <input type="submit" class="btn btn-primary" id="btt_cliente_add" value="Salvar Exportador">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts necessários (jQuery, Bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Script para tratar de adição de clientes não registados a tabela -->
+    <script>
+        // Selecione o formulário
+        const form = document.getElementById('formNovoCliente');
+
+        // Adicione um event listener para o envio do formulário
+        form.addEventListener('submit', async (event) => {
+            // Impedir o envio padrão do formulário
+            event.preventDefault();
+
+            // Enviar o formulário via AJAX
+            const formData = new FormData(form);
+            const url = form.action;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Verificar se a resposta é bem-sucedida
+                if (response.ok) {
+                    // Converter a resposta para JSON
+                    const data = await response.json();
+
+                    // Exibir a mensagem de retorno usando Toastr
+                    toastr.success(data.message); // Exibir mensagem de sucesso
+                    $("#formNovoCliente")[0].reset();  // Reset form
+                    $('#newClientModal').modal('hide');  // Hide modal
+                    $('#CustomerID').val(data.cliente_id);
+                } else {
+                    // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
+                    toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
+                }
+            } catch (error) {
+                console.error('Erro ao enviar formulário:', error);
+                // Em caso de erro, exibir uma mensagem de erro genérica
+                toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
+            }
+        });
+    </script>
+
+    <!-- Script para tratar de adição de Exportadores não registados a tabela -->
+    <script>
+        // Selecione o formulário
+        const formE = document.getElementById('formNovoExportador');
+
+        // Adicione um event listener para o envio do formulário
+        formE.addEventListener('submit', async (event) => {
+            // Impedir o envio padrão do formulário
+            event.preventDefault();
+
+            // Enviar o formulário via AJAX
+            const formData = new FormData(formE);
+            const url = formE.action;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Verificar se a resposta é bem-sucedida
+                if (response.ok) {
+                    // Converter a resposta para JSON
+                    const data = await response.json();
+
+                    // Exibir a mensagem de retorno usando Toastr
+                    toastr.success(data.message); // Exibir mensagem de sucesso
+                    $("#formNovoExportador")[0].reset();  // Reset form
+                    $('#newExportadorModal').modal('hide');  // Hide modal
+                    $('#ExportadorID').val(data.exportador_id);
+                } else {
+                    // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
+                    toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
+                }
+            } catch (error) {
+                console.error('Erro ao enviar formulário:', error);
+                // Em caso de erro, exibir uma mensagem de erro genérica
+                toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
+            }
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

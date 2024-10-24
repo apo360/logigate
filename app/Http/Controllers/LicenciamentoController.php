@@ -63,7 +63,23 @@ class LicenciamentoController extends Controller
         $ibans = IbanController::getBankDetails();
         $pautaAduaneira = PautaAduaneira::all();
         $empresa = EmpresaUser::where('empresa_id', Auth::user()->empresas->first()->id)->get();
-        return view('processos.licenciamento', compact('clientes', 'estancias', 'regioes', 'exportador', 'paises', 'empresa', 'portos', 'ibans', 'pautaAduaneira'));
+
+        // chamar a stored procedure
+        $newCustomerCode = Customer::generateNewCode();
+        $newExportadorCode = Exportador::generateNewCode();
+        return view('processos.licenciamento', 
+        compact('clientes', 
+                'estancias', 
+                'regioes', 
+                'exportador', 
+                'paises', 
+                'empresa', 
+                'portos', 
+                'ibans', 
+                'pautaAduaneira',
+                'newCustomerCode', 
+                'newExportadorCode'
+            ));
     }
 
     /**

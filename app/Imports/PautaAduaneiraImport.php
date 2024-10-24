@@ -35,8 +35,4 @@ class PautaAduaneiraImport implements ToCollection
         return 1000; // Define o tamanho do chunk
     }
 
-    public function batchSize(): int
-    {
-        return 1000; // Define o tamanho do batch
-    }
 }

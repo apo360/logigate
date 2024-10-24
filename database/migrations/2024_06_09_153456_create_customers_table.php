@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('CompanyName', 100);
             $table->string('Telephone', 20)->nullable();
             $table->string('Email', 254)->nullable();
-            $table->string('Website', 60);
+            $table->string('Website', 60)->nullable();
             $table->integer('SelfBillingIndicator')->default(0);
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('empresa_id');

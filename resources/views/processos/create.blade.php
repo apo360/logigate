@@ -1,8 +1,10 @@
 <x-app-layout>
-    <x-slot name="header">
-        <x-breadcrumb title="Novo Processo" breadcrumb="Novo Processo" />
-    </x-slot>
-    <br/>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Pesquisar Processos', 'url' => route('processos.index')],
+        ['name' => 'Novo Processo', 'url' => route('processos.create')]
+    ]" separator="/" />
+
     <div class="" style="padding: 10px;">
         <div class="row">
             <div class="col-9">
@@ -361,6 +363,7 @@
             </div>
         </div>
     </div>
+
     <!-- Modal para adicionar novo cliente -->
     <div class="modal fade" id="newClientModal" tabindex="-1" role="dialog" aria-labelledby="newClientModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-aside" role="document">
@@ -522,7 +525,7 @@
         });
     </script>
 
-<!-- Script para tratar de adição de Exportadores não registados a tabela -->
+    <!-- Script para tratar de adição de Exportadores não registados a tabela -->
     <script>
         // Selecione o formulário
         const formE = document.getElementById('formNovoExportador');
