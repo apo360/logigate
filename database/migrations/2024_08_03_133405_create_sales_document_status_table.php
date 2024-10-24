@@ -13,20 +13,20 @@ return new class extends Migration
     {
         Schema::create('sales_document_status', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('documentoID');
             $table->string('invoice_status', 1)->nullable();
             $table->datetime('invoice_status_date')->nullable();
             $table->datetime('invoice_available_date')->nullable();
-            $table->unsignedBigInteger('source_id');
             $table->string('source_billing', 1)->nullable();
             $table->string('detalhe')->nullable();
             $table->string('motivo')->nullable();
-            $table->unsignedBigInteger('source_cancel_id');
+
+            $table->foreignId('source_cancel_id')->nullable()->constrained('users');
+            $table->foreignId('source_id')->nullable()->constrained('users');
+            $table->foreignId('documentoID')->references('id')->on('sales_invoice');
+
             $table->timestamps();
 
-            $table->foreign('source_id')->references('id')->on('users');
-            $table->foreign('documentoID')->references('id')->on('sales_invoice');
-            $table->foreign('source_cancel_id')->references('id')->on('users');
+            
         });
     }
 
