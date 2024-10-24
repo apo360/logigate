@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('capital', 50)->nullable();
             $table->string('latitude', 50)->nullable();
             $table->string('longitude', 50)->nullable();
-            $table->decimal('cambio', 15, 2)->default(1.00)->after('moeda'); // Adicionando a coluna 'cambio'
-            $table->date('data_cambio')->default('2000-01-01')->after('cambio'); // Adicionando a coluna 'data_cambio'
+            $table->decimal('cambio', 15, 2)->default(1.00); // Adicionando a coluna 'cambio'
+            $table->date('data_cambio')->default('2000-01-01'); // Adicionando a coluna 'data_cambio'
         
             $table->timestamps();
         });

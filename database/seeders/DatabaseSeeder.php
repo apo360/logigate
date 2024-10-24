@@ -15,20 +15,23 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             
-            UserRoleSeeder::class,
-            // RolesAndPermissionsSeeder::class,
+            /*UserRoleSeeder::class,
+            //RolesAndPermissionsSeeder::class,
 
-            /*ProvinciasSeeder::class,
+            EmpresasSeeder::class,
+            ProductGroupsSeeder::class,
+            ProvinciasSeeder::class,
             MunicipiosSeeder::class,
             PaisesSeeder::class,
             ModuleSeeder::class,
-            MenuSeeder::class,
-            PortosSeeder::class,
+            MenuSeeder::class, 
             ProductTypeSeeder::class,
-            ProductExemptionReasonSeeder::class,
+            ProductExemptionReasonSeeder::class, 
+            ProdutoSeeder::class,
             InvoiceTypesSeeder::class,
             RegiaoAduaneirasSeeder::class,
-            EstanciasSeeder::class,*/
+            EstanciasSeeder::class, 
+            PortosSeeder::class, */
 
         ]);
     }

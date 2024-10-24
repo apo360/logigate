@@ -2,7 +2,7 @@
 
 // app/Utilities/DatabaseUtility.php
 
-namespace App\Utilities;
+namespace App\Helpers;
 
 use Illuminate\Support\Facades\DB;
 

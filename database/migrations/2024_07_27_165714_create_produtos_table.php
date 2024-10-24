@@ -19,7 +19,7 @@ return new class extends Migration
 	        $table->string('ProductDescription', 200);
 	        $table->string('ProductNumberCode', 100);
             $table->string('imagem_path', 200)->nullable();
-            $table->unsignedBigInteger('empresa_id')->nullable()->after('id');
+            $table->unsignedBigInteger('empresa_id');
 
             $table->timestamps();
 
