@@ -14,11 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-
-        DB::statement('TRUNCATE TABLE menus');
+        // DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+        // DB::statement('TRUNCATE TABLE menus');
+        // DB::statement('TRUNCATE TABLE paises');
+        // DB::statement('TRUNCATE TABLE portos');
 
         $this->call([
-            
+
             /*UserRoleSeeder::class,
             //RolesAndPermissionsSeeder::class,
 
@@ -38,5 +40,7 @@ class DatabaseSeeder extends Seeder
             PortosSeeder::class, */
 
         ]);
+
+        // DB::statement('SET FOREIGN_KEY_CHECKS = 1');
     }
 }
