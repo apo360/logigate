@@ -21,10 +21,8 @@ class LicenciamentoRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'estancia_id' => 'required|exists:empresas,id',
-            'cliente_id' => 'required|exists:customers,id',
-            'exportador_id' => 'required|exists:exportadors,id',
+        $rules = [
+            'estancia_id' => 'required|exists:estancias,id',
             'referencia_cliente' => 'required|string|max:50',
             'factura_proforma' => 'required|string|max:50',
             'descricao' => 'required|string|max:150',
@@ -47,8 +45,17 @@ class LicenciamentoRequest extends FormRequest
             'frete' => 'nullable|numeric|min:0',
             'seguro' => 'nullable|numeric|min:0',
             'cif' => 'nullable|numeric|min:0',
-            'porto_origem' => 'required|string'
+            'porto_origem' => 'required|string',
+            'pais_origem' => 'nullable|string'
         ];
+    
+        // Campos obrigatórios somente para criação
+        if ($this->isMethod('post')) {
+            $rules['cliente_id'] = 'required|exists:customers,id';
+            $rules['exportador_id'] = 'required|exists:exportadors,id';
+        }
+    
+        return $rules;
     }
 
     /**

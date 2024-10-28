@@ -63,7 +63,18 @@
                 <div class="col-md-8">
                     <header class="mb-4">
                         <h4>{{$documento->invoice_no}}</h4>
-                        <h4>{{$documento->invoice_date_end}}</h4>
+                        <div class="div">
+                            @if($status->invoice_status == 'A')
+                                <span>Factura anulada</span>
+                            @else
+                                @if ($documento->invoice_date_end >= Carbon\Carbon::now())
+                                    <h4 style = "color: darkgoldenrod;"> <i class = "fas fa-exclamation-triangle"></i> Por Pagar</h4>
+                                @else
+                                    <h4 style = "color: darkred;"> <i class = "fas fa-exclamation-triangle"></i> Factura Vencida</h4>
+                                @endif
+                            @endif
+                        </div>
+                        
                         
                         <hr>
                         <p class="mb-2">
@@ -147,14 +158,16 @@
                         <button type="button" class="btn btn-sm btn-secondary mb-2">
                             <i class="fas fa-bell"></i> Notificar na App
                         </button>
-                        @if($documento->invoiceType->Code == 'FT' || $documento->invoiceType->Code == 'FG')
-                            <a href="{{ route('documento.ViewPagamento', ['id' => $documento->id]) }}" class="btn btn-sm btn-success mb-2">
-                                <i class="fas fa-credit-card"></i> Efectuar Pagamento
+                        @if($status->invoice_status == 'N')
+                            @if($documento->invoiceType->Code == 'FT' || $documento->invoiceType->Code == 'FG')
+                                <a href="{{ route('documento.ViewPagamento', ['id' => $documento->id]) }}" class="btn btn-sm btn-success mb-2">
+                                    <i class="fas fa-credit-card"></i> Efectuar Pagamento
+                                </a>
+                            @endif
+                            <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-times-circle"></i> Anular Factura
                             </a>
                         @endif
-                        <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger">
-                            <i class="fas fa-times-circle"></i> Anular Factura
-                        </a>
                     </div>
                 </div>
             </div>

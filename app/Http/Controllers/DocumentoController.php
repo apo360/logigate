@@ -86,7 +86,7 @@ class DocumentoController extends Controller
         $faturasEmAtraso = SalesDocTotal::whereNull('data_pagamento')->where('data_pagamento', '<', now())->count();
 
         $tableData = [
-            'headers' => ['Tipo', 'Número da Fatura', 'Cliente', 'Total', 'Status',''],
+            'headers' => ['Tipo', 'Número da Fatura', 'Cliente', 'Total', 'Estado',''],
             'rows' => [],
         ];
 
@@ -100,7 +100,7 @@ class DocumentoController extends Controller
                 $fatura->invoice_no,
                 $fatura->customer->CompanyName ?? '',
                 $fatura->salesdoctotal->gross_total ?? '0.00',
-                $fatura->getStatusAttribute(),
+                '',
                 '
                    <div class="inline-flex">
                     <a href="'.route('documentos.show', $fatura).'" class="btn btn-sm "><i class="fas fa-eye"></i></a>
@@ -330,13 +330,16 @@ class DocumentoController extends Controller
      * Display the specified resource.
      */
     public function show(SalesInvoice $documento){
-        return view('Documentos.detalhe_documento',compact('documento'));
+        $status = SalesStatus::where('documentoID', $documento->id)->first();
+        return view('Documentos.detalhe_documento',compact('documento', 'status'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(SalesInvoice $documento){
+
+        
 
         return view('Documentos.ncredito_documento', compact('documento'));
     }
@@ -348,7 +351,7 @@ class DocumentoController extends Controller
     {
         // Criar uma NC (Documento Anulado)
         $invoiceTypeID = (new InvoiceType())->getID($request->input('document_type'));
-
+        $statuss = SalesStatus::where('documentoID', $documento->id)->first();
         $result = DB::select("CALL GenerateInvoiceNo(?,?)", [$invoiceTypeID, Auth::user()->empresas->first()->id]);
 
         $salesInvoice = SalesInvoice::create([
@@ -364,10 +367,10 @@ class DocumentoController extends Controller
             'invoice_type_id' => $invoiceTypeID,
             'source_id' => Auth::user()->id,
             'system_entry_date' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
-            'customer_id' => $documento->cliente->id, 
+            'customer_id' => $documento->customer->id, 
         ]);
 
-        if($documento->salesstatus->invoice_status == 'N'){
+        if($statuss->invoice_status == 'N'){
             SalesStatus::where('documentoID', $documento->id)->update([
                 'documentoID' => $documento->id,
                 'invoice_status' => 'A',
@@ -379,7 +382,9 @@ class DocumentoController extends Controller
         }
 
         // Assinar o campo Hash
-        $this->signAndSaveHash($salesInvoice->id);
+        $this->signAndSaveHash($documento->id);
+
+        return redirect()->route('documentos.show',$salesInvoice)->with('success', 'Factura Anulada com Sucesso');
         
     }
 

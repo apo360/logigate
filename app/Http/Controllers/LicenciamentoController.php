@@ -160,33 +160,46 @@ class LicenciamentoController extends Controller
             return redirect()->route('licenciamento.index')->with('error', 'Este licenciamento não pode ser editado.');
         }
 
+        $estancias = Estancia::all();
+        $regioes = RegiaoAduaneira::all();
+        $paises = Pais::all();
+        $portos = Porto::all();
+        $bancos = IbanController::getBankDetails();
+
         // Continue com o processo de edição
-        return view('licenciamentos.edit', compact('licenciamento'));
+        return view('processos.licenciamento_edit', compact('licenciamento', 'bancos','portos', 'paises', 'regioes', 'estancias'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Licenciamento $licenciamento)
+    public function update(LicenciamentoRequest $request, Licenciamento $licenciamento)
     {
 
+        $user = Auth::user();
         // Verifica se o licenciamento pode ser editado
         if (!$licenciamento->podeSerEditado()) {
             return redirect()->route('licenciamento.index')->with('error', 'Este licenciamento não pode ser atualizado.');
         }
 
-        // Validar dados
-        $validated = $request->validate([
-            'empresa_id' => 'required|exists:empresas,id',
-            'descricao' => 'required|string|max:150',
-            // Outros campos...
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Atualizar o licenciamento
-        $licenciamento->update($validated);
+            $licenciamento_request = $request->validated();
 
-        return redirect()->route('licenciamento.show', $licenciamento->id)
-                        ->with('success', 'Licenciamento atualizado com sucesso!');
+            $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
+
+            // Atualizar o licenciamento
+            $licenciamento->update($licenciamento_request);
+
+            DB::commit();
+
+            return redirect()->route('licenciamentos.edit', $licenciamento->id)->with('success', 'Licenciamento atualizado com sucesso!');
+
+        }catch (QueryException $th) {
+            return DatabaseErrorHandler::handle($th, $request);
+        }
+
     }
 
     /**

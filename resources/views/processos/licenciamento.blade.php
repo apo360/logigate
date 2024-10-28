@@ -65,13 +65,12 @@
                             </div>
 
                             <div class="form-group mt-4 col-md-2">
-                                <label for="cliente_id">Importador</label>
+                                <label for="cliente_id">Importador (Cliente)</label>
                                 <div class="input-group">
                                     <input class="form-control border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" list="cliente_list" id="cliente_id" name="cliente_id" value="{{ old('cliente_id') }}" required>
                                     <div class="input-group-append">
                                         <a href="#" id="add-new-client-button" class="btn btn-dark" data-toggle="modal" data-target="#newClientModal"><i class="fas fa-user-plus" aria-hidden="true"></i></a>
                                     </div>
-                                    <a href="#" class="btn btn-primary"> <i class="fa fa-repeat" aria-hidden="true"></i></a>
                                 </div>
                                 <datalist id="cliente_list">
                                     @foreach ($clientes as $cliente)
@@ -90,7 +89,6 @@
                                     <div class="input-group-append">
                                         <a href="#" id="add-new-exportador-button" class="btn btn-dark" data-toggle="modal" data-target="#newExportadorModal"><i class="fas fa-user-plus" aria-hidden="true"></i></a>
                                     </div>
-                                    <a href="#" class="btn btn-primary"> <i class="fa fa-repeat" aria-hidden="true"></i></a>
                                 </div>
                                 <datalist id="exportador_list">
                                     @foreach ($exportador as $exporta)
@@ -115,7 +113,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-check"></i></span>
                                     </div>
-                                    <x-input type="text" name="referencia_cliente" value="{{ old('referencia_cliente') }}" class="form-control" />
+                                    <x-input type="text" name="referencia_cliente" value="{{ old('referencia_cliente') }}" required class="form-control" />
                                     @error('referencia_cliente')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -156,7 +154,7 @@
                                         <option value="7">Instalação Transporte Fixo (Pipe, P)</option>
                                         <option value="8">Fluvial</option>
                                     </select>
-                                    @error('NomeTransporte')
+                                    @error('tipo_transporte')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -164,7 +162,7 @@
 
                             <div class="form-group mt-4 col-md-3">
                                 <label for="registo_transporte">Registo do Transporte:</label>
-                                <input type="text" id="registo_transporte" name="registo_transporte" required class="form-control" value="{{ old('registo_transporte') }}">
+                                <input type="text" id="registo_transporte" name="registo_transporte" class="form-control" value="{{ old('registo_transporte') }}">
                             </div>
 
                             <div class="form-group mt-4 col-md-3">
@@ -191,18 +189,16 @@
                         </div>
 
                         <div class="row">
-                            <div class="form-group mt-4 col-md-3">
+                            <div class="form-group mt-4 col-md-4">
                                 <label for="moeda">Moeda</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-check"></i></span>
                                     </div>
-                                    <select id="moeda" name="moeda" required class="form-control" value="{{ old('moeda') }}">
+                                    <select id="moeda" name="moeda" required class="form-control">
                                         <option value="">Selecionar</option>
-                                        @foreach($paises->filter(function($pais) { return $pais->cambio > 0; }) as $pais)
-                                            <option value="{{ $pais->moeda }}">
-                                                {{$pais->moeda}}
-                                            </option>
+                                        @foreach($paises->filter(fn($pais) => $pais->cambio > 0) as $pais)
+                                            <option value="{{ $pais->moeda }}">{{ $pais->moeda }}</option>
                                         @endforeach
                                     </select>
                                     @error('moeda')
@@ -210,12 +206,12 @@
                                     @enderror
                                 </div>
                             </div>
-                            <div class="form-group mt-4 col-md-3">
+                            <div class="form-group mt-4 col-md-4">
                                 <label for="data_entrada">Data de Chegada</label>
                                 <input type="date" id="data_entrada" name="data_entrada" class="form-control" value="{{ old('data_entrada') }}">
                             </div>
 
-                            <div class="form-group mt-4 col-md-3">
+                            <div class="form-group mt-4 col-md-4">
                                 <label for="porto_entrada">(Aero)Porto de Entrada</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
@@ -224,32 +220,32 @@
                                     <x-input type="text" name="porto_entrada" class="form-control rounded-md shadow-sm" value="{{ old('porto_entrada') }}" list="porto" required />
                                     <datalist id="porto">
                                         @foreach($portos as $porto)
-                                            <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
+                                            <option value="{{$porto->porto}}"> {{$porto->porto}} ({{$porto->sigla}})</option>
                                         @endforeach
                                     </datalist>
                                     @error('porto_entrada')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
-                                </div> <!-- callcenter@ensa.co.ao -->
+                                </div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="metodo_avaliacao">Método de Avaliação:</label>
-                                <select id="metodo_avaliacao" name="metodo_avaliacao" required class="form-control" value="{{ old('metodo_avaliacao') }}">
+                                <select id="metodo_avaliacao" name="metodo_avaliacao" required class="form-control">
                                     <option value="GATT">GATT</option>
                                     <option value="Outro">Outro</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="forma_pagamento">Forma de Pagamento:</label>
-                                <select id="forma_pagamento" name="forma_pagamento" required class="form-control" value="{{ old('forma_pagamento') }}">
+                                <select id="forma_pagamento" name="forma_pagamento" required class="form-control" >
                                     <option value="RD">RD</option>
                                     <option value="Outro">Outro</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label for="codigo_banco">Código do Banco</label>
                                 <select name="codigo_banco" id="codigo_banco" class="form-select select2" value="{{ old('codigo_banco') }}" required >
                                     <option value=""></option>
@@ -272,13 +268,13 @@
                                     <x-input type="text" name="porto_origem" class="form-control rounded-md shadow-sm" list="porto" required />
                                     <datalist id="porto">
                                         @foreach($portos as $porto)
-                                            <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
+                                            <option value="{{$porto->sigla}}"> {{$porto->porto}} - ({{$porto->sigla}})</option>
                                         @endforeach
                                     </datalist>
                                     @error('porto_origem')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
-                                </div> <!-- callcenter@ensa.co.ao -->
+                                </div>
                             </div>
 
                             <div class="form-group col-md-3">
@@ -302,7 +298,7 @@
 
                     <div class="card-footer">
                         <div class="row">
-                            <button type="submit" class="btn btn-dark">Gerar Licenciamento</button>
+                            <button type="submit" class="btn btn-dark">Gravar</button>
                         </div>
                     </div>
 
@@ -399,7 +395,7 @@
         <div class="modal-dialog modal-dialog-aside" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newClientModalLabel">Novo Exportador</h5>
+                    <h5 class="modal-title" id="newExportdorModalLabel">Novo Exportador</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -462,90 +458,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <!-- Script para tratar de adição de clientes não registados a tabela -->
-    <script>
-        // Selecione o formulário
-        const form = document.getElementById('formNovoCliente');
-
-        // Adicione um event listener para o envio do formulário
-        form.addEventListener('submit', async (event) => {
-            // Impedir o envio padrão do formulário
-            event.preventDefault();
-
-            // Enviar o formulário via AJAX
-            const formData = new FormData(form);
-            const url = form.action;
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                // Verificar se a resposta é bem-sucedida
-                if (response.ok) {
-                    // Converter a resposta para JSON
-                    const data = await response.json();
-
-                    // Exibir a mensagem de retorno usando Toastr
-                    toastr.success(data.message); // Exibir mensagem de sucesso
-                    $("#formNovoCliente")[0].reset();  // Reset form
-                    $('#newClientModal').modal('hide');  // Hide modal
-                    $('#CustomerID').val(data.cliente_id);
-                } else {
-                    // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
-                    toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-                }
-            } catch (error) {
-                console.error('Erro ao enviar formulário:', error);
-                // Em caso de erro, exibir uma mensagem de erro genérica
-                toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-            }
-        });
-    </script>
-
-    <!-- Script para tratar de adição de Exportadores não registados a tabela -->
-    <script>
-        // Selecione o formulário
-        const formE = document.getElementById('formNovoExportador');
-
-        // Adicione um event listener para o envio do formulário
-        formE.addEventListener('submit', async (event) => {
-            // Impedir o envio padrão do formulário
-            event.preventDefault();
-
-            // Enviar o formulário via AJAX
-            const formData = new FormData(formE);
-            const url = formE.action;
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                // Verificar se a resposta é bem-sucedida
-                if (response.ok) {
-                    // Converter a resposta para JSON
-                    const data = await response.json();
-
-                    // Exibir a mensagem de retorno usando Toastr
-                    toastr.success(data.message); // Exibir mensagem de sucesso
-                    $("#formNovoExportador")[0].reset();  // Reset form
-                    $('#newExportadorModal').modal('hide');  // Hide modal
-                    $('#ExportadorID').val(data.exportador_id);
-                } else {
-                    // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
-                    toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-                }
-            } catch (error) {
-                console.error('Erro ao enviar formulário:', error);
-                // Em caso de erro, exibir uma mensagem de erro genérica
-                toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
-            }
-        });
-    </script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
@@ -605,9 +517,7 @@
                 placeholder: 'Selecione um banco',
                 allowClear: true
             });
-        });
 
-        $(document).ready(function() {
             // Função que envia automaticamente o rascunho a cada 60 segundos
             setInterval(function() {
                 var formData = $('#licenciamento-form').serialize();
@@ -625,6 +535,37 @@
                 });
             }, 60000); // Salva automaticamente a cada 60 segundos
         });
+
+        async function handleSubmit(formId, modalId, entityId, entityInput) {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const formData = new FormData(form);
+                const url = form.action;
+
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        toastr.success(data.message);
+                        $(`#${formId}`)[0].reset();
+                        $(`#${modalId}`).modal('hide');
+                        $(`#${entityInput}`).val(data[entityId]);
+                    } else {
+                        toastr.error('Erro ao processar solicitação.');
+                    }
+                } catch (error) {
+                    const errorData = await response.json();
+                    toastr.error(errorData.message || 'Erro ao processar solicitação.');
+                }
+            });
+        }
+
+        handleSubmit('formNovoCliente', 'newClientModal', 'cliente_id', 'cliente_id');
+        handleSubmit('formNovoExportador', 'newExportadorModal', 'exportador_id', 'exportador_id');
 
     </script>
 

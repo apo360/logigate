@@ -61,7 +61,7 @@
                 @endforeach
             </tbody>
         </table>
-        <input type="text" id="total">
+        <input type="hidden" id="total">
     </div>
             </div>
         </div>
