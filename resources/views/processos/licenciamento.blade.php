@@ -220,7 +220,7 @@
                                     <x-input type="text" name="porto_entrada" class="form-control rounded-md shadow-sm" value="{{ old('porto_entrada') }}" list="porto" required />
                                     <datalist id="porto">
                                         @foreach($portos as $porto)
-                                            <option value="{{$porto->porto}}"> {{$porto->porto}} ({{$porto->sigla}})</option>
+                                            <option value="{{$porto->sigla}}"> {{$porto->porto}} ({{$porto->sigla}})</option>
                                         @endforeach
                                     </datalist>
                                     @error('porto_entrada')
@@ -297,7 +297,7 @@
                         <div class="row">
                             <div class="col-md-3">
                                 <label for="frete">Frete</label>
-                                <input type="text" id="frete" name="frete" class="form-control" value="{{$frete}}">
+                                <input type="text" id="frete" name="frete" class="form-control">
                                 @error('frete')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
@@ -305,7 +305,15 @@
 
                             <div class="col-md-3">
                                 <label for="seguro">Seguro</label>
-                                <input type="text" id="seguro" name="seguro" class="form-control" value="{{$seguro}}">
+                                <input type="text" id="seguro" name="seguro" class="form-control">
+                                @error('seguro')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="seguro">Peso Bruto</label>
+                                <input type="text" id="peso_bruto" name="peso_bruto" class="form-control">
                                 @error('seguro')
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror

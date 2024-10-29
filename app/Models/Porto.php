@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Porto extends Model
 {
     use HasFactory;
+
+    protected $table = 'portos';
+
+    public function pais()
+    {
+        return $this->belongsTo(Pais::class, 'pais_id');
+    }
 }

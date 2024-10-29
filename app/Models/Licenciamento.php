@@ -85,6 +85,11 @@ class Licenciamento extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    public function pais()
+    {
+        return $this->belongsTo(Pais::class, 'nacionalidade_transporte', 'id');
+    }
+
     /**
      * Relacionamento com a Estância (Se for uma entidade separada da empresa).
      */

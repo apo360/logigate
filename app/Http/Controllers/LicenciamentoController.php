@@ -96,7 +96,6 @@ class LicenciamentoController extends Controller
             $licenciamento_request = $request->validated();
 
             $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
-            $licenciamento_request['peso_bruto'] = 0.00;
             $licenciamento_request['adicoes'] = 0;
 
             // Criar licenciamento (código será gerado automaticamente pelo Model)
@@ -223,6 +222,8 @@ class LicenciamentoController extends Controller
 
         $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
 
+        $porto = Porto::with('pais')->where('porto', $licenciamento->porto_origem)->first();
+
         $FOB = $licenciamento->fob_total;
         $Frete = $licenciamento->frete;
         $Seguro = $licenciamento->seguro;
@@ -231,11 +232,14 @@ class LicenciamentoController extends Controller
         $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
         
         // Linha 1 - Informações do exportador e transporte
-        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->nacionalidade_transporte}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$licenciamento->pais_origem}{$licenciamento->porto_origem}|{$licenciamento->pais_origem}|AO||||";
+        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo}{$porto->sigla}|{$licenciamento->pais_origem}|AO||||";
         
         // Linha 2 - Adições de mercadorias
         $adicoes = [];
         foreach ($mercadoriaAgrupada as $key => $adicao) {
+
+            $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->first();
+
             $ordem = $key + 1;
             
             // Calculando Frete e Seguro proporcionais
@@ -244,8 +248,13 @@ class LicenciamentoController extends Controller
             
             $CIF = $frete_seguro + $adicao->preco_total;
             
+            if ($adicao->peso_total == 0) {
+                $peso = $licenciamento->peso_bruto / count($mercadoriaAgrupada);
+            }else{
+                $peso = $adicao->peso_total;
+            }
             // Criando a linha de adição
-            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->quantidade_total}||{$licenciamento->pais_origem}|{$adicao->peso_total}|{$licenciamento->moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||Kg|||||||||||||||||||";
+            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->quantidade_total}||{$licenciamento->pais_origem}|{$peso}|{$licenciamento->moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||{$pautaAduaneira->uq}|||||||||||||||||||";
         }
 
         // Montando o conteúdo completo

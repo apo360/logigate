@@ -29,10 +29,6 @@
             <input type="hidden" name="licenciamento_id" value="{{ request()->get('licenciamento_id') }}">
         @endif
 
-        @if(request()->has('processo_id'))
-            <input type="hidden" name="Fk_Importacao" value="{{ request()->get('processo_id') }}">
-        @endif
-
         <div class="row">
             <div class="col-md-9">
                 <div class="card">
@@ -95,7 +91,7 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label for="preco_total" class="form-label">Valor Total (FOB)</label>
-                                <input type="number" class="form-control" id="preco_total" name="preco_total" step="0.01" placeholder="Ex.: 10000.00" required>
+                                <input type="number" class="form-control" id="preco_total" name="preco_total" step="0.01" placeholder="Ex.: 10000.00">
                             </div>
                         </div>
 
@@ -180,6 +176,7 @@
                         <th>Quantidade Total</th>
                         <th>Peso (Kg)</th>
                         <th>Preço (Moeda)</th>
+                        <th>Quantidade</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -189,6 +186,7 @@
                         <td>{{ $agrupamento->quantidade_total }}</td>
                         <td>{{ $agrupamento->peso_total }}</td>
                         <td>{{ $agrupamento->preco_total }}</td>
+                        <td>{{ count($agrupamento->mercadorias) }}</td>
                     </tr>
 
                     <!-- Linhas Detalhadas (Mercadorias Associadas) -->

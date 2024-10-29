@@ -250,6 +250,32 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="frete">Frete</label>
+                        <input type="text" id="frete" name="frete" class="form-control" value="{{ $licenciamento->frete }}">
+                        @error('frete')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="seguro">Seguro</label>
+                        <input type="text" id="seguro" name="seguro" class="form-control" value="{{ $licenciamento->seguro }}">
+                        @error('seguro')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="seguro">Peso Bruto</label>
+                        <input type="text" id="peso_bruto" name="peso_bruto" class="form-control" value="{{ $licenciamento->peso_bruto }}">
+                        @error('peso_bruto')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
             </div>
             <div class="card-footer">
                 <!-- Botões -->

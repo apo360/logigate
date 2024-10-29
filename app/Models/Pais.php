@@ -14,4 +14,9 @@ class Pais extends Model
     protected $fillable = [
         'codigo', 'pais', 'nacionalidade', 'moeda', 'capital', 'latitude', 'longitude', 'cambio', 'data_cambio'
     ];
+
+    public function portos()
+    {
+        return $this->hasMany(Porto::class, 'pais_id');
+    }
 }
