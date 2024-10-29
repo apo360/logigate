@@ -1,23 +1,17 @@
 <!-- resources/view/mercadorias/create_mercadoria.blade.php -->
 <x-app-layout>
-    @php
-        $fob = 0;
-        $seguro = 0;
-        $frete = 0;
-        $CIF = 0;
-    @endphp
-    @if(request()->has('licenciamento_id'))
+    @if(request()->has('processo_id'))
         <x-breadcrumb :items="[
-            ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')],
-            ['name' => 'Visualizar Licenciamento', 'url' => route('licenciamentos.show', request()->get('licenciamento_id') )],
+            ['name' => 'Processos', 'url' => route('processos.index')],
+            ['name' => 'Editar Processo', 'url' => route('processos.show', request()->get('processo_id') )],
             ['name' => 'Nova Mercadorias', 'url' => '']
         ]" separator="/" />
         @php
-            $mercadoriasAgrupadas = App\Models\MercadoriaAgrupada::with('mercadorias')->where('licenciamento_id',request()->get('licenciamento_id'))->get();
-            $licenciamento = App\Models\Licenciamento::find(request()->get('licenciamento_id'));
-            $fob = $licenciamento->fob_total;
-            $seguro = $licenciamento->seguro;
-            $frete = $licenciamento->frete;
+            $mercadoriasAgrupadas = App\Models\MercadoriaAgrupada::with('mercadorias')->where('Fk_Importacao',request()->get('processo_id'))->get();
+            $processo = App\Models\Processo::find(request()->get('processo_id'));
+            $fob = $processo->importacao->FOB;
+            $seguro = $processo->importacao->Insurance;
+            $frete = $processo->importacao->Freight;
             $CIF = $fob + $seguro + $frete;
         @endphp
     @endif
@@ -65,30 +59,65 @@
 
                                 </datalist>
                             </div>
-
-                            <div class="col-md-4 mb-3">
-                                <label for="Quantidade" class="form-label">Quantidade</label>
-                                <input type="number" class="form-control" id="Quantidade" name="Quantidade" min="1" placeholder="Ex.: 10" required>
+                            <div class="col-md-3 form-group">
+                                <label for="NCM_HS">Marca</label>
+                                <input type="text" name="NCM_HS" id="NCM_HS" placeholder="Marcas do Contentor" class="form-control">
                             </div>
-                            
+                            <div class="col-md-3 form-group">
+                                <label for="NCM_HS_Numero">Números</label>
+                                <input type="text" name="NCM_HS_Numero" id="NCM_HS_Numero" placeholder="Números do Contentor" class="form-control">
+                            </div>
                         </div>
 
                         
                         <!-- Detalhes da Mercadoria -->
-                        <div class="row">
-                            <div class="col-md-9 mb-3">
-                                <label for="descricao">Descrição da Mercadoria:</label>
-                                <input type="text" name="Descricao" class="form-control" required>
-                            </div>
+                        <div class="form-group">
+                            <label for="descricao">Descrição da Mercadoria:</label>
+                            <input type="text" name="Descricao" class="form-control" required>
+                        </div>
 
-                            <div class="col-md-3 mb-3">
-                                <label for="Peso" class="form-label">Peso (Kg)</label>
-                                <input type="number" class="form-control" id="Peso" name="Peso" step="0.01" placeholder="Ex.: 500.50" value="0">
+                        <!-- Seção de Detalhes Específicos -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="Quantidade" class="form-label">Quantidade</label>
+                                <input type="number" class="form-control" id="Quantidade" name="Quantidade" min="1" placeholder="Ex.: 10" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="Unidade" class="form-label">Unidade de Medida</label>
+                                <select class="form-select" id="Unidade" name="Unidade" required>
+                                    <option value="">Selecione a unidade</option>
+                                    <option value="kg">Kg</option>
+                                    <option value="litros">Litros</option>
+                                    <option value="unidades">Unidades</option>
+                                    <option value="metros">Metros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="form-group">
+                                    <label for="unidade">Qualificação</label>
+                                    <select name="Qualificacao" id="Qualificacao" class="form-control">
+                                        <option value="">Selecionar</option>
+                                        <option value="cont">Contentor</option>
+                                        <option value="auto">Automóvel</option>
+                                        <option value="outro">Outro</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Detalhes Adicionais: Peso, Volume, etc. -->
                         <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="Peso" class="form-label">Peso (Kg)</label>
+                                <input type="number" class="form-control" id="Peso" name="Peso" step="0.01" placeholder="Ex.: 500.50">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="volume" class="form-label">Volume (m³)</label>
+                                <input type="number" class="form-control" id="volume" name="volume" step="0.01" placeholder="Ex.: 20.5">
+                            </div>
+                       
+                            <!-- Valor Unitário e Total -->
+                        
                             <div class="col-md-3 mb-3">
                                 <label for="preco_unitario" class="form-label">Valor Unitário (Moeda)</label>
                                 <input type="number" class="form-control" id="preco_unitario" name="preco_unitario" step="0.01" placeholder="Ex.: 1000.00" required>
@@ -140,7 +169,31 @@
                             </div>
                         </div>
 
-                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="frete">Frete</label>
+                                <input type="text" id="frete" name="frete" class="form-control" value="{{$frete}}">
+                                @error('frete')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="seguro">Seguro</label>
+                                <input type="text" id="seguro" name="seguro" class="form-control" value="{{$seguro}}">
+                                @error('seguro')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="cif">CIF</label>
+                                <input type="text" id="cif" name="cif" class="form-control" value="{{$CIF}}">
+                                @error('cif')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -180,6 +233,7 @@
                         <th>Quantidade Total</th>
                         <th>Peso (Kg)</th>
                         <th>Preço (Moeda)</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>

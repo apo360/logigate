@@ -14,7 +14,7 @@
                     <div class="card-header">
                         <div class="float-left">
                             <a class="btn btn-default" style="color: black;" href="{{ route('licenciamentos.index') }}">
-                                <i class="fas fa-search" style="color: black;"></i> {{ __('Pesquisar Licenciamento') }}
+                                <i class="fas fa-search" style="color: black;"> </i> {{__('Pesquisar Licenciamento') }}
                             </a>
                         </div>
                         <div class="float-right">
@@ -291,6 +291,24 @@
                             <div class="form-group col-md-3">
                                 <label for="qntd_volume">Quantidade de Volumes</label>
                                 <input type="number" id="qntd_volume" name="qntd_volume" required class="form-control" value="{{ old('qntd_volume') }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="frete">Frete</label>
+                                <input type="text" id="frete" name="frete" class="form-control" value="{{$frete}}">
+                                @error('frete')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="seguro">Seguro</label>
+                                <input type="text" id="seguro" name="seguro" class="form-control" value="{{$seguro}}">
+                                @error('seguro')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
