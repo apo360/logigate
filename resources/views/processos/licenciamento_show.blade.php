@@ -9,7 +9,34 @@
         <div class="col-md-9">
             <div class="card">
                 <div class="card-header">
-                    Detalhes do Licenciamento
+                    <div class="float-left">
+                        <span>Número do Processo: {{ $licenciamento->codigo_licenciamento }}</span>
+                    </div>
+                    <div class="float-right">
+                        <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" type="button" class="btn btn-default" style="color: black;">
+                            <i class="fas fa-edit" style="color: black;"></i> Editar Licenciamento
+                        </a>
+                        <div class="btn-group" role="group">
+                            <div class="btn-group" role="group">
+                                <button id="btnGroupDrop1" type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-filter"></i>Opções
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                    <li> <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">Adicionar Mercadoria</a> </li>
+                                    
+                                    <li> <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                            <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
+                                        </a> 
+                                    </li>
+                                    
+                                    <li> <a href="{{ route('gerar.txt', ['IdProcesso' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                            <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
+                                        </a> 
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     <p><strong>FOB Total:</strong> {{ $licenciamento->fob_total }}</p>
@@ -47,7 +74,7 @@
     <div class="card">
         <h2 class="mt-4">Mercadorias</h2>
         @if($licenciamento->mercadorias->count() > 0)
-            <table class="table table-bordered mt-3">
+            <table class="table table-sm table-bordered mt-3">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -74,15 +101,4 @@
         @endif
     </div>
 
-    <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class="btn btn-primary mt-3">Editar Licenciamento</a>
-    <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="btn btn-default mt-3">Inserir Mercadoria</a>
-    
-    <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="btn btn-success">
-                                <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
-                            </a>
-
-    <!-- Ao clicar quero verificar se os campos frete e seguro estão vazio. Caso estejam deve me alertar por mensagem para preencher -->
-    <a href="{{ route('gerar.txt', ['IdProcesso' => $licenciamento->id]) }}" class="btn btn-default">
-                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
-                            </a>
 </x-app-layout>

@@ -214,10 +214,10 @@ class LicenciamentoController extends Controller
         // Buscando o processo pelo ID
         $licenciamento = Licenciamento::findOrFail($Idlice);
 
-        // Verificando se os campos Frete e Seguro estão preenchidos
-        if (empty($licenciamento->frete) || empty($licenciamento->seguro)) {
+        // Verificar se os campos importantes estão preenchidos
+        if (is_null($licenciamento->frete) || is_null($licenciamento->seguro) || $licenciamento->frete === 0 || $licenciamento->seguro === 0) {
             // Redirecionar de volta com uma mensagem de erro
-            return redirect()->back()->with('error', 'Os campos Frete e Seguro precisam ser preenchidos antes de gerar o licenciamento.');
+            return redirect()->back()->withErrors(['error' => 'Os campos Frete e Seguro precisam estar preenchidos e diferentes de zero antes de gerar o licenciamento.']);
         }
 
         $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
@@ -243,19 +243,31 @@ class LicenciamentoController extends Controller
             $ordem = $key + 1;
             
             // Calculando Frete e Seguro proporcionais
-            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete) 
+            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete)
                         + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
             
-            $CIF = $frete_seguro + $adicao->preco_total;
-            
-            if ($adicao->peso_total == 0) {
-                $peso = $licenciamento->peso_bruto / count($mercadoriaAgrupada);
-            }else{
-                $peso = $adicao->peso_total;
+             // Calcular o CIF
+             $CIF = $frete_seguro + $adicao->preco_total;
+
+             // Determinar o peso
+             $peso = $adicao->peso_total ?: $licenciamento->peso_bruto / max(count($mercadoriaAgrupada), 1);
+ 
+             // Adição das mercadorias
+             $adicoes[] = sprintf(
+                 "2|%d|||||%s|%d||%s|%s|%s|%s|%s|||%s|||||||||||||||||||",
+                 $key + 1,
+                 $adicao->codigo_aduaneiro,
+                 $adicao->quantidade_total,
+                 $licenciamento->pais_origem,
+                 $peso,
+                 $licenciamento->moeda,
+                 $adicao->preco_total,
+                 $frete_seguro,
+                 $CIF,
+                 $pautaAduaneira->uq ?? 'N/A'
+             );
+
             }
-            // Criando a linha de adição
-            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->quantidade_total}||{$licenciamento->pais_origem}|{$peso}|{$licenciamento->moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||{$pautaAduaneira->uq}|||||||||||||||||||";
-        }
 
         // Montando o conteúdo completo
         $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);

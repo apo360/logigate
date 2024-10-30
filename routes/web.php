@@ -89,11 +89,8 @@ use App\Http\Controllers\PautaAduaneiraController;
             'avenca' => CustomerAvencaController::class,
         ]);
 
-        
-
         Route::get('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import_view'])->name('pauta.import');
         Route::post('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import'])->name('pauta.import.submit');
-
 
         // Rota personalizada para criar mercadorias com licenciamento ou processo
         Route::get('/mercadorias/create/{licenciamento_id?}/{processo_id?}', [MercadoriaController::class, 'create'])->name('mercadorias.createWithParams');
@@ -138,7 +135,7 @@ use App\Http\Controllers\PautaAduaneiraController;
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/imprimir', [ProcessoController::class, 'print'])->name('processos.print');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
-        Route::get('processo/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
+        Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
 
 
