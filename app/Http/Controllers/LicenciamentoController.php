@@ -222,7 +222,7 @@ class LicenciamentoController extends Controller
 
         $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
 
-        $porto = Porto::with('pais')->where('porto', $licenciamento->porto_origem)->first();
+        $porto = Porto::with('pais')->where('porto', $licenciamento->porto_origem)->get();
 
         $FOB = $licenciamento->fob_total;
         $Frete = $licenciamento->frete;
@@ -238,7 +238,7 @@ class LicenciamentoController extends Controller
         $adicoes = [];
         foreach ($mercadoriaAgrupada as $key => $adicao) {
 
-            $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->first();
+            $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->get();
 
             $ordem = $key + 1;
             
