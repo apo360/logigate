@@ -60,6 +60,10 @@ class SalesInvoice extends Model implements Auditable
         return $this->belongsTo(User::class, 'source_id');
     }
 
+    public function empresa(){
+        return $this->belongsTo(Empresa::class, 'empresa_id');
+    }
+
     public function invoiceType()
     {
         return $this->belongsTo(InvoiceType::class);

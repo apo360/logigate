@@ -156,7 +156,7 @@ class LicenciamentoController extends Controller
     {
         // Verifica se o licenciamento pode ser editado
         if (!$licenciamento->podeSerEditado()) {
-            return redirect()->route('licenciamento.index')->with('error', 'Este licenciamento não pode ser editado.');
+            return redirect()->back()->with('error', 'Este licenciamento não pode ser editado.');
         }
 
         $estancias = Estancia::all();
@@ -222,7 +222,9 @@ class LicenciamentoController extends Controller
 
         $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
 
-        $porto = Porto::with('pais')->where('porto', $licenciamento->porto_origem)->get();
+        $porto = DB::table('portos')->join('paises', 'portos.pais_id', '=', 'paises.id')
+        ->where('portos.porto', $licenciamento->porto_origem)
+        ->select('portos.sigla', 'paises.codigo as codigo_pais')->first();
 
         $FOB = $licenciamento->fob_total;
         $Frete = $licenciamento->frete;
@@ -232,42 +234,43 @@ class LicenciamentoController extends Controller
         $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
         
         // Linha 1 - Informações do exportador e transporte
-        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo}{$porto->sigla}|{$licenciamento->pais_origem}|AO||||";
+        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo_pais}{$porto->sigla}|{$licenciamento->pais_origem}|AO||||";
         
         // Linha 2 - Adições de mercadorias
         $adicoes = [];
         foreach ($mercadoriaAgrupada as $key => $adicao) {
 
-            $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->get();
+            $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->first();
 
             $ordem = $key + 1;
             
             // Calculando Frete e Seguro proporcionais
-            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete)
+            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete) 
                         + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
             
-             // Calcular o CIF
-             $CIF = $frete_seguro + $adicao->preco_total;
-
-             // Determinar o peso
-             $peso = $adicao->peso_total ?: $licenciamento->peso_bruto / max(count($mercadoriaAgrupada), 1);
- 
-             // Adição das mercadorias
-             $adicoes[] = sprintf(
-                 "2|%d|||||%s|%d||%s|%s|%s|%s|%s|||%s|||||||||||||||||||",
-                 $key + 1,
-                 $adicao->codigo_aduaneiro,
-                 $adicao->quantidade_total,
-                 $licenciamento->pais_origem,
-                 $peso,
-                 $licenciamento->moeda,
-                 $adicao->preco_total,
-                 $frete_seguro,
-                 $CIF,
-                 $pautaAduaneira->uq ?? 'N/A'
-             );
-
+            $CIF = $frete_seguro + $adicao->preco_total;
+            
+            if ($adicao->peso_total == 0) {
+                $peso = $licenciamento->peso_bruto / count($mercadoriaAgrupada);
+            }else{
+                $peso = $adicao->peso_total;
             }
+            // Criando a linha de adição
+            $adicoes[] = sprintf(
+                "2|%d|||||%s|%d||%s|%s|%s|%s|%s|%s|||%s|||||||||||||||||||",
+                $ordem,
+                $adicao->codigo_aduaneiro ?? 'N/A',             // Código aduaneiro ou padrão 'N/A'
+                $adicao->quantidade_total ?? 0,                 // Quantidade total ou padrão '0'
+                $porto->codigo_pais ?? 'N/A',                   // País de origem ou padrão 'N/A'
+                $peso ?? '0.00',                                // Peso ou padrão '0.00'
+                $licenciamento->moeda ?? 'N/A',                 // Moeda ou padrão 'N/A'
+                $adicao->preco_total ?? '0.00',                 // Preço total ou padrão '0.00'
+                $frete_seguro ?? '0.00',                        // Frete e seguro proporcionais ou padrão '0.00'
+                $CIF ?? '0.00',                                 // CIF ou padrão '0.00'
+                $pautaAduaneira->uq ?? 'N/A'                    // Unidade de quantidade ou padrão 'N/A'
+            );
+            
+        }
 
         // Montando o conteúdo completo
         $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);
@@ -279,8 +282,7 @@ class LicenciamentoController extends Controller
         $licenciamento->save();
 
         // Criando e retornando o arquivo .txt para download
-        return response($conteudo)
-            ->header('Content-Type', 'text/plain')
+        return response($conteudo)->header('Content-Type', 'text/plain')
             ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
     }
 }

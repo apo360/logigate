@@ -221,7 +221,7 @@
                             <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-plane"></i></span>
                             </div>
-                            <x-input type="text" name="porto_origem" class="form-control rounded-md shadow-sm" list="porto" required />
+                            <x-input type="text" name="porto_origem" class="form-control rounded-md shadow-sm" list="porto" value="{{ $licenciamento->porto_origem }}" required />
                             <datalist id="porto">
                                 @foreach($portos as $porto)
                                     <option value="{{$porto->porto}}" {{ $licenciamento->porto_origem == $porto->porto ? 'selected' : '' }}> {{$porto->porto}} - ({{$porto->sigla}})</option>

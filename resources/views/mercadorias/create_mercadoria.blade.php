@@ -199,15 +199,24 @@
                                         <th>Quantidade</th>
                                         <th>Peso</th>
                                         <th>Preço Total</th>
+                                        <th>Acções</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($agrupamento->mercadorias as $mercadoria)
-                                    <tr>
+                                    <tr id="mercadoria-{{ $mercadoria->id }}">
                                         <td>{{ $mercadoria->Descricao }}</td>
                                         <td>{{ $mercadoria->Quantidade }}</td>
                                         <td>{{ $mercadoria->Peso }}</td>
                                         <td>{{ $mercadoria->preco_total }}</td>
+                                        <td>
+                                            <a href="#" class="btn-edit" data-id="{{ $mercadoria->id }}">
+                                                <i class="fas fa-edit" style="color: darkcyan;"></i>
+                                            </a>
+                                            <a href="#" class="btn-delete" data-id="{{ $mercadoria->id }}">
+                                                <i class="fas fa-trash" style="color: red;"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -263,6 +272,42 @@
             var valorTotal = quantidade * precoUnitario;
             document.getElementById('preco_total').value = valorTotal.toFixed(2);
         }
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Ao clicar no botão de excluir
+            $('.btn-delete').click(function(e) {
+                e.preventDefault();
+                
+                let mercadoriaId = $(this).data('id');
+                
+                // Confirmação antes de excluir
+                if (!confirm("Tem certeza que deseja excluir esta mercadoria?")) {
+                    return;
+                }
+                
+                $.ajax({
+                    url: `{{ route('mercadorias.destroy', ':id') }}`.replace(':id', mercadoriaId),  // URL da rota de exclusão com o ID dinâmico
+                    type: 'DELETE',
+                    dataType: 'json',
+                    data: {
+                        _token: '{{ csrf_token() }}'  // Token CSRF para segurança
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Remove a linha da mercadoria na tabela
+                            $(`#mercadoria-${mercadoriaId}`).remove();
+                            alert(response.message);
+                        } else {
+                            alert("Erro: " + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Erro ao excluir a mercadoria. Por favor, tente novamente.");
+                    }
+                });
+            });
+        });
 
     </script>
 

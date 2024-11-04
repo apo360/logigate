@@ -151,10 +151,20 @@ class MercadoriaController extends Controller
     }
 
     /**
+     * MercadoriaController.php
      * Remove the specified resource from storage.
      */
     public function destroy(Mercadoria $mercadoria)
     {
-        //
+        try {
+            // Tenta excluir a mercadoria
+            $mercadoria->delete();
+
+            // Retorna uma resposta JSON com status de sucesso
+            return response()->json(['success' => true, 'message' => 'Mercadoria excluída com sucesso!']);
+        } catch (\Exception $e) {
+            // Retorna uma resposta JSON com status de erro
+            return response()->json(['success' => false, 'message' => 'Erro ao excluir a mercadoria. Tente novamente.'], 500);
+        }
     }
 }

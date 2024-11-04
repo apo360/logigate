@@ -34,6 +34,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
+use PHPJasper\PHPJasper;
 
     /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
@@ -151,7 +152,7 @@ use App\Http\Controllers\PautaAduaneiraController;
 
         Route::get('processos/report/{ProcessoID}/visualizar', [RelatorioController::class, 'generateReport'])->name('processos.print');
         // Documentos
-        Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'InvoicesSales'])->name('documento.print');
+        Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
         Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');
         Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
         Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
@@ -159,5 +160,5 @@ use App\Http\Controllers\PautaAduaneiraController;
         
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
-        Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']);
+        Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']); 
     });

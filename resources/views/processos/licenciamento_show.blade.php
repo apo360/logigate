@@ -22,7 +22,10 @@
                                     <i class="fas fa-filter"></i>Opções
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                    <li> <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">Adicionar Mercadoria</a> </li>
+                                    <li> <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                        <i class="fas fa-plus-circle"></i> {{__('Adicionar Mercadoria')}}
+                                    </a> 
+                                </li>
                                     
                                     <li> <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
                                             <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
@@ -54,6 +57,22 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <ul aria-labelledby="btnGroupDrop1">
+                        <li> <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                <i class="fas fa-plus-circle"></i> {{__('Adicionar Mercadoria')}}
+                            </a> 
+                        </li>
+                        
+                        <li> <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
+                            </a> 
+                        </li>
+                        
+                        <li> <a href="{{ route('gerar.txt', ['IdProcesso' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
+                            </a> 
+                        </li>
+                    </ul>
                     @if($licenciamento->procLicenFaturas->isNotEmpty())
                         @php
                             $statusFatura = $licenciamento->procLicenFaturas->last()->status_fatura;
@@ -63,7 +82,7 @@
                         <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span> 
                         <!-- Encontar um formar de buscar e listar todas as facturas relacionadas com a factura original -->
                     @else
-                        <span>Sem Fatura</span>
+                        <span>Se Fatura</span>
                     @endif
                 </div>
             </div>

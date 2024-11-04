@@ -6,6 +6,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "aws/aws-sdk-php": "^3.325",
+        "barryvdh/laravel-dompdf": "^3.0",
+        "cossou/jasperphp": "^2.8",
+        "geekcom/phpjasper": "^3.4",
         "laravel/framework": "^11.9",
         "laravel/jetstream": "^5.1",
         "laravel/sanctum": "^4.0",
