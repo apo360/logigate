@@ -6,6 +6,7 @@ use App\Helpers\DatabaseErrorHandler;
 use App\Helpers\PdfHelper;
 use App\Http\Requests\DARRequest;
 use App\Http\Requests\PortuariaRequest;
+use App\Http\Requests\ProcessoRequest;
 use App\Http\Requests\TarifaDURequest;
 use App\Models\Customer;
 use App\Models\Estancia;
@@ -70,7 +71,6 @@ class ProcessoController extends Controller
     {
         $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca os Clientes
         $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
-        $NewProcesso = Processo::generateNewProcesso(); // Inicializar com novo código de processo
         $paises = Pais::all();
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
@@ -84,8 +84,7 @@ class ProcessoController extends Controller
         return view('processos.create', 
         compact(
             'clientes', 
-            'exportador', 
-            'NewProcesso', 
+            'exportador',
             'paises', 
             'newCustomerCode', 
             'newExportadorCode',
@@ -98,30 +97,14 @@ class ProcessoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ProcessoRequest $request)
     {
         
         try {
 
             DB::beginTransaction();
-            // Obtém o usuário autenticado
-            $user = Auth::user();
 
-            $processo_request =  $request->validate([
-                'NrProcesso' => 'required|string|max:100',
-                'ContaDespacho' => 'nullable|string|max:150',
-                'customer_id' => 'required|string|max:30',
-                'RefCliente' => 'nullable|string|max:200',
-                'Descricao' => 'nullable|string|max:200',
-                'DataAbertura' => 'required|date',
-                'TipoProcesso' => 'required|string|max:100',
-                'Situacao' => 'required|string',
-                'exportador_id' => 'required|string',
-                'estancia_id' => 'required|string',
-            ]);
-    
-            $processo_request['user_id'] = $user->id;
-            $processo_request['empresa_id'] = $user->empresas->first()->id;
+            $processo_request =  $request->validated();
 
             // Cria o processo
             $processo = Processo::create($processo_request);
@@ -140,7 +123,9 @@ class ProcessoController extends Controller
 
             // Redirecione para a página de listagem de processos com uma mensagem de sucesso
             return redirect()->route('processos.edit', $processo->id)->with('success', 'Processo inserido com sucesso!');
+        
         } catch (QueryException $e) {
+            DB::rollBack();
             return DatabaseErrorHandler::handle($e, $request);
         }
     }

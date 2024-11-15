@@ -1,9 +1,5 @@
 <x-app-layout>
-    <x-breadcrumb :items="[
-        ['name' => 'Dashboard', 'url' => route('dashboard')],
-        ['name' => {{__('Clientes')}}, 'url' => route('customers.index')],
-        ['name' => {{__('Novo Cliente')}} , 'url' => '']
-    ]" separator="/" />
+    
     <br>
     <div class="container">
         <div class="row">

@@ -93,14 +93,14 @@ class DocumentoController extends Controller
         foreach ($invoices as $key => $fatura ) {
             $tableData['rows'][] = [
                 '<div id="doc-header-type" data-href="#/office/change/">
-                    <div style="background: gray; " class="doc-type-circle doc-type inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md ">
+                    <div style="background: gray; border-radius: 50px;" class="inline-flex items-center px-3 py-2 border ">
                     '.$fatura->invoiceType->Code.'
                     </div> 
                 </div>',
                 $fatura->invoice_no,
                 $fatura->customer->CompanyName ?? '',
                 $fatura->salesdoctotal->gross_total ?? '0.00',
-                '',
+                '', // ---> faturasPagas, faturasPorPagar, faturasEmAtraso
                 '
                    <div class="inline-flex">
                     <a href="'.route('documentos.show', $fatura).'" class="btn btn-sm "><i class="fas fa-eye"></i></a>
@@ -111,6 +111,20 @@ class DocumentoController extends Controller
         }
 
         return view('Documentos.index', compact('tableData','invoices','faturasPagas', 'faturasPorPagar', 'faturasEmAtraso'));
+    }
+
+    /**
+     * Filtrar as pesquisas de documentos
+     */
+
+    public function filtrar(Request $request)
+    {
+        $dataInicial = $request->input('dataInicial');
+        $dataFinal = $request->input('dataFinal');
+
+        $faturas = SalesDocTotal::whereBetween('invoice_date', [$dataInicial, $dataFinal])->get();
+
+        return view('Documentos.index', compact('faturas'));
     }
 
     /**
@@ -301,7 +315,6 @@ class DocumentoController extends Controller
                     'gross_total' => $SumGrossTotal, // total de preços com taxa
                     'documentoID' => $salesInvoice->id,
                     'moeda' => 'Kz',
-                    'payment_mechanism_id' => $request->input('invoice_date'),
                     'montante_pagamento' => $request->input('invoice_date'),
                     'data_pagamento' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
                 ]);

@@ -24,9 +24,8 @@ class ProcessoRequest extends FormRequest
     public function rules()
     {
         return [
-            'NrProcesso' => 'required|string|max:100',
             'ContaDespacho' => 'nullable|string|max:150',
-            'CustomerID' => 'required|string|max:30',
+            'customer_id' => 'required|string|max:30',
             'RefCliente' => 'nullable|string|max:200',
             'Descricao' => 'nullable|string|max:200',
             'DataAbertura' => 'required|date',

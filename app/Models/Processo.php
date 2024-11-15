@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -35,6 +37,25 @@ class Processo extends Model implements Auditable
         'created_at',
         'updated_at'
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Evento executado antes de criar um novo registro
+        static::creating(function ($processo) {
+
+            if (Auth::check()) {
+                $processo->user_id = Auth::user()->id;
+            }
+
+            // Definir automaticamente o empresa_id se ainda não estiver definido
+            if (!$processo->empresa_id) {
+                $processo->empresa_id = Auth::user()->empresas->first()->id/* Defina aqui o ID da empresa que deseja associar */;
+            }
+            $processo->NrProcesso = self::generateNewProcesso($processo->empresa_id);
+        });
+    }
 
     public static function getLastInsertedId()
     {
@@ -97,22 +118,43 @@ class Processo extends Model implements Auditable
      *
      * @return string
      */
-    public static function generateNewProcesso()
+
+    // Função para gerar o código único e sequencial
+    public static function generateNewProcesso($empresaId)
     {
-        // Implementar a geração do novo código de processo aqui
-        return DB::select('CALL ProcessoNewCod()')[0]->codProcesso;
+        // Obtenha o último licenciamento dessa empresa
+        $ultimoProcesso = Processo::where('empresa_id', $empresaId)->orderBy('id', 'desc')->first();
+
+        // Se houver um licenciamento anterior, incremente o número
+        if ($ultimoProcesso) {
+            $ultimoCodigo = (int) substr($ultimoProcesso->NrProcesso, -7, 4); // Exemplo: pega os 4 dígitos específicos
+            $novoCodigo = $ultimoCodigo + 1;
+        } else {
+            // Caso seja o primeiro licenciamento da empresa
+            $novoCodigo = 1;
+        }
+
+        // Obtenha o nome da empresa e gere as iniciais
+        $empresa = Empresa::findOrFail($empresaId);
+
+        if($empresa->CodProcesso == ''){
+            // Função para obter as iniciais do nome da empresa
+            $iniciais = implode('', array_map(function($word) { return strtoupper($word[0]); }, explode(' ', $empresa->nome)));
+        }else{
+            $iniciais = $empresa->CodProcesso;
+        }
+        // Gera o código com as iniciais, ID da empresa e o código do processo
+        $codigoProcesso = $iniciais . '-' . str_pad($empresaId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($novoCodigo, 4, '0', STR_PAD_LEFT) . '/' . Carbon::now()->format('y');
+
+        return $codigoProcesso;
     }
+
 
     /**
      * Gerar um novo código de ContaDespacho sequencial a cada ano. OBS: Esse numero é gerado quando a conta é fechada ou imprimida a carta.
      * 
      * @return string
      */
-    public static function generateNewContaDespacho()
-    {
-        // Implementar a geração do novo código de processo aqui
-        return DB::select('CALL DespachoNewCod()')[0]->codProcesso;
-    }
 
      /**
      * Obtém a data de abertura formatada.

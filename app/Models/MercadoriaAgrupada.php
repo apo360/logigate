@@ -13,7 +13,7 @@ class MercadoriaAgrupada extends Model
         'codigo_aduaneiro',
         'licenciamento_id',
         'processo_id',
-        'quantidade_total',
+        'quantidade_total', 
         'peso_total',
         'preco_total',
         'mercadorias_ids', //Para armazenar os IDs das mercadorias agrupadas
@@ -74,9 +74,8 @@ class MercadoriaAgrupada extends Model
             $exists = Licenciamento::where('id', $mercadoria->licenciamento_id)->first();
             if ($exists) {
                 $exists->adicoes += 1;
+                $exists->save();  // Mover o save para dentro do if
             }
-
-            $exists->save();
         }
     }
 
@@ -90,15 +89,14 @@ class MercadoriaAgrupada extends Model
 
         if ($agrupamento) {
             // Subtrair as quantidades, peso e preço do agrupamento
-            $agrupamento->quantidade_total -= $mercadoria->quantidade;
-            $agrupamento->peso_total -= $mercadoria->peso;
-            $agrupamento->preco_total -= $mercadoria->preco_total;
+            $agrupamento->quantidade_total = max(0, $agrupamento->quantidade_total - $mercadoria->quantidade);
+            $agrupamento->peso_total = max(0, $agrupamento->peso_total - $mercadoria->peso);
+            $agrupamento->preco_total = max(0, $agrupamento->preco_total - $mercadoria->preco_total);
 
-            // Atualizar os IDs das mercadorias agrupadas
-            $mercadoriasIds = json_decode($agrupamento->mercadorias_ids);
-            if (($key = array_search($mercadoria->id, $mercadoriasIds)) !== false) {
-                unset($mercadoriasIds[$key]); // Remover o ID da mercadoria
-            }
+
+            $mercadoriasIds = json_decode($agrupamento->mercadorias_ids, true);
+            //simplificar a remoção do ID usando a função array_filter:
+            $mercadoriasIds = array_filter($mercadoriasIds, fn($id) => $id !== $mercadoria->id); // Remover o ID da mercadoria
             $agrupamento->mercadorias_ids = json_encode(array_values($mercadoriasIds));
 
             // Se não houver mais mercadorias associadas ao agrupamento, deletar o agrupamento
@@ -109,5 +107,43 @@ class MercadoriaAgrupada extends Model
             }
         }
     }
+
+    public static function recalcularAgrupamento($licenciamentoId = null, $processoId = null)
+    {
+        // Busca todos os agrupamentos ou filtra por licenciamento ou processo
+        if ($licenciamentoId) {
+            $agrupamentos = MercadoriaAgrupada::where('licenciamento_id', $licenciamentoId)->get();
+        }
+
+        if ($processoId) {
+            $agrupamentos = MercadoriaAgrupada::where('processo_id', $processoId)->get();
+        }
+
+        foreach ($agrupamentos as $agrupamento) {
+            // Busca todas as mercadorias associadas ao agrupamento usando os IDs armazenados
+            $mercadorias = Mercadoria::whereIn('id', json_decode($agrupamento->mercadorias_ids))->get();
+
+            // Calcula os novos valores agregados
+            $quantidadeTotal = $mercadorias->sum('Quantidade');
+            $pesoTotal = $mercadorias->sum('Peso');
+            $precoTotal = $mercadorias->sum('preco_total');
+
+            // Verifica se há mudanças nos valores para evitar operações desnecessárias
+            if ($agrupamento->quantidade_total !== $quantidadeTotal ||
+                $agrupamento->peso_total !== $pesoTotal ||
+                $agrupamento->preco_total !== $precoTotal) {
+
+                // Atualiza o agrupamento com os valores recalculados
+                $agrupamento->quantidade_total = $quantidadeTotal;
+                $agrupamento->peso_total = $pesoTotal;
+                $agrupamento->preco_total = $precoTotal;
+
+                $agrupamento->save();
+            }
+        }
+
+        return response()->json(['message' => 'Recalculo dos agrupamentos concluído com sucesso!']);
+    }
+
 
 }

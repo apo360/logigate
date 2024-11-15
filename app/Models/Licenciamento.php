@@ -153,9 +153,7 @@ class Licenciamento extends Model
     public static function generateCodigoLicenciamento($empresaId)
     {
         // Obtenha o último licenciamento dessa empresa
-        $ultimoLicenciamento = Licenciamento::where('empresa_id', $empresaId)
-                                             ->orderBy('id', 'desc')
-                                             ->first();
+        $ultimoLicenciamento = Licenciamento::where('empresa_id', $empresaId)->orderBy('id', 'desc')->first();
 
         // Se houver um licenciamento anterior, incremente o número
         if ($ultimoLicenciamento) {

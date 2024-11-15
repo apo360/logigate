@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         // DB::statement('TRUNCATE TABLE portos');
 
         $this->call([
-
+            
             /*UserRoleSeeder::class,
             //RolesAndPermissionsSeeder::class,
 
@@ -37,7 +37,10 @@ class DatabaseSeeder extends Seeder
             InvoiceTypesSeeder::class,
             RegiaoAduaneirasSeeder::class,
             EstanciasSeeder::class, 
-            PortosSeeder::class, */
+            PortosSeeder::class,
+            CategoriaAduaneiraSeeder::class,
+            SubcategoriaSeeder::class,
+            */
 
         ]);
 

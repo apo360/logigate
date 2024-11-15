@@ -29,103 +29,108 @@
     }
 </style>
 
-
+<div class="py-12">
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Clientes', 'url' => route('customers.index')],
         ['name' => 'Pesquisar Clientes' , 'url' => '']
     ]" separator="/" />
-    <br>
-    <div class="container mt-5">
-        <div class="card card-navy">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-search"></i> Pesquisar Clientes</h3>
-                <div class="float-right">
-                    <a href="{{ route('customers.create') }}" type="button" class="btn btn-default" style="color: black;">
-                        <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
-                    </a>
-                    <a type="button" href="{{ route('customers.create') }}" class="btn btn-default" style="color: black;">
-                        <i class="fas fa-download" style="color: #0170cf;"></i> Upload Clientes CSV
-                    </a>
-                    <a type="button" href="{{ route('customers.create') }}" class="btn btn-default" data-toggle="modal" data-target="#modal-lg" style="color: black;">
-                        <i class="fas fa-upload" style="color: #0170cf;"></i> Exportar Clientes
-                    </a>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                    <input type="text" id="search" placeholder="Pesquisar por Nome, NIF, Telefone ou Cidade" class="form-control">
-                    </div>
-                    <div class="col-md-3">
-                        <select name="" id="" class="form-control">
-                            <option value="">Todos</option>
-                            <option value="">Activo</option>
-                            <option value="">Inativo</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="button" class="btn btn-primary">Pesquisar</button>
-                    </div>
-                </div>
-                <hr>
-                <table class="table table-hover" id="customerTable">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>NIF</th>
-                            <th>Cidade</th>
-                            <th>Telemóvel</th>
-                            <th>Estado</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customerTableBody">
-                        @foreach($customers as $customer)
-                            <tr>
-                                <td><a href="{{ route('customers.show', $customer->id) }}">{{$customer->CompanyName}}</a></td>
-                                <td>{{$customer->CustomerTaxID}}</td>
-                                <td>{{$customer->City}}</td>
-                                <td>{{$customer->Telephone}}</td>
-                                <td>{{$customer->status}}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button id="btnGroupDrop1" type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Opções
-                                        </button>
-                                        <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                            <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Detalhes</a></li>
-                                            <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Conta Corrente</a></li>
-                                            <li><a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
-                                            <hr>
-                                            <li><a href="{{ route('customers.create', ['id' => $customer->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Suspender Cliente</a></li>
-                                            <li>
-                                                <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" style="display: inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('customers.destroy', $customer->id) }}"> <i class="fas fa-trash"></i> Apagar Cliente </button>
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="card-footer">
-               <!-- Elementos de Paginação -->
-               <div class="d-flex justify-content-center">
-                    <nav>
-                        <ul class="pagination" id="pagination">
-                            <!-- Paginação gerada por JavaScript -->
-                        </ul>
-                    </nav>
-                </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-search"></i> Pesquisar Clientes</h3>
+            <div class="float-right">
+                <a href="{{ route('customers.create') }}" type="button" class="btn btn-default" style="color: black;">
+                    <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
+                </a>
+                <a type="button" href="{{ route('customers.create') }}" class="btn btn-default" style="color: black;">
+                    <i class="fas fa-download" style="color: #0170cf;"></i> Upload Clientes CSV
+                </a>
+                <a type="button" href="{{ route('customers.create') }}" class="btn btn-default" data-toggle="modal" data-target="#modal-lg" style="color: black;">
+                    <i class="fas fa-upload" style="color: #0170cf;"></i> Exportar Clientes
+                </a>
             </div>
         </div>
     </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                <input type="text" id="search" placeholder="Pesquisar por Nome, NIF, Telefone ou Cidade" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <select name="" id="" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="">Activo</option>
+                        <option value="">Inativo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-primary">Pesquisar</button>
+                </div>
+            </div>
+            <hr>
+            <table class="table table-hover" id="customerTable">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>NIF</th>
+                        <th>Cidade</th>
+                        <th>Telemóvel</th>
+                        <th>Estado</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    @foreach($customers as $customer)
+                        <tr>
+                            <td><a href="{{ route('customers.show', $customer->id) }}">{{$customer->CompanyName}}</a></td>
+                            <td>{{$customer->CustomerTaxID}}</td>
+                            <td>{{$customer->City}}</td>
+                            <td>{{$customer->Telephone}}</td>
+                            <td>{{$customer->status}}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button id="btnGroupDrop1" type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Opções
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                        <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Detalhes</a></li>
+                                        <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Conta Corrente</a></li>
+                                        <li><a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
+                                        <hr>
+                                        <li><a href="{{ route('customers.create', ['id' => $customer->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Suspender Cliente</a></li>
+                                        <li>
+                                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" style="display: inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('customers.destroy', $customer->id) }}"> <i class="fas fa-trash"></i> Apagar Cliente </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer">
+            <!-- Elementos de Paginação -->
+            <div class="d-flex justify-content-center">
+                <nav>
+                    <ul class="pagination" id="pagination">
+                        <!-- Paginação gerada por JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+        
 
     <!-- Modal de Confirmação de Exclusão -->
     <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">

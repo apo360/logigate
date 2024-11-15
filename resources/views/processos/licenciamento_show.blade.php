@@ -72,6 +72,10 @@
                                 <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
                             </a> 
                         </li>
+                        <li> <a href="{{ route('gerar.processo', ['IdProcesso' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                <i class="fas fa-file-download"></i> {{ __('Constituir Processo') }}
+                            </a> 
+                        </li>
                     </ul>
                     @if($licenciamento->procLicenFaturas->isNotEmpty())
                         @php

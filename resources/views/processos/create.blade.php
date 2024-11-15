@@ -32,20 +32,6 @@
 
                     <div class="card">
                         <div class="card-body">
-                            @if ($errors->any())
-                                <div {{ $attributes->merge(['class' => 'alert alert-danger']) }}>
-                                    <div class="font-medium text-red-600">{{ __('Whoops! Alguma coisa não correu bem.') }}</div>
-
-                                    <ul class="mt-3 list-disc list-inside text-sm text-red-600">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-                            
-                            <label for="NrProcesso" style="color: red;">Processo: {{ $NewProcesso }}</label>
-                            <input type="hidden" name="NrProcesso" value="{{ $NewProcesso }}"> <br>
 
                             <div class="row">
                                 <div class="form-group mt-4 col-md-4">

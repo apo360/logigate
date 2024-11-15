@@ -3,7 +3,6 @@
             ['name' => 'Dashboard', 'url' => route('dashboard')],
             ['name' => 'Facturação', 'url' => route('documentos.index')]
         ]" separator="/" />
-    <div class="container">
 
         <div class="row">
             <div class="col-md-4">
@@ -56,7 +55,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <canvas id="faturasPorStatus"></canvas>
 

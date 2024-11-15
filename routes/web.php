@@ -69,7 +69,9 @@ use PHPJasper\PHPJasper;
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
-        
+        Route::get('/dashboard-Licenciamento', [DashboardController::class, 'licenciamentoEstatisticas'])->name('licenciamento.estatistica');
+        Route::get('/dashboard-Processos', [DashboardController::class, 'ProcessosEstatisticas'])->name('processos.estatistica');
+
         Route::resources([
             'activated-modules' => ActivatedModuleController::class,
             'arquivos' => ArquivoController::class,
@@ -138,6 +140,7 @@ use PHPJasper\PHPJasper;
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
         Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
+        Route::post('licenciamento/{idLicenciamento}/gerarProcesso', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
 
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
@@ -157,6 +160,7 @@ use PHPJasper\PHPJasper;
         Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
         Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
         Route::post('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
+        Route::get('documentos/filtrar', [DocumentoController::class, 'filtrar'])->name('faturas.filtrar');
         
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);

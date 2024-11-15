@@ -40,19 +40,23 @@ class MercadoriaController extends Controller
     public function create($licenciamento_id = null, $processo_id = null)
     {
         // Inicializa variáveis para controle
-        $licenciamento = null; $processo = null;
+        $licenciamento = null; $processo = null; $mercadorias = null;
 
         // Verifica se o licenciamento_id foi passado
         if ($licenciamento_id) 
         { 
-            $licenciamento = Licenciamento::find($licenciamento_id);
+            $licenciamento = Licenciamento::findOrFail($licenciamento_id);
+            MercadoriaAgrupada::recalcularAgrupamento($licenciamento_id);
         }
 
         // Verifica se o processo_id foi passado
         if ($processo_id) { 
             $processo = Processo::find($processo_id);
             $mercadorias = Mercadoria::where('Fk_Importacao', $processo_id)->get(); 
+            MercadoriaAgrupada::recalcularAgrupamento(null, $processo_id);
         }
+
+        
 
         $pautaAduaneira = PautaAduaneira::all();
 
@@ -81,7 +85,7 @@ class MercadoriaController extends Controller
             MercadoriaAgrupada::StoreAndUpdateAgrupamento($mercadoria);
 
             // Atualização de licenciamento, caso o mesmo exista
-            if (request()->has('licenciamento_id')) {
+            if ($request->has('licenciamento_id')) {
                 $licenciamento = Licenciamento::where('id', $validatedData['licenciamento_id'])->first();
 
                 // Atualizar valores agregados de FOB e peso
@@ -92,7 +96,7 @@ class MercadoriaController extends Controller
             }
 
             // Atualização de processo, caso o mesmo exista
-            if (request()->has('processo_id')) {
+            if ($request->has('processo_id')) {
                 $processo = Processo::where('id', $validatedData['processo_id'])->first();
                 // 
                 
@@ -157,14 +161,21 @@ class MercadoriaController extends Controller
     public function destroy(Mercadoria $mercadoria)
     {
         try {
-            // Tenta excluir a mercadoria
-            $mercadoria->delete();
+            DB::beginTransaction();
+            $licenciamento = Licenciamento::find($mercadoria->licenciamento_id);
+            if ($licenciamento) {
+                $licenciamento->fob_total -= $mercadoria->preco_total;
+                $licenciamento->peso_bruto -= $mercadoria->Peso;
+                $licenciamento->save();
+            }
 
-            // Retorna uma resposta JSON com status de sucesso
-            return response()->json(['success' => true, 'message' => 'Mercadoria excluída com sucesso!']);
+            $mercadoria->delete();
+            MercadoriaAgrupada::RemoveAgrupamento($mercadoria);
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Mercadoria excluída com sucesso!', 'mercadoria' => $mercadoria], 200);
         } catch (\Exception $e) {
-            // Retorna uma resposta JSON com status de erro
-            return response()->json(['success' => false, 'message' => 'Erro ao excluir a mercadoria. Tente novamente.'], 500);
+            DB::rollBack();
+            return response()->json(['error' => true, 'message' => 'Erro ao excluir a mercadoria. Tente novamente.'], 500);
         }
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\EmpresaUser;
 use App\Models\Estancia;
 use App\Models\Exportador;
+use App\Models\Importacao;
 use App\Models\Licenciamento;
 use App\Models\LicenciamentoRascunho;
 use App\Models\Mercadoria;
@@ -15,6 +16,7 @@ use App\Models\MercadoriaAgrupada;
 use App\Models\Pais;
 use App\Models\PautaAduaneira;
 use App\Models\Porto;
+use App\Models\Processo;
 use App\Models\RegiaoAduaneira;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -234,7 +236,7 @@ class LicenciamentoController extends Controller
         $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
         
         // Linha 1 - Informações do exportador e transporte
-        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo_pais}{$porto->sigla}|{$licenciamento->pais_origem}|AO||||";
+        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo_pais}{$porto->sigla}||{$porto->codigo_pais}|AO||||";
         
         // Linha 2 - Adições de mercadorias
         $adicoes = [];
@@ -285,4 +287,66 @@ class LicenciamentoController extends Controller
         return response($conteudo)->header('Content-Type', 'text/plain')
             ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
     }
+
+    public function ConstituirProcesso($idLicenciamento)
+    {
+        // Busca o licenciamento pelo ID
+        $licenca = Licenciamento::findOrFail($idLicenciamento);
+
+        // Inicia a transação
+        DB::beginTransaction();
+
+        try {
+            // Cria o processo baseado no licenciamento
+            $processo = Processo::create([
+                'NrProcesso' => 'PRO-' . strtoupper(uniqid()), // Gera número único para o processo
+                'ContaDespacho' => $licenca->referencia_cliente,
+                'RefCliente' => $licenca->referencia_cliente,
+                'Descricao' => $licenca->descricao,
+                'DataAbertura' => now(),
+                'TipoProcesso' => $licenca->tipo_declaracao,
+                'Situacao' => 'Aberto',
+                'customer_id' => $licenca->cliente_id,
+                'user_id' => auth()->id(),
+                'empresa_id' => $licenca->empresa_id,
+                'exportador_id' => $licenca->exportador_id,
+                'estancia_id' => $licenca->estancia_id,
+            ]);
+
+            // Cria a importação associada ao processo
+            $importacao = Importacao::create([
+                'processo_id' => $processo->id,
+                'FOB' => $licenca->fob_total,
+                'Freight' => $licenca->frete,
+                'Insurance' => $licenca->seguro,
+                'Fk_pais_origem' => $licenca->pais_origem, // Supondo que seja um ID em uma tabela de países
+                'PortoOrigem' => $licenca->porto_origem,
+                'TipoTransporte' => $licenca->tipo_transporte,
+                'NomeTransporte' => $licenca->registo_transporte,
+                'DataChegada' => $licenca->data_entrada,
+                'Moeda' => $licenca->moeda,
+                'Cambio' => 1.0, // Ajuste conforme a lógica para câmbio
+                'ValorTotal' => $licenca->cif,
+                'ValorAduaneiro' => $licenca->cif + $licenca->frete + $licenca->seguro, // Ajuste se necessário
+            ]);
+
+            // Atualiza as mercadorias associadas ao licenciamento para vinculá-las ao novo processo
+            Mercadoria::where('licenciamento_id', $idLicenciamento)
+                ->update(['Fk_Importacao	' => $importacao->id]);
+
+            // Confirma a transação
+            DB::commit();
+
+            // Redireciona para edição do processo
+            return redirect()->route('processos.edit', $processo->id)
+                ->with(['success' => true, 'message' => 'Processo constituído com sucesso pelo Licenciamento ' . $licenca->codigo_licenciamento . '.']);
+        } catch (\Exception $e) {
+            // Reverte a transação em caso de erro
+            DB::rollBack();
+
+            // Retorna para a página anterior com a mensagem de erro
+            return redirect()->back()->with(['error' => true, 'message' => 'Erro ao constituir processo: ' . $e->getMessage()]);
+        }
+    }
+
 }
