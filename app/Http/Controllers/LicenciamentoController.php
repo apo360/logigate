@@ -288,7 +288,7 @@ class LicenciamentoController extends Controller
             ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
     }
 
-    public function ConstituirProcesso($idLicenciamento)
+    public function ConstituirProcesso(Request $request, $idLicenciamento)
     {
         // Busca o licenciamento pelo ID
         $licenca = Licenciamento::findOrFail($idLicenciamento);
@@ -299,7 +299,6 @@ class LicenciamentoController extends Controller
         try {
             // Cria o processo baseado no licenciamento
             $processo = Processo::create([
-                'NrProcesso' => 'PRO-' . strtoupper(uniqid()), // Gera número único para o processo
                 'ContaDespacho' => $licenca->referencia_cliente,
                 'RefCliente' => $licenca->referencia_cliente,
                 'Descricao' => $licenca->descricao,
@@ -340,13 +339,11 @@ class LicenciamentoController extends Controller
             // Redireciona para edição do processo
             return redirect()->route('processos.edit', $processo->id)
                 ->with(['success' => true, 'message' => 'Processo constituído com sucesso pelo Licenciamento ' . $licenca->codigo_licenciamento . '.']);
-        } catch (\Exception $e) {
-            // Reverte a transação em caso de erro
-            DB::rollBack();
-
-            // Retorna para a página anterior com a mensagem de erro
-            return redirect()->back()->with(['error' => true, 'message' => 'Erro ao constituir processo: ' . $e->getMessage()]);
-        }
+            }catch (QueryException $th) {
+                DB::rollBack();
+                return DatabaseErrorHandler::handle($th, $request);
+            }
+            
     }
 
 }

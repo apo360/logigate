@@ -94,13 +94,7 @@
                                     <td>Sem Fatura</td>
                                 @endif
                                 <td>
-                                    <!-- Mostrar ou desativar o botão de edição com base no status da fatura -->
-                                    @if ($licenciamento->procLicenFaturas->whereIn('status_fatura', ['emitida', 'paga'])->isNotEmpty())
-                                        <a href="#" class="" disabled>Editar</a>
-                                    @else
-                                        <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class=""> <i class="fas fa-edit"></i> Editar</a>
-                                    @endif
-
+                                    <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class=""> <i class="fas fa-edit"></i> Editar</a>
                                     <!-- Mostrar botão para visualizar detalhes -->
                                     <a href="{{ route('licenciamentos.show', $licenciamento->id) }}" class=""> <i class="fas fa-eye"></i> Visualizar</a>
                                 </td>

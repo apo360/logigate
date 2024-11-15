@@ -25,7 +25,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
-        $customers = Customer::all();
+        $customers = Customer::where('empresa_id', Auth::user()->empresas->first()->id)->get();
         return view('customer.customer_pesquisar', compact('customers'));
     }
 

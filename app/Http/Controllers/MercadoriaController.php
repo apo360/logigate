@@ -178,4 +178,104 @@ class MercadoriaController extends Controller
             return response()->json(['error' => true, 'message' => 'Erro ao excluir a mercadoria. Tente novamente.'], 500);
         }
     }
+
+    public function reagrupar($licenciamentoId)
+    {
+        $this->limparAgrupamentosInativos($licenciamentoId);
+
+        DB::beginTransaction();
+
+        try {
+            // Buscar todas as mercadorias do licenciamento
+            $mercadorias = Mercadoria::where('licenciamento_id', $licenciamentoId)->get();
+
+            foreach ($mercadorias as $mercadoria) {
+                // Verificar se a mercadoria já está agrupada corretamente
+                $agrupamento = MercadoriaAgrupada::where('codigo_aduaneiro', $mercadoria->codigo_aduaneiro)
+                ->where(function($query) use ($mercadoria) {
+                    $query->where('licenciamento_id', $mercadoria->licenciamento_id)
+                        ->orWhere('processo_id', $mercadoria->processo_id);
+                })->first();
+
+                if ($agrupamento) {
+                    // Atualizar agrupamento existente se necessário
+                    $mercadoriasIds = json_decode($agrupamento->mercadorias_ids, true) ?? [];
+                    
+                    if (!in_array($mercadoria->id, $mercadoriasIds)) {
+                        $agrupamento->quantidade_total += $mercadoria->Quantidade;
+                        $agrupamento->peso_total += $mercadoria->Peso;
+                        $agrupamento->preco_total += $mercadoria->preco_total;
+
+                        // Adicionar o ID da mercadoria ao JSON
+                        $mercadoriasIds[] = $mercadoria->id;
+                        $agrupamento->mercadorias_ids = json_encode($mercadoriasIds);
+
+                        $agrupamento->save();
+                    }
+                } else {
+                    // Criar um novo agrupamento para mercadorias não agrupadas
+                    MercadoriaAgrupada::create([
+                        'codigo_aduaneiro' => $mercadoria->codigo_aduaneiro,
+                        'licenciamento_id' => $licenciamentoId,
+                        'quantidade_total' => $mercadoria->Quantidade,
+                        'peso_total' => $mercadoria->Peso,
+                        'preco_total' => $mercadoria->preco_total,
+                        'mercadorias_ids' => json_encode([$mercadoria->id]),
+                    ]);
+                }
+            }
+
+            // Passo 3: Calcular o total de `preco_total` das mercadorias agrupadas
+            $fobTotal = MercadoriaAgrupada::where('licenciamento_id', $licenciamentoId)
+            ->sum('preco_total');
+
+            $pesoTotal = MercadoriaAgrupada::where('licenciamento_id', $licenciamentoId)
+            ->sum('peso_total');
+
+            // Passo 4: Atualizar o `fob_total` no licenciamento
+            $licenciamento = Licenciamento::findOrFail($licenciamentoId);
+            $licenciamento->fob_total = $fobTotal;
+            $licenciamento->peso_bruto = $pesoTotal;
+            $licenciamento->save();
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Reagrupamento concluído com sucesso!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Erro ao reagrupar: ' . $e->getMessage());
+        }
+    }
+
+    public function limparAgrupamentosInativos($licenciamentoId)
+    {
+        DB::beginTransaction();
+
+        try {
+            // Buscar todos os agrupamentos
+            $agrupamentos = MercadoriaAgrupada::where('licenciamento_id', $licenciamentoId)->get();
+
+            foreach ($agrupamentos as $agrupamento) {
+                // Decodificar os IDs das mercadorias do agrupamento
+                $mercadoriasIds = json_decode($agrupamento->mercadorias_ids, true);
+
+                // Verificar se algum dos IDs ainda existe na tabela mercadoria
+                $existeMercadoria = Mercadoria::whereIn('id', $mercadoriasIds)->exists();
+
+                if (!$existeMercadoria) {
+                    // Deletar o agrupamento se não houver mercadorias associadas
+                    $agrupamento->delete();
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Agrupamentos inativos foram removidos com sucesso!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Erro ao limpar agrupamentos inativos: ' . $e->getMessage());
+        }
+    }
+
+
 }

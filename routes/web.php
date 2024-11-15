@@ -140,7 +140,9 @@ use PHPJasper\PHPJasper;
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
         Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
-        Route::post('licenciamento/{idLicenciamento}/gerarProcesso', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
+        Route::get('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
+        Route::post('licenciamento/mercadorias/reagrupar/{licenciamentoId}', [MercadoriaController::class, 'reagrupar'])->name('mercadorias.reagrupar');
+
 
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');

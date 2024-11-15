@@ -165,6 +165,10 @@
                 <a href="#" id="pauta_mercadoria" class="event button" data-toggle="modal" data-target="#PautaModal">
                     <span class="icon-edit icon"></span>Pauta Aduaneira
                 </a>
+                <form action="{{ route('mercadorias.reagrupar', $licenciamento->id) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-warning">Reagrupar</button>
+                </form>
             </div>
         </div>
 
