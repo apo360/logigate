@@ -92,12 +92,12 @@
                         <tbody>
                             <!-- products -->
                             @foreach($products as $product)
-                            <tr id="productRow_{{ $product->Id }}" >
+                            <tr id="productRow_{{ $product->id }}" >
                                 <td>
-                                    <a href="{{ route('produtos.edit', $product->Id) }}" style='margin:5px;' title="Editar Produto">
+                                    <a href="{{ route('produtos.edit', $product->id) }}" style='margin:5px;' title="Editar Produto">
                                             <i class="fas fa-edit"></i>
                                     </a>
-                                    <a onclick="deleteProduct({{ $product->Id }})" data-id="{{ $product->Id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
+                                    <a onclick="deleteProduct({{ $product->id }})" data-id="{{ $product->id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
                                         <i class="fas fa-trash" style="color: salmon;"></i>
                                     </a>
                                     <a href="">
@@ -107,9 +107,9 @@
                                 <td>{{ $product->ProductType }} | {{ $product->ProductCode }}</td>
                                 <td>{{ $product->ProductDescription }}</td>
                                 <td>{{ $product->ProductGroup ?? 'Sem Categoria' }}</td>
-                                <td>{{ number_format(floatval($product->venda_sem_iva), 2, ',','.') }} Kz</td>
-                                <td>{{ number_format(floatval($product->imposto), 2, ',','.') }} %</td>
-                                <td>{{ number_format(floatval($product->venda), 2, ',','.') }} Kz</td>
+                                <td>{{ number_format(floatval($product->prices->venda_sem_iva), 2, ',','.') }} Kz</td>
+                                <td>{{ number_format(floatval($product->prices->imposto), 2, ',','.') }} %</td>
+                                <td>{{ number_format(floatval($product->prices->venda), 2, ',','.') }} Kz</td>
                             </tr>
                             @endforeach
                         </tbody>
