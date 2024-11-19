@@ -106,10 +106,10 @@
                                 </td>
                                 <td>{{ $product->ProductType }} | {{ $product->ProductCode }}</td>
                                 <td>{{ $product->ProductDescription }}</td>
-                                <td>{{ $product->ProductGroup ?? 'Sem Categoria' }}</td>
-                                <td>{{ number_format(floatval($product->prices->venda_sem_iva), 2, ',','.') }} Kz</td>
-                                <td>{{ number_format(floatval($product->prices->imposto), 2, ',','.') }} %</td>
-                                <td>{{ number_format(floatval($product->prices->venda), 2, ',','.') }} Kz</td>
+                                <td>{{ $product->grupo->descricao ?? 'Sem Categoria' }}</td>
+                                <td>{{ number_format(floatval($product->venda_sem_iva), 2, ',','.') }} Kz</td>
+                                <td>{{ number_format(floatval($product->imposto), 2, ',','.') }} %</td>
+                                <td>{{ number_format(floatval($product->venda), 2, ',','.') }} Kz</td>
                             </tr>
                             @endforeach
                         </tbody>

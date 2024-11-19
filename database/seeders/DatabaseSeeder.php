@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             
+            TaxTableSeeder::class,
+            ProdutoSeeder::class,
             /*UserRoleSeeder::class,
             //RolesAndPermissionsSeeder::class,
 
@@ -33,7 +35,7 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class, 
             ProductTypeSeeder::class,
             ProductExemptionReasonSeeder::class, 
-            ProdutoSeeder::class,
+            
             InvoiceTypesSeeder::class,
             RegiaoAduaneirasSeeder::class,
             EstanciasSeeder::class, 

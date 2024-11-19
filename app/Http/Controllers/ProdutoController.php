@@ -25,8 +25,14 @@ class ProdutoController extends Controller
      */
     public function index()
     {
-        // Obtém todos os produtos do banco de dados
-        $products = Produto::with(['prices', 'grupo'])->where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        $empresaId = Auth::user()->empresas->first()->id;
+        // Obtém todos os produtos do banco de dados 
+        $products = Produto::with(['prices', 'grupo'])
+        ->where(function ($query) use ($empresaId) {
+            $query->where('empresa_id', $empresaId)
+                ->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
+        })
+        ->get();
         $productTypes = ProductType::all();
         $productExemptionReasons = ProductExemptionReason::all();
         $taxas = TaxTable::orderBy('TaxPercentage', 'desc')->get();

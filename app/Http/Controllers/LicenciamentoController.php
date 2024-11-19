@@ -70,8 +70,6 @@ class LicenciamentoController extends Controller
         $empresa = EmpresaUser::where('empresa_id', Auth::user()->empresas->first()->id)->get();
 
         // chamar a stored procedure
-        $newCustomerCode = Customer::generateNewCode();
-        $newExportadorCode = Exportador::generateNewCode();
         return view('processos.licenciamento', 
         compact('clientes', 
                 'estancias', 
@@ -81,9 +79,7 @@ class LicenciamentoController extends Controller
                 'empresa', 
                 'portos', 
                 'ibans', 
-                'pautaAduaneira',
-                'newCustomerCode', 
-                'newExportadorCode'
+                'pautaAduaneira'
             ));
     }
 

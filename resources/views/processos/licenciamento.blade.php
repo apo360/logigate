@@ -378,7 +378,6 @@
                 <form id="formNovoCliente" action="{{ route('customers.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
-                        <input type="hidden" name="CustomerID" value="{{ $newCustomerCode }}" id="CustomerID">
                         <input type="hidden" name="formType" value="modal">
                         <div class="mt-4">
                             <x-label for="CustomerTaxID" value="{{ __('NIF') }}" />
@@ -429,7 +428,6 @@
                 <form id="formNovoExportador" action="{{ route('exportadors.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
-                        <input type="hidden" name="ExportadorID" value="{{ $newExportadorCode }}" id="ExportadorID">
                         <input type="hidden" name="formType" value="modal">
 
                         <div class="row">
