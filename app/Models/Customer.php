@@ -6,12 +6,13 @@ use App\Traits\SharedFieldsTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     
     use SharedFieldsTrait;
     
@@ -33,6 +34,9 @@ class Customer extends Model
         'Email',
         'Website',
         'SelfBillingIndicator',
+        'CustomerType',
+        'is_active',
+        'foto',
         'user_id',
         'empresa_id'
     ];
@@ -59,6 +63,7 @@ class Customer extends Model
             }
 
             $customer->CustomerID = self::generateNewCodeCustomer($customer->empresa_id);
+            $customer->is_active = 1; $customer->AccountID = 0;
         });
 
         // Evento(s) que executam antes de actualizar
@@ -85,15 +90,15 @@ class Customer extends Model
             $novoCodigo = 1;
         }
          
-        $codigoCustos = 'cli'.str_pad($novoCodigo, 3,'0', STR_PAD_LEFT).'/'. Carbon::now()->format('y');
+        $codigo = 'cli'.str_pad($novoCodigo, 3,'0', STR_PAD_LEFT).'/'. Carbon::now()->format('y');
         
-        return DB::select('CALL ClienteNewCod()')[0]->codigoCliente;
+        return $codigo;
     }
-    /*
+    
         public function endereco(){
-            return $this->hasOne(BillingAddress::class, 'CustomerID');
+            return $this->hasOne(Endereco::class, 'customer_id');
         }
-    */
+    
     /**
      * Define the "invoices" relationship. Each customer can have multiple invoices.
      * @return \Illuminate\Database\Eloquent\Relations\HasMany

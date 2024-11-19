@@ -92,6 +92,17 @@ use PHPJasper\PHPJasper;
             'avenca' => CustomerAvencaController::class,
         ]);
 
+        Route::post('customer/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);
+        Route::get('customer/export-csv', [CustomerController::class, 'exportCsv'])->name('customers.exportCsv');
+        Route::get('customer/export-excel', [CustomerController::class, 'exportExcel'])->name('customers.exportExcel');
+        Route::post('customer/import', [CustomerController::class, 'import'])->name('customers.import');
+        Route::get('customer/Ficha/{id}Imprimir', [CustomerController::class, 'ImprimirFicha'])->name('customers.ficha_imprimir');
+
+        Route::get('/arquivo/download/{NrDocumento}', [ArquivoController::class, 'download'])->name('arquivos.dowload');
+        Route::get('relatorios/licenciamento/{tipo}', [RelatorioController::class, 'RelatorioLicenciamento'])->name('relatorio.visualizar');
+        Route::get('licenciamento/relatorio', [RelatorioController::class, 'SelecionarRelatorio'])->name('relatorio.licenciamento');
+
+
         Route::get('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import_view'])->name('pauta.import');
         Route::post('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import'])->name('pauta.import.submit');
 
@@ -139,11 +150,13 @@ use PHPJasper\PHPJasper;
         Route::get('processo/imprimir', [ProcessoController::class, 'print'])->name('processos.print');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
         Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
+        Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
+        Route::get('licenciamento/export-excel', [LicenciamentoController::class, 'exportExcel'])->name('licenciamentos.exportExcel');
+        Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
+
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
         Route::get('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
         Route::post('licenciamento/mercadorias/reagrupar/{licenciamentoId}', [MercadoriaController::class, 'reagrupar'])->name('mercadorias.reagrupar');
-
-
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
         Route::post('/subscricao/pagamentos', [ModuleSubscriptionController::class, 'pay'])->name('payment.pay');

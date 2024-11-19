@@ -8,9 +8,13 @@ use App\Http\Requests\CustomerRequest;
 use App\Imports\CustomersImport;
 use App\Models\ContaCorrente;
 use App\Models\Customer;
+use App\Models\Municipio;
+use App\Models\Pais;
 use App\Models\Processo;
+use App\Models\Provincia;
 use App\Models\SalesInvoice;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -34,9 +38,8 @@ class CustomerController extends Controller
      */
     public function create()
     {
-        // chamar a stored procedure
-        $newCustomerCode = Customer::generateNewCode();
-        return view('customer.create', compact('newCustomerCode'));
+        $provincias = Provincia::all();
+        return view('customer.create', compact('provincias'));
     }
 
     /**
@@ -51,15 +54,8 @@ class CustomerController extends Controller
             // Inicia uma transação para garantir a integridade dos dados
             DB::beginTransaction();
 
-            $user = Auth::user();
-
             $custValidate = $request->validated();
             
-            $custValidate['AccountID'] = '0';
-
-            $custValidate['user_id'] = $user->id;
-
-            $custValidate['empresa_id'] = $user->empresas->first()->id;
             // Cria um novo registro de cliente na tabela 'customers' com os dados fornecidos
             $newCustomer = Customer::create($custValidate);
 
@@ -101,7 +97,13 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
-        //
+        $paises = Pais::pluck('pais', 'id')->toArray();
+        $provincias = Provincia::pluck('Nome', 'id')->toArray();
+        $municipios = Municipio::pluck('Nome', 'id')->toArray();
+        $typeContacts = '';
+        $paymentModes = '';
+        $ivaExercises = '';
+        return view('customer.customer_edit', compact('customer', 'paises', 'provincias', 'municipios', 'typeContacts', 'paymentModes', 'ivaExercises'));
     }
 
     /**
@@ -263,4 +265,26 @@ class CustomerController extends Controller
         
         return response()->json(['cliente_id' => $ultimoCliente->id]);
     }
+
+    public function toggleStatus(Request $request, $id)
+    {
+        try {
+            $customer = Customer::findOrFail($id);
+
+            $customer->is_active = $request->is_active;
+            $customer->save();
+
+            return response()->json(['success' => true, 'message' => 'Status atualizado com sucesso.']);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Cliente não encontrado.'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Erro ao atualizar o status.'], 500);
+        }
+    }
+
+    public function ImprimirFicha($id){
+
+        return '';
+    }
+
 }

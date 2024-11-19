@@ -145,6 +145,12 @@
             </li>
 
             <li class="nav-item">
+                <a href="{{ route('relatorio.licenciamento')}}" class="nav-link">
+                <i class="nav-icon fas fa-report"></i>
+                <p> Relatórios </p>
+                </a>
+            </li>
+            <li class="nav-item">
                 <a href="#" class="nav-link">
                 <i class="nav-icon fas fa-gear"></i>
                 <p> AGT <i class="right fas fa-angle-left"></i> </p>

@@ -25,21 +25,18 @@ class CustomerRequest extends FormRequest
         $id = $this->isMethod('PUT') ? $this->route('customers') : null;
 
         return [
-            'CustomerID' => ['required', 'string', 'max:30', $id ? Rule::unique('customers')->ignore($id) : ''],
             'CustomerTaxID' => ['required', 'string', 'min:6', 'max:14', Rule::unique('customers')->ignore($id, 'CustomerID')], // NIF deve ter exatamente 14 dígitos
             'AccountID' => ['nullable', 'string', 'max:30'],
             'CompanyName' => ['required', 'string', 'max:100'],
-            'Telephone' => ['nullable', 'string', 'max:20'], // Defina um tamanho máximo apropriado para o telefone
+            'Telephone' => ['nullable', 'string', 'max:20'],
             'Email' => ['nullable', 'email', 'max:254'],
-            'Website' => ['nullable', 'url', 'max:60'], // Verifica se é uma URL válida
+            'Website' => ['nullable', 'url', 'max:60'],
         ];
     }
 
     public function messages()
     {
         return [
-            'CustomerID.required' => 'O campo ID do cliente é obrigatório.',
-            'CustomerID.max' => 'O ID do cliente deve ter no máximo :max caracteres.',
             'CustomerTaxID.required' => 'O campo NIF do cliente é obrigatório.',
             'CustomerTaxID.min' => 'O NIF do cliente deve ter pelo menos :min caracteres.',
             'CustomerTaxID.max' => 'O NIF do cliente deve ter no máximo :max caracteres.',

@@ -14,7 +14,7 @@ class SubcategoriaSeeder extends Seeder
     public function run(): void
     {
         DB::table('sub_categoria_aduaneira')->insert([
-            /*
+            
             ['cod_pauta' => '01', 'descricao' => 'Animais Vivos', 'categoria_id' => 1],
             ['cod_pauta' => '02', 'descricao' => 'Carnes e miudezas, comestíveis', 'categoria_id' => 1],
             ['cod_pauta' => '03', 'descricao' => 'Peixes e Crustáceos, moluscos e outros invertebrados aquáticos.', 'categoria_id' => 1],
@@ -35,7 +35,7 @@ class SubcategoriaSeeder extends Seeder
 
             ['cod_pauta' => '16', 'descricao' => 'Preparações de carnes, peixes, crustáceos, moluscos, outros invertebrados...', 'categoria_id' => 4],
             ['cod_pauta' => '17', 'descricao' => 'Açúcares e produtos de confeitaria', 'categoria_id' => 4],
-            */
+            
             ['cod_pauta' => '18', 'descricao' => 'Cacau e suas Preparações', 'categoria_id' => 4],
             ['cod_pauta' => '19', 'descricao' => 'Preparações à base de cereais, farinhas, amidos, féculas ou leite; Produtos de pastelaria', 'categoria_id' => 4],
             ['cod_pauta' => '20', 'descricao' => 'Preparações de produtos hortícolas, frutas ou de outras partes de plantas.', 'categoria_id' => 4],
@@ -44,14 +44,14 @@ class SubcategoriaSeeder extends Seeder
             ['cod_pauta' => '23', 'descricao' => 'Resíduos e desperdícios das indústrias alimentares; alimentos preparados para animais', 'categoria_id' => 4],
             ['cod_pauta' => '24', 'descricao' => 'Tabaco e suas sucedâneos manufacturados; produtos, mesmo com nicotina, destinados à inalação sem combustão;', 'categoria_id' => 4],
 
-            /*['cod_pauta' => '25', 'descricao' => 'Sal; enxofre; terras e pedras; gesso; cal e cimento', 'categoria_id' => 5],
+            ['cod_pauta' => '25', 'descricao' => 'Sal; enxofre; terras e pedras; gesso; cal e cimento', 'categoria_id' => 5],
             ['cod_pauta' => '26', 'descricao' => 'Minérios, escórias e cinzas', 'categoria_id' => 5],
             ['cod_pauta' => '27', 'descricao' => 'Combustíveis minerais, óleos minerais e produtos de sua destilação...', 'categoria_id' => 5],
 
             ['cod_pauta' => '28', 'descricao' => 'Produtos químicos inorgânicos; composto inorgânicos ou orgânicos de metais...', 'categoria_id' => 6],
             ['cod_pauta' => '29', 'descricao' => 'Produtos químicos orgânicos', 'categoria_id' => 6],
             ['cod_pauta' => '30', 'descricao' => 'Produtos Farmacêuticos', 'categoria_id' => 6],
-            */
+            
             ['cod_pauta' => '31', 'descricao' => 'Adubos (Fertilizantes)', 'categoria_id' => 6],
             ['cod_pauta' => '32', 'descricao' => 'Extratos tanantes e tintoriais; taninos e seus derivados; pigmentos e outras matérias corantes; tintas e vernizes; mástiques; tintas de escrever', 'categoria_id' => 6],
             ['cod_pauta' => '33', 'descricao' => 'Óleos essenciais e resinoides; produtos de perfumarias ou de toucador preparados e preparações cosméticas', 'categoria_id' => 6],
@@ -61,13 +61,13 @@ class SubcategoriaSeeder extends Seeder
             ['cod_pauta' => '37', 'descricao' => 'Produtos para fotografia e cinematografia', 'categoria_id' => 6],
             ['cod_pauta' => '38', 'descricao' => 'Produtos diversos das indústrias químicas', 'categoria_id' => 6],
 
-            /*['cod_pauta' => '39', 'descricao' => 'Plásticos e suas Obras', 'categoria_id' => 7],
+            ['cod_pauta' => '39', 'descricao' => 'Plásticos e suas Obras', 'categoria_id' => 7],
             ['cod_pauta' => '40', 'descricao' => 'Borrachas e suas Obras', 'categoria_id' => 7],
             
             ['cod_pauta' => '41', 'descricao' => 'Peles, excepto as peles com pelo e couros', 'categoria_id' => 8],
             ['cod_pauta' => '42', 'descricao' => 'Obras de couro; artigos de correeiro ou de seleiro; artigos de viagem, bolsas e artigos semelhantes; obras de tripa.', 'categoria_id' => 8],
             ['cod_pauta' => '43', 'descricao' => 'Peles com pelo e suas obras; peles com pelo Artificiais', 'categoria_id' => 8],
-               
+            
             ['cod_pauta' => 44, 'descricao' => 'Peles, exepto as peles com pelo e couros', 'categoria_id' => 9],
             ['cod_pauta' => 45, 'descricao' => 'Obras de couro; artigos de correeiro ou de seleiro; artigos de viagem, bolsas e artigos semelhantes; obras de tripa', 'categoria_id' => 9],
             ['cod_pauta' => 46, 'descricao' => 'Peles com pelo e suas obras; peles com pelo artificiais', 'categoria_id' => 9],
@@ -117,7 +117,7 @@ class SubcategoriaSeeder extends Seeder
 
             ['cod_pauta' => 84, 'descricao' => 'Reatores nucleares, caldeiras, máquinas, aparelhos e instrumentos mecânicos, e suas partes', 'categoria_id' => 16],
             ['cod_pauta' => 85, 'descricao' => 'Máquinas, aparelhos e materias eléctricos, e suas partes; Gravação, Sons, Reprodução de imagens e de som em televisão, e suas partes e acessórios', 'categoria_id' => 16],
-            */
+            
             ['cod_pauta' => 86, 'descricao' => 'Veículos e material para vias férreas ou semelhantes, e suas partes; aparelhos mecânicos(incluindo os electromecânicos) de sinalização para vias de comunicação', 'categoria_id' => 17],
             ['cod_pauta' => 87, 'descricao' => 'Veículos automóveis, tratores, ciclos e outros veículos terrestres, suas partes e acessórios', 'categoria_id' => 17],
             ['cod_pauta' => 88, 'descricao' => 'Aeronaves e aparelhos espaciais, e suas partes', 'categoria_id' => 17],

@@ -1,14 +1,12 @@
 <x-app-layout>
-    <x-slot name="header">
-        <x-breadcrumb title="Editar Cliente" breadcrumb="Editar Cliente" />
-    </x-slot>
-    <br>
+<x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Clientes', 'url' => route('customers.index')],
+        ['name' => $customer->CompanyName, 'url' => route('customers.show', $customer->id)],
+        ['name' => 'Editar Cliente', 'url' => route('customers.edit', $customer->id)]
+    ]" separator="/" />
 
-    <div class="container">
-        @if (Session::has('status'))
-            <x-alert-message type="success" :message="Session::get('success')" />
-            <x-alert-message type="error" :message="Session::get('error')" /> 
-        @endif
+    <div class="py-12">
 
         <form method="POST" action="">
             @csrf
@@ -20,7 +18,7 @@
 
             <div class="card card-dark">
                 <div class="card-header">
-                    <div class="card-title text-red">{{ $costumers->CustomerID }}</div>
+                    <div class="card-title text-red">{{ $customer->CustomerID }}</div>
                 </div>
                 <div class="card-body"></div>
             </div>
@@ -48,7 +46,7 @@
                         <div class="items-center">
                             <x-button type="submit" class="button">{{ __('Atualizar') }}</x-button>
                             <x-button>
-                                <a class="button " href=" {{ route('customers.print', $costumers->Id) }}">
+                                <a class="button " href=" {{ route('customers.ficha_imprimir', ['id' => $customer->id]) }}">
                                     {{ __('Imprimir') }}
                                 </a>
                             </x-button>
@@ -66,7 +64,7 @@
                             <div class="col-md-4">
                                 <div class="mt-2">
                                     <x-label for="name" value="{{ __('Cliente ID') }}" />
-                                    <x-input id="name" class="block mt-1 w-full" type="text" name="CustomerID" value="{{ $costumers->CustomerID }}" readonly />
+                                    <x-input id="name" class="block mt-1 w-full" type="text" name="CustomerID" value="{{ $customer->CustomerID }}" readonly />
                                 </div>
                             </div>
                         </div> 
@@ -98,13 +96,13 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <x-label for="country" value="{{ __('País') }}" />
-                                        <x-select name="country" :options="$countries" :selected="$selectedCountry" />
+                                        <x-select name="country" :options="$paises" />
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <x-label for="province" value="{{ __('Província') }}" />
-                                        <x-select name="province" :options="$provinces" :selected="$selectedProvinces" />
+                                        <x-select name="province" :options="$provincias" :selected="$customer->Provincia" />
                                         
                                     </div>
                                 </div>
@@ -187,12 +185,10 @@
                                 
                                 <div class="form-group">
                                     <x-label for="payment_mode" value="{{ __('Modo de Pagamento') }}" />
-                                    <x-select name="payment_mode" :options="$paymentModes" :selected="old('payment_mode')" />
                                 </div>
 
                                 <div class="form-group">
                                     <x-label for="iva_exercise" value="{{ __('Exercício do IVA') }}" />
-                                    <x-select name="iva_exercise" :options="$ivaExercises" :selected="old('iva_exercise')" />
                                 </div>
 
                                 @if (old('iva_exercise') === 'Isento')

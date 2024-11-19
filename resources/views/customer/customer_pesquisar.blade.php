@@ -1,5 +1,6 @@
 <x-app-layout>
-
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
     .pagination {
         display: flex;
@@ -27,6 +28,19 @@
         color: white;
         border: 1px solid #007bff;
     }
+
+    #importacaoModal .modal-body {
+        padding: 20px;
+    }
+    #importacaoModal .modal-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    #importacaoModal .modal-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
 </style>
 
 <div class="py-12">
@@ -38,7 +52,6 @@
     
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-search"></i> Pesquisar Clientes</h3>
             <div class="float-right">
                 <a href="{{ route('customers.create') }}" type="button" class="btn btn-default" style="color: black;">
                     <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
@@ -51,70 +64,136 @@
                 </a>
             </div>
         </div>
-    </div>
-
-    <div class="card">
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-6">
-                <input type="text" id="search" placeholder="Pesquisar por Nome, NIF, Telefone ou Cidade" class="form-control">
+                    <input type="text" id="search" placeholder="Pesquisar por Nome, NIF, Telefone ou Cidade" class="form-control">
                 </div>
-                <div class="col-md-3">
-                    <select name="" id="" class="form-control">
+                <div class="col-md-4 text-end">
+                    <select id="filterStatus" class="form-select">
                         <option value="">Todos</option>
-                        <option value="">Activo</option>
-                        <option value="">Inativo</option>
+                        <option value="1">Activos</option>
+                        <option value="0">Inativos</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <button type="button" class="btn btn-primary">Pesquisar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="float-left">
+                <div class="btn-group">
+                    <a href="{{ route('customers.exportCsv') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-csv"></i> CSV</a>
+                    <a href="{{ route('customers.exportExcel') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-excel"></i> Excel</a>
+                    <a href="#" class="btn btn-sm btn-default"><i class="fas fa-file-pdf"></i> PDF</a>
                 </div>
             </div>
-            <hr>
-            <table class="table table-hover" id="customerTable">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>NIF</th>
-                        <th>Cidade</th>
-                        <th>Telemóvel</th>
-                        <th>Estado</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="customerTableBody">
-                    @foreach($customers as $customer)
+        </div>
+        <div class="card-body">
+            <!-- Tabela de Clientes -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="customerTable">
+                    <thead class="table-dark">
                         <tr>
-                            <td><a href="{{ route('customers.show', $customer->id) }}">{{$customer->CompanyName}}</a></td>
-                            <td>{{$customer->CustomerTaxID}}</td>
-                            <td>{{$customer->City}}</td>
-                            <td>{{$customer->Telephone}}</td>
-                            <td>{{$customer->status}}</td>
+                            <th>Foto</th>
+                            <th>Nome</th>
+                            <th>NIF</th>
+                            <th>Endereço</th>
+                            <th>Telemóvel</th>
+                            <th>Status</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerTableBody">
+                        @forelse($customers as $customer)
+                        <tr>
+                            <!-- Foto ou Iniciais -->
                             <td>
-                                <div class="btn-group" role="group">
-                                    <button id="btnGroupDrop1" type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Opções
+                                @if($customer->foto)
+                                    <img src="{{ asset($customer->foto) }}" alt="{{ $customer->CompanyName }}" class="rounded-circle" width="50" height="50">
+                                @else
+                                    <div class="rounded-circle bg-secondary text-white text-center" style="width: 50px; height: 50px; line-height: 50px;">
+                                        {{ strtoupper(substr($customer->CompanyName, 0, 2)) }}
+                                    </div>
+                                @endif
+                            </td>
+                            
+                            <!-- Nome -->
+                            <td>
+                            @php
+                                $overdueInvoices = $customer->invoices->filter(function ($invoice) {
+                                    return Carbon\Carbon::parse($invoice->invoice_date_end)->lt(Carbon\Carbon::now());
+                                });
+                            @endphp
+                                @if ($overdueInvoices->count() > 0)
+                                    <i class = "fas fa-exclamation-triangle" style="color: red;"></i>
+                                @endif
+                                <a href="{{ route('customers.show', $customer->id) }}" class="text-decoration-none">
+                                    {{ $customer->CompanyName }}
+                                </a>
+                            </td>
+                            
+                            <!-- NIF -->
+                            <td>{{ $customer->CustomerTaxID }}</td>
+                            
+                            <!-- Endereço -->
+                            <td>{{ $customer->AddressDetail ?? 'N/A' }}</td>
+                            
+                            <!-- Telemóvel -->
+                            <td>{{ $customer->Telephone ?? 'N/A' }}</td>
+                            
+                            <!-- Status -->
+                            <td>
+                                <div class="form-check form-switch">
+                                    <input 
+                                        class="form-check-input toggle-status" 
+                                        type="checkbox" 
+                                        id="statusSwitch{{ $customer->id }}" 
+                                        data-id="{{ $customer->id }}" 
+                                        data-status="{{ $customer->is_active ? 0 : 1 }}"
+                                        {{ $customer->is_active ? 'checked' : '' }}
+                                    >
+                                    <span class="spinner-border spinner-border-sm text-primary d-none" id="spinner{{ $customer->id }}"></span>
+                                </div>
+                            </td>
+
+                            
+                            <!-- Ações -->
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
                                     </button>
-                                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                        <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Detalhes</a></li>
-                                        <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Conta Corrente</a></li>
-                                        <li><a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
-                                        <hr>
-                                        <li><a href="{{ route('customers.create', ['id' => $customer->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Suspender Cliente</a></li>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item"><i class="fas fa-eye"></i> Detalhes</a></li>
+                                        <li><a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item"><i class="fas fa-edit"></i> Editar</a></li>
+                                        <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item"><i class="fas fa-wallet"></i> Conta Corrente</a></li>
                                         <li>
-                                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" style="display: inline-block;">
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('customers.destroy', $customer->id) }}"> <i class="fas fa-trash"></i> Apagar Cliente </button>
+                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
+                                                    <i class="fas fa-trash"></i> Apagar
+                                                </button>
                                             </form>
                                         </li>
                                     </ul>
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">Nenhum cliente encontrado.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
         </div>
         <div class="card-footer">
             <!-- Elementos de Paginação -->
@@ -130,32 +209,66 @@
 
 </div>
 
-        
-
-    <!-- Modal de Confirmação de Exclusão -->
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+<!-- Modal -->
+<div class="modal fade" id="importacaoModal" tabindex="-1" role="dialog" aria-labelledby="importacaoModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmação de Exclusão</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title" id="importacaoModalLabel">Importar Ficheiro</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    Tem certeza que deseja excluir este cliente?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <form id="deleteCustomerForm" method="POST" action="">
+                    <p>Por favor, faça upload de um ficheiro no formato <strong>CSV</strong> ou <strong>Excel</strong>.</p>
+                    
+                    <!-- Instruções de campos necessários -->
+                    <div class="alert alert-info">
+                        <h6>Campos necessários no ficheiro:</h6>
+                        <ul>
+                            <li>...</li>
+                        </ul>
+                    </div>
+
+                    <!-- Formulário de Upload -->
+                    <form id="uploadForm" action="{{ route('customers.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger">Excluir</button>
+                        <div class="form-group">
+                            <label for="fileInput">Escolher Ficheiro</label>
+                            <input type="file" name="file" id="fileInput" class="form-control-file" accept=".csv, .xls, .xlsx" required>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Importar</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="confirmDeleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja excluir este cliente? Esta ação não poderá ser desfeita.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteCustomerForm" action="#" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script>
         $('#confirmDeleteModal').on('show.bs.modal', function (event) {
@@ -166,6 +279,8 @@
         })
     </script>
 
+ <!-- Ensure you have included jQuery and Bootstrap JS at the end of the body tag -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function () {
@@ -204,6 +319,51 @@
                 });
             });
         });
+    </script>
+
+    <!-- Toggle para activar clientes -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusSwitches = document.querySelectorAll('.toggle-status');
+
+            statusSwitches.forEach(switchEl => {
+                switchEl.addEventListener('change', function () {
+                    const customerId = this.getAttribute('data-id');
+                    const newStatus = this.checked ? 1 : 0;
+                    const spinner = document.getElementById(`spinner${customerId}`);
+
+                    // Exibir spinner
+                    spinner.classList.remove('d-none');
+
+                    fetch(`customer/toggle-status/${customerId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ is_active: newStatus })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Status atualizado com sucesso!');
+                        } else {
+                            alert('Erro ao atualizar o status.');
+                            this.checked = !this.checked; // Reverter toggle
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erro:', error);
+                        this.checked = !this.checked; // Reverter toggle
+                    })
+                    .finally(() => {
+                        // Ocultar spinner
+                        spinner.classList.add('d-none');
+                    });
+                });
+            });
+        });
+
     </script>
 
 </x-app-layout>

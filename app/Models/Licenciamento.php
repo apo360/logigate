@@ -95,7 +95,7 @@ class Licenciamento extends Model
      */
     public function estancia()
     {
-        return $this->belongsTo(Empresa::class, 'estancia_id');
+        return $this->belongsTo(Estancia::class, 'estancia_id');
     }
 
     public function procLicenFaturas()
@@ -115,6 +115,16 @@ class Licenciamento extends Model
     public function mercadorias()
     {
         return $this->hasMany(Mercadoria::class, 'licenciamento_id');
+    }
+
+    public function mercadoriasAgrupadas()
+    {
+        return $this->hasMany(MercadoriaAgrupada::class, 'licenciamento_id')->onDelete('cascade');
+    }
+
+    public function documentos()
+    {
+        return $this->hasMany(DocumentosAduaneiros::class, 'licenciamento_id');
     }
 
     // Métodos auxiliares
