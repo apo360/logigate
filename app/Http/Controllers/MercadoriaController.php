@@ -181,6 +181,16 @@ class MercadoriaController extends Controller
 
     public function reagrupar($licenciamentoId)
     {
+        try {
+            DB::unprepared("CALL AgruparMercadorias(?)", [$licenciamentoId]);
+            return redirect()->back()->with('success', 'Mercadorias agrupadas com sucesso!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Erro ao agrupar mercadorias: ' . $e->getMessage());
+        }
+    }
+
+    /*public function reagrupar($licenciamentoId)
+    {
         $this->limparAgrupamentosInativos($licenciamentoId);
 
         DB::beginTransaction();
@@ -245,7 +255,7 @@ class MercadoriaController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Erro ao reagrupar: ' . $e->getMessage());
         }
-    }
+    }*/
 
     public function limparAgrupamentosInativos($licenciamentoId)
     {

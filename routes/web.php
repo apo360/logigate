@@ -32,6 +32,7 @@ use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
+use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
 use PHPJasper\PHPJasper;
@@ -180,4 +181,7 @@ use PHPJasper\PHPJasper;
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
         Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']); 
+
+        //GPSTraker
+        Route::get('API/Services/GpsTraker/', [GpsTrakerController::class, 'index'])->name('gps.index');
     });
