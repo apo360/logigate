@@ -22,23 +22,28 @@ class TarifaDURequest extends FormRequest
     public function rules()
     {
         return [
-            'Fk_processo' => 'int',
+            'processo_id' => 'int',
             'lmc' => 'nullable|numeric',
             'navegacao' => 'nullable|numeric',
-            'viacao' => 'nullable|numeric',
-            'taxa_aeroportuaria' => 'nullable|numeric',
+            'terminal' => 'nullable|numeric',
+            'porto' => 'nullable|numeric',
             'caucao' => 'nullable|numeric',
             'honorario' => 'nullable|numeric',
             'honorario_iva' => 'nullable|numeric',
             'frete' => 'nullable|numeric',
             'carga_descarga' => 'nullable|numeric',
-            'orgaos_ofiais' => 'nullable|numeric',
+            'direitos' => 'nullable|numeric',
             'deslocacao' => 'nullable|numeric',
-            'guia_fiscal' => 'nullable|numeric',
+            'emolumentos' => 'nullable|numeric',
             'inerentes' => 'nullable|numeric',
-            'despesas' => 'nullable|numeric',
+            'impostoEstatistico' => 'nullable|numeric',
+            'iva_aduaneiro' => 'nullable|numeric',
+            'iec' => 'nullable|numeric',
             'selos' => 'nullable|numeric',
-            'NrDU' => 'nullable|string',
+            'juros_mora' => 'nullable|numeric',
+            'multas' => 'nullable|numeric',
+            'orgaos_ofiais' => 'nullable|numeric',
+            'guia_fiscal' => 'nullable|numeric',
         ];
     }
 }

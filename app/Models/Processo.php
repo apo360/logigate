@@ -5,38 +5,80 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Processo extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     use \OwenIt\Auditing\Auditable;
+
+    /**
+     * A tabela associada ao modelo.
+     *
+     * @var string
+     */
+    protected $table;
 
     protected $fillable = [
         'NrProcesso',
         'ContaDespacho',
-        'customer_id',
         'RefCliente',
         'Descricao',
         'DataAbertura',
         'DataFecho',
         'TipoProcesso',
-        'Situacao',
+        'Estado',
+        'customer_id',
         'user_id',
         'empresa_id',
         'exportador_id',
         'estancia_id',
-        // Adicione outros campos fillable conforme necessário
+        'NrDU',
+        'N_Dar',
+        'MarcaFiscal',
+        'BLC_Porte',
+        'Pais_origem',
+        'Pais_destino',
+        'PortoOrigem',
+        'DataChegada',
+        'TipoTransporte',
+        'registo_transporte',
+        'nacionalidade_transporte',
+        'forma_pagamento',
+        'codigo_banco',
+        'Moeda',
+        'Cambio',
+        'ValorTotal',
+        'ValorAduaneiro',
+        'fob_total',
+        'frete',
+        'seguro',
+        'cif',
     ];
 
     protected $dates = [
         'DataAbertura',
         'DataFecho',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'deleted_at'
     ];
+
+    /**
+     * Configurar a tabela dinamicamente.
+     *
+     * @param string $table
+     * @return void
+     */
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
 
     protected static function boot()
     {
@@ -53,7 +95,48 @@ class Processo extends Model implements Auditable
             if (!$processo->empresa_id) {
                 $processo->empresa_id = Auth::user()->empresas->first()->id/* Defina aqui o ID da empresa que deseja associar */;
             }
-            $processo->NrProcesso = self::generateNewProcesso($processo->empresa_id);
+
+            // Gerar automaticamente o NrProcesso apenas se a tabela for 'processos'
+            if ($processo->getTable() === 'processos') {
+                $processo->NrProcesso = self::generateNewProcesso($processo->empresa_id);
+            }
+        });
+
+        static::updating(function ($processo) {
+            if ($processo->isDirty(['Estado'])) {
+                $log = [
+                    'processo_id' => $processo->id,
+                    'user_id' => Auth::id(),
+                    'alteracao' => 'Estado alterado de ' . $processo->getOriginal('Estado') . ' para ' . $processo->Estado,
+                    'data' => now(),
+                ];
+                Log::info('Alteração no processo:', $log); // Ou salve em uma tabela de auditoria.
+            }
+
+            if ($processo->Estado === 'Concluído' && $processo->isDirty('Estado')) {
+                throw new \Exception('Não é permitido alterar o estado de um processo concluído.');
+            }
+
+        });
+        
+
+        // Evento executado antes de excluir um registro
+        static::deleting(function ($processo) {
+            // Exemplo: impedir exclusão se o processo estiver em um estado específico
+            if ($processo->Estado === ['Retido','Finalizado']) {
+                throw new \Exception('Processos concluídos não podem ser excluídos.');
+            }
+
+            Log::info('Processo excluído', [
+                'processo_id' => $processo->id,
+                'user_id' => Auth::id(),
+                'motivo' => request('motivo') ?? 'Não especificado',
+                'data' => now(),
+            ]);
+
+            DB::table('processos_historico')->insert($processo->toArray());
+
+            // Mail::to('admin@empresa.com')->send(new ProcessoExcluido($processo));
         });
     }
 
@@ -68,10 +151,9 @@ class Processo extends Model implements Auditable
         return null;
     }
 
-    // Relacionamento com a tabela Importacao
-    public function importacao()
+    public function tipoTransporte()
     {
-        return $this->hasOne(Importacao::class, 'processo_id');
+        return $this->belongsTo(TipoTransporte::class, 'TipoTransporte');
     }
 
     // Relacionamento com a tabela Exportador
@@ -95,6 +177,11 @@ class Processo extends Model implements Auditable
         return $this->belongsTo(Estancia::class, 'estancia_id');
     }
 
+    public function tipoProcesso()
+    {
+        return $this->belongsTo(RegiaoAduaneira::class, 'TipoProcesso');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -103,6 +190,22 @@ class Processo extends Model implements Auditable
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    /**
+     * Relação com o modelo de país de origem.
+     */
+    public function paisOrigem()
+    {
+        return $this->belongsTo(Pais::class, 'Pais_origem');
+    }
+
+    /**
+     * Relação com o modelo de país de destino.
+     */
+    public function paisDestino()
+    {
+        return $this->belongsTo(Pais::class, 'Pais_destino');
     }
 
     /**
@@ -210,13 +313,6 @@ class Processo extends Model implements Auditable
         return null;
     }
 
-    // public static function mediaTempoProcessamentoAnual($year)
-    // {
-    //     return self::whereYear('DataAbertura', $year)
-    //         ->selectRaw('AVG(DATEDIFF(DataFecho, DataAbertura)) as tempo_medio')
-    //         ->value('tempo_medio');
-    // }
-
     public static function mediaTempoProcessamentoAnual($year)
     {
         return self::whereYear('DataAbertura', $year)
@@ -247,24 +343,6 @@ class Processo extends Model implements Auditable
      *
      * @return \Illuminate\Database\Eloquent\Relations\hasMany
      */
-
-    // Definindo relação One-to-One com o modelo Portuaria
-    public function portuaria()
-    {
-        return $this->hasOne(TarifaPortuaria::class, 'Fk_processo');
-    }
-
-    // Definindo relação One-to-One com o modelo Equivalencia
-    public function dar()
-    {
-        return $this->hasOne(TarifaDAR::class, 'Fk_processo');
-    }
-
-    //Definindo relação One-to-One com o modelo DU
-    public function du()
-    {
-        return $this->hasOne(TarifaDU::class, 'Fk_processo');
-    }
 
     public function historico()
     {

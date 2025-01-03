@@ -21,9 +21,11 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             
+            TipoTransporteSeeder::class
+            /*
             TaxTableSeeder::class,
             ProdutoSeeder::class,
-            /*UserRoleSeeder::class,
+            UserRoleSeeder::class,
             //RolesAndPermissionsSeeder::class,
 
             EmpresasSeeder::class,

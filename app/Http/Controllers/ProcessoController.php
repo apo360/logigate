@@ -4,10 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\DatabaseErrorHandler;
 use App\Helpers\PdfHelper;
-use App\Http\Requests\DARRequest;
-use App\Http\Requests\PortuariaRequest;
 use App\Http\Requests\ProcessoRequest;
-use App\Http\Requests\TarifaDURequest;
 use App\Models\Customer;
 use App\Models\Estancia;
 use App\Models\Exportador;
@@ -17,8 +14,10 @@ use App\Models\Pais;
 use App\Models\PautaAduaneira;
 use App\Models\Porto;
 use App\Models\Processo;
+use App\Models\EmolumentoTarifa;
 use App\Models\views\ProcessosView;
 use App\Models\RegiaoAduaneira;
+use App\Models\TipoTransporte;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -75,10 +74,8 @@ class ProcessoController extends Controller
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
         $portos = Porto::all();
-        
-        // chamar a stored procedure
-        $newCustomerCode = Customer::generateNewCode();
-        $newExportadorCode = Exportador::generateNewCode();
+        $ibans = IbanController::getBankDetails();
+        $tipoTransp = TipoTransporte::all();
 
         // Retornar uma view com o formulário para criar um novo processo
         return view('processos.create', 
@@ -86,11 +83,11 @@ class ProcessoController extends Controller
             'clientes', 
             'exportador',
             'paises', 
-            'newCustomerCode', 
-            'newExportadorCode',
             'estancias',
             'regioes',
-            'portos'
+            'portos',
+            'ibans',
+            'tipoTransp'
         ));
     }
 
@@ -104,29 +101,34 @@ class ProcessoController extends Controller
 
             DB::beginTransaction();
 
-            $processo_request =  $request->validated();
+            // Dados validados do request
+            $processo_request = $request->validated();
 
-            // Cria o processo
-            $processo = Processo::create($processo_request);
+            // Verifica o botão clicado para definir a tabela
+            $tabela = $request->input('action') === 'draft' ? 'processos_draft' : 'processos';
 
-            // Cria a importação
-            Importacao::create([
-                'processo_id' => $processo->id,
-                'Fk_pais_origem' => $request->input('Fk_pais'),
-                'PortoOrigem' => $request->input('PortoOrigem'),
-                'TipoTransporte' => $request->input('TipoTransporte'),
-                'NomeTransporte' => $request->input('NomeTransporte'),
-                'DataChegada' => $request->input('DataChegada'),
-            ]);
+            // Define a tabela e cria o registro
+            $processo = new Processo();
+            $processo->setTable($tabela);
+            // Cria o processo e obtém a instância completa
+            $novoProcesso = $processo->create($processo_request);
 
             DB::commit();
 
-            // Redirecione para a página de listagem de processos com uma mensagem de sucesso
-            return redirect()->route('processos.edit', $processo->id)->with('success', 'Processo inserido com sucesso!');
-        
+            if($tabela === 'draft'){
+                return redirect()->back()->with('success', 'Salvo como Rascunho!');
+            } else{
+                // Redirecione para a página de edição de processos com uma mensagem de sucesso
+                return redirect()->route('processos.edit', $novoProcesso->id)->with('success', 'Processo inserido com sucesso!');
+            }
         } catch (QueryException $e) {
             DB::rollBack();
             return DatabaseErrorHandler::handle($e, $request);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Erro inesperado: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -159,16 +161,27 @@ class ProcessoController extends Controller
     public function edit(Request $request, $processoID)
     {
         $processo = Processo::findOrFail($processoID);
+        $estancias = Estancia::all();
+        $regioes = RegiaoAduaneira::all();
+        $portos = Porto::all();
+        $ibans = IbanController::getBankDetails();
+        $tipoTransp = TipoTransporte::all();
+        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
         
-        $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get(); // Obtenha a relação 'mercadoria'
+        $mercadorias = Mercadoria::where('Fk_Importacao', $processo->id)->get(); // Obtenha a relação 'mercadoria'
         $paises = Pais::all();
-        return view('processos.edit', compact('processo', 'mercadorias', 'paises'));
+        return view('processos.edit', compact('processo', 'mercadorias', 'paises', 'estancias',
+            'regioes',
+            'portos',
+            'ibans',
+            'tipoTransp',
+            'emolumentoTarifa'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $ProcessoRequest, TarifaDURequest $DURequest, PortuariaRequest $Portuaria, $processoID, DARRequest $DARRequest)
+    public function update(Request $ProcessoRequest, $processoID)
     {
         
         try {
@@ -192,12 +205,6 @@ class ProcessoController extends Controller
                 'ValorAduaneiro' => $ProcessoRequest->input('ValorAduaneiro'),
                 'ValorTotal' => $ProcessoRequest->input('ValorTotal'),
             ]); // Dados do Importação
-
-            TarifaDARController::storeOrUpdate($DARRequest, $processoID); //Tarifas do DAR
-
-            TarifaPortuariaController::storeOrUpdate($Portuaria, $processoID); //Tarifas Portuarias
-
-            TarifaDUController::storeOrUpdate($DURequest, $processoID); //Tarifas do DU
 
             // Caso exista documento(File/Files) para inserir ou actualizar deve activar a função
 

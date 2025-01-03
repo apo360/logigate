@@ -32,6 +32,7 @@ use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
+use App\Http\Controllers\EmolumentoTarifaController;
 use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
@@ -91,6 +92,7 @@ use PHPJasper\PHPJasper;
             'licenciamentos' => LicenciamentoController::class,
             'modulos' => ModuleController::class,
             'avenca' => CustomerAvencaController::class,
+            'emolumento_tarifas' => EmolumentoTarifaController::class,
         ]);
 
         Route::post('customer/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);

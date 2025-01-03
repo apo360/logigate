@@ -34,7 +34,7 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="form-group mt-4 col-md-3">
-                                <label for="tipo_declaracao">Tipo de Declaração (Região)</label>
+                                <label for="tipo_declaracao">Declaração (Região)</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fas fa-check"></i></span>

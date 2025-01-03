@@ -59,10 +59,16 @@
                 }
         </style>
     </head>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Processos', 'url' => route('processos.index')],
+        ['name' => $processo->NrProcesso, 'url' => route('processos.show', $processo->id)],
+        ['name' => 'Editar Processo', 'url' => route('processos.edit', $processo->id)]
+    ]" separator="/" />
+
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span><strong>Número do Processo:</strong> {{ $processo->NrProcesso }}</span>
-            <div class="btn-group">
+        <div class="card-header d-flex justify-content-between">
+            <div class="btn-group float-left">
                 <a class="btn btn-outline-secondary" href="{{ route('processos.index') }}">
                     <i class="fas fa-search"></i> {{ __('Pesquisar') }}
                 </a>
@@ -101,325 +107,414 @@
                 </div>
             </div>
         </div>
+        <span style="padding: 10px 0px 0px 10px;">Cliente :  <a href="{{route('customers.show', $processo->cliente->id)}}">{{$processo->cliente->CompanyName}}</a>  </span>
+        <span style="padding-left: 10px;">Email : {{$processo->cliente->Email}} </span>
+        <span style="padding-left: 10px;">Telefone : {{$processo->cliente->Telephone}} </span>
+        <span style="padding-left: 10px;">Ref/Factura :  {{ $processo->RefCliente }}</span>
     </div>
 
-
-    <x-validation-errors class="mb-4" />
-
     <div class="" style="padding: 10px;">
-        <form action="{{ route('processos.update', $processo->id) }}" method="POST">
-            @csrf
-            @method('PUT')
-            <div class="row">
-                <div class="col-md-8">
+        <div class="card card-navy">
+            <div class="card-body">
+                <ul class="nav nav-tabs nav-dark" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="detalhe-tab" data-bs-toggle="tab" data-bs-target="#detalhe" type="button" role="tab" aria-controls="detalhe" aria-selected="true">Pagína Info</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="mercadoria-tab" data-bs-toggle="tab" data-bs-target="#mercadoria" type="button" role="tab" aria-controls="mercadoria" aria-selected="false">Mercadorias</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="false">Despesas & Imposições</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Documentos Anexo</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="resumo-tab" data-bs-toggle="tab" data-bs-target="#resumo" type="button" role="tab" aria-controls="resumo" aria-selected="false">Resumo Asycuda</button>
+                    </li>
+                </ul>
 
-                    <div class="card card-navy">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <div class="flex items-center justify-between">
-                                    <div class="float-left">
-                                        <strong>Nº Processo:</strong> <span>{{ $processo->NrProcesso }}</span>
-                                        <strong>Cliente : </strong> <span>{{ $processo->cliente->CompanyName }}</span>
-                                        <strong>Ref/Factura : </strong> <span>{{ $processo->RefCliente }}</span>
-                                        <input type="hidden" name="Fk_processo" id="Fk_processo" value="{{ $processo->id }}">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-2 form-group">
-                                    <label for="N_Dar">Nº DAR</label>
-                                    <input type = "text" name = "N_Dar" class="form-control" value="{{ $processo->dar->N_Dar ?? '0000' }}" >
-                                </div>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="detalhe" role="tabpanel" aria-labelledby="detalhe-tab">
+                        <form action="{{ route('processos.update', $processo->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')    
+                            <div class="row mt-4">
                                 <div class="col-md-2 form-group">
                                     <label for="NrDU">Nº DU</label>
-                                    <input type="text" name="NrDU" class="form-control" value="{{ $processo->du ? $processo->du->NrDU : '' }}" >
+                                    <input type="text" name="NrDU" id="NrDU" class="form-control" value="{{ old('NrDU', $processo->NrDU) }}">
                                 </div>
                             
                                 <div class="form-group col-md-3">
                                     <label for="MarcaFiscal">Marca Fiscal:</label>
-                                    <input type="text" name="MarcaFiscal" class="form-control" value="{{$processo->importacao ? $processo->importacao->MarcaFiscal : ''}}">
+                                    <input type="text" name="MarcaFiscal" class="form-control" value="{{ old('MarcaFiscal', $processo->MarcaFiscal) }}">
                                 </div>
-                                <div class="form-group col-md-4">
+
+                                <div class="form-group col-md-3">
                                     <label for="BLC_Porte">BL/C Porte:</label>
-                                    <input type="text" name="BLC_Porte" class="form-control" value="{{$processo->importacao ? $processo->importacao->BLC_Porte : ''}}">
+                                    <input type="text" name="BLC_Porte" class="form-control" value="{{ old('BLC_Porte', $processo->BLC_Porte)}}">
+                                </div>
+
+                                <div class="form-group col-md-3">
+                                    <label for="Situacao">Situação:</label>
+                                    <select name="Situacao" class="form-control">
+                                        <option value="" selected>Selecionar</option>
+                                        <option value="Aberto" {{ $processo->Situacao == 'Aberto' ? 'selected' : '' }}>Aberto</option>
+                                        <option value="Em curso" {{ $processo->Situacao == 'Em curso' ? 'selected' : '' }}>Em curso</option>
+                                        <option value="Alfandega" {{ $processo->Situacao == 'Alfandega' ? 'selected' : '' }}>Alfandega</option>
+                                        <option value="Desafaldegamento" {{ $processo->Situacao == 'Desafaldegamento' ? 'selected' : '' }}>Desafaldegamento</option>
+                                        <option value="Inspensão" {{ $processo->Situacao == 'Inspensão' ? 'selected' : '' }}>Inspensão</option>
+                                        <option value="Terminal" {{ $processo->Situacao == 'Terminal' ? 'selected' : '' }}>Terminal</option>
+                                        <option value="Retido" {{ $processo->Situacao == 'Retido' ? 'selected' : '' }}>Retido</option>
+                                        <option value="Finalizado" {{ $processo->Situacao == 'Finalizado' ? 'selected' : '' }}>Finalizado</option>
+                                        <!-- Adicione outras opções conforme necessário -->
+                                    </select>
+                                    @error('Situacao')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
-                            <ul class="nav nav-tabs nav-dark" id="myTab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="mercadoria-tab" data-bs-toggle="tab" data-bs-target="#mercadoria" type="button" role="tab" aria-controls="mercadoria" aria-selected="true">Mercadorias</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="false">Emolumentos/ T. Portuárias</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Documentos</button>
-                                </li>
-                            </ul>
 
-                            <div class="tab-content">
-                                <div class="tab-pane active" id="mercadoria" role="tabpanel" aria-labelledby="mercadoria-tab">
-                                    <a class="btn btn-primary mt-2" data-bs-toggle="modal" href="#exampleModalToggle" role="button">Mercadorias</a>
-                                    
-                                    <table class="table table-sm table-flex table-flex--autocomplete mt-3">
-                                        <thead>
-                                            <tr>
-                                                <th>Código</th>
-                                                <th>Qntd</th>
-                                                <th>Designação</th>
-                                                <th>Peso (Kg)</th>
-                                                <th>P.Unitário</th>
-                                                <th>P.Total</th>
-                                                <th>Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Exemplo de linha de mercadoria, você deve popular essa tabela dinamicamente -->
-                                            @if ($processo->importacao->mercadorias)
-                                                @php
-                                                    $FOB = 0;
-                                                @endphp
-                                                @foreach ($processo->importacao->mercadorias as $mercadoria)
-                                                    @php
-                                                        $FOB += $mercadoria->preco_total;
-                                                    @endphp
-                                                    
-                                                    <tr>
-                                                        <td>{{ $mercadoria->codigo_aduaneiro }}</td>
-                                                        <td>{{ $mercadoria->Quantidade }}</td>
-                                                        <td>{{ $mercadoria->Descricao }}</td>
-                                                        <td>{{ $mercadoria->Peso }}</td>
-                                                        <td>{{ number_format($mercadoria->preco_unitario, 2) }}</td>
-                                                        <td>{{ number_format($mercadoria->preco_total, 2) }}</td>
-                                                        <td>
-                                                            <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
-                                                            <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            @else
-                                                <tr>
-                                                    <td colspan="3">Nenhuma mercadoria disponível</td>
-                                                </tr>
-                                            @endif
-                                        </tbody>
-                                    </table>
+                            
 
-                                    <div class="row mt-4">
-                                        <div class="col-md-4">
-                                            <label for="FOB">FOB</label>
-                                            <input type="text" class="form-control" id="FOB" name="FOB" value="{{$FOB}}" oninput="calculateValorAduaneiro()">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="Freight">Frete</label>
-                                            <input type="text" class="form-control" name="Freight" id="Freight" placeholder="Freight (Frete)" value="{{$processo->importacao->Freight ?? '0.00'}}" oninput="calculateValorAduaneiro()">
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="Insurance">Seguro</label>
-                                            <input type="text" class="form-control" id="Insurance" name="Insurance" placeholder="Insurance (Seguro)" value="{{$processo->importacao->Insurance ?? '0.00'}}" oninput="calculateValorAduaneiro()">
-                                        </div>
-                                    </div>
-                                    <table class="mt-4">
-                                        <tbody>
-                                            <tr>
-                                                <td>
-                                                    <label for="">CIF</label>
-                                                </td>
-                                                <td>
-                                                    <input type="text" id="ValorAduaneiro" name="ValorAduaneiro" class="form-control" value="{{$processo->importacao->ValorAduaneiro ?? '0.00'}}">
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-
-                                    <div class="row">
-                                        <div class="col-md-4 mt-4">
-                                            <label for="direitos">Direitos</label>
-                                            <input type = "decimal" id = "direitos" name = "direitos" class="form-control input-ivaAduaneiro total-input" value="{{$processo->dar ? $processo->dar->direitos : '0.00'}}">
-                                        </div>
-                                        <div class="col-md-4 mt-4">
-                                            <label for="emolumentos">Emolumentos Gerais</label>
-                                            <input type = "decimal" id = "emolumentos" name = "emolumentos" class="form-control input-ivaAduaneiro total-input" value="{{$processo->dar ? $processo->dar->emolumentos : '0.00'}}">
-                                        </div>
-                                        <div class="col-md-4 mt-4">
-                                            <label for="iec">IEC</label>
-                                            <input type = "decimal" name = "iec" class="form-control total-input" value="{{$processo->dar ? $processo->dar->iec : '0.00'}}">
-                                        </div>
-                                    </div>    
-                                </div>
-                                <div class="tab-pane" id="home" role="tabpanel" aria-labelledby="home-tab">
-                                    <div class="form-group mt-4 col-md-4">
-                                        <label for="Situacao">Situação:</label>
-                                        <select name="Situacao" class="form-control">
-                                            <option value="" selected>Selecionar</option>
-                                            <option value="Aberto" {{ $processo->Situacao == 'Aberto' ? 'selected' : '' }}>Aberto</option>
-                                            <option value="Em curso" {{ $processo->Situacao == 'Em curso' ? 'selected' : '' }}>Em curso</option>
-                                            <option value="Alfandega" {{ $processo->Situacao == 'Alfandega' ? 'selected' : '' }}>Alfandega</option>
-                                            <option value="Desafaldegamento" {{ $processo->Situacao == 'Desafaldegamento' ? 'selected' : '' }}>Desafaldegamento</option>
-                                            <option value="Inspensão" {{ $processo->Situacao == 'Inspensão' ? 'selected' : '' }}>Inspensão</option>
-                                            <option value="Terminal" {{ $processo->Situacao == 'Terminal' ? 'selected' : '' }}>Terminal</option>
-                                            <option value="Retido" {{ $processo->Situacao == 'Retido' ? 'selected' : '' }}>Retido</option>
-                                            <option value="Finalizado" {{ $processo->Situacao == 'Finalizado' ? 'selected' : '' }}>Finalizado</option>
-                                            <!-- Adicione outras opções conforme necessário -->
-                                        </select>
-                                        @error('Situacao')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-4 mt-4">
-                                            <label for="ep14">Porto</label>
-                                            <input type="decimal" name="ep14" class="form-control total-input" value="{{$processo->portuaria ? $processo->portuaria->ep14 : '0.00'}}">
-                                        </div>
-                                        <div class="col-md-4 mt-4">
-                                            <label for="terminal">Terminal</label>
-                                            <input type="decimal" name="terminal" class="form-control total-input" value="{{$processo->portuaria ? $processo->portuaria->terminal : '0.00'}}">
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4 mt-4">
-                                            <label for="lmc">Licenciamento Ministério Comércio  </label>
-                                            <input type="decimal" name="lmc" class="form-control total-input" value="{{ $processo->du ? $processo->du->lmc : '0.00' }}">
-                                        </div>
-
-                                        <div class="col-md-4 mt-4">
-                                            <label for="navegacao">Navegação</label>
-                                            <input type="decimal" name="navegacao" class="form-control total-input" value="{{ $processo->du ? $processo->du->navegacao : '0.00' }}">
-                                        </div>
-
-                                        <div class="col-md-4 mt-4">
-                                            <label for="inerentes">Inerentes</label>
-                                            <input type="decimal" name="inerentes" class="form-control total-input" value="{{ $processo->du ? $processo->du->inerentes : '0.00' }}">
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-4 mt-4">
-                                            <label for="frete">Frete</label>
-                                            <input type="decimal" name="frete" class="form-control total-input" value="{{ $processo->du ? $processo->du->frete : '0.00' }}">
-                                        </div>
-
-                                        <div class="col-md-4 mt-4">
-                                            <label for="deslocacao">Deslocação</label>
-                                            <input type="decimal" name="deslocacao" class="form-control total-input" value="{{ $processo->du ? $processo->du->deslocacao : '0.00' }}">
-                                        </div>
-
-                                        <div class="col-md-4 mt-4">
-                                            <label for="carga_descarga">Carga/Descarga</label>
-                                            <input type="decimal" name="carga_descarga" class="form-control total-input" value="{{ $processo->du ? $processo->du->carga_descarga : '0.00' }}">
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-4 mt-4">
-                                            <label for="caucao">Caução</label>
-                                            <input type="decimal" name="caucao" class="form-control total-input" value="{{ $processo->du ? $processo->du->caucao : '0.00' }}">
-                                        </div>
-
-                                        <div class="col-md-4 mt-4">
-                                            <label for="selos">Selos</label>
-                                            <input type="decimal" name="selos" class="form-control total-input" value="{{ $processo->du ? $processo->du->selos : '0.00' }}"5678>
-                                        </div>
-
-                                        <div class="col-md-4 mt-4">
-                                            <label for="honorario">Honorário</label>
-                                            <input type="decimal" name="honorario" class="form-control total-input" value="{{ $processo->du ? $processo->du->honorario : '0.00' }}" style="border: 0px; border-bottom: 1px solid black;">
-                                        </div>
-                                    </div>
-                                    
-                                </div>
-                                
-                                <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-                                    <div class="col-md-12 mt-4">
-                                        
-                                        <div id="drop-area" style="width: 100%; height: 200px; border: 2px dashed #ccc; text-align: center; padding: 20px;">
-                                            <h2>Arraste e solte documento aqui!</h2>
-                                            <p>ou</p>
-                                            <label for="file-input" style="cursor: pointer;" class="button-arquivo">Selecione um arquivo</label>
-                                        </div>
-                                        <input type="file" id="file-input" multiple style="display: none;">
-                                        
-                                        <div id="file-list" class="mt-4">
-                                            <p>Arquivos selecionados:</p>
-                                            <ul></ul>
-                                        </div>
-                                        <br>
-                                    </div>
-                                </div>
+                            <div class="form-group">
+                                <label for="Descricao">Descrição</label>
+                                <textarea 
+                                    name="Descricao" 
+                                    id="Descricao" 
+                                    class="form-control">{{ old('Descricao', $processo->Descricao) }}</textarea>
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="col-md-4">
-                    <div class="card card-navy">
-                        <div class="card-header">
-                            <div class="card-title">Configurações do Processo</div>
-                        </div>
-                        <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <label for="Moeda">Moeda</label>
-                                    <select name="Moeda" id="Moeda" class="form-control" required>
-                                        <option value="">Selecionar</option>
-                                        @foreach($paises->filter(function($pais) { return $pais->cambio > 0; }) as $pais)
-                                            <option value="{{ $pais->moeda }}" data-cambio="{{ $pais->cambio }}" {{ $pais->moeda == $processo->importacao->Moeda ? 'selected' : '' }}>
-                                                {{$pais->moeda}}
+
+                                <div class="form-group col-md-3">
+                                    <label for="DataAbertura">Data de Abertura</label>
+                                    <input 
+                                        type="date" 
+                                        name="DataAbertura" 
+                                        id="DataAbertura" 
+                                        class="form-control" 
+                                        value="{{ old('DataAbertura', $processo->DataAbertura) }}">
+                                </div>
+
+                                <div class="form-group col-md-3">
+                                    <label for="TipoProcesso">Tipo de Declaração</label>
+                                    <select name="TipoProcesso" id="TipoProcesso" class="form-control">
+                                        @foreach($regioes as $regiao)
+                                            <option 
+                                                value="{{ $regiao->id }}" 
+                                                {{ old('TipoProcesso', $processo->TipoProcesso) == $regiao->id ? 'selected' : '' }}>
+                                                {{ $regiao->descricao }}
                                             </option>
                                         @endforeach
                                     </select>
+                                </div>
 
-                                    @error('Moeda')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="Cambio"> Cambio</label>
-                                    <input type="text" name="Cambio" id="Cambio" class="form-control" value="{{$processo->importacao->Cambio ?? 0}}" placeholder="" required>
-                                    @error('Cambio')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
+                                <div class="form-group col-md-3">
+                                    <label for="Estado">Estado</label>
+                                    <select name="Estado" id="Estado" class="form-control">
+                                        <option value="Aberto" {{ old('Estado', $processo->Estado) == 'Aberto' ? 'selected' : '' }}>Aberto</option>
+                                        <option value="Fechado" {{ old('Estado', $processo->Estado) == 'Fechado' ? 'selected' : '' }}>Fechado</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div class="form-group">
-                                <div class="mt-4">
-                                    <label for="ValorTotal">Valor Aduaneiro (AOA)</label>
-                                    <input type = "decimal" name = "ValorTotal" id = "ValorTotal" class="form-control input-ivaAduaneiro" value="{{$processo->importacao->ValorTotal}}" readonly />
+                            <div class="row">
+                                <!-- Fk_pais_origem -->
+                                <div class="form-group col-md-3">
+                                    <label for="Fk_pais_origem">País de Origem</label>
+                                    <select name="Fk_pais_origem" id="Fk_pais_origem" class="form-control">
+                                        @foreach($paises as $pais)
+                                            <option 
+                                                value="{{ $pais->id }}" 
+                                                {{ old('Fk_pais_origem', $processo->Fk_pais_origem) == $pais->id ? 'selected' : '' }}>
+                                                {{ $pais->nome }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Fk_pais_destino -->
+                                <div class="form-group col-md-3">
+                                    <label for="Fk_pais_destino">País de Destino</label>
+                                    <select name="Fk_pais_destino" id="Fk_pais_destino" class="form-control">
+                                        @foreach($paises as $pais)
+                                            <option 
+                                                value="{{ $pais->id }}" 
+                                                {{ old('Fk_pais_destino', $processo->Fk_pais_destino) == $pais->id ? 'selected' : '' }}>
+                                                {{ $pais->nome }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- PortoOrigem -->
+                                <div class="form-group col-md-3">
+                                    <label for="PortoOrigem">Porto de Origem</label>
+                                    <input type="text" name="PortoOrigem" id="PortoOrigem" class="form-control" value="{{ old('PortoOrigem', $processo->PortoOrigem) }}">
+                                </div>
+
+                                <!-- DataChegada -->
+                                <div class="form-group col-md-3">
+                                    <label for="DataChegada">Data de Chegada</label>
+                                    <input 
+                                        type="date" 
+                                        name="DataChegada" 
+                                        id="DataChegada" 
+                                        class="form-control" 
+                                        value="{{ old('DataChegada', $processo->DataChegada) }}">
                                 </div>
                             </div>
 
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <label for="iva_aduaneiro">IVA Aduaneiro (14%)</label>
-                                    <input type = "decimal" id = "iva_aduaneiro" name = "iva_aduaneiro" class="form-control total-input" value="{{$processo->dar ? $processo->dar->iva_aduaneiro : '0.00'}}" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="impostoEstatistico">Imposto Estatístico (10%)</label>
-                                    <input type = "decimal"  id = "impostoEstatistico" name = "impostoEstatistico" class="form-control total-input" value="{{$processo->dar ? $processo->dar->impostoEstatistico : '0.00'}}" readonly>
-                                </div>
+                            <!-- TipoTransporte -->
+                            <div class="form-group">
+                                <label for="TipoTransporte">Tipo de Transporte</label>
+                                <select name="TipoTransporte" id="TipoTransporte" class="form-control">
+                                    @foreach($tipoTransp as $transporte)
+                                        <option 
+                                            value="{{ $transporte->id }}" 
+                                            {{ old('TipoTransporte', $processo->TipoTransporte) == $transporte->id ? 'selected' : '' }}>
+                                            {{ $transporte->descricao }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
 
+                            <!-- Registo Transporte -->
                             <div class="form-group">
-                                <label>Total Geral:</label> 
-                                <input type="text" name="TOTALGERAL" id="TOTALGERAL" class="form-control" value="{{ old('TOTALGERAL', isset($cobrado) ? $cobrado->TOTALGERAL : '0.00') }}" readonly class="total" style="border: 0px; border-bottom: 1px solid black;">
+                                <label for="registo_transporte">Registo do Transporte</label>
+                                <input 
+                                    type="text" 
+                                    name="registo_transporte" 
+                                    id="registo_transporte" 
+                                    class="form-control" 
+                                    value="{{ old('registo_transporte', $processo->registo_transporte) }}">
                             </div>
-                            <div class="form-group">
-                                <label>Extenso:</label> 
-                                <x-input type="text" name="Extenso" id="Extenso" class="form-control" value="{{ old('Extenso', isset($cobrado) ? $cobrado->Extenso : '') }}"/>
+
+                            <!-- Dados Financeiros -->
+                            <h4>Dados Financeiros</h4>
+                            <div class="row">
+                                <div class="form-group col-md-3">
+                                    <label for="forma_pagamento">Forma de Pagamento</label>
+                                    <input 
+                                        type="text" 
+                                        name="forma_pagamento" 
+                                        id="forma_pagamento" 
+                                        class="form-control" 
+                                        value="{{ old('forma_pagamento', $processo->forma_pagamento) }}">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="codigo_banco">Código do Banco</label>
+                                    <input 
+                                        type="text" 
+                                        name="codigo_banco" 
+                                        id="codigo_banco" 
+                                        class="form-control" 
+                                        value="{{ old('codigo_banco', $processo->codigo_banco) }}">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="Moeda">Moeda</label>
+                                    <input 
+                                        type="text" 
+                                        name="Moeda" 
+                                        id="Moeda" 
+                                        class="form-control" 
+                                        value="{{ old('Moeda', $processo->Moeda) }}">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label for="ValorTotal">Valor Total</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        name="ValorTotal" 
+                                        id="ValorTotal" 
+                                        class="form-control" 
+                                        value="{{ old('ValorTotal', $processo->ValorTotal) }}">
+                                </div>
                             </div>
-                        </div>
-                        <div class="card-footer">
-                            <x-button class="btn btn-dark" type="submit">
-                                {{ __('Atualizar') }}
+                            <x-button type="submit" class="btn btn-primary">
+                                Actualizar Processo
                             </x-button>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="mercadoria" role="tabpanel" aria-labelledby="mercadoria-tab">
+                        <a class="btn btn-primary mt-2" data-bs-toggle="modal" href="#exampleModalToggle" role="button">Mercadorias</a>
+                        
+                        <table class="table table-sm table-flex table-flex--autocomplete mt-3">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Qntd</th>
+                                    <th>Designação</th>
+                                    <th>Peso (Kg)</th>
+                                    <th>P.Unitário</th>
+                                    <th>P.Total</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Exemplo de linha de mercadoria, você deve popular essa tabela dinamicamente -->
+                                @if ($processo->mercadorias)
+                                    @php
+                                        $FOB = 0;
+                                    @endphp
+                                    @foreach ($processo->mercadorias as $mercadoria)
+                                        @php
+                                            $FOB += $mercadoria->preco_total;
+                                        @endphp
+                                        
+                                        <tr>
+                                            <td>{{ $mercadoria->codigo_aduaneiro }}</td>
+                                            <td>{{ $mercadoria->Quantidade }}</td>
+                                            <td>{{ $mercadoria->Descricao }}</td>
+                                            <td>{{ $mercadoria->Peso }}</td>
+                                            <td>{{ number_format($mercadoria->preco_unitario, 2) }}</td>
+                                            <td>{{ number_format($mercadoria->preco_total, 2) }}</td>
+                                            <td>
+                                                <button class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr>
+                                        <td colspan="3">Nenhuma mercadoria disponível</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <label for="FOB">FOB</label>
+                                <input type="text" class="form-control" id="FOB" name="FOB" value="" oninput="calculateValorAduaneiro()">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="Freight">Frete</label>
+                                <input type="text" class="form-control" name="Freight" id="Freight" placeholder="Freight (Frete)" value="{{$processo->Freight ?? '0.00'}}" oninput="calculateValorAduaneiro()">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="Insurance">Seguro</label>
+                                <input type="text" class="form-control" id="Insurance" name="Insurance" placeholder="Insurance (Seguro)" value="{{$processo->Insurance ?? '0.00'}}" oninput="calculateValorAduaneiro()">
+                            </div>
                         </div>
+                        <table class="mt-4">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <label for="">CIF</label>
+                                    </td>
+                                    <td>
+                                        <input type="text" id="ValorAduaneiro" name="ValorAduaneiro" class="form-control" value="{{$processo->importacao->ValorAduaneiro ?? '0.00'}}">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>    
+                    </div>
+                    <div class="tab-pane" id="home" role="tabpanel" aria-labelledby="home-tab">
+                        <form action="{{ isset($emolumentoTarifa) ? route('emolumento_tarifas.update', $emolumentoTarifa->id) : route('emolumento_tarifas.store') }}" method="POST">
+                            @csrf
+                            @if(isset($emolumentoTarifa))
+                                @method('PUT')
+                            @endif
+                            <hr>
+                            <span class="mt-4" style="color: red;" >Despesas Portuárias e Aeroportuárias</span>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="porto">Porto</label>
+                                    <input type="decimal" name="porto" class="form-control total-input" value="{{ old('porto', $emolumentoTarifa->porto ?? '') }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="terminal">Terminal</label>
+                                    <input type="decimal" name="terminal" class="form-control total-input" value="{{ old('terminal', $emolumentoTarifa->terminal ?? '') }}">
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <span class="mt-4" style="color: red;" >Imposições</span>
+                            <div class="row">
+                                <div class="col-md-3 mt-3">
+                                    <label for="lmc">Licenciamento Ministério Comércio  </label>
+                                    <input type="decimal" name="lmc" class="form-control total-input" value="{{ old('lmc', $emolumentoTarifa->lmc ?? '') }}" value="{{ $processo->du ? $processo->du->lmc : '0.00' }}">
+                                </div>
+
+                                <div class="col-md-3 mt-3">
+                                    <label for="navegacao">Navegação</label>
+                                    <input type="decimal" name="navegacao" class="form-control total-input" value="{{ old('navegacao', $emolumentoTarifa->navegacao ?? '') }}">
+                                </div>
+
+                                <div class="col-md-3 mt-3">
+                                    <label for="frete">Frete</label>
+                                    <input type="decimal" name="frete" class="form-control total-input" value="{{ old('frete', $emolumentoTarifa->frete ?? '') }}">
+                                </div>
+
+                                <div class="col-md-3 mt-3">
+                                    <label for="inerentes">Inerentes</label>
+                                    <input type="decimal" name="inerentes" class="form-control total-input" value="{{ old('inerentes', $emolumentoTarifa->inerentes ?? '') }}" >
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3 mt-4">
+                                    <label for="direitos">Direitos</label>
+                                    <input type = "decimal" id = "direitos" name = "direitos" class="form-control" value="{{ old('direitos', $emolumentoTarifa->direitos ?? '') }}">
+                                </div>
+                                <div class="col-md-3 mt-4">
+                                    <label for="iec">IEC</label>
+                                    <input type = "decimal" name = "iec" class="form-control" value="{{ old('iec', $emolumentoTarifa->iec ?? '') }}">
+                                </div>
+                                <div class="col-md-3 mt-4">
+                                    <label for="deslocacao">Deslocação</label>
+                                    <input type="decimal" name="deslocacao" class="form-control total-input" value="{{ old('deslocacao', $emolumentoTarifa->deslocacao ?? '') }}">
+                                </div>
+                                <div class="col-md-3 mt-4">
+                                    <label for="carga_descarga">Carga/Descarga</label>
+                                    <input type="decimal" name="carga_descarga" class="form-control total-input" value="{{ old('carga_descarga', $emolumentoTarifa->carga_descarga ?? '') }}">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mt-4">
+                                    <label for="caucao">Caução</label>
+                                    <input type="decimal" name="caucao" class="form-control total-input" value="{{ old('caucao', $emolumentoTarifa->caucao ?? '') }}">
+                                </div>
+
+                                <div class="col-md-4 mt-4">
+                                    <label for="selos">Selos</label>
+                                    <input type="decimal" name="selos" class="form-control total-input" value="{{ old('selos', $emolumentoTarifa->selos ?? '') }}">
+                                </div>
+
+                                <div class="col-md-4 mt-4">
+                                    <label for="honorario">Honorário</label>
+                                    <input type="decimal" name="honorario" class="form-control total-input" value="{{ old('honorario', $emolumentoTarifa->honorario ?? '') }}">
+                                </div>
+
+                            </div>
+                            <button type="submit" class="btn btn-primary">{{ isset($emolumentoTarifa) ? 'Actualizar' : 'Criar' }}</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                        <div class="col-md-12 mt-4">
+                            
+                            <div id="drop-area" style="width: 100%; height: 200px; border: 2px dashed #ccc; text-align: center; padding: 20px;">
+                                <h2>Arraste e solte documento aqui!</h2>
+                                <p>ou</p>
+                                <label for="file-input" style="cursor: pointer;" class="button-arquivo">Selecione um arquivo</label>
+                            </div>
+                            <input type="file" id="file-input" multiple style="display: none;">
+                            
+                            <div id="file-list" class="mt-4">
+                                <p>Arquivos selecionados:</p>
+                                <ul></ul>
+                            </div>
+                            <br>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="resumo" role="tabpanel" aria-labelledby="resumo-tab">
+                    <input type="decimal" name="honorario" class="form-control total-input" value="{{ old('honorario', $emolumentoTarifa->honorario ?? '') }}" style="border: 0px; border-bottom: 1px solid black;">
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
     
     <!-- Modal para Listar Mercadorias -->
@@ -434,7 +529,7 @@
                     <!-- Formulário para Inserir Mercadoria -->
                     <form id="addMercadoriaForm" action="{{ route('mercadorias.store') }}" method="POST">
                         @csrf
-                        <input type="hidden" name="Fk_Importacao" id="Fk_Importacao" value="{{ $processo->importacao->id }}">
+                        <input type="hidden" name="Fk_Importacao" id="Fk_Importacao" value="{{ $processo->id }}">
                         <div class="mercadoria">
                             <select name="Qualificacao" id="Qualificacao" class="form-control mt-4">
                                 <option value="">Selecionar</option>

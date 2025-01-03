@@ -5,7 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <!-- SEO -->
         <title>{{ config('app.name', 'Logigate') }}</title>
+        <meta name="description" content="{{ $page_description ?? 'Sistema de Gestão de Processos Aduaneiros' }}">
+        <meta name="keywords" content="{{ $page_keywords ?? 'Sistema, Gestão, Logistica', 'Aduaneira', 'Despachantes', 'Processos' }}">
+        <meta name="robots" content="index, follow">
+        <link rel="canonical" href="{{ url()->current() }}">
+        <link rel="icon" type="image/x-icon" href="{{ asset('dist/img/LOGIGATE.png') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -19,7 +25,6 @@
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <!-- Toastr -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
-        <!-- DataTables -->
         <!-- DataTables -->
         <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
         <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
@@ -40,17 +45,43 @@
         <link rel="stylesheet" href="{{ asset('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
         <!-- Daterange picker -->
         <link rel="stylesheet" href="{{ asset('plugins/daterangepicker/daterangepicker.css') }}">
-        <!-- Flag Icons CDN -->
+        <!-- Flag Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
 
-        <!-- Select2 CSS -->
+        <!-- Select2 -->
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-        <!-- Select2 JS -->
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-X"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-XXXXX-X');
+        </script>
 
+        <!-- Rich Snippets -->
+        <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "Logigate",
+            "url": "https://logigate.com",
+            "logo": "https://logigate.com/logo.png",
+            "Acesso" : "https://logigate.com/login",
+            "Registro" : "https://logigate.com/register",
+            "sameAs": [
+                "https://facebook.com/logigate",
+                "https://instagram.com/logigate"
+            ]
+        }
+        </script>
+
+        <!-- Mobile Optimization -->
+        <meta name="theme-color" content="#ffffff">
     </head>
+
     <body class="hold-transition sidebar-mini layout-fixed">
 
         <div class="wrapper">

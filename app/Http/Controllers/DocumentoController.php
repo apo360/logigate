@@ -81,36 +81,13 @@ class DocumentoController extends Controller
 
         $invoices = SalesInvoice::all();
 
+        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+
         $faturasPagas = SalesDocTotal::whereNotNull('data_pagamento')->count();
         $faturasPorPagar = SalesDocTotal::whereNull('data_pagamento')->count();
         $faturasEmAtraso = SalesDocTotal::whereNull('data_pagamento')->where('data_pagamento', '<', now())->count();
 
-        $tableData = [
-            'headers' => ['Tipo', 'Número da Fatura', 'Cliente', 'Total', 'Estado',''],
-            'rows' => [],
-        ];
-
-        foreach ($invoices as $key => $fatura ) {
-            $tableData['rows'][] = [
-                '<div id="doc-header-type" data-href="#/office/change/">
-                    <div style="background: gray; border-radius: 50px;" class="inline-flex items-center px-3 py-2 border ">
-                    '.$fatura->invoiceType->Code.'
-                    </div> 
-                </div>',
-                $fatura->invoice_no,
-                $fatura->customer->CompanyName ?? '',
-                $fatura->salesdoctotal->gross_total ?? '0.00',
-                '', // ---> faturasPagas, faturasPorPagar, faturasEmAtraso
-                '
-                   <div class="inline-flex">
-                    <a href="'.route('documentos.show', $fatura).'" class="btn btn-sm "><i class="fas fa-eye"></i></a>
-                    <a href="'.route('documento.print', $fatura->id).'" class="btn btn-sm "><i class="fas fa-print"></i></a>
-                   </div>         
-                ',
-            ];
-        }
-
-        return view('Documentos.index', compact('tableData','invoices','faturasPagas', 'faturasPorPagar', 'faturasEmAtraso'));
+        return view('Documentos.index', compact('invoices','faturasPagas', 'faturasPorPagar', 'faturasEmAtraso', 'clientes'));
     }
 
     /**
@@ -149,15 +126,19 @@ class DocumentoController extends Controller
             return view('Documentos.create_documento', compact('licenciamento', 'produtos', 'tipoDocumentos'));
         } else {
             
-            $produtos = DB::table('Listar_Produtos')->get();
+            $empresaId = Auth::user()->empresas->first()->id;
+            // Obtém todos os produtos do banco de dados 
+            $produtos = Produto::with(['prices', 'grupo'])
+            ->where(function ($query) use ($empresaId) {
+                $query->where('empresa_id', $empresaId)
+                    ->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
+            })
+            ->get();
 
             // Retorna a view padrão de criação quando não há 'id'
             $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
 
-            // Gera novo código para o cliente
-            $newCustomerCode = Customer::generateNewCode();
-
-            return view('Documentos.create_documento_2', compact('clientes', 'tipoDocumentos', 'produtos', 'newCustomerCode'));
+            return view('Documentos.create_documento_2', compact('clientes', 'tipoDocumentos', 'produtos'));
         }
     }
 
@@ -216,7 +197,9 @@ class DocumentoController extends Controller
                 'invoice_type_id' => $invoiceTypeID,
                 'source_id' => Auth::user()->id,
                 'system_entry_date' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
-                'customer_id' => $request->input('customer_id'), 
+                'transaction_id' => 1,
+                'customer_id' => $request->input('customer_id'),
+                'empresa_id' => Auth::user()->empresas->first()->id,
             ]);
 
            // Verificar se existe licenciamento ou processo no request

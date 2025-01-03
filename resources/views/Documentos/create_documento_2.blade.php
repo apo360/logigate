@@ -362,8 +362,6 @@
                 
                 <form id="formNovoCliente">
                     <div class="modal-body">
-                        
-                        <input type="hidden" name="CustomerID" value="{{ $newCustomerCode }}" id="CustomerID">
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mt-2">
