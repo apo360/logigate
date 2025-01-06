@@ -142,11 +142,11 @@
                                     </div>
                                 </td>
                                 <td>{{ $processo->NrProcesso }}</td>
-                                <td>{{ $processo->CompanyName }}</td>
-                                <td>{{ $processo->TipoProcesso }}</td>
+                                <td>{{ $processo->cliente->CompanyName }}</td>
+                                <td>{{ $processo->tipoProcesso->descricao }}</td>
                                 <td>
-                                    <span class="badge {{ $processo->Situacao == 'Em processamento' ? 'badge-warning' : ($processo->Situacao == 'Desembaraçado' ? 'badge-success' : 'badge-danger') }}">
-                                        {{ $processo->Situacao }}
+                                    <span class="badge {{ $processo->Situacao == 'Aberto' ? 'badge-warning' : ($processo->Situacao == 'Desembaraçado' ? 'badge-success' : 'badge-danger') }}">
+                                        {{ $processo->Estado }}
                                     </span>
                                 </td>
                                 <td>

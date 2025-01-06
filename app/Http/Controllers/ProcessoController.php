@@ -33,14 +33,14 @@ class ProcessoController extends Controller
      */
     public function index(Request $request)
     {
-        $processos = ProcessosView::query()
+        $processos = Processo::query()
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('NrProcesso', 'like', "%{$search}%")
                       ->orWhere('CompanyName', 'like', "%{$search}%");
                 });
             })
-            ->where('IdEmpresa', Auth::user()->empresas->first()->id ?? null)->get(); // Paginação com 10 itens por página
+            ->where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Paginação com 10 itens por página
 
         return view('processos.index', compact('processos'));
     }

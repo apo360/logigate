@@ -298,7 +298,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-edit"></i></span>
                                         </div>
-                                        <x-input type="text" name="registo_transporte" class="form-control rounded-md shadow-sm" required />
+                                        <x-input type="text" name="registo_transporte" class="form-control rounded-md shadow-sm" value="Desconhecido" />
                                         @error('registo_transporte')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -311,7 +311,7 @@
                                             <span class="input-group-text"><i class="fas fa-country"></i></span>
                                         </div>
                                         <select name="TipoTransporte" class="form-control rounded-md shadow-sm" id="TipoTransporte" required>
-                                            <option value="">Selecionar</option>
+                                            <option value="Desconhecido">Selecionar</option>
                                             @foreach($tipoTransp as $tipoT)
                                                 <option value="{{ $tipoT->id }}"> {{$tipoT->descricao}} </option>
                                             @endforeach
@@ -341,49 +341,11 @@
                             </div> 
                             <hr>
                             <span style="color: red;">Dados Financeiros & Contabilísticos</span>
-                            <div class="row">
-                                <div class="form-group mt-4 col-md-2">
-                                    <label for="Moeda">Moeda</label>
-                                    <select name="Moeda" id="Moeda" class="form-control" required>
-                                        <option value="">Selecionar</option>
-                                        @foreach($paises->filter(function($pais) { return $pais->cambio > 0; }) as $pais)
-                                            <option value="{{ $pais->moeda }}" data-cambio="{{ $pais->cambio }}">
-                                                {{$pais->moeda}}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('Moeda')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group mt-4 col-md-2">
-                                    <label for="Cambio"> Cambio</label>
-                                    <input type="text" name="Cambio" id="Cambio" class="form-control" value="{{$processo->importacao->Cambio ?? 0}}" placeholder="" required>
-                                    @error('Cambio')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="ValorTotal">Valor Aduaneiro</label>
-                                    <input type = "decimal" name = "ValorTotal" id = "ValorTotal" class="form-control input-ivaAduaneiro" value="" />
-                                    @error('ValorTotal')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="ValorAduaneiro">Valor Aduaneiro (Kz)</label>
-                                    <input type = "decimal" name = "ValorAduaneiro" id = "ValorAduaneiro" class="form-control input-ivaAduaneiro" value="" readonly />
-                                    @error('ValorAduaneiro')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+                            
                             <div class="row">
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="forma_pagamento">Forma de Pagamento:</label>
-                                    <select id="forma_pagamento" name="forma_pagamento" required class="form-control" >
+                                    <select id="forma_pagamento" name="forma_pagamento" class="form-control" aria-label="Selecionar forma de pagamento">
                                         <option value="RD">Pronto Pagamento</option>
                                         <option value="Outro">Outro</option>
                                     </select>
@@ -393,11 +355,11 @@
                                 </div>
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="codigo_banco">Código do Banco</label>
-                                    <select name="codigo_banco" id="codigo_banco" class="form-select select2" value="{{ old('codigo_banco') }}" required >
-                                        <option value=""></option>
+                                    <select name="codigo_banco" id="codigo_banco" class="form-select select2" value="{{ old('codigo_banco') }}" aria-label="Selecionar código do banco">
+                                        <option value="">Selecionar</option>
                                         @foreach($ibans as $iban)
-                                            <option value="{{$iban['code']}}" data-code="{{$iban['code']}}">
-                                                {{$iban['code']}} - {{$iban['fname']}} ({{$iban['sname']}})
+                                            <option value="{{ $iban['code'] }}" data-code="{{ $iban['code'] }}">
+                                                {{ $iban['code'] }} - {{ $iban['fname'] }} ({{ $iban['sname'] }})
                                             </option>
                                         @endforeach
                                     </select>
@@ -405,69 +367,114 @@
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group mt-4 col-md-2">
+                                    <label for="Moeda">Moeda</label>
+                                    <select name="Moeda" id="Moeda" class="form-control" required aria-label="Selecionar moeda">
+                                        <option value="">Selecionar</option>
+                                        @foreach($paises->filter(function($pais) { return $pais->cambio > 0; }) as $pais)
+                                            <option value="{{ $pais->moeda }}" data-cambio="{{ $pais->cambio }}">
+                                                {{ $pais->moeda }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('Moeda')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-2">
+                                    <label for="Cambio">Cambio</label>
+                                    <input type="number" name="Cambio" id="Cambio" class="form-control" value="{{ $processo->importacao->Cambio ?? 0 }}" placeholder="Insira o câmbio" aria-describedby="cambioHelp">
+                                    <small id="cambioHelp" class="form-text text-muted">Insira o valor de câmbio atual.</small>
+                                    @error('Cambio')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
                                 <div class="form-group mt-4 col-md-3">
+                                    <label for="ValorTotal">Valor Aduaneiro</label>
+                                    <input type="decimal" name="ValorTotal" id="ValorTotal" class="form-control input-ivaAduaneiro" value="" placeholder="Insira o valor total">
+                                    @error('ValorTotal')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="ValorAduaneiro">Valor Aduaneiro (Kz)</label>
+                                    <input type="decimal" name="ValorAduaneiro" id="ValorAduaneiro" class="form-control input-ivaAduaneiro" value="" aria-label="Valor Aduaneiro em Kz">
+                                    @error('ValorAduaneiro')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group mt-4 col-md-3">  
                                     <label for="fob_total">FOB</label>
-                                    <input type="text" id="fob_total" name="fob_total" class="form-control">
+                                    <input type="number" id="fob_total" name="fob_total" class="form-control" placeholder="Insira o valor FOB" aria-describedby="fobHelp">
+                                    <small id="fobHelp" class="form-text text-muted">Insira o valor FOB em dólares.</small>
                                     @error('fob_total')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
-                            <div class="row">
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="frete">Frete</label>
-                                    <input type="text" id="frete" name="frete" class="form-control">
+                                    <input type="number" id="frete" name="frete" class="form-control" placeholder="Insira o valor do frete">
                                     @error('frete')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
-
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="seguro">Seguro</label>
-                                    <input type="text" id="seguro" name="seguro" class="form-control">
+                                    <input type="number" id="seguro" name="seguro" class="form-control" placeholder="Insira o valor do seguro">
                                     @error('seguro')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="cif_total">CIF</label>
+                                    <input type="number" id="cif_total" name="cif_total" class="form-control" readonly>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                </form>
-            </div>
-            <div class="col-md-3">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">Resumo do Processo</div>
-                    </div>
 
-                    <div class="card-body">
-                        @foreach(auth()->user()->empresas as $despachante)
-                            <span> {{ $despachante->Designacao}} </span> <br>
-                            <span> {{ $despachante->Empresa}} </span>
-                            <div class="row">
-                                <div class="col-md-6"><span> {{__('Cedula : ')}} {{ $despachante->Cedula}} </span></div>
-                                <div class="col-md-6"><span> {{__('NIF : ')}} {{ $despachante->NIF}} </span></div>
                             </div>
-                        @endforeach
-                        <hr>
-                        <div id="dados_estancia">
-                            <!-- Dados da Estância -->
                         </div>
-                        <div id="dados_tipodeclaracao">
-                            <!-- Dados do Tipo de Declaração -->
+                        
+                    </form>
+                </div>
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Resumo do Processo</div>
                         </div>
-                        <div id="dados_cliente">
-                            <!-- Dados do Cliente -->
-                        </div>
-                        <div id="dados_exportador">
-                            <!-- Dados do Exportador -->
+
+                        <div class="card-body">
+                            @foreach(auth()->user()->empresas as $despachante)
+                                <span> {{ $despachante->Designacao}} </span> <br>
+                                <span> {{ $despachante->Empresa}} </span>
+                                <div class="row">
+                                    <div class="col-md-6"><span> {{__('Cedula : ')}} {{ $despachante->Cedula}} </span></div>
+                                    <div class="col-md-6"><span> {{__('NIF : ')}} {{ $despachante->NIF}} </span></div>
+                                </div>
+                            @endforeach
+                            <hr>
+                            <div id="dados_estancia">
+                                <!-- Dados da Estância -->
+                            </div>
+                            <div id="dados_tipodeclaracao">
+                                <!-- Dados do Tipo de Declaração -->
+                            </div>
+                            <div id="dados_cliente">
+                                <!-- Dados do Cliente -->
+                            </div>
+                            <div id="dados_exportador">
+                                <!-- Dados do Exportador -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Modal para adicionar novo cliente -->
     <div class="modal fade" id="newClientModal" tabindex="-1" role="dialog" aria-labelledby="newClientModalLabel" aria-hidden="true">
@@ -723,4 +730,36 @@
         });
     </script>
 
+    <!-- Calculos do aduaneiro(KZ) e o CIF -->
+    <script>
+        $(document).ready(function() {
+            // Função para calcular o CIF
+            function calcularCIF() {
+                var fob = parseFloat($('#fob_total').val()) || 0;
+                var frete = parseFloat($('#frete').val()) || 0;
+                var seguro = parseFloat($('#seguro').val()) || 0;
+                
+                var cif = fob + frete + seguro;
+                $('#cif_total').val(cif.toFixed(2));
+                $('#ValorTotal').val(cif.toFixed(2));
+            }
+            // Eventos de input para calcular CIF e Valor Aduaneiro em Kz
+            $('#fob_total, #frete, #seguro').on('input', calcularCIF);
+
+            function calcularValores() {
+                var valorAduaneiro = parseFloat($('#ValorTotal').val()) || 0;
+                var cambio = parseFloat($('#cambio').val()) || 0;
+                
+                // Calcula Valor Aduaneiro em Kz
+                var valorAduaneiroKz = valorAduaneiro * cambio;
+                $('#ValorAduaneiro').val(valorAduaneiroKz.toFixed(2));
+
+                // CIF é igual ao Valor Aduaneiro
+                $('#cif_total').val(valorAduaneiro.toFixed(2));
+            }
+            
+            // Eventos de input para calcular os valores
+            $('#ValorTotal, #cambio').on('input', calcularValores);
+        });
+    </script>
 </x-app-layout>
