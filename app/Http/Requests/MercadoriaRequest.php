@@ -22,7 +22,7 @@ class MercadoriaRequest extends FormRequest
     public function rules()
     {
         return [
-            'Fk_Importacao' => 'nullable|integer|exists:importacoes,id',
+            'Fk_Importacao' => 'nullable|integer|exists:processos,id',
             'Descricao' => 'required|string|max:255',
             'NCM_HS' => 'nullable|string|max:50',
             'NCM_HS_Numero' => 'nullable|string|max:50',

@@ -44,7 +44,7 @@ class MercadoriaAgrupada extends Model
         $agrupamento = MercadoriaAgrupada::where('codigo_aduaneiro', $mercadoria->codigo_aduaneiro)
             ->where(function($query) use ($mercadoria) {
                 $query->where('licenciamento_id', $mercadoria->licenciamento_id)
-                    ->orWhere('processo_id', $mercadoria->processo_id);
+                    ->orWhere('processo_id', $mercadoria->Fk_Importacao);
             })->first();
 
         if ($agrupamento) {
@@ -63,12 +63,13 @@ class MercadoriaAgrupada extends Model
             // Criar um novo agrupamento
             self::create([
                 'codigo_aduaneiro' => $mercadoria->codigo_aduaneiro,
-                'licenciamento_id' => $mercadoria->licenciamento_id,
+                'licenciamento_id' => $mercadoria->licenciamento_id ?? null,
+                'processo_id' => $mercadoria->Fk_Importacao ?? null,
                 'quantidade_total' => $mercadoria->Quantidade,
                 'peso_total' => $mercadoria->Peso,
                 'preco_total' => $mercadoria->preco_total,
                 'mercadorias_ids' => json_encode([$mercadoria->id]),
-            ]);
+            ]);            
 
             // Adicionar mais uma adição na linha do licenciamento correspondente
             $exists = Licenciamento::where('id', $mercadoria->licenciamento_id)->first();

@@ -23,6 +23,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use SimpleXMLElement;
 
 class ProcessoController extends Controller
@@ -99,10 +100,10 @@ class ProcessoController extends Controller
         
         try {
 
-            DB::beginTransaction();
-
             // Dados validados do request
             $processo_request = $request->validated();
+
+            DB::beginTransaction();
 
             // Verifica o botão clicado para definir a tabela
             $tabela = $request->input('action') === 'draft' ? 'processos_draft' : 'processos';
@@ -140,19 +141,11 @@ class ProcessoController extends Controller
      */
     public function show($processoID)
     {
-        $processo = Processo::findOrFail($processoID);
-
-        if ($processo) {
-            $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
-            $mercadoriasAgrupadas = $mercadorias->groupBy('codigo_aduaneiro');
-        } else {
-            $mercadorias = collect(); // Retorna uma coleção vazia se não houver processo encontrado
-            $mercadoriasAgrupadas = collect();
-        }
+        $processo = Processo::with('mercadorias')->findOrFail($processoID);
 
         $pautaAduaneira = PautaAduaneira::all();
 
-        return view('processos.show', compact('processo', 'mercadorias', 'pautaAduaneira', 'mercadoriasAgrupadas'));
+        return view('processos.show', compact('processo', 'pautaAduaneira'));
     }
 
     /**

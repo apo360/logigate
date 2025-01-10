@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Porto;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -41,7 +42,10 @@ class ProcessoRequest extends FormRequest
             'BLC_Porte' => 'nullable|string|max:50|unique:processos,BLC_Porte',
             'Pais_origem' => 'nullable|exists:paises,id',
             'Pais_destino' => 'nullable|exists:paises,id',
-            'PortoOrigem' => 'nullable|string|max:100',
+            'PortoOrigem' => [
+                    'nullable',
+                    Rule::in(Porto::pluck('porto')->toArray()), // Certifique-se de que Porto é acessível
+            ],
             'DataChegada' => 'nullable|date|after_or_equal:DataAbertura',
             'TipoTransporte' => 'nullable|exists:tipo_transportes,id',
             'registo_transporte' => 'nullable|string|max:100',
@@ -74,6 +78,7 @@ class ProcessoRequest extends FormRequest
     {
         return [
             'Estado.in' => 'O estado deve ser um dos seguintes valores: Aberto, Em processamento, Concluído ou Cancelado.',
+            'PortoOrigem.in' => 'O (Aero)Porto de Origem selecionado é inválido.',
             'required' => 'O campo :attribute é obrigatório.',
             'max' => 'O campo :attribute não pode ter mais de :max caracteres.',
             'string' => 'O campo :attribute deve ser uma string.',

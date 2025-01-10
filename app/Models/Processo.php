@@ -252,7 +252,6 @@ class Processo extends Model implements Auditable
         return $codigoProcesso;
     }
 
-
     /**
      * Gerar um novo código de ContaDespacho sequencial a cada ano. OBS: Esse numero é gerado quando a conta é fechada ou imprimida a carta.
      * 
@@ -348,5 +347,16 @@ class Processo extends Model implements Auditable
     {
         return $this->hasMany(HistoricoProcesso::class);
     }
+
+    public function mercadorias()
+    {
+        return $this->hasMany(Mercadoria::class, 'Fk_Importacao');
+    }
+
+    public function mercadoriasAgrupadas()
+    {
+        return $this->hasMany(MercadoriaAgrupada::class, 'processo_id')->onDelete('cascade');
+    }
+    
 
 }

@@ -42,28 +42,28 @@ class MercadoriaController extends Controller
         // Inicializa variáveis para controle
         $licenciamento = null; $processo = null; $mercadorias = null;
 
-        // Verifica se o licenciamento_id foi passado
-        if ($licenciamento_id) 
-        { 
-            $licenciamento = Licenciamento::findOrFail($licenciamento_id);
-            MercadoriaAgrupada::recalcularAgrupamento($licenciamento_id);
-        }
-
-        // Verifica se o processo_id foi passado
-        if ($processo_id) { 
-            $processo = Processo::find($processo_id);
-            $mercadorias = Mercadoria::where('Fk_Importacao', $processo_id)->get(); 
-            MercadoriaAgrupada::recalcularAgrupamento(null, $processo_id);
-        }
-
-        
-
         $pautaAduaneira = PautaAduaneira::all();
 
         $sub_categorias = Subcategoria::all();
 
-        // Redireciona para o formulário de mercadorias com os dados apropriados
-        return view('mercadorias.create_mercadoria', compact('licenciamento', 'processo', 'pautaAduaneira', 'sub_categorias'));
+        // Verifica se o licenciamento_id foi passado
+        if (request()->get('licenciamento_id')) 
+        { 
+            $licenciamento = Licenciamento::findOrFail(request()->get('licenciamento_id'));
+            $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('licenciamento_id',request()->get('licenciamento_id'))->get();
+            // Redireciona para o formulário de mercadorias com os dados apropriados
+            return view('mercadorias.create_mercadoria', compact('licenciamento', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias'));
+    
+        }
+
+        // Verifica se o processo_id foi passado
+        if (request()->get('processo_id')) { 
+            $processo = Processo::find(request()->get('processo_id'));
+            $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id',request()->get('processo_id'))->get();
+            return view('mercadorias.create_mercadoria_proc', compact('processo', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias'));
+        }
+
+        
     }
 
 
@@ -98,8 +98,10 @@ class MercadoriaController extends Controller
             // Atualização de processo, caso o mesmo exista
             if ($request->has('processo_id')) {
                 $processo = Processo::where('id', $validatedData['processo_id'])->first();
+                $processo->fob_total += $mercadoria->preco_total;
+
+                $processo->save();
                 // 
-                
             }
 
             DB::commit();

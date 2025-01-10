@@ -44,9 +44,6 @@ class ExportadorController extends Controller
 
             $exportValidate = $request->validated();
 
-            $exportValidate['user_id'] = $user->id;
-
-            $exportValidate['empresa_id'] = $user->empresas->first()->id;
             // Cria um novo registro de cliente na tabela 'customers' com os dados fornecidos
             $newExportador = Exportador::create($exportValidate);
 

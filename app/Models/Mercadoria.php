@@ -33,9 +33,14 @@ class Mercadoria extends Model
         // 'hs_code',
     ];
 
-    public function importacao()
+    public function processos()
     {
-        return $this->belongsTo(Importacao::class, 'Fk_Importacao');
+        return $this->belongsTo(Processo::class, 'Fk_Importacao');
+    }
+
+    public function licenciamento()
+    {
+        return $this->belongsTo(Licenciamento::class, 'licenciamento_id');
     }
 
     public function categoria_mercadoria(){

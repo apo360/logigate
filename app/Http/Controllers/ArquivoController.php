@@ -32,31 +32,42 @@ class ArquivoController extends Controller
      */
     public function store(DocumentoAduRequest $request)
     {
-        
         try {
-                DB::beginTransaction();
-                // Criar um novo documento se o ID não for fornecido
-                $documentos = DocumentosAduaneiros::create($request->validated());
+            DB::beginTransaction();
 
-                DB::commit();
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Documento inserido com sucesso!',
-                    'documentos' => $documentos,
-                ], 200);
-
+            // Upload do arquivo para o S3
+            if ($request->hasFile('arquivo')) {
+                $file = $request->file('arquivo');
+                $path = $file->store('documentos', 's3');
+                $url = Storage::disk('s3')->url($path);
             }
-            
-         catch (QueryException $e) {
+
+            // Criar um novo documento no banco de dados
+            $documentos = DocumentosAduaneiros::create([
+                'processo_id' => $request->input('processo_id'),
+                'licenciamento_id' => $request->input('licenciamento_id'),
+                'TipoDocumento' => $request->input('TipoDocumento'),
+                'NrDocumento' => $request->input('NrDocumento'),
+                'DataEmissao' => $request->input('DataEmissao'),
+                'Caminho' => $url, // URL do arquivo no S3
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Documento inserido com sucesso!',
+                'documentos' => $documentos,
+            ], 200);
+        } catch (QueryException $e) {
             DB::rollBack();
             return response()->json([
                 'error' => true,
                 'message' => 'Erro ao inserir o documento!',
             ], 500);
-            return DatabaseErrorHandler::handle($e, $request);
         }
     }
+
 
     /**
      * Display the specified resource.

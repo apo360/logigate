@@ -250,33 +250,7 @@
                                     </div>
 
                                     <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-                                        <table class="mt-4 table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Tipo de Taxa</th>
-                                                    <th>Descrição</th>
-                                                    <th>Valor</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>Direito Aduaneiro</td>
-                                                    <td>Percentual aplicado sobre o valor aduaneiro.</td>
-                                                    <td>{{ $Direito }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Emolumento</td>
-                                                    <td>Taxa de 2% sobre o valor aduaneiro.</td>
-                                                    <td>{{ $Emolumentos }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>IVA Aduaneiro</td>
-                                                    <td>Imposto de 14% sobre o valor total (VA + Emolumentos + Direito).</td>
-                                                    <td>{{ $Iva }}</td>
-                                                </tr>
-                                                <!-- Adicione mais linhas conforme necessário -->
-                                            </tbody>
-                                        </table>
+                                        
                                     </div>
                                 </div>                
                             </div>

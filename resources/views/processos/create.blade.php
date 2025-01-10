@@ -149,12 +149,12 @@
                                 </div>
 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="Situacao">Estado do Processo:</label>
+                                    <label for="Estado">Estado do Processo:</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-country"></i></span>
                                         </div>
-                                        <select name="Situacao" class="form-control rounded-md shadow-sm" >
+                                        <select name="Estado" id="Estado" class="form-control rounded-md shadow-sm" >
                                             <option value="Aberto">Aberto</option>
                                             <option value="Em curso">Em curso</option>
                                             <option value="Alfandega">Alfandega</option>
@@ -165,7 +165,7 @@
                                             <option value="Finalizado">Finalizado</option>
                                             <!-- Adicione outras opções conforme necessário -->
                                         </select>
-                                        @error('Situacao')
+                                        @error('Estado')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -251,7 +251,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                         </div>
-                                        <x-input type="text" name="PortoOrigem" class="form-control rounded-md shadow-sm" list="porto" required />
+                                        <x-input type="text" name="PortoOrigem" class="form-control rounded-md shadow-sm" list="porto" />
                                         <datalist id="porto">
                                             @foreach($portos as $porto)
                                                 <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
@@ -293,7 +293,7 @@
                             <span style="color: red;">Dados do Transporte</span>
                             <div class="row">
                                 <div class="form-group mt-4 col-md-5">
-                                    <label for="registo_transporte">Nome do Transporte</label>
+                                    <label for="registo_transporte">Registro do Transporte</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-edit"></i></span>
@@ -433,7 +433,7 @@
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="cif_total">CIF</label>
-                                    <input type="number" id="cif_total" name="cif_total" class="form-control" readonly>
+                                    <input type="number" id="cif_total" name="cif" class="form-control" readonly>
                                 </div>
                             </div>
 
@@ -560,7 +560,6 @@
                             </div>
                         </div>
                         
-
                         <div class="mt-4">
                             <x-label for="Exportador" value="{{ __('Exportador') }}" />
                             <x-input id="Exportador" class="block mt-1 w-full" type="text" name="Exportador" required autofocus autocomplete="Exportador" />
@@ -568,17 +567,19 @@
                     
                         <div class="mt-4">
                             <x-label for="Endereco" value="{{ __('Endereço') }}" />
-                            <x-input id="Endereco" class="block mt-1 w-full" type="text" name="Endereco" required autofocus autocomplete="Endereco" />
+                            <x-input id="Endereco" class="block mt-1 w-full" type="text" name="Endereco" autofocus autocomplete="Endereco" value="Desconhecido" />
                         </div>
 
                         <div class="mt-4">
                             <x-label for="Telefone" value="{{ __('Telefone') }}" />
-                            <x-input id="Telefone" class="block mt-1 w-full" type="text" name="Telefone" required autofocus autocomplete="Telefone" />
+                            <x-input id="Telefone" class="block mt-1 w-full" type="text" name="Telefone" autofocus autocomplete="Telefone" />
                         </div>
+
                         <div class="mt-4">
                             <x-label for="Email" value="{{ __('Email') }}" />
                             <x-input id="Email" class="block mt-1 w-full" type="email" name="Email" autocomplete="Email" />
                         </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
@@ -664,7 +665,7 @@
                     toastr.success(data.message); // Exibir mensagem de sucesso
                     $("#formNovoExportador")[0].reset();  // Reset form
                     $('#newExportadorModal').modal('hide');  // Hide modal
-                    $('#ExportadorID').val(data.exportador_id);
+                    $('#exportador_id').val(data.exportador_id);
                 } else {
                     // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
                     toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
@@ -760,6 +761,21 @@
             
             // Eventos de input para calcular os valores
             $('#ValorTotal, #cambio').on('input', calcularValores);
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $('#PortoOrigem').on('input', function() {
+                var value = $(this).val();
+                var list = $('#porto option').map(function() { return $(this).val(); }).get();
+                
+                // Se o valor não estiver na lista, limpar o campo
+                if (!list.includes(value)) {
+                    $(this).val('');
+                    alert('Por favor, selecione um porto válido da lista.');
+                }
+            });
         });
     </script>
 </x-app-layout>

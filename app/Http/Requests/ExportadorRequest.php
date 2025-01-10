@@ -25,8 +25,7 @@ class ExportadorRequest extends FormRequest
         $id = $this->isMethod('PUT') ? $this->route('exportadors') : null;
 
         return [
-            'ExportadorID' => ['required', 'string', 'max:30', $id ? Rule::unique('exportadors')->ignore($id) : ''],
-            'ExportadorTaxID' => ['nullable', 'string', 'min:6', 'max:20', Rule::unique('exportadors')->ignore($id, 'ExportadorID')], // NIF deve ter exatamente 20 dígitos
+            'ExportadorTaxID' => ['nullable', 'string', 'min:6', 'max:20'], // NIF deve ter exatamente 20 dígitos
             'AccountID' => ['nullable', 'string', 'max:30'],
             'Exportador' => ['required', 'string', 'max:100'],
             'Telefone' => ['nullable', 'string', 'max:20'], // Defina um tamanho máximo apropriado para o telefone

@@ -156,41 +156,35 @@
                                 </div>
 
                                 <div class="form-group col-md-3">
-                                    <label for="Situacao">Situação:</label>
-                                    <select name="Situacao" class="form-control">
+                                    <label for="Estado">Situação:</label>
+                                    <select name="Estado" class="form-control">
                                         <option value="" selected>Selecionar</option>
-                                        <option value="Aberto" {{ $processo->Situacao == 'Aberto' ? 'selected' : '' }}>Aberto</option>
-                                        <option value="Em curso" {{ $processo->Situacao == 'Em curso' ? 'selected' : '' }}>Em curso</option>
-                                        <option value="Alfandega" {{ $processo->Situacao == 'Alfandega' ? 'selected' : '' }}>Alfandega</option>
-                                        <option value="Desafaldegamento" {{ $processo->Situacao == 'Desafaldegamento' ? 'selected' : '' }}>Desafaldegamento</option>
-                                        <option value="Inspensão" {{ $processo->Situacao == 'Inspensão' ? 'selected' : '' }}>Inspensão</option>
-                                        <option value="Terminal" {{ $processo->Situacao == 'Terminal' ? 'selected' : '' }}>Terminal</option>
-                                        <option value="Retido" {{ $processo->Situacao == 'Retido' ? 'selected' : '' }}>Retido</option>
-                                        <option value="Finalizado" {{ $processo->Situacao == 'Finalizado' ? 'selected' : '' }}>Finalizado</option>
+                                        <option value="Aberto" {{ $processo->Estado == 'Aberto' ? 'selected' : '' }}>Aberto</option>
+                                        <option value="Em curso" {{ $processo->Estado == 'Em curso' ? 'selected' : '' }}>Em curso</option>
+                                        <option value="Alfandega" {{ $processo->Estado == 'Alfandega' ? 'selected' : '' }}>Alfandega</option>
+                                        <option value="Desafaldegamento" {{ $processo->Estado == 'Desafaldegamento' ? 'selected' : '' }}>Desafaldegamento</option>
+                                        <option value="Inspensão" {{ $processo->Estado == 'Inspensão' ? 'selected' : '' }}>Inspensão</option>
+                                        <option value="Terminal" {{ $processo->Estado == 'Terminal' ? 'selected' : '' }}>Terminal</option>
+                                        <option value="Retido" {{ $processo->Estado == 'Retido' ? 'selected' : '' }}>Retido</option>
+                                        <option value="Finalizado" {{ $processo->Estado == 'Finalizado' ? 'selected' : '' }}>Finalizado</option>
                                         <!-- Adicione outras opções conforme necessário -->
                                     </select>
-                                    @error('Situacao')
+                                    @error('Estado')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
 
-                            
-
                             <div class="form-group">
-                                <label for="Descricao">Descrição</label>
-                                <textarea 
-                                    name="Descricao" 
-                                    id="Descricao" 
-                                    class="form-control">{{ old('Descricao', $processo->Descricao) }}</textarea>
+                                <label for="Descricao">Descrição da Mercadoria</label>
+                                <input type="text" name="Descricao" id="Descricao" class="form-control" value="{{ old('Descricao', $processo->Descricao) }}">
                             </div>
 
                             <div class="row">
 
                                 <div class="form-group col-md-3">
                                     <label for="DataAbertura">Data de Abertura</label>
-                                    <input 
-                                        type="date" 
+                                    <input type="date" 
                                         name="DataAbertura" 
                                         id="DataAbertura" 
                                         class="form-control" 
@@ -210,27 +204,19 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group col-md-3">
-                                    <label for="Estado">Estado</label>
-                                    <select name="Estado" id="Estado" class="form-control">
-                                        <option value="Aberto" {{ old('Estado', $processo->Estado) == 'Aberto' ? 'selected' : '' }}>Aberto</option>
-                                        <option value="Fechado" {{ old('Estado', $processo->Estado) == 'Fechado' ? 'selected' : '' }}>Fechado</option>
-                                    </select>
-                                </div>
                             </div>
                             <div class="row">
                                 <!-- Fk_pais_origem -->
                                 <div class="form-group col-md-3">
                                     <label for="Fk_pais_origem">País de Origem</label>
-                                    <select name="Fk_pais_origem" id="Fk_pais_origem" class="form-control">
+                                    <select name="Fk_pais" class="form-control" id="Fk_pais" >
                                         @foreach($paises as $pais)
-                                            <option 
-                                                value="{{ $pais->id }}" 
-                                                {{ old('Fk_pais_origem', $processo->Fk_pais_origem) == $pais->id ? 'selected' : '' }}>
-                                                {{ $pais->nome }}
-                                            </option>
+                                            <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
                                         @endforeach
                                     </select>
+                                    @error('Fk_pais')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <!-- Fk_pais_destino -->
@@ -265,29 +251,51 @@
                                 </div>
                             </div>
 
-                            <!-- TipoTransporte -->
-                            <div class="form-group">
-                                <label for="TipoTransporte">Tipo de Transporte</label>
-                                <select name="TipoTransporte" id="TipoTransporte" class="form-control">
-                                    @foreach($tipoTransp as $transporte)
-                                        <option 
-                                            value="{{ $transporte->id }}" 
-                                            {{ old('TipoTransporte', $processo->TipoTransporte) == $transporte->id ? 'selected' : '' }}>
-                                            {{ $transporte->descricao }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                            <div class="row">
+                                <!-- TipoTransporte -->
+                                <div class="form-group col-md-6">
+                                    <label for="TipoTransporte">Tipo de Transporte</label>
+                                    <select name="TipoTransporte" id="TipoTransporte" class="form-control">
+                                        @foreach($tipoTransp as $transporte)
+                                            <option 
+                                                value="{{ $transporte->id }}" 
+                                                {{ old('TipoTransporte', $processo->TipoTransporte) == $transporte->id ? 'selected' : '' }}>
+                                                {{ $transporte->descricao }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            <!-- Registo Transporte -->
-                            <div class="form-group">
-                                <label for="registo_transporte">Registo do Transporte</label>
-                                <input 
-                                    type="text" 
-                                    name="registo_transporte" 
-                                    id="registo_transporte" 
-                                    class="form-control" 
-                                    value="{{ old('registo_transporte', $processo->registo_transporte) }}">
+                                <!-- Registo Transporte -->
+                                <div class="form-group col-md-3">
+                                    <label for="registo_transporte">Registo do Transporte</label>
+                                    <input 
+                                        type="text" 
+                                        name="registo_transporte" 
+                                        id="registo_transporte" 
+                                        class="form-control" 
+                                        value="{{ old('registo_transporte', $processo->registo_transporte) }}">
+                                </div>
+
+                                <!-- Nacionalidade do Transporte -->
+                                <div class="form-group col-md-3">
+                                    <label for="nacionalidade_transporte">Nacionalidade</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-plane"></i></span>
+                                        </div>
+                                        <select name="nacionalidade_transporte" class="form-control" id="nacionalidade_transporte" >
+                                            @foreach($paises as $pais)
+                                                <option value="{{$pais->id}}"
+                                                {{ old('nacionalidade_transporte', $processo->nacionalidade_transporte) == $pais->id ? 'selected' : '' }}>
+                                                    {{$pais->pais}} ({{$pais->codigo}})</option>
+                                            @endforeach
+                                        </select>
+                                        @error('nacionalidade_transporte')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Dados Financeiros -->
@@ -336,8 +344,11 @@
                             </x-button>
                         </form>
                     </div>
+
                     <div class="tab-pane" id="mercadoria" role="tabpanel" aria-labelledby="mercadoria-tab">
-                        <a class="btn btn-primary mt-2" data-bs-toggle="modal" href="#exampleModalToggle" role="button">Mercadorias</a>
+                        <!-- <a class="btn btn-primary mt-2" data-bs-toggle="modal" href="#exampleModalToggle" role="button">Mercadorias</a> -->
+
+                        <a class="btn btn-primary mt-2" href="{{ route('mercadorias.create', ['processo_id' => $processo->id])}}" role="button">Add Mercadorias</a>
                         
                         <table class="table table-sm table-flex table-flex--autocomplete mt-3">
                             <thead>
@@ -382,50 +393,26 @@
                                 @endif
                             </tbody>
                         </table>
-
-                        <div class="row mt-4">
-                            <div class="col-md-4">
-                                <label for="FOB">FOB</label>
-                                <input type="text" class="form-control" id="FOB" name="FOB" value="" oninput="calculateValorAduaneiro()">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="Freight">Frete</label>
-                                <input type="text" class="form-control" name="Freight" id="Freight" placeholder="Freight (Frete)" value="{{$processo->Freight ?? '0.00'}}" oninput="calculateValorAduaneiro()">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="Insurance">Seguro</label>
-                                <input type="text" class="form-control" id="Insurance" name="Insurance" placeholder="Insurance (Seguro)" value="{{$processo->Insurance ?? '0.00'}}" oninput="calculateValorAduaneiro()">
-                            </div>
-                        </div>
-                        <table class="mt-4">
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <label for="">CIF</label>
-                                    </td>
-                                    <td>
-                                        <input type="text" id="ValorAduaneiro" name="ValorAduaneiro" class="form-control" value="{{$processo->importacao->ValorAduaneiro ?? '0.00'}}">
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>    
+  
                     </div>
+
                     <div class="tab-pane" id="home" role="tabpanel" aria-labelledby="home-tab">
                         <form action="{{ isset($emolumentoTarifa) ? route('emolumento_tarifas.update', $emolumentoTarifa->id) : route('emolumento_tarifas.store') }}" method="POST">
                             @csrf
                             @if(isset($emolumentoTarifa))
                                 @method('PUT')
                             @endif
+                            <input type="hidden" name="processo_id" value="{{$processo->id}}" >
                             <hr>
                             <span class="mt-4" style="color: red;" >Despesas Portuárias e Aeroportuárias</span>
                             <div class="row">
                                 <div class="col-md-4">
                                     <label for="porto">Porto</label>
-                                    <input type="decimal" name="porto" class="form-control total-input" value="{{ old('porto', $emolumentoTarifa->porto ?? '') }}">
+                                    <input type="decimal" name="porto" class="form-control total-input" value="{{ old('porto', $emolumentoTarifa->porto ?? '0.00') }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="terminal">Terminal</label>
-                                    <input type="decimal" name="terminal" class="form-control total-input" value="{{ old('terminal', $emolumentoTarifa->terminal ?? '') }}">
+                                    <input type="decimal" name="terminal" class="form-control total-input" value="{{ old('terminal', $emolumentoTarifa->terminal ?? '0.00') }}">
                                 </div>
                             </div>
                             
@@ -434,64 +421,65 @@
                             <div class="row">
                                 <div class="col-md-3 mt-3">
                                     <label for="lmc">Licenciamento Ministério Comércio  </label>
-                                    <input type="decimal" name="lmc" class="form-control total-input" value="{{ old('lmc', $emolumentoTarifa->lmc ?? '') }}" value="{{ $processo->du ? $processo->du->lmc : '0.00' }}">
+                                    <input type="decimal" name="lmc" class="form-control total-input" value="{{ old('lmc', $emolumentoTarifa->lmc ?? '0.00') }}" value="{{ $processo->du ? $processo->du->lmc : '0.00' }}">
                                 </div>
 
                                 <div class="col-md-3 mt-3">
                                     <label for="navegacao">Navegação</label>
-                                    <input type="decimal" name="navegacao" class="form-control total-input" value="{{ old('navegacao', $emolumentoTarifa->navegacao ?? '') }}">
+                                    <input type="decimal" name="navegacao" class="form-control total-input" value="{{ old('navegacao', $emolumentoTarifa->navegacao ?? '0.00') }}">
                                 </div>
 
                                 <div class="col-md-3 mt-3">
                                     <label for="frete">Frete</label>
-                                    <input type="decimal" name="frete" class="form-control total-input" value="{{ old('frete', $emolumentoTarifa->frete ?? '') }}">
+                                    <input type="decimal" name="frete" class="form-control total-input" value="{{ old('frete', $emolumentoTarifa->frete ?? '0.00') }}">
                                 </div>
 
                                 <div class="col-md-3 mt-3">
                                     <label for="inerentes">Inerentes</label>
-                                    <input type="decimal" name="inerentes" class="form-control total-input" value="{{ old('inerentes', $emolumentoTarifa->inerentes ?? '') }}" >
+                                    <input type="decimal" name="inerentes" class="form-control total-input" value="{{ old('inerentes', $emolumentoTarifa->inerentes ?? '0.00') }}" >
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-3 mt-4">
                                     <label for="direitos">Direitos</label>
-                                    <input type = "decimal" id = "direitos" name = "direitos" class="form-control" value="{{ old('direitos', $emolumentoTarifa->direitos ?? '') }}">
+                                    <input type = "decimal" id = "direitos" name = "direitos" class="form-control" value="{{ old('direitos', $emolumentoTarifa->direitos ?? '0.00') }}">
                                 </div>
                                 <div class="col-md-3 mt-4">
                                     <label for="iec">IEC</label>
-                                    <input type = "decimal" name = "iec" class="form-control" value="{{ old('iec', $emolumentoTarifa->iec ?? '') }}">
+                                    <input type = "decimal" name = "iec" class="form-control" value="{{ old('iec', $emolumentoTarifa->iec ?? '0.00') }}">
                                 </div>
                                 <div class="col-md-3 mt-4">
                                     <label for="deslocacao">Deslocação</label>
-                                    <input type="decimal" name="deslocacao" class="form-control total-input" value="{{ old('deslocacao', $emolumentoTarifa->deslocacao ?? '') }}">
+                                    <input type="decimal" name="deslocacao" class="form-control total-input" value="{{ old('deslocacao', $emolumentoTarifa->deslocacao ?? '0.00') }}">
                                 </div>
                                 <div class="col-md-3 mt-4">
                                     <label for="carga_descarga">Carga/Descarga</label>
-                                    <input type="decimal" name="carga_descarga" class="form-control total-input" value="{{ old('carga_descarga', $emolumentoTarifa->carga_descarga ?? '') }}">
+                                    <input type="decimal" name="carga_descarga" class="form-control total-input" value="{{ old('carga_descarga', $emolumentoTarifa->carga_descarga ?? '0.00') }}">
                                 </div>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-4 mt-4">
                                     <label for="caucao">Caução</label>
-                                    <input type="decimal" name="caucao" class="form-control total-input" value="{{ old('caucao', $emolumentoTarifa->caucao ?? '') }}">
+                                    <input type="decimal" name="caucao" class="form-control total-input" value="{{ old('caucao', $emolumentoTarifa->caucao ?? '0.00') }}">
                                 </div>
 
                                 <div class="col-md-4 mt-4">
                                     <label for="selos">Selos</label>
-                                    <input type="decimal" name="selos" class="form-control total-input" value="{{ old('selos', $emolumentoTarifa->selos ?? '') }}">
+                                    <input type="decimal" name="selos" class="form-control total-input" value="{{ old('selos', $emolumentoTarifa->selos ?? '0.00') }}">
                                 </div>
 
                                 <div class="col-md-4 mt-4">
                                     <label for="honorario">Honorário</label>
-                                    <input type="decimal" name="honorario" class="form-control total-input" value="{{ old('honorario', $emolumentoTarifa->honorario ?? '') }}">
+                                    <input type="decimal" name="honorario" class="form-control total-input" value="{{ old('honorario', $emolumentoTarifa->honorario ?? '0.00') }}">
                                 </div>
 
                             </div>
                             <button type="submit" class="btn btn-primary">{{ isset($emolumentoTarifa) ? 'Actualizar' : 'Criar' }}</button>
                         </form>
                     </div>
+
                     <div class="tab-pane" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                         <div class="col-md-12 mt-4">
                             
@@ -499,8 +487,10 @@
                                 <h2>Arraste e solte documento aqui!</h2>
                                 <p>ou</p>
                                 <label for="file-input" style="cursor: pointer;" class="button-arquivo">Selecione um arquivo</label>
+                                <span>ou</span>
+                                <label for="file-input" style="cursor: pointer;" id="scan-button" class="button-arquivo">Scannear o documento</label>
                             </div>
-                            <input type="file" id="file-input" multiple style="display: none;">
+                            <input type="file" id="file-input" multiple style="display: none;" accept=".jpg,.jpeg,.png,.pdf,.doc,.xls">
                             
                             <div id="file-list" class="mt-4">
                                 <p>Arquivos selecionados:</p>
@@ -509,6 +499,7 @@
                             <br>
                         </div>
                     </div>
+
                     <div class="tab-pane" id="resumo" role="tabpanel" aria-labelledby="resumo-tab">
                     <input type="decimal" name="honorario" class="form-control total-input" value="{{ old('honorario', $emolumentoTarifa->honorario ?? '') }}" style="border: 0px; border-bottom: 1px solid black;">
                     </div>
@@ -682,6 +673,38 @@
             // Chame a função inicialmente para configurar os valores iniciais
             calcularValores();
         });
+    </script>
+
+    <!-- Scanner de Documentos -->
+    <script src="https://raw.githubusercontent.com/asprise/scannerjs/master/scanner.js"></script>
+
+    <script>
+        document.getElementById('scan-button').addEventListener('click', () => {
+            scanner.scan(displayImagesOnPage, {
+                "use_asprise_dialog": true,  // Usar o diálogo do Asprise para seleção do scanner
+                "output_settings": [
+                    {
+                        "type": "return-base64",
+                        "format": "jpg"
+                    }
+                ]
+            });
+        });
+
+        function displayImagesOnPage(successful, mesg, response) {
+            if (!successful) { 
+                console.error('Erro ao digitalizar:', mesg);
+                return;
+            }
+
+            const scannedImages = scanner.getScannedImages(response, true, false); 
+
+            scannedImages.forEach((image) => {
+                const imgElement = document.createElement('img');
+                imgElement.src = image.src;
+                document.body.appendChild(imgElement);
+            });
+        }
     </script>
 
     <!-- Scrip para inserção de documentos -->

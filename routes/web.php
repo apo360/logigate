@@ -110,7 +110,8 @@ use PHPJasper\PHPJasper;
         Route::post('/import-pauta-aduaneira', [PautaAduaneiraController::class, 'import'])->name('pauta.import.submit');
 
         // Rota personalizada para criar mercadorias com licenciamento ou processo
-        Route::get('/mercadorias/create/{licenciamento_id?}/{processo_id?}', [MercadoriaController::class, 'create'])->name('mercadorias.createWithParams');
+        Route::get('/mercadorias/create/{licenciamento_id?}{processo_id?}', [MercadoriaController::class, 'create'])->name('mercadorias.createWithParams');
+        
         // web.php
         Route::get('get-codigo-aduaneiro/{cod_pauta}', [MercadoriaController::class, 'getCodigosAduaneiros'])->name('pauta.get');
 

@@ -18,20 +18,20 @@
     </style>
     
     <div class="py-12">
-    <x-breadcrumb :items="[
-        ['name' => 'Dashboard', 'url' => route('dashboard')],
-        ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')]
-    ]" separator="/" />
+        <x-breadcrumb :items="[
+            ['name' => 'Dashboard', 'url' => route('dashboard')],
+            ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')]
+        ]" separator="/" />
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @elseif(session('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
-    @endif
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @elseif(session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
 
         <div class="card">
             <div class="card-header">

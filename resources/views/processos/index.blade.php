@@ -279,10 +279,4 @@
             });
         }
     </script>
-
-    <!-- <script>
-        $(document).ready(function() {
-            $('.form-control').select2();
-        });
-    </script> -->
 </x-app-layout>

@@ -1,27 +1,22 @@
-<!-- resources/view/mercadorias/create_mercadoria.blade.php -->
+<!-- resources/view/mercadorias/create_mercadoria.blade.php Processos -->
 <x-app-layout>
-    @if(request()->has('processo_id'))
-        <x-breadcrumb :items="[
-            ['name' => 'Processos', 'url' => route('processos.index')],
-            ['name' => 'Editar Processo', 'url' => route('processos.show', request()->get('processo_id') )],
-            ['name' => 'Nova Mercadorias', 'url' => '']
-        ]" separator="/" />
-        @php
-            $mercadoriasAgrupadas = App\Models\MercadoriaAgrupada::with('mercadorias')->where('Fk_Importacao',request()->get('processo_id'))->get();
-            $processo = App\Models\Processo::find(request()->get('processo_id'));
-            $fob = $processo->importacao->FOB;
-            $seguro = $processo->importacao->Insurance;
-            $frete = $processo->importacao->Freight;
-            $CIF = $fob + $seguro + $frete;
-        @endphp
-    @endif
+
+    <x-breadcrumb :items="[
+        ['name' => 'Processos', 'url' => route('processos.index')],
+        ['name' => 'Visualizar Processo', 'url' => route('processos.show', request()->get('processo_id') )],
+        ['name' => 'Nova Mercadorias', 'url' => '']
+    ]" separator="/" />
+    @php
+        $fob = $processo->fob_total ?? 0.00;
+        $seguro = $processo->seguro ?? 0.00;
+        $frete = $processo->frete ?? 0.00;
+        $CIF = $fob + $seguro + $frete;
+    @endphp
+
 
     <form action="{{ route('mercadorias.store') }}" method="POST">
         @csrf
         <!-- Enviar os IDs escondidos no formulário -->
-        @if(request()->has('licenciamento_id'))
-            <input type="hidden" name="licenciamento_id" value="{{ request()->get('licenciamento_id') }}">
-        @endif
 
         @if(request()->has('processo_id'))
             <input type="hidden" name="Fk_Importacao" value="{{ request()->get('processo_id') }}">
@@ -168,32 +163,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label for="frete">Frete</label>
-                                <input type="text" id="frete" name="frete" class="form-control" value="{{$frete}}">
-                                @error('frete')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="seguro">Seguro</label>
-                                <input type="text" id="seguro" name="seguro" class="form-control" value="{{$seguro}}">
-                                @error('seguro')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-3">
-                                <label for="cif">CIF</label>
-                                <input type="text" id="cif" name="cif" class="form-control" value="{{$CIF}}">
-                                @error('cif')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -222,6 +191,7 @@
                 <a href="#" id="pauta_mercadoria" class="event button" data-toggle="modal" data-target="#PautaModal">
                     <span class="icon-edit icon"></span>Pauta Aduaneira
                 </a>
+                
             </div>
         </div>
 
@@ -233,7 +203,7 @@
                         <th>Quantidade Total</th>
                         <th>Peso (Kg)</th>
                         <th>Preço (Moeda)</th>
-                        <th>Ações</th>
+                        <th>Quantidade</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -243,6 +213,7 @@
                         <td>{{ $agrupamento->quantidade_total }}</td>
                         <td>{{ $agrupamento->peso_total }}</td>
                         <td>{{ $agrupamento->preco_total }}</td>
+                        <td>{{ count($agrupamento->mercadorias) }}</td>
                     </tr>
 
                     <!-- Linhas Detalhadas (Mercadorias Associadas) -->
@@ -255,15 +226,24 @@
                                         <th>Quantidade</th>
                                         <th>Peso</th>
                                         <th>Preço Total</th>
+                                        <th>Acções</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($agrupamento->mercadorias as $mercadoria)
-                                    <tr>
+                                    <tr id="mercadoria-{{ $mercadoria->id }}">
                                         <td>{{ $mercadoria->Descricao }}</td>
                                         <td>{{ $mercadoria->Quantidade }}</td>
                                         <td>{{ $mercadoria->Peso }}</td>
                                         <td>{{ $mercadoria->preco_total }}</td>
+                                        <td>
+                                            <a href="#" class="btn-edit" data-id="{{ $mercadoria->id }}">
+                                                <i class="fas fa-edit" style="color: darkcyan;"></i>
+                                            </a>
+                                            <a href="#" class="btn-delete" data-id="{{ $mercadoria->id }}">
+                                                <i class="fas fa-trash" style="color: red;"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                     @endforeach
                                 </tbody>

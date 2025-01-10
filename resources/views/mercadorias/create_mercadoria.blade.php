@@ -13,7 +13,6 @@
             ['name' => 'Nova Mercadorias', 'url' => '']
         ]" separator="/" />
         @php
-            $mercadoriasAgrupadas = App\Models\MercadoriaAgrupada::with('mercadorias')->where('licenciamento_id',request()->get('licenciamento_id'))->get();
             $licenciamento = App\Models\Licenciamento::find(request()->get('licenciamento_id'));
             $fob = $licenciamento->fob_total;
             $seguro = $licenciamento->seguro;
