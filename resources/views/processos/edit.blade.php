@@ -138,7 +138,27 @@
                     <div class="tab-pane active" id="detalhe" role="tabpanel" aria-labelledby="detalhe-tab">
                         <form action="{{ route('processos.update', $processo->id) }}" method="POST">
                             @csrf
-                            @method('PUT')    
+                            @method('PUT')   
+                            <div class="row mt-4">
+                                <div class="form-group mt-4 col-md-4">
+                                    <label for="customer_id">Cliente</label>
+                                    <div class="input-group">
+                                        <input class="form-control border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" list="cliente_list" id="customer_id" name="customer_id" value="{{ old('customer_id', $processo->customer_id) }}" required>
+                                        <div class="input-group-append">
+                                            <a href="#" id="add-new-client-button" class="btn btn-dark" data-toggle="modal" data-target="#newClientModal"><i class="fas fa-user-plus" aria-hidden="true"></i></a>
+                                        </div>
+                                    </div>
+                                    <datalist id="cliente_list">
+                                        @foreach ($clientes as $cliente)
+                                            <option value="{{ $cliente->id }}" data-nif="{{ $cliente->CustomerTaxID }}" data-code="{{ $cliente->CustomerID }}">{{ $cliente->CompanyName }}</option>
+                                        @endforeach
+                                    </datalist>
+                                    @error('customer_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                
+                            </div> 
                             <div class="row mt-4">
                                 <div class="col-md-2 form-group">
                                     <label for="NrDU">Nº DU</label>

@@ -10,6 +10,7 @@ use App\Models\ActivatedModule;
 use App\Models\EmpresaUser;
 use App\Models\Representante;
 use App\Models\Subscricao;
+use Aws\S3\S3Client;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -93,12 +94,26 @@ class CreateNewUser implements CreatesNewUsers
                 'status' => 'ATIVA',
             ]);
 
+            Subscricao::create([
+                'empresa_id' => $empresa->id,
+                'modulo_id' => 17,
+                'data_expiracao' => now()->addMonth(),
+                'status' => 'ATIVA',
+            ]);
+
             // Ativar o módulo
             ActivatedModule::create([
                 'module_id' => 1,
                 'empresa_id' => $empresa->id,
                 'activation_date' => now(),
             ]);
+
+            ActivatedModule::create([
+                'module_id' => 17,
+                'empresa_id' => $empresa->id,
+                'activation_date' => now(),
+            ]);
+
 
             // Atribuir permissões de Administrador
             $role = Role::findOrCreate('Administrador');
@@ -113,6 +128,25 @@ class CreateNewUser implements CreatesNewUsers
 
             // Enviar o e-mail de confirmação
             Mail::to($user->email)->send(new ConfirmationMail($otp));
+
+            // Pasta Raiz no S3
+            // Inicializar o cliente S3
+            $s3Client = new S3Client([
+                'version' => 'latest',
+                'region'  => 'us-east-1', // A região do seu bucket S3
+            ]);
+
+            $bucket = 'logigate-docs'; // Nome do bucket
+
+            // Criar o caminho completo da pasta, incluindo a raiz e o nome da pasta
+            $caminhoCompleto = 'Despachantes/' . $contaCode;
+
+            $s3Client->putObject([
+                'Bucket' => $bucket,
+                'Key'    => $caminhoCompleto . '/', 
+                'Body'   => "", // Corpo vazio para simular uma pasta
+            ]);
+
 
             // Confirmar a transação
             DB::commit();

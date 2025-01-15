@@ -101,7 +101,13 @@ use PHPJasper\PHPJasper;
         Route::post('customer/import', [CustomerController::class, 'import'])->name('customers.import');
         Route::get('customer/Ficha/{id}Imprimir', [CustomerController::class, 'ImprimirFicha'])->name('customers.ficha_imprimir');
 
-        Route::get('/arquivo/download/{NrDocumento}', [ArquivoController::class, 'download'])->name('arquivos.dowload');
+        Route::get('/arquivo/download/{key}', [ArquivoController::class, 'download'])->name('arquivos.dowload');
+        Route::post('/arquivo/MoveMassa', [ArquivoController::class, 'bulkActions'])->name('arquivos.bulkActions');
+        Route::get('/arquivo/pasta-view', [ArquivoController::class, 'PastaView'])->name('PastaAbrir');
+        Route::post('/arquivo/criar-pasta', [ArquivoController::class, 'criarPasta'])->name('arquivos.criarPasta');
+        Route::get('/arquivo/visualizar/{key}', [ArquivoController::class, 'visualizar'])->name('arquivos.visualizar');
+
+
         Route::get('relatorios/licenciamento/{tipo}', [RelatorioController::class, 'RelatorioLicenciamento'])->name('relatorio.visualizar');
         Route::get('licenciamento/relatorio', [RelatorioController::class, 'SelecionarRelatorio'])->name('relatorio.licenciamento');
 

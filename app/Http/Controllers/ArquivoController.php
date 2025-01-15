@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\DocumentoAduRequest;
 use App\Models\DocumentosAduaneiros;
+use Aws\Exception\AwsException;
+use Aws\S3\S3Client;
+use Illuminate\Support\Facades\Storage;
+use Aws\S3\Exception\S3Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ArquivoController extends Controller
 {
@@ -16,66 +22,246 @@ class ArquivoController extends Controller
      */
     public function index()
     {
-        //
+        // Obter o nome do usuário autenticado
+        $username = Auth::user()->empresas->first()->conta;
+        
+        // Inicializar o cliente S3
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1', // A região do seu bucket S3
+        ]);
+
+        $bucket = 'logigate-docs'; // Nome do bucket
+
+        try {
+            // Listar as pastas e sub-pastas dentro de 'Despachantes/{empresaId}'
+            $result = $s3Client->listObjectsV2([
+                'Bucket' => $bucket,
+                'Prefix' => "Despachantes/$username/",
+                'Delimiter' => '/',
+            ]);
+
+            // Obter pastas e sub-pastas
+            $folders = $result['CommonPrefixes'] ?? [];
+            $files = $result['Contents'] ?? [];
+
+            // Formatando dados para a view
+            $items = array_map(function($folder) {
+                return [
+                    'name' => basename($folder['Prefix']),
+                    'path' => $folder['Prefix'],
+                    'type' => 'folder',
+                ];
+            }, $folders);
+
+            $items = array_merge($items, array_map(function($file) {
+                return [
+                    'name' => basename($file['Key']),
+                    'path' => $file['Key'],
+                    'size' => $file['Size'],
+                    'last_modified' => $file['LastModified'],
+                    'type' => 'file',
+                ];
+            }, $files));
+
+            
+
+            // Retornar a view com os itens
+            return view('arquivos.index', compact('items'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erro ao listar as pastas: ' . $e->getMessage());
+        }
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create($dir = null)
     {
-        //
+        return view('arquivos.upload', compact('dir'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(DocumentoAduRequest $request)
+    public function store(Request $request)
     {
-        try {
-            DB::beginTransaction();
+        // Validação
+        $request->validate([
+            'files' => 'required',
+            'pasta_raiz' => 'required'
+        ]);
 
-            // Upload do arquivo para o S3
-            if ($request->hasFile('arquivo')) {
-                $file = $request->file('arquivo');
-                $path = $file->store('documentos', 's3');
-                $url = Storage::disk('s3')->url($path);
+        // Inicializar o cliente S3
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1',
+        ]);
+
+        $bucket = 'logigate-docs';
+        
+        $pastaRaiz = $request->input('pasta_raiz');
+
+        foreach ($request->file('files') as $file) {
+            $filePath = 'Despachantes/' . $pastaRaiz . '/' . $file->getClientOriginalName();
+
+            try {
+                $s3Client->putObject([
+                    'Bucket' => $bucket,
+                    'Key'    => $filePath,
+                    'SourceFile' => $file->getPathname(),
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => 'Erro ao fazer upload: ' . $e->getMessage()], 500);
             }
-
-            // Criar um novo documento no banco de dados
-            $documentos = DocumentosAduaneiros::create([
-                'processo_id' => $request->input('processo_id'),
-                'licenciamento_id' => $request->input('licenciamento_id'),
-                'TipoDocumento' => $request->input('TipoDocumento'),
-                'NrDocumento' => $request->input('NrDocumento'),
-                'DataEmissao' => $request->input('DataEmissao'),
-                'Caminho' => $url, // URL do arquivo no S3
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Documento inserido com sucesso!',
-                'documentos' => $documentos,
-            ], 200);
-        } catch (QueryException $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => true,
-                'message' => 'Erro ao inserir o documento!',
-            ], 500);
         }
+
+        return response()->json(['success' => 'Arquivos carregados com sucesso!'], 200);
     }
 
+    /**
+     * Processa as ações em lote (excluir, mover ou copiar arquivos).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function bulkActions(Request $request)
+    {
+        // Valida os arquivos selecionados
+        $validated = $request->validate([
+            'files' => 'required|array|min:1',
+            'action' => 'required|string|in:delete,move,copy',
+            'destination_folder' => 'nullable|string', // Necessário para mover ou copiar
+        ]);
+
+        // Obtém a lista de arquivos selecionados e a ação
+        $files = $validated['files'];
+        $action = $validated['action'];
+        $destinationFolder = $validated['destination_folder'] ?? null;
+
+        try {
+            switch ($action) {
+                case 'delete':
+                    // Excluir os arquivos selecionados
+                    foreach ($files as $fileKey) {
+                        Storage::disk('s3')->delete($fileKey);
+                    }
+                    session()->flash('success', 'Arquivos excluídos com sucesso!');
+                    break;
+
+                case 'move':
+                    if (!$destinationFolder) {
+                        session()->flash('error', 'O destino para mover os arquivos não foi especificado!');
+                        return back();
+                    }
+                    // Mover os arquivos selecionados para a pasta de destino
+                    foreach ($files as $fileKey) {
+                        $fileContent = Storage::disk('s3')->get($fileKey);
+                        $newKey = $destinationFolder . '/' . basename($fileKey);
+                        Storage::disk('s3')->put($newKey, $fileContent);
+                        Storage::disk('s3')->delete($fileKey);
+                    }
+                    session()->flash('success', 'Arquivos movidos com sucesso!');
+                    break;
+
+                case 'copy':
+                    if (!$destinationFolder) {
+                        session()->flash('error', 'O destino para copiar os arquivos não foi especificado!');
+                        return back();
+                    }
+                    // Copiar os arquivos selecionados para a pasta de destino
+                    foreach ($files as $fileKey) {
+                        $fileContent = Storage::disk('s3')->get($fileKey);
+                        $newKey = $destinationFolder . '/' . basename($fileKey);
+                        Storage::disk('s3')->put($newKey, $fileContent);
+                    }
+                    session()->flash('success', 'Arquivos copiados com sucesso!');
+                    break;
+
+                default:
+                    session()->flash('error', 'Ação inválida.');
+                    return back();
+            }
+        } catch (S3Exception $e) {
+            // Captura exceções do S3
+            session()->flash('error', 'Erro ao processar os arquivos: ' . $e->getMessage());
+        }
+
+        return back();
+    }
 
     /**
      * Display the specified resource.
      */
-    public function show(DocumentosAduaneiros $documentosAduaneiros)
+    public function show($arquivo)
     {
-        //
+        // Obter o nome do usuário autenticado
+        $username = Auth::user()->empresas->first()->conta;
+
+        // Inicializar o cliente S3
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1', // A região do seu bucket S3
+        ]);
+
+        $bucket = 'logigate-docs'; // Nome do bucket
+
+        try {
+            // Listar o conteúdo da pasta selecionada
+            $result = $s3Client->listObjectsV2([
+                'Bucket' => $bucket,
+                'Prefix' => "Despachantes/$username/$arquivo/",
+            ]);
+
+            // Obter arquivos e sub-pastas dentro da pasta selecionada
+            $files = $result->get('Contents');
+            return view('arquivos.show', compact('files', 'arquivo'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erro ao listar os arquivos: ' . $e->getMessage());
+        }
     }
+
+    public function PastaView($dir = null){
+        return view('arquivos.criar_pasta', compact('dir'));
+    }
+
+    public function criarPasta(Request $request)
+    {
+        $request->validate([
+            'nome_pasta' => 'required|string|max:255',
+            'pasta_raiz' => 'required|string',
+        ]);
+
+        $nomePasta = $request->input('nome_pasta');
+        $pastaRaiz = $request->input('pasta_raiz');
+
+        // Inicializar o cliente S3
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1', // A região do seu bucket S3
+        ]);
+
+        $bucket = 'logigate-docs'; // Nome do bucket
+
+        // Criar o caminho completo da pasta, incluindo a raiz e o nome da pasta
+        $caminhoCompleto = 'Despachantes/' . rtrim($pastaRaiz, '/') . '/' . rtrim($nomePasta, '/') . '/';
+
+        try {
+            // Criando a "pasta" no S3
+            $result = $s3Client->putObject([
+                'Bucket' => $bucket,
+                'Key'    => $caminhoCompleto, // Garante que termina com '/'
+                'Body'   => "", // Corpo vazio para simular uma pasta
+            ]);
+    
+            return redirect()->back()->with('success', 'Pasta criada com sucesso.');
+        } catch (AwsException $e) {
+            // Tratamento de erro detalhado
+            $errorMessage = $e->getAwsErrorMessage() ?: 'Erro desconhecido ao tentar criar a pasta.';
+            return redirect()->back()->with('error', 'Erro ao criar a pasta: ' . $errorMessage);
+        }
+    }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -96,18 +282,73 @@ class ArquivoController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(DocumentosAduaneiros $documentoAduaneiro)
+    public function destroy($arquivo)
     {
-        $documentoAduaneiro->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Documento excluido com sucesso!',
-            'documentos' => $documentoAduaneiro,
-        ], 200);
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1',
+        ]);
+    
+        $bucket = 'logigate-docs';
+    
+        try {
+            $s3Client->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $arquivo,
+            ]);
+    
+            return redirect()->back()->with('success', 'Documento excluído com sucesso!');
+        } catch (AwsException $e) {
+            return redirect()->back()->with('error', 'Erro ao excluir o documento: ' . $e->getMessage());
+        }
     }
 
-    public function download($NrDocumento){
-        
+    public function download($key)
+    {
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1',
+        ]);
+
+        $bucket = 'logigate-docs';
+
+        try {
+            $result = $s3Client->getObject([
+                'Bucket' => $bucket,
+                'Key'    => $key,
+            ]);
+
+            return response($result['Body'])
+                ->header('Content-Type', $result['ContentType'])
+                ->header('Content-Disposition', 'attachment; filename="' . basename($key) . '"');
+        } catch (AwsException $e) {
+            return redirect()->back()->with('error', 'Erro ao baixar o documento: ' . $e->getMessage());
+        }
     }
+
+    public function visualizar($key)
+    {
+        $s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1',
+        ]);
+
+        $bucket = 'logigate-docs';
+
+        try {
+            // Gerar URL assinada para o arquivo
+            $cmd = $s3Client->getCommand('GetObject', [
+                'Bucket' => $bucket,
+                'Key'    => $key,
+            ]);
+            $request = $s3Client->createPresignedRequest($cmd, '+20 minutes'); // URL válida por 20 minutos
+    
+            $presignedUrl = (string)$request->getUri();
+
+        return redirect($presignedUrl);
+        } catch (AwsException $e) {
+            return redirect()->back()->with('error', 'Erro ao visualizar o documento: ' . $e->getMessage());
+        }
+    }
+
 }

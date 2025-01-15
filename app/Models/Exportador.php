@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -25,29 +26,20 @@ class Exportador extends Model
     ];
 
 
-    public static function generateNewCode()
-    {
-        return DB::select('CALL ExportadorNewCod()')[0]->codigoExportador;
-    }
-
     protected static function boot()
     {
         parent::boot();
 
         // Evento executado antes de criar um novo registro
         static::creating(function ($exportador) {
-
             if (Auth::check()) {
                 $exportador->user_id = Auth::user()->id;
+                $exportador->empresa_id = $exportador->empresa_id ?? Auth::user()->empresas->first()->id;
+                
+                $exportador->ExportadorID = $exportador->generateExportadorID();
             }
-
-            // Definir automaticamente o empresa_id se ainda não estiver definido
-            if (!$exportador->empresa_id) {
-                $exportador->empresa_id = Auth::user()->empresas->first()->id /* Defina aqui o ID da empresa que deseja associar */;
-            }
-
-            $exportador->ExportadorID = self::generateNewCode();
         });
+        
 
         // Evento(s) que executam antes de actualizar
         static::updating(function ($customer){
@@ -57,5 +49,17 @@ class Exportador extends Model
         static::deleting( function ($customer){
 
         });
+    }
+
+    /**
+     * Gera o ID do exportador baseado nas condições definidas.
+     *
+     * @return string
+     */
+    public function generateExportadorID()
+    {
+        $empresaId = Auth::user()->empresas->first()->id;
+        $taxIdPart = $this->ExportadorTaxID ? $this->ExportadorTaxID : random_int(5, 1000);
+        return 'exp' . $empresaId . $taxIdPart . Carbon::now()->format('y');
     }
 }

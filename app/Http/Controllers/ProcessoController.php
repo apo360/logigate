@@ -160,6 +160,8 @@ class ProcessoController extends Controller
         $ibans = IbanController::getBankDetails();
         $tipoTransp = TipoTransporte::all();
         $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
+        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca os Clientes
+        $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
         
         $mercadorias = Mercadoria::where('Fk_Importacao', $processo->id)->get(); // Obtenha a relação 'mercadoria'
         $paises = Pais::all();
@@ -168,7 +170,7 @@ class ProcessoController extends Controller
             'portos',
             'ibans',
             'tipoTransp',
-            'emolumentoTarifa'));
+            'emolumentoTarifa', 'clientes'));
     }
 
     /**

@@ -62,8 +62,9 @@ class Customer extends Model
                 $customer->empresa_id = Auth::user()->empresas->first()->id /* Defina aqui o ID da empresa que deseja associar */;
             }
 
-            $customer->CustomerID = self::generateNewCodeCustomer($customer->empresa_id);
-            $customer->is_active = 1; $customer->AccountID = 0;
+            $customer->CustomerID = 'cli'.Auth::user()->empresas->first()->id.$customer->CustomerTaxID.'/'. Carbon::now()->format('y');
+            $customer->is_active = 1; 
+            $customer->AccountID = 0;
         });
 
         // Evento(s) que executam antes de actualizar

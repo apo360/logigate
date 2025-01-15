@@ -118,58 +118,67 @@
                 @endif
                 
 
-            <li class="nav-item has-treeview">
-                <a href="#" class="nav-link">
-                    <i class="nav-icon fas fa-coins"></i>
-                    <p>
-                        {{ __('Contabilidade') }}
-                        <i class="right fas fa-angle-left"></i>
-                    </p>
-                </a>
-                <ul class="nav nav-treeview">
-                    <li class="nav-item">
-                        <a href="{{ route('customers.index') }}" 
-                        class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-file-invoice-dollar"></i>
-                            <p>{{ __('Mapa de Impostos e Tarifas') }}</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('customers.listagem_cc') }}" 
-                        class="nav-link {{ request()->routeIs('customers.listagem_cc') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-file-alt"></i>
-                            <p>{{ __('Pauta Aduaneira') }}</p>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-coins"></i>
+                        <p>
+                            {{ __('Contabilidade') }}
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('customers.index') }}" 
+                            class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-file-invoice-dollar"></i>
+                                <p>{{ __('Mapa de Impostos e Tarifas') }}</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('customers.listagem_cc') }}" 
+                            class="nav-link {{ request()->routeIs('customers.listagem_cc') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-file-alt"></i>
+                                <p>{{ __('Pauta Aduaneira') }}</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
             <li class="nav-item">
                 <a href="{{ route('relatorio.licenciamento')}}" class="nav-link">
-                <i class="nav-icon fas fa-report"></i>
+                <i class="nav-icon fas fa-file-pdf"></i>
                 <p> Relatórios </p>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="nav-icon fas fa-gear"></i>
-                <p> AGT <i class="right fas fa-angle-left"></i> </p>
+                <a href="{{ route('arquivos.index')}}" class="nav-link">
+                <i class="nav-icon fas fa-file-alt"></i>
+                <p> Arquivos </p>
                 </a>
             </li>
-
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                <i class="nav-icon fab fa-whatsapp"></i>
-                <p> Whatsapp Empresa <i class="right fas fa-angle-left"></i> </p>
-                </a>
-            </li>
+            
             <hr>
             <!-- API -->
-            <li class="nav-item">
+            <li class="nav-item has-treeview">
                 <a href="#" class="nav-link">
-                <i class="nav-icon fab fa-link"></i>
-                <p> APIs <i class="right fas fa-angle-link"></i> </p>
+                    <i class="nav-icon fas fa-link"></i>
+                    <p> APIs <i class="right fas fa-angle-link"></i> </p>
                 </a>
+                <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-gear"></i>
+                        <p> AGT </p>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a href="#" class="nav-link">
+                        <i class="nav-icon fab fa-whatsapp"></i>
+                        <p> Whatsapp Empresa </p>
+                        </a>
+                    </li>
+                </ul>
             </li>
             </ul>
         </nav>
