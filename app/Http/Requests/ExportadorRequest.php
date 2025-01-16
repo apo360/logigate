@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class ExportadorRequest extends FormRequest
 {
@@ -24,14 +25,23 @@ class ExportadorRequest extends FormRequest
     {
         $id = $this->isMethod('PUT') ? $this->route('exportadors') : null;
 
+        $empresaId = Auth::user()->empresas->first()->id;
+
         return [
-            'ExportadorTaxID' => ['nullable', 'string', 'min:6', 'max:20'], // NIF deve ter exatamente 20 dígitos
+            'ExportadorTaxID' => [
+                'nullable',
+                'string',
+                'min:6',
+                'max:20',
+                Rule::unique('exportadores')->where(function ($query) use ($empresaId) {
+                    return $query->where('empresa_id', $empresaId);
+                })->ignore($this->route('exportador'), 'ExportadorID')
+            ],
             'AccountID' => ['nullable', 'string', 'max:30'],
-            'Exportador' => ['required', 'string', 'max:100'],
-            'Telefone' => ['nullable', 'string', 'max:20'], // Defina um tamanho máximo apropriado para o telefone
+            'CompanyName' => ['required', 'string', 'max:100'],
+            'Telephone' => ['nullable', 'string', 'max:20'],
             'Email' => ['nullable', 'email', 'max:254'],
-            'Pais' => ['required', 'numeric'],
-            'Website' => ['nullable', 'url', 'max:60'], // Verifica se é uma URL válida
+            'Website' => ['nullable', 'url', 'max:60'],
         ];
     }
 
