@@ -36,10 +36,10 @@ class ProcessoRequest extends FormRequest
             'DataFecho' => 'nullable|date|after:DataAbertura',
             'Estado' => 'required|string',
             'TipoProcesso' => 'required|exists:regiao_aduaneiras,id', // Deve existir na tabela `tipo_processos`
-            'NrDU' => 'nullable|string|max:100|unique:processos,NrDU',
+            'NrDU' => 'nullable|string|max:100',
             'N_Dar' => 'nullable|integer|min:0',
             'MarcaFiscal' => 'nullable|string|max:50',
-            'BLC_Porte' => 'nullable|string|max:50|unique:processos,BLC_Porte',
+            'BLC_Porte' => 'nullable|string|max:50',
             'Pais_origem' => 'nullable|exists:paises,id',
             'Pais_destino' => 'nullable|exists:paises,id',
             'PortoOrigem' => [
