@@ -72,9 +72,6 @@
                 <a class="btn btn-outline-secondary" href="{{ route('processos.index') }}">
                     <i class="fas fa-search"></i> {{ __('Pesquisar') }}
                 </a>
-                <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}" target="_blank">
-                    <i class="fas fa-print"></i> {{ __('Imprimir') }}
-                </a>
                 <a href="{{ route('processos.show', $processo->id) }}" class="btn btn-outline-secondary">
                     <i class="fas fa-eye"></i> {{ __('Visualizar') }}
                 </a>
@@ -107,10 +104,13 @@
                 </div>
             </div>
         </div>
-        <span style="padding: 10px 0px 0px 10px;">Cliente :  <a href="{{route('customers.show', $processo->cliente->id)}}">{{$processo->cliente->CompanyName}}</a>  </span>
-        <span style="padding-left: 10px;">Email : {{$processo->cliente->Email}} </span>
-        <span style="padding-left: 10px;">Telefone : {{$processo->cliente->Telephone}} </span>
-        <span style="padding-left: 10px;">Ref/Factura :  {{ $processo->RefCliente }}</span>
+        <!-- Link para Cliente -->
+        <span class="d-block px-3">
+            Cliente: <a href="{{route('customers.show', $processo->cliente->id)}}">{{$processo->cliente->CompanyName}}</a>
+            <a href="#" data-bs-toggle="modal" data-bs-target="#editClienteModal"><i class="fas fa-edit"></i></a>
+        </span>
+        <span class="d-block px-3">Exportador: {{$processo->exportador->Exportador}} <a href=""><i class="fas fa-edit"></i></a></span>
+
     </div>
 
     <div class="" style="padding: 10px;">
@@ -138,27 +138,7 @@
                     <div class="tab-pane active" id="detalhe" role="tabpanel" aria-labelledby="detalhe-tab">
                         <form action="{{ route('processos.update', $processo->id) }}" method="POST">
                             @csrf
-                            @method('PUT')   
-                            <div class="row mt-4">
-                                <div class="form-group mt-4 col-md-4">
-                                    <label for="customer_id">Cliente</label>
-                                    <div class="input-group">
-                                        <input class="form-control border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" list="cliente_list" id="customer_id" name="customer_id" value="{{ old('customer_id', $processo->customer_id) }}" required>
-                                        <div class="input-group-append">
-                                            <a href="#" id="add-new-client-button" class="btn btn-dark" data-toggle="modal" data-target="#newClientModal"><i class="fas fa-user-plus" aria-hidden="true"></i></a>
-                                        </div>
-                                    </div>
-                                    <datalist id="cliente_list">
-                                        @foreach ($clientes as $cliente)
-                                            <option value="{{ $cliente->id }}" data-nif="{{ $cliente->CustomerTaxID }}" data-code="{{ $cliente->CustomerID }}">{{ $cliente->CompanyName }}</option>
-                                        @endforeach
-                                    </datalist>
-                                    @error('customer_id')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                
-                            </div> 
+                            @method('PUT')
                             <div class="row mt-4">
                                 <div class="col-md-2 form-group">
                                     <label for="NrDU">Nº DU</label>
@@ -597,6 +577,42 @@
                         }
                     </script>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Editar Cliente -->
+    <div class="modal fade" id="editClienteModal" tabindex="-1" aria-labelledby="editClienteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editClienteModalLabel">Editar Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('customers.update', $processo->cliente->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-body">
+                        <!-- Formulário para editar cliente -->
+                        <div class="mb-3">
+                            <label for="clienteNome" class="form-label">Nome do Cliente</label>
+                            <input type="text" class="form-control" id="clienteNome" value="{{ $processo->cliente->CompanyName }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="clienteNome" class="form-label">Escolhe o Cliente a que pretende Alterar</label>
+                            <input type="text" class="form-control" id="clienteNome" name="CompanyName" list="cliente_list">
+                            <datalist id="cliente_list">
+                                @foreach ($clientes as $cliente)
+                                    <option value="{{ $cliente->id }}" data-nif="{{ $cliente->CustomerTaxID }}" data-code="{{ $cliente->CustomerID }}">{{ $cliente->CompanyName }}</option>
+                                @endforeach
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

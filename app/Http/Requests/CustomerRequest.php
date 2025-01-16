@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerRequest extends FormRequest
 {
@@ -23,9 +24,19 @@ class CustomerRequest extends FormRequest
     public function rules()
     {
         $id = $this->isMethod('PUT') ? $this->route('customers') : null;
+        $empresaId = Auth::user()->empresas->first()->id;
 
         return [
-            'CustomerTaxID' => ['required', 'string', 'min:6', 'max:14', Rule::unique('customers')->ignore($id, 'CustomerID')], // NIF deve ter exatamente 14 dígitos
+            'CustomerTaxID' => 
+                [
+                    'required', 
+                    'string', 
+                    'min:6', 
+                    'max:14', 
+                    Rule::unique('customers')->where(function ($query) use ($empresaId) {
+                        return $query->where('empresa_id', $empresaId);
+                    })->ignore($id, 'CustomerID')
+                ], // NIF deve ter exatamente 14 dígitos
             'AccountID' => ['nullable', 'string', 'max:30'],
             'CompanyName' => ['required', 'string', 'max:100'],
             'Telephone' => ['nullable', 'string', 'max:20'],
