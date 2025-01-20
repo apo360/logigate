@@ -22,6 +22,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use SimpleXMLElement;
@@ -178,43 +179,36 @@ class ProcessoController extends Controller
      */
     public function update(Request $ProcessoRequest, $processoID)
     {
-        
-        try {
+        // Dados validados do request
+        $processo_requestUP = $ProcessoRequest->validated();
 
+        try {
             // Inicia uma transação para garantir a integridade dos dados
             DB::beginTransaction();
 
-            // Actualizar os campos de processos...
-            Processo::where('id', $processoID)->update([
-                'Situacao' => $ProcessoRequest->input('Situacao'),
-            ]); // Dados do Processo
+            // Verifica se o processo existe
+            $processo = Processo::find($processoID);
+            if (!$processo) {
+                return redirect()->back()->with('error', 'Processo não encontrado');
+            }
 
-            Importacao::where('processo_id', $processoID)->update([
-                'MarcaFiscal' => $ProcessoRequest->input('MarcaFiscal'),
-                'BLC_Porte' => $ProcessoRequest->input('BLC_Porte'),
-                'Moeda' => $ProcessoRequest->input('Moeda'),
-                'FOB' => $ProcessoRequest->input('FOB'), 
-                'Freight' => $ProcessoRequest->input('Freight'), //Frete
-                'Insurance' => $ProcessoRequest->input('Insurance'), // Seguro
-                'Cambio' => $ProcessoRequest->input('Cambio'),
-                'ValorAduaneiro' => $ProcessoRequest->input('ValorAduaneiro'),
-                'ValorTotal' => $ProcessoRequest->input('ValorTotal'),
-            ]); // Dados do Importação
+            // Atualiza os campos do processo
+            $processo->update($processo_requestUP);
 
-            // Caso exista documento(File/Files) para inserir ou actualizar deve activar a função
-
-            
             DB::commit();
 
-            return redirect()->back()->with('success', 'Dados Actualizados com sucesso');
+            return redirect()->back()->with('success', 'Dados atualizados com sucesso');
 
         } catch (QueryException $e) {
-
             DB::rollBack();
 
-            return DatabaseErrorHandler::handle($e, $ProcessoRequest);
+            // Registro do erro
+            Log::error('Erro ao atualizar o processo', ['error' => $e->getMessage()]);
+
+            return redirect()->back()->with('error', 'Erro ao atualizar os dados. Por favor, tente novamente.');
         }
     }
+
 
     /**
      * Remove the specified resource from storage.

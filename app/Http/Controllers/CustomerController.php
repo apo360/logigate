@@ -39,7 +39,8 @@ class CustomerController extends Controller
     public function create()
     {
         $provincias = Provincia::all();
-        return view('customer.create', compact('provincias'));
+        $paises = Pais::all();
+        return view('customer.create', compact('provincias', 'paises'));
     }
 
     /**
@@ -71,6 +72,27 @@ class CustomerController extends Controller
                     'codCli' => $newCustomer->CustomerTaxID,
                 ], 200);
             } else {
+
+                // Chama o método store do EnderecoController para criar o endereço
+                $enderecoController = new EnderecoController();
+
+                $enderecoData = $request->only([
+                    'BuildingNumber',
+                    'StreetName',
+                    'AddressDetail',
+                    'AddressType' => 'Facturamento',
+                    'Province',
+                    'City',
+                    'PostalCode',
+                    'Country'
+                ]);
+                $enderecoData['customer_id'] = $newCustomer->id;
+            
+                // Chama o método store do EnderecoController para criar o endereço
+                $enderecoController = new EnderecoController();
+                $enderecoRequest = new Request($enderecoData);
+                $enderecoController->store($enderecoRequest);
+                
                 // Redirect to 'form.edit' for the main form
                 return redirect()->route('customers.edit', $newCustomer->id)->with('success', 'Cliente Inserido com sucesso');
             }
@@ -97,9 +119,9 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
-        $paises = Pais::pluck('pais', 'id')->toArray();
-        $provincias = Provincia::pluck('Nome', 'id')->toArray();
-        $municipios = Municipio::pluck('Nome', 'id')->toArray();
+        $paises = Pais::all();
+        $provincias = Provincia::all();
+        $municipios = Municipio::all();
         $typeContacts = '';
         $paymentModes = '';
         $ivaExercises = '';
@@ -117,6 +139,19 @@ class CustomerController extends Controller
             
             // Atualize os atributos do cliente com base nos dados recebidos no $request
             Customer::where('CustomerID',$customer->CustomerID)->update($request->validated());
+
+            // Chama o método update do EnderecoController para atualizar o endereço
+            $enderecoController = new EnderecoController();
+            $enderecoRequest = new Request($request->only([
+                'BuildingNumber',
+                'StreetName',
+                'AddressDetail',
+                'Province',
+                'City',
+                'PostalCode',
+                'Country',
+            ]));
+            $enderecoController->update($enderecoRequest, $customer->endereco);
 
             DB::commit();
 

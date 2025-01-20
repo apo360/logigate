@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'role' => \App\Http\Middleware\RoleMiddleware::class, // Adiciona o middleware de papel aqui
         'eventsProcess' => \App\Http\Middleware\LogProcessEvents::class,
         'check.password.changed' => \App\Http\Middleware\CheckPasswordChanged::class,
+        'api.key' => \App\Http\Middleware\ApiKeyMiddleware::class,
     ];
 }

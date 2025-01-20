@@ -42,6 +42,12 @@ class CustomerRequest extends FormRequest
             'Telephone' => ['nullable', 'string', 'max:20'],
             'Email' => ['nullable', 'email', 'max:254'],
             'Website' => ['nullable', 'url', 'max:60'],
+            'CustomerType' => 'nullable|string|in:Individual,Empresa',
+            'nacionality' => 'nullable|string|max:255',
+            'doc_type' => 'nullable|string|in:BI,PASS,CC,CR,Outro',
+            'doc_num' => 'nullable|string|max:255',
+            'validade_date_doc' => 'nullable|date|after_or_equal:today',
+            'metodo_pagamento' => 'nullable|string',
         ];
     }
 

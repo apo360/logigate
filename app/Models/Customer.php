@@ -38,7 +38,12 @@ class Customer extends Model
         'is_active',
         'foto',
         'user_id',
-        'empresa_id'
+        'empresa_id',
+        'nacionality',
+        'doc_type',
+        'doc_num',
+        'validade_date_doc',
+        'metodo_pagamento'
     ];
 
     protected $dates = [

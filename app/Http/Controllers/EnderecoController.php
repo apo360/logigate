@@ -28,7 +28,21 @@ class EnderecoController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validatedData = $request->validate([
+            'customer_id' => 'required',
+            'BuildingNumber' => 'nullable|string|max:255',
+            'StreetName' => 'nullable|string|max:255',
+            'AddressDetail' => 'nullable|string|max:255',
+            'AddressType' => 'nullable|string|max:255',
+            'Province' => 'nullable|string|max:255',
+            'City' => 'nullable|string|max:255',
+            'PostalCode' => 'nullable|string|max:20',
+            'Country' => 'nullable|string|max:255',
+        ]);
+
+        $endereco = Endereco::create($validatedData);
+        
+        return response()->json($endereco, 201); // Retorna o endereço criado com status 201
     }
 
     /**
@@ -52,7 +66,20 @@ class EnderecoController extends Controller
      */
     public function update(Request $request, Endereco $endereco)
     {
-        //
+        $validatedData = $request->validate([
+            'BuildingNumber' => 'nullable|string|max:255',
+            'StreetName' => 'nullable|string|max:255',
+            'AddressDetail' => 'nullable|string|max:255',
+            'AddressType' => 'nullable|string|max:255',
+            'Province' => 'nullable|string|max:255',
+            'City' => 'nullable|string|max:255',
+            'PostalCode' => 'nullable|string|max:20',
+            'Country' => 'nullable|string|max:255',
+        ]);
+
+        $endereco->update($validatedData);
+
+        return response()->json($endereco, 200); // Retorna o endereço atualizado com status 200
     }
 
     /**

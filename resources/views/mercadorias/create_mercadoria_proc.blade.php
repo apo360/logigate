@@ -82,14 +82,14 @@
                                 <select class="form-select" id="Unidade" name="Unidade" required>
                                     <option value="">Selecione a unidade</option>
                                     <option value="kg">Kg</option>
-                                    <option value="litros">Litros</option>
-                                    <option value="unidades">Unidades</option>
-                                    <option value="metros">Metros</option>
+                                    <option value="l">Litros</option>
+                                    <option value="uni">Unidades</option>
+                                    <option value="m">Metros</option>
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <div class="form-group">
-                                    <label for="unidade">Qualificação</label>
+                                    <label for="Qualificacao">Qualificação</label>
                                     <select name="Qualificacao" id="Qualificacao" class="form-control">
                                         <option value="">Selecionar</option>
                                         <option value="cont">Contentor</option>
