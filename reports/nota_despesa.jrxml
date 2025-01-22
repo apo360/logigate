@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="nota_despesa" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="040f612d-122b-4f92-b072-531720a0e313">
+	<parameter name="Empresa" class="java.lang.String"/>
+	<parameter name="Designacao" class="java.lang.String"/>
+	<parameter name="Cedula" class="java.lang.String"/>
+	<parameter name="NIF" class="java.lang.String"/>
+	<parameter name="Cliente" class="java.lang.String"/>
+	<parameter name="Ref_Cliente" class="java.lang.String"/>
+	<parameter name="Cli_NIF" class="java.lang.String"/>
+	<parameter name="NrProcesso" class="java.lang.String"/>
+	<parameter name="ContaDespacho" class="java.lang.String"/>
+	<parameter name="Cambio" class="java.lang.String"/>
+	<parameter name="ValorAduaneiro" class="java.lang.String"/>
+	<parameter name="Fob_total" class="java.lang.String"/>
+	<parameter name="Moeda" class="java.lang.String"/>
+	<parameter name="NrDU" class="java.lang.String"/>
+	<parameter name="N_Dar" class="java.lang.String"/>
+	<parameter name="DataAbertura" class="java.util.Date"/>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="79" splitType="Stretch"/>
+	</title>
+	<pageHeader>
+		<band height="35" splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="61" splitType="Stretch"/>
+	</columnHeader>
+	<detail>
+		<band height="125" splitType="Stretch">
+			<textField>
+				<reportElement x="0" y="0" width="45" height="30" uuid="9ea417c9-42ef-4d29-a0c8-2d923e819d39"/>
+				<textFieldExpression><![CDATA[$P{Empresa}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="45" y="0" width="34" height="30" uuid="faec6f8f-fde9-448d-aec9-bf1497663425"/>
+				<textFieldExpression><![CDATA[$P{Designacao}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="79" y="0" width="34" height="30" uuid="268a748c-78f1-4145-8b9b-6664bff6b8e8"/>
+				<textFieldExpression><![CDATA[$P{Cedula}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="113" y="0" width="34" height="30" uuid="46921a6a-97d9-45cc-ad81-13e7e3d8dc38"/>
+				<textFieldExpression><![CDATA[$P{NIF}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="147" y="0" width="34" height="30" uuid="a9450c7c-f223-40e2-aeb7-e18a3698e719"/>
+				<textFieldExpression><![CDATA[$P{Cliente}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="181" y="0" width="34" height="30" uuid="affb65f5-3d60-45c9-9b31-5535b94654de"/>
+				<textFieldExpression><![CDATA[$P{Ref_Cliente}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="215" y="0" width="34" height="30" uuid="6d5247db-5e70-46d8-8e8e-be7e532bdd7d"/>
+				<textFieldExpression><![CDATA[$P{Cli_NIF}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="249" y="0" width="34" height="30" uuid="5145720f-3c21-453f-9ef8-474493a1f0d5"/>
+				<textFieldExpression><![CDATA[$P{NrProcesso}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="283" y="0" width="34" height="30" uuid="f4af6cc6-e537-419f-869f-439e6130d272"/>
+				<textFieldExpression><![CDATA[$P{ContaDespacho}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="317" y="0" width="34" height="30" uuid="1687daa1-319d-4cb5-ba82-a818fefeb0b5"/>
+				<textFieldExpression><![CDATA[$P{Cambio}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="351" y="0" width="34" height="30" uuid="0ea76ec7-054e-4f4b-8c8d-f5c1a1b4c9e7"/>
+				<textFieldExpression><![CDATA[$P{ValorAduaneiro}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="385" y="0" width="34" height="30" uuid="f3b308d2-2187-4c23-9613-bd3181eb6353"/>
+				<textFieldExpression><![CDATA[$P{Fob_total}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="419" y="0" width="34" height="30" uuid="0e262928-ff30-435d-9395-da38fd1be4c0"/>
+				<textFieldExpression><![CDATA[$P{Moeda}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="453" y="0" width="34" height="30" uuid="98fa5c44-e66e-47ee-bd1c-cd5f8771745f"/>
+				<textFieldExpression><![CDATA[$P{NrDU}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="487" y="0" width="34" height="30" uuid="70f99d5f-b69b-4a2d-a82e-a7c8c5e81356"/>
+				<textFieldExpression><![CDATA[$P{N_Dar}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="521" y="0" width="34" height="30" uuid="d7a2303a-b844-4e00-9860-d76436559dd6"/>
+				<textFieldExpression><![CDATA[$P{DataAbertura}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="45" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="54" splitType="Stretch"/>
+	</pageFooter>
+	<summary>
+		<band height="42" splitType="Stretch"/>
+	</summary>
+</jasperReport>

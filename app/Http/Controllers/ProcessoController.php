@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use PHPJasper\PHPJasper;
 use SimpleXMLElement;
 
 class ProcessoController extends Controller
@@ -177,10 +178,10 @@ class ProcessoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $ProcessoRequest, $processoID)
+    public function update(ProcessoRequest $request, $processoID)
     {
         // Dados validados do request
-        $processo_requestUP = $ProcessoRequest->validated();
+        $processo_requestUP = $request->validated();
 
         try {
             // Inicia uma transação para garantir a integridade dos dados
@@ -371,5 +372,60 @@ class ProcessoController extends Controller
             'mercadorias' => $processos->flatMap->mercadorias,
             'cobranca' => $processos->first()->cobrado
         ]);
+    }
+
+    public function printNotaDespesa($ProcessoID){
+
+        $processo = Processo::where('id', $ProcessoID)->first();
+
+        // Caminho completo para o template .jasper
+        $input = base_path('reports/nota_despesa.jrxml'); // Certifique-se de que este arquivo existe
+        $output = base_path('reports');
+
+        $params = [
+            'Empresa' => Auth::user()->empresas->first()->Empresa,
+            'Designacao' => 'Despachante Oficial',
+            'Cedula' => Auth::user()->empresas->first()->Cedula,
+            'NIF' => Auth::user()->empresas->first()->NIF,
+
+            // Cliente
+            'Cliente' => $processo->cliente->CompanyName,
+            'Ref_Cliente' => $processo->cliente->RefCliente,
+            'Cli_NIF' => $processo->cliente->CustomerTaxID,
+
+            // Processo
+            'NrProcesso' => $processo->NrProcesso,
+            'ContaDespacho' => $processo->ContaDespacho,
+            'Cambio' => $processo->Cambio,
+            'ValorAduaneiro' => $processo->ValorAduaneiro,
+            'Fob_total' => $processo->Fob_total,
+            'Moeda' => $processo->Moeda,
+            'NrDU' => $processo->NrDU,
+            'N_Dar' => $processo->N_Dar,
+            'DataAbertura' => $processo->DataAbertura,
+        ];
+
+        // Definir os parâmetros
+        $options = [
+            'format' => ['pdf'],
+            'locale' => 'en',
+            'params' => $params,
+        ];
+
+        $jasper = new PHPJasper();
+
+        $jasper->process(
+            $input,
+            $output,
+            $options
+        )->execute();
+
+        $file = $output . '/nota_despesa.pdf';
+
+        if (!file_exists($file)) {
+            abort(404);
+        }
+
+        return response()->file($file);
     }
 }

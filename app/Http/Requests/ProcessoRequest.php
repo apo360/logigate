@@ -28,8 +28,6 @@ class ProcessoRequest extends FormRequest
         $rules = [
             'ContaDespacho' => 'nullable|string|max:150',
             'RefCliente' => 'nullable|string|max:200',
-            'customer_id' => 'required|exists:customers,id',
-            'exportador_id' => 'required|exists:exportadors,id',
             'estancia_id' => 'required|exists:estancias,id',
             'Descricao' => 'nullable|string|max:200',
             'DataAbertura' => 'nullable|date|before_or_equal:today',
@@ -44,7 +42,7 @@ class ProcessoRequest extends FormRequest
             'Pais_destino' => 'nullable|exists:paises,id',
             'PortoOrigem' => [
                     'nullable',
-                    Rule::in(Porto::pluck('porto')->toArray()), // Certifique-se de que Porto é acessível
+                    Rule::in(Porto::pluck('sigla')->toArray()), // Certifique-se de que Porto é acessível
             ],
             'DataChegada' => 'nullable|date|after_or_equal:DataAbertura',
             'TipoTransporte' => 'nullable|exists:tipo_transportes,id',
@@ -65,6 +63,8 @@ class ProcessoRequest extends FormRequest
         // Regras adicionais no caso de criação
         if ($this->isMethod('post')) {
             $rules['NrProcesso'] = 'nullable|string|max:100|unique:processos,NrProcesso';
+            $rules['customer_id'] = 'required|exists:customers,id';
+            $rules['exportador_id'] = 'required|exists:exportadors,id';
         }
 
         return $rules;

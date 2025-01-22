@@ -178,7 +178,7 @@ use PHPJasper\PHPJasper;
         Route::post('empresa/importar/processos', [MigracaoController::class, 'importProcessos'])->name('import.processos');
         Route::post('empresa/logotipo/inserir', [EmpresaController::class, 'storeLogo'])->name('empresa.logotipo');
 
-        Route::get('processos/report/{ProcessoID}/visualizar', [RelatorioController::class, 'generateReport'])->name('processos.print');
+        Route::get('processos/report/{ProcessoID}/visualizar', [ProcessoController::class, 'printNotaDespesa'])->name('processos.print');
         // Documentos
         Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
         Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');

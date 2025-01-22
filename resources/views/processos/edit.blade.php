@@ -187,7 +187,7 @@
                                     <input type="date" 
                                         name="DataAbertura" 
                                         id="DataAbertura" 
-                                        class="form-control" 
+                                        class="form-control"
                                         value="{{ old('DataAbertura', $processo->DataAbertura) }}">
                                 </div>
 
@@ -204,30 +204,41 @@
                                     </select>
                                 </div>
 
+                                <div class="form-group col-md-3">
+                                    <label for="estancia_id"> Estância</label>
+                                    <select name="estancia_id" id="estancia_id" class="form-control">
+                                        <option value="{{$processo->estancia_id}}">{{$processo->estancia->desc_estancia}}</option>
+                                    </select>
+                                </div>
+
                             </div>
                             <div class="row">
                                 <!-- Fk_pais_origem -->
                                 <div class="form-group col-md-3">
-                                    <label for="Fk_pais_origem">País de Origem</label>
-                                    <select name="Fk_pais" class="form-control" id="Fk_pais" >
+                                    <label for="Pais_origem">País de Origem</label>
+                                    <select name="Pais_origem" class="form-control" id="Fk_pais" >
                                         @foreach($paises as $pais)
-                                            <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
+                                            <option 
+                                                value="{{$pais->id}}" 
+                                                {{ old('Pais_origem', $processo->Pais_origem) == $pais->id ? 'selected' : '' }}>
+                                                {{$pais->pais}} ({{$pais->codigo}})
+                                            </option>
                                         @endforeach
                                     </select>
-                                    @error('Fk_pais')
+                                    @error('Pais_origem')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
 
                                 <!-- Fk_pais_destino -->
                                 <div class="form-group col-md-3">
-                                    <label for="Fk_pais_destino">País de Destino</label>
-                                    <select name="Fk_pais_destino" id="Fk_pais_destino" class="form-control">
+                                    <label for="Pais_destino">País de Destino</label>
+                                    <select name="Pais_destino" id="Pais_destino" class="form-control">
                                         @foreach($paises as $pais)
                                             <option 
                                                 value="{{ $pais->id }}" 
-                                                {{ old('Fk_pais_destino', $processo->Fk_pais_destino) == $pais->id ? 'selected' : '' }}>
-                                                {{ $pais->nome }}
+                                                {{ old('Pais_destino', $processo->Pais_destino) == $pais->id ? 'selected' : '' }}>
+                                                {{$pais->pais}} ({{$pais->codigo}})
                                             </option>
                                         @endforeach
                                     </select>
@@ -331,8 +342,7 @@
                                 <div class="form-group col-md-3">
                                     <label for="ValorTotal">Valor Total</label>
                                     <input 
-                                        type="number" 
-                                        step="0.01" 
+                                        type="text" 
                                         name="ValorTotal" 
                                         id="ValorTotal" 
                                         class="form-control" 
@@ -896,58 +906,6 @@
             const mercadorias = await response.json();
             // Atualize a tabela ou lista de mercadorias aqui
         }
-    </script>
-    
-    <!-- Calcular o valor aduaneiro em função do Cambio -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const moedaSelect = document.getElementById('Moeda');
-            const cambioInput = document.getElementById('Cambio');
-            
-
-            moedaSelect.addEventListener('change', function () {
-                const selectedOption = moedaSelect.options[moedaSelect.selectedIndex];
-                const cambioValue = selectedOption.getAttribute('data-cambio');
-                cambioInput.value = cambioValue;
-                var valorAduaneiroMoeda = document.getElementById('[name="ValorAduaneiro"]') || 0;
-
-                var taxaCambio = parseFloat(cambioValue) || 1;
-                var valorTotalAOA = valorAduaneiroMoeda * taxaCambio;
-                $('#ValorTotal').val(valorTotalAOA.toFixed(2));
-            });
-        });
-    </script>
-
-    <script>
-        $(document).ready(function () {
-            // Função para calcular os valores com base na taxa de câmbio
-            function calcular() {
-                // Obter os valores dos campos
-                var valorAduaneiroUSD = parseFloat($('[name="ValorAduaneiro"]').val()) || 0;
-                var taxaCambio = parseFloat($('[name="Cambio"]').val()) || 1;
-
-                // Calcular o Valor Total em AOA
-                var valorTotalAOA = valorAduaneiroUSD * taxaCambio;
-
-                var IvaAduaneiro = valorTotalAOA*0.14; // 14% dos valores aduaneiros
-
-                var ImpostoAduaneiro = valorTotalAOA*0.10; // 10% dos valores aduaneiros
-
-                // Atualizar os campos
-                $('[name="ValorTotal"]').val(valorTotalAOA.toFixed(2));
-                $('[name="iva_aduaneiro"]').val(IvaAduaneiro.toFixed(2));
-                $('[name="impostoEstatistico"]').val(ImpostoAduaneiro.toFixed(2));
-            } 
-
-
-            // Adicionar um ouvinte de evento para o campo Cambio
-            $('[name="Cambio"]').on('input', function () {
-                calcular();
-            });
-
-            // Chame a função inicialmente para configurar os valores iniciais
-            calcular();
-        });
     </script>
 
     <script>

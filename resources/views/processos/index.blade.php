@@ -100,24 +100,89 @@
         </div>
         
         <div class="card">
+            <div class="card-header">
+                <div class="float-left">
+                    <div class="btn-group">
+                        <a href="{{ route('licenciamentos.exportCsv') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-csv"></i> CSV</a>
+                        <a href="{{ route('licenciamentos.exportExcel') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-excel"></i> Excel</a>
+                        <a href="" class="btn btn-sm btn-default"><i class="fas fa-file-pdf"></i> PDF</a>
+                    </div>
+                </div>
+                <div class="float-right">
+                    <span>Nº de Processos: {{count($processos)}}</span>
+                </div>
+            </div>
 
             <div class="card-body">
                 <!-- Tabela de Processos -->
-                <table id="example1" class="table table-hover">
+                <table class="table table-hover" id="ProcessoTable">
                     <thead>
                         <tr>
-                            <th>Acções</th>
+                            
                             <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'NrProcesso', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Número do Processo</a></th>
-                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'CompanyName', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Cliente</a></th>
                             <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'TipoProcesso', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Tipo de Processo</a></th>
-                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'Situacao', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Situação</a></th>
-                            <th>Porto de Origem</th>
+                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'Situacao', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Estado</a></th>
+                            <th>Origem</th>
+                            <th>Valor Aduaneiro</th>
                             <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'DataAbertura', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Data de Abertura</a></th>
+                            <th>Factura</th>
+                            <th>Acções</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($processos as $processo)
                             <tr>
+                                <td>
+                                    <div class="text-wrap">
+                                        <a href="{{ route('customers.show', $processo->cliente->id) }}">
+                                            {{ $processo->cliente->CompanyName }}
+                                        </a>
+                                        @if($processo->RefCliente)
+                                            <small>({{ $processo->RefCliente }})</small>
+                                        @endif
+                                        <br>
+                                        <span class="badge bg-success mt-1">
+                                            <a href="{{ route('processos.show', $processo->id) }}">
+                                                {{ $processo->NrProcesso }}
+                                            </a>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>{{ $processo->tipoProcesso->descricao }}</td>
+                                <td>
+                                    <span class="badge {{ $processo->Situacao == 'Aberto' ? 'badge-warning' : ($processo->Situacao == 'Desembaraçado' ? 'badge-success' : 'badge-danger') }}">
+                                        {{ $processo->Estado }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="porto-origem">
+                                        <span class="pais-codigo" data-toggle="tooltip" title="{{ $processo->PortoOrigem }}">
+                                            <span class="flag-icon flag-icon-{{ strtolower($processo->codigo) }}"></span>
+                                            {{ $processo->PortoOrigem }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ number_format($processo->ValorAduaneiro, 2, ',', '.') }} kz <br>
+                                    <small>({{ $processo->cif }} {{ $processo->Moeda }})</small>
+                                </td>
+                                <td>
+                                    {{ $processo->DataAbertura }} <br>
+                                    <small>
+                                        <span style="color: darkorange;">0</span> Semanas <span style="color: darkorange;">0</span> dias atrás
+                                    </small>
+                                </td>
+                                <!-- Exibir status da fatura -->
+                                @if($processo->procLicenFaturas->isNotEmpty())
+                                    @php
+                                        $statusFatura = $processo->procLicenFaturas->last()->status_fatura;
+                                    @endphp
+                                    <td>{{ ucfirst($statusFatura) }} <br>
+                                        <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span>
+                                    </td>
+                                @else
+                                    <td>{{ __('Sem Factura') }}</td>
+                                @endif
                                 <td>
                                     <div class="btn-group" role="group">
                                         <div class="btn-group" role="group">
@@ -141,23 +206,6 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ $processo->NrProcesso }}</td>
-                                <td>{{ $processo->cliente->CompanyName }}</td>
-                                <td>{{ $processo->tipoProcesso->descricao }}</td>
-                                <td>
-                                    <span class="badge {{ $processo->Situacao == 'Aberto' ? 'badge-warning' : ($processo->Situacao == 'Desembaraçado' ? 'badge-success' : 'badge-danger') }}">
-                                        {{ $processo->Estado }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="porto-origem">
-                                        <span class="pais-codigo" data-toggle="tooltip" title="{{ $processo->origem }}">
-                                            <span class="flag-icon flag-icon-{{ strtolower($processo->codigo) }}"></span>
-                                            {{ $processo->PortoOrigem }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>{{ $processo->DataAbertura }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -225,14 +273,28 @@
 
     <script>
         $(document).ready(function() {
-            $('#processosTable').DataTable({
-                "paging": false,
-                "lengthChange": false,
-                "searching": true,
-                "ordering": false,
-                "info": false,
-                "autoWidth": false,
-                "responsive": true,
+
+            // Filtro de Pesquisa
+            $('#search').on('input', function() {
+                var searchTerm = $(this).val().toLowerCase();
+
+                // Filtrar as linhas da tabela
+                $('#ProcessoTable tbody tr').each(function() {
+                    var row = $(this);
+                    var cliente = row.find('td').eq(0).text().toLowerCase(); // Nº Processo
+                    var descricao = row.find('td').eq(1).text().toLowerCase(); // Tipo de Processo
+                    var referencia = row.find('td').eq(2).text().toLowerCase(); // Estado
+                    var origem = row.find('td').eq(3).text().toLowerCase(); // Origem Mercadoria
+                    var valor = row.find('td').eq(4).text().toLowerCase(); // Valor Aduaneiro
+                    var data_abertura = row.find('td').eq(5).text().toLowerCase(); // Data de Abertura
+
+                    // Verificar se algum dos campos corresponde ao termo de pesquisa
+                    if (cliente.includes(searchTerm) || descricao.includes(searchTerm) || referencia.includes(searchTerm) || origem.includes(searchTerm) || valor.includes(searchTerm) || data_abertura.includes(searchTerm)) {
+                        row.show();
+                    } else {
+                        row.hide();
+                    }
+                });
             });
         });
     </script>

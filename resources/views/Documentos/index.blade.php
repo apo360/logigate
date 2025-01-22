@@ -3,9 +3,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
 
     <x-breadcrumb :items="[
-            ['name' => 'Dashboard', 'url' => route('dashboard')],
-            ['name' => 'Facturação', 'url' => route('documentos.index')]
-        ]" separator="/" />
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Facturação', 'url' => route('documentos.index')]
+    ]" separator="/" />
+
+    <div class="card">
+        <div class="card-header">
+            <div class="float-left"></div>
+            <div class="float-right">
+                <div class="btn-group">
+                    <a href="{{ route('documentos.create') }}" class="btn btn-sm btn-primary"> <i class="fas fa-plus-circle"></i> Emitir Documento</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="row">
         <div class="col-md-3">
@@ -167,22 +178,30 @@
         </div>
 
         <div class="col-md-9">
-            <div class="card card-dark">
+            <div class="card">
                 <div class="card-header">
-                    <div class="card-title"> 
-                        <span>Facturas</span>
+                    <div class="float-left">
+                        <div class="btn-group">
+                            <a href="{{ route('licenciamentos.exportCsv') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-csv"></i> CSV</a>
+                            <a href="{{ route('licenciamentos.exportExcel') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-excel"></i> Excel</a>
+                            <a href="" class="btn btn-sm btn-default"><i class="fas fa-file-pdf"></i> PDF</a>
+                        </div>
+                    </div>
+                    <div class="float-right">
+                        <span>Nº de Facturas: {{count($invoices)}}</span>
                     </div>
                 </div>
 
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
+                        <table class="table table-hover align-middle">
                             <thead>
                                 <th>Tipo</th>
-                                <th>Factura</th>
+                                <th>Nº Factura</th>
                                 <th>Cliente</th>
                                 <th>Total</th>
                                 <th>Estado</th>
+                                <th>Referencia</th>
                                 <th>Acções</th>
                             </thead>
                             <tbody>
@@ -190,15 +209,20 @@
                                     <tr>
                                         <td>
                                             <div id="doc-header-type">
-                                                <div style="background: gray; border-radius: 50px;" class="inline-flex items-center px-3 py-2 border ">
-                                                    {{$fatura->invoiceType->Code}}
-                                                </div> 
+                                                <div class="rounded-circle bg-secondary text-white text-center" style="width: 50px; height: 50px; line-height: 50px;">
+                                                    {{ $fatura->invoiceType->Code }}
+                                                </div>
                                             </div>
                                         </td>
                                         <td>{{$fatura->invoice_no}}</td>
                                         <td>{{$fatura->customer->CompanyName ?? ''}}</td>
                                         <td>{{$fatura->salesdoctotal->gross_total ?? '0.00'}}</td>
-                                        <td>{{$fatura->salesdoctotal->}}</td>
+                                        <td>Pago, Vencido, Anulado, Corrente</td>
+                                        <td>
+                                            @if($fatura->invoiceType->Code  == 'NC')
+                                                Qual referencia
+                                            @endif
+                                        </td>
                                         <td>
                                             <div class="inline-flex">
                                                 <a href="{{ route('documentos.show', $fatura->id) }}" class="btn btn-sm "><i class="fas fa-eye"></i></a>

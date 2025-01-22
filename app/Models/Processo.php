@@ -62,7 +62,6 @@ class Processo extends Model implements Auditable
     ];
 
     protected $dates = [
-        'DataAbertura',
         'DataFecho',
         'created_at',
         'updated_at',
@@ -253,29 +252,6 @@ class Processo extends Model implements Auditable
     }
 
     /**
-     * Gerar um novo código de ContaDespacho sequencial a cada ano. OBS: Esse numero é gerado quando a conta é fechada ou imprimida a carta.
-     * 
-     * @return string
-     */
-
-     /**
-     * Obtém a data de abertura formatada.
-     *
-     * @param date $dataAbertura
-     * @return string|null
-     */
-    protected function getDataAberturaAttribute()
-    {
-        $dataAbertura = $this->attributes['DataAbertura'];
-
-        if ($dataAbertura) {
-            return date('d/m/Y', strtotime($dataAbertura));
-        }
-
-        return null;
-    }
-
-    /**
      * Metodos para obter estatisticas relativamente aos processos.
      *
      * @return int
@@ -358,5 +334,8 @@ class Processo extends Model implements Auditable
         return $this->hasMany(MercadoriaAgrupada::class, 'processo_id')->onDelete('cascade');
     }
     
-
+    public function procLicenFaturas()
+    {
+        return $this->hasMany(ProcLicenFactura::class, 'processo_id');
+    }
 }
