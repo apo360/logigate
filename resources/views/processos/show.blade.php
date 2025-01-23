@@ -267,9 +267,12 @@
                     </div>
                 </div>
                 <div class="card-body">
-                <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}" target="_blank">
-                    <i class="fas fa-print"></i> {{ __('Imprimir') }}
-                </a>
+                    <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}" target="_blank">
+                        <i class="fas fa-print"></i> {{ __('Notas de Despesas') }}
+                    </a>
+                    <a class="btn btn-dark" href="{{ route('processos.print', $processo->id) }}" target="_blank">
+                        <i class="fas fa-print"></i> {{ __('requisição') }}
+                    </a>
                 </div>
             </div>
         </div>

@@ -377,6 +377,7 @@ class ProcessoController extends Controller
     public function printNotaDespesa($ProcessoID){
 
         $processo = Processo::where('id', $ProcessoID)->first();
+        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $ProcessoID)->first();
 
         // Caminho completo para o template .jasper
         $input = base_path('reports/nota_despesa.jrxml'); // Certifique-se de que este arquivo existe
@@ -387,6 +388,10 @@ class ProcessoController extends Controller
             'Designacao' => 'Despachante Oficial',
             'Cedula' => Auth::user()->empresas->first()->Cedula,
             'NIF' => Auth::user()->empresas->first()->NIF,
+            'P_user' => Auth::user()->name,
+            'Endereco_completo' => Auth::user()->empresas->first()->Endereco_completo,
+            'Provincia' => Auth::user()->empresas->first()->Provincia,
+            'logotipo' => public_path( Auth::user()->empresas->first()->Logotipo),
 
             // Cliente
             'Cliente' => $processo->cliente->CompanyName,
@@ -403,7 +408,51 @@ class ProcessoController extends Controller
             'NrDU' => $processo->NrDU,
             'N_Dar' => $processo->N_Dar,
             'DataAbertura' => $processo->DataAbertura,
+
+            // Transporte
+            'MarcaFiscal'  => $processo->MarcaFiscal,
+            'BLC_Porte' => $processo->BLC_Porte,
+            'Pais_origem' => $processo->paisOrigem->pais,
+            'Pais_destino' => $processo->paisDestino->pais,
+            'TipoTransporte' => $processo->tipoTransporte->descricao,
+            'registo_transporte' => $processo->registo_transporte,
+            'nacionalidade_transporte' => $processo->paisOrigem->pais,
+            'DataChegada' => $processo->DataChegada,
+
+            // Tarifas
+            'direitos' => $emolumentoTarifa->direitos ?? '0.00',
+            'emolumentos' => $emolumentoTarifa->emolumentos  ?? '0.00',
+            'porto' => $emolumentoTarifa->porto  ?? '0.00',
+            'terminal' => $emolumentoTarifa->terminal  ?? '0.00',
+            'lmc' => $emolumentoTarifa->lmc  ?? '0.00',
+            'navegacao' => $emolumentoTarifa->navegacao  ?? '0.00',
+            'inerentes' => $emolumentoTarifa->inerentes  ?? '0.00',
+            'frete' => $emolumentoTarifa->frete  ?? '0.00',
+            'carga_descarga' => $emolumentoTarifa->carga_descarga  ?? '0.00',
+            'deslocacao' => $emolumentoTarifa->deslocacao  ?? '0.00',
+            'selos' => $emolumentoTarifa->selos  ?? '0.00',
+            'iva_aduaneiro' => $emolumentoTarifa->iva_aduaneiro  ?? '0.00',
+            'iec' => $emolumentoTarifa->iec  ?? '0.00',
+            'impostoEstatistico' => $emolumentoTarifa->impostoEstatistico  ?? '0.00',
+            'juros_mora' => $emolumentoTarifa->juros_mora  ?? '0.00',
+            'caucao' => $emolumentoTarifa->caucao  ?? '0.00',
+            'honorario' => $emolumentoTarifa->honorario  ?? '0.00',
+            'honorario_iva' => $emolumentoTarifa->honorario_iva  ?? '0.00',
+            'orgaos_ofiais' => $emolumentoTarifa->orgaos_ofiais  ?? '0.00',
+            'guia_fiscal' => $emolumentoTarifa->guia_fiscal  ?? '0.00',
+              
         ];
+
+        // Definindo parâmetros das mercadorias separadamente
+        $mercadoriasParams = [];
+        foreach ($processo->mercadorias as $index => $mercad) {
+            $mercadoriasParams["marca_numero"] = $mercad->NCM_HS . '/' . $mercad->NCM_HS_Numero ?? '';
+            $mercadoriasParams["merc_descricao"] = $mercad->Descricao ?? '';
+            $mercadoriasParams["qualidade"] = $mercad->Qualificacao ?? '';
+            $mercadoriasParams["quanti"] = 1;
+            $mercadoriasParams["peso_bruto"] = $mercad->Peso ?? '';
+        }
+        $params = array_merge($params, $mercadoriasParams);
 
         // Definir os parâmetros
         $options = [
