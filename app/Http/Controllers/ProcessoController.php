@@ -391,7 +391,8 @@ class ProcessoController extends Controller
             'P_user' => Auth::user()->name,
             'Endereco_completo' => Auth::user()->empresas->first()->Endereco_completo,
             'Provincia' => Auth::user()->empresas->first()->Provincia,
-            'logotipo' => public_path( Auth::user()->empresas->first()->Logotipo),
+            'logotipo' => '',
+            //'logotipo' => public_path( Auth::user()->empresas->first()->Logotipo),
 
             // Cliente
             'Cliente' => $processo->cliente->CompanyName,

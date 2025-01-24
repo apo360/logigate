@@ -51,24 +51,33 @@ class EmpresaController extends Controller
 
         try {
             if ($request->hasFile('logotipo')) {
+                // Verifique e crie as pastas se não existirem
+                $storagePath = storage_path('app/public/logos');
+                if (!file_exists($storagePath)) {
+                    if (!mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
+                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $storagePath));
+                    }
+                }
+
                 // Defina o caminho onde a imagem será salva
                 $imagePath = $request->file('logotipo')->store('logos', 'public');
-    
-                // Salve o caminho da imagem no banco de dados
-                $empresa = Empresa::where('id', Auth::user()->empresas->first()->id)->update(['Logotipo' => '/storage/' . $imagePath]);
+
+                // Atualize o caminho da imagem no banco de dados
+                $empresaId = Auth::user()->empresas->first()->id;
+                Empresa::where('id', $empresaId)->update(['Logotipo' => '/storage/' . $imagePath]);
+
+                // Busque a instância atualizada da empresa
+                $empresa = Empresa::find($empresaId);
 
                 return response()->json(['newLogoUrl' => asset($empresa->Logotipo)]);
+            } else {
+                return response()->json(['error' => 'Arquivo não carregado'], 400);
             }
-        } catch (QueryException $e) { 
+        } catch (QueryException $e) {
             return DatabaseErrorHandler::handle($e, $request);
             return response()->json(['error' => 'Falha ao carregar o logotipo'], 400);
-            
-        } 
-        
-
-        
+        }
     }
-
 
     /**
      * Display the specified resource.
