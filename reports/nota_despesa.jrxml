@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.21.3.final using JasperReports Library version 6.21.3-4a3078d20785ebe464f18037d738d12fc98c13cf  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="nota_despesa" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="040f612d-122b-4f92-b072-531720a0e313">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="LogigateRemote"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<parameter name="Empresa" class="java.lang.String"/>
 	<parameter name="Designacao" class="java.lang.String"/>
 	<parameter name="Cedula" class="java.lang.String"/>
@@ -49,14 +51,48 @@
 	<parameter name="orgaos_ofiais" class="java.lang.Float"/>
 	<parameter name="guia_fiscal" class="java.lang.Float"/>
 	<parameter name="logotipo" class="java.lang.String"/>
-	<parameter name="marca_numero" class="java.lang.String"/>
-	<parameter name="merc_descricao" class="java.lang.String"/>
-	<parameter name="qualidade" class="java.lang.String"/>
-	<parameter name="quanti" class="java.lang.Integer"/>
-	<parameter name="peso_bruto" class="java.lang.String"/>
+	<parameter name="ProcessoID" class="java.lang.Integer"/>
 	<queryString>
-		<![CDATA[]]>
+		<![CDATA[SELECT `Descricao`,
+	`NCM_HS`,
+	`NCM_HS_Numero`,
+	`Quantidade`,
+	`Qualificacao`,
+	`Peso`
+FROM logigatedb.mercadorias
+WHERE 
+	`Fk_Importacao` =  $P!{ProcessoID}]]>
 	</queryString>
+	<field name="Descricao" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="Descricao"/>
+		<property name="com.jaspersoft.studio.field.label" value="Descricao"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="mercadorias"/>
+	</field>
+	<field name="NCM_HS" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="NCM_HS"/>
+		<property name="com.jaspersoft.studio.field.label" value="NCM_HS"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="mercadorias"/>
+	</field>
+	<field name="NCM_HS_Numero" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="NCM_HS_Numero"/>
+		<property name="com.jaspersoft.studio.field.label" value="NCM_HS_Numero"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="mercadorias"/>
+	</field>
+	<field name="Quantidade" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="Quantidade"/>
+		<property name="com.jaspersoft.studio.field.label" value="Quantidade"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="mercadorias"/>
+	</field>
+	<field name="Qualificacao" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="Qualificacao"/>
+		<property name="com.jaspersoft.studio.field.label" value="Qualificacao"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="mercadorias"/>
+	</field>
+	<field name="Peso" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="Peso"/>
+		<property name="com.jaspersoft.studio.field.label" value="Peso"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="mercadorias"/>
+	</field>
 	<variable name="TotalDespesa" class="java.lang.Float" calculation="Sum">
 		<variableExpression><![CDATA[$P{direitos}+$P{emolumentos}+$P{iva_aduaneiro}+$P{iec}+$P{impostoEstatistico}+$P{lmc}+$P{carga_descarga}+$P{selos}+$P{frete}+$P{terminal}+$P{porto}+$P{caucao}+$P{honorario}+$P{honorario_iva}+$P{deslocacao}+$P{inerentes}+$P{navegacao}]]></variableExpression>
 	</variable>
@@ -441,28 +477,36 @@
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="15" splitType="Stretch">
+		<band height="23" splitType="Stretch">
 			<textField>
-				<reportElement x="0" y="-2" width="80" height="16" uuid="6b629024-7981-4bf1-9c45-17faa90b6c48">
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<reportElement x="80" y="-2" width="244" height="22" uuid="4531ff19-fb8c-4cbb-9048-e42f9fffc9e1">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="81b78861-af80-4bcf-83e9-a04cc94d6829"/>
 				</reportElement>
-				<textFieldExpression><![CDATA[$P{marca_numero}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{Descricao}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="80" y="0" width="244" height="14" uuid="aa9dc14a-19d4-4431-97cf-e1cc0353e075"/>
-				<textFieldExpression><![CDATA[$P{merc_descricao}]]></textFieldExpression>
+				<reportElement x="325" y="0" width="46" height="20" uuid="00ee6a9c-f571-40d9-a953-e43b470962eb">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="44756139-a3da-419f-84f0-90ca04664a34"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{Quantidade}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="325" y="0" width="46" height="14" uuid="1fcbe969-be43-4ff2-88bd-8ac829ab2994"/>
-				<textFieldExpression><![CDATA[$P{quanti}]]></textFieldExpression>
+				<reportElement x="377" y="0" width="88" height="20" uuid="0a3a7107-303d-4b6f-b7e3-c3340e054ffd">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="83883ead-145c-45a7-a3fd-ba21d08c211c"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{Qualificacao}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="376" y="0" width="90" height="14" uuid="93637f73-34a0-491c-87ed-016b4b494cf9"/>
-				<textFieldExpression><![CDATA[$P{qualidade}]]></textFieldExpression>
+				<reportElement x="476" y="0" width="76" height="20" uuid="6a8a84f5-8562-4793-9e5e-0f82ec5feb96">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="6f4d3c48-c88e-4a63-ae09-13feb868d0ef"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{Peso}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="476" y="0" width="76" height="14" uuid="2afb6cf9-ec7c-488d-9d52-37b33c9a8530"/>
-				<textFieldExpression><![CDATA[$P{peso_bruto}]]></textFieldExpression>
+				<reportElement x="0" y="0" width="78" height="20" uuid="8ea1dc80-b10b-4d56-85b8-3acd421029ee">
+					<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="a5cb2b2d-aa0d-4578-a0e2-a184480c4638"/>
+				</reportElement>
+				<textFieldExpression><![CDATA[$F{NCM_HS}+'/'+$F{NCM_HS_Numero}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

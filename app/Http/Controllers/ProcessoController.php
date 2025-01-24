@@ -399,6 +399,7 @@ class ProcessoController extends Controller
             'Cli_NIF' => $processo->cliente->CustomerTaxID,
 
             // Processo
+            'ProcessoID' => $processo->id,
             'NrProcesso' => $processo->NrProcesso,
             'ContaDespacho' => $processo->ContaDespacho,
             'Cambio' => $processo->Cambio,
@@ -443,22 +444,21 @@ class ProcessoController extends Controller
               
         ];
 
-        // Definindo parâmetros das mercadorias separadamente
-        $mercadoriasParams = [];
-        foreach ($processo->mercadorias as $index => $mercad) {
-            $mercadoriasParams["marca_numero"] = $mercad->NCM_HS . '/' . $mercad->NCM_HS_Numero ?? '';
-            $mercadoriasParams["merc_descricao"] = $mercad->Descricao ?? '';
-            $mercadoriasParams["qualidade"] = $mercad->Qualificacao ?? '';
-            $mercadoriasParams["quanti"] = 1;
-            $mercadoriasParams["peso_bruto"] = $mercad->Peso ?? '';
-        }
-        $params = array_merge($params, $mercadoriasParams);
-
         // Definir os parâmetros
         $options = [
             'format' => ['pdf'],
             'locale' => 'en',
             'params' => $params,
+            'db_connection' => [
+                'driver' => env('DB_CONNECTION', 'mysql'),
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '3306'),
+                'database' => env('DB_DATABASE', 'forge'),
+                'username' => env('DB_USERNAME', 'forge'),
+                'password' => env('DB_PASSWORD', ''),
+                'jdbc_driver' => 'com.mysql.cj.jdbc.Driver', // Driver JDBC para MySQL
+                'jdbc_url' => 'jdbc:mysql://' . env('DB_HOST') . ':' . env('DB_PORT') . '/' . env('DB_DATABASE'),
+            ],
         ];
 
         $jasper = new PHPJasper();
