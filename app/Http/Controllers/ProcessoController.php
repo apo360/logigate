@@ -76,6 +76,7 @@ class ProcessoController extends Controller
         $paises = Pais::all();
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
+        $paises_porto = Porto::select('pais', 'pais_id')->distinct()->whereNotNull('pais')->orderBy('pais')->get();
         $portos = Porto::all();
         $ibans = IbanController::getBankDetails();
         $tipoTransp = TipoTransporte::all();
@@ -88,6 +89,7 @@ class ProcessoController extends Controller
             'paises', 
             'estancias',
             'regioes',
+            'paises_porto',
             'portos',
             'ibans',
             'tipoTransp'
@@ -391,8 +393,7 @@ class ProcessoController extends Controller
             'P_user' => Auth::user()->name,
             'Endereco_completo' => Auth::user()->empresas->first()->Endereco_completo,
             'Provincia' => Auth::user()->empresas->first()->Provincia,
-            'logotipo' => '',
-            //'logotipo' => public_path( Auth::user()->empresas->first()->Logotipo),
+            'logotipo' => Auth::user()->empresas->first()->Logotipo,
 
             // Cliente
             'Cliente' => $processo->cliente->CompanyName,

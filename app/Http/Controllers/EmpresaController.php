@@ -10,6 +10,8 @@ use App\Models\Provincia;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Aws\Exception\AwsException;
+use Aws\S3\S3Client;
 
 class EmpresaController extends Controller
 {
@@ -45,38 +47,62 @@ class EmpresaController extends Controller
 
     public function storeLogo(Request $request)
     {
+        // Validação do logotipo
         $request->validate([
-            'logotipo' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'logotipo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+        
+        $empresaId = Auth::user()->empresas->first()->id;
+
+        $empresa = Empresa::findOrFail($empresaId);
+
+        // Configurando o S3 Client
+        $s3 = new S3Client([
+            'version' => 'latest',
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key'    => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
         ]);
 
-        try {
-            if ($request->hasFile('logotipo')) {
-                // Verifique e crie as pastas se não existirem
-                $storagePath = storage_path('app/public/logos');
-                if (!file_exists($storagePath)) {
-                    if (!mkdir($storagePath, 0777, true) && !is_dir($storagePath)) {
-                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $storagePath));
-                    }
-                }
-
-                // Defina o caminho onde a imagem será salva
-                $imagePath = $request->file('logotipo')->store('logos', 'public');
-
-                // Atualize o caminho da imagem no banco de dados
-                $empresaId = Auth::user()->empresas->first()->id;
-                Empresa::where('id', $empresaId)->update(['Logotipo' => '/storage/' . $imagePath]);
-
-                // Busque a instância atualizada da empresa
-                $empresa = Empresa::find($empresaId);
-
-                return response()->json(['newLogoUrl' => asset($empresa->Logotipo)]);
-            } else {
-                return response()->json(['error' => 'Arquivo não carregado'], 400);
-            }
-        } catch (QueryException $e) {
-            return DatabaseErrorHandler::handle($e, $request);
-            return response()->json(['error' => 'Falha ao carregar o logotipo'], 400);
+        if ($empresa->logotipo) {
+            $key = str_replace(env('AWS_URL') . '/', '', $empresa->logotipo);
+        
+            $s3->deleteObject([
+                'Bucket' => env('AWS_BUCKET'),
+                'Key'    => $key,
+            ]);
         }
+        
+
+        if ($request->hasFile('logotipo')) {
+            try {
+                // Nome único para o arquivo
+                $fileName = 'Logotipos/' . uniqid() . '_' . $request->file('logotipo')->getClientOriginalName();
+
+                // Fazer upload para o S3
+                $result = $s3->putObject([
+                    'Bucket' => env('AWS_BUCKET'),
+                    'Key'    => $fileName,
+                    'SourceFile' => $request->file('logotipo')->getPathName(),
+                ]);
+
+                // URL do logotipo no S3
+                $logotipoUrl = $result['ObjectURL'];
+
+                // Atualizar a empresa no banco de dados
+                $empresa->logotipo = $logotipoUrl;
+            } catch (AwsException $e) {
+                DatabaseErrorHandler::handle($e, $request);
+                return redirect()->back()->withErrors(['logotipo' => 'Erro ao fazer upload para o S3: ' . $e->getMessage()]);
+            }
+        }
+
+        $empresa->save();
+
+        return redirect()->back()->with('success', 'Logotipo atualizada com sucesso.');
+
     }
 
     /**

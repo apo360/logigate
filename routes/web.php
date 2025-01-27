@@ -36,6 +36,7 @@ use App\Http\Controllers\EmolumentoTarifaController;
 use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
+use App\Http\Controllers\PortoController;
 use PHPJasper\PHPJasper;
 
     /** Rotas WEB */
@@ -120,6 +121,7 @@ use PHPJasper\PHPJasper;
         
         // web.php
         Route::get('get-codigo-aduaneiro/{cod_pauta}', [MercadoriaController::class, 'getCodigosAduaneiros'])->name('pauta.get');
+        Route::get('get-portos/{paisId}', [PortoController::class, 'getPortos'])->name('portos.get');
 
         // Rota o Rascunho do Licenciamento
         Route::post('licenciamento/rascunho', [LicenciamentoController::class, 'storeDraft'])->name('licenciamento.rascunho.store');
@@ -193,4 +195,6 @@ use PHPJasper\PHPJasper;
 
         //GPSTraker
         Route::get('API/Services/GpsTraker/', [GpsTrakerController::class, 'index'])->name('gps.index');
+       
+
     });

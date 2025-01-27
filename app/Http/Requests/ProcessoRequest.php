@@ -40,10 +40,7 @@ class ProcessoRequest extends FormRequest
             'BLC_Porte' => 'nullable|string|max:50',
             'Pais_origem' => 'nullable|exists:paises,id',
             'Pais_destino' => 'nullable|exists:paises,id',
-            'PortoOrigem' => [
-                    'nullable',
-                    Rule::in(Porto::pluck('sigla')->toArray()), // Certifique-se de que Porto é acessível
-            ],
+            'PortoOrigem' => 'nullable',
             'DataChegada' => 'nullable|date|after_or_equal:DataAbertura',
             'TipoTransporte' => 'nullable|exists:tipo_transportes,id',
             'registo_transporte' => 'nullable|string|max:100',

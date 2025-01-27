@@ -16,39 +16,61 @@
             <div class="card-body">
 
                 <div class="col-span-6 sm:col-span-4">
-                    <!-- Profile Photo File Input -->
-                    <input type="file" id="logotipo" name="logotipo" accept="image/*" class="hidden">
+                <form action="{{ route('empresa.logotipo') }}" method="POST" enctype="multipart/form-data">
+    @csrf
 
-                    <label for="logotipo" value="{{ __('Carregar Logotipo') }}"></label>
+    <div class="col-span-6 sm:col-span-4">
+        <!-- Input para selecionar arquivo -->
+        <input type="file" id="logotipo" name="logotipo" accept="image/*" class="hidden" onchange="previewPhoto(event)">
 
-                    <!-- Current Profile Photo -->
-                    <div class="mt-2" id="current-photo">
-                        <img src="{{ asset($empresa->Logotipo) }}" alt="{{ $empresa->Empresa }}" class="rounded-full h-40 w-40 object-cover">
-                    </div>
+        <!-- Foto atual -->
+        <div class="mt-2" id="current-photo">
+            @if ($empresa->Logotipo)
+                <img src="{{ $empresa->Logotipo }}" alt="Logotipo da Empresa" class="rounded-full h-60 w-60 object-cover">
+            @else
+                <p>{{ __('Nenhum logotipo disponível') }}</p>
+            @endif
+        </div>
 
-                    <!-- New Profile Photo Preview -->
-                    <div class="mt-2" id="new-photo-preview">
-                        <span class="block rounded-full w-40 h-40 bg-cover bg-no-repeat bg-center" id="photo-preview"></span>
-                    </div>
+        <!-- Preview do novo logotipo -->
+        <div class="mt-2" id="new-photo-preview">
+            <span class="block rounded-full w-40 h-40 bg-cover bg-no-repeat bg-center" id="photo-preview"></span>
+        </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <!-- Button to select new photo -->
-                            <a class="mt-2 btn btn-sm btn-success" id="select-new-photo">
-                                {{ __('Selecionar Imagem') }}
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- Button to remove the current photo -->
-                            @if ($empresa->Logotipo)
-                                <a class="mt-2 btn btn-sm btn-danger" id="remove-photo">
-                                    {{ __('Remover Imagem') }}
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                    <!-- Display error messages -->
-                    <div class="mt-2" id="photo-error"></div>
+        <div class="row mt-4">
+            <!-- Botão de Selecionar Imagem -->
+            <div class="col-md-6">
+                <label for="logotipo" class="btn btn-sm btn-success">
+                    {{ __('Selecionar Imagem') }}
+                </label>
+            </div>
+
+            <!-- Botão de Remover Imagem -->
+            <div class="col-md-6">
+                @if ($empresa->Logotipo)
+                    <a href="" class="btn btn-sm btn-danger">
+                        {{ __('Remover Imagem') }}
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        <!-- Botão para Gravar -->
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                {{ __('Salvar Logotipo') }}
+            </button>
+        </div>
+
+        <!-- Mensagens de Erro -->
+        <div class="mt-2 text-danger">
+            @error('logotipo')
+                <span>{{ $message }}</span>
+            @enderror
+        </div>
+    </div>
+</form>
+
                 </div>
 
                 <x-section-border />
@@ -300,7 +322,7 @@
             });
 
             // Quando a imagem for alterada, faz a submissão via AJAX
-            $('#logotipo').change(function () {
+            /*$('#logotipo').change(function () {
                 // Verifica se um arquivo foi selecionado
                 if ($('#logotipo')[0].files.length === 0) {
                     $('#photo-error').html('Por favor, selecione uma imagem.');
@@ -340,7 +362,7 @@
                         $('#photo-error').html('Erro ao carregar a imagem. Por favor, tente novamente.');
                     }
                 });
-            });
+            });*/
 
             // Validação de IBAN com base no código Logotipo banco selecionado
             $('#banco-select').change(function() {

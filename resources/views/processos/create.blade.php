@@ -8,6 +8,7 @@
     <div class="" style="padding: 10px;">
         <div class="row">
             <div class="col-9">
+            
                 <form method="POST" action="{{ route('processos.store') }}">
                     @csrf
                     <div class="card">
@@ -35,6 +36,7 @@
 
                     <div class="card">
                         <div class="card-body">
+                        <span class="text-danger" title="Campo obrigatório">* Campo Obrigatório</span> 
                             <div class="row">
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="ContaDespacho">Conta Despacho:</label>
@@ -50,22 +52,32 @@
                                 </div>
 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="estancia_id">Região Aduaneira (Estância)</label>
+                                    <label for="estancia_id">Região Aduaneira (Estância)
+                                    <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-check"></i></span>
                                         </div>
-                                        <select name="estancia_id" id="estancia_id" class="form-control">
-                                            <option value=""></option>
+                                        <select name="estancia_id" id="estancia_id" class="form-control" required>
+                                            <option value="">Selecionar</option>
                                             @foreach($estancias as $estancia)
-                                                <option value="{{ $estancia->id }}" data-code="{{ $estancia->cod_estancia }}" data-desc="{{ $estancia->desc_estancia }}">{{ $estancia->desc_estancia }}</option>
+                                                <option value="{{ $estancia->id }}" 
+                                                        data-code="{{ $estancia->cod_estancia }}" 
+                                                        data-desc="{{ $estancia->desc_estancia }}" 
+                                                        {{ old('estancia_id') == $estancia->id ? 'selected' : '' }}>
+                                                    {{ $estancia->desc_estancia }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
 
+
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="customer_id">Cliente</label>
+                                    <label for="customer_id">Cliente
+                                    <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <input class="form-control border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" list="cliente_list" id="customer_id" name="customer_id" value="{{ old('customer_id') }}" required>
                                         <div class="input-group-append">
@@ -98,15 +110,19 @@
                                 </div>  
 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="ContaDespacho">Tipo de Declaração</label>
+                                    <label for="ContaDespacho">Tipo de Declaração
+                                        <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-check"></i></span>
                                         </div>
                                         <select name="TipoProcesso" id="TipoProcesso" class="form-control rounded-md shadow-sm" required>
-                                            <option value=""></option>
+                                            <option value="">Selecionar</option>
                                             @foreach($regioes as $regiao)
-                                                <option value="{{$regiao->id}}">{{$regiao->descricao}}</option>
+                                                <option value="{{ $regiao->id }}" {{ old('TipoProcesso') == $regiao->id ? 'selected' : '' }}>
+                                                    {{ $regiao->descricao }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('TipoProcesso')
@@ -116,7 +132,9 @@
                                 </div>
 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="customer_id">(Ex)Importador</label>
+                                    <label for="customer_id">(Ex)Importador
+                                    <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <input class="form-control border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" list="exportador_list" id="exportador_id" name="exportador_id" value="{{ old('exportador_id') }}" required>
                                         <div class="input-group-append">
@@ -154,36 +172,36 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-country"></i></span>
                                         </div>
-                                        <select name="Estado" id="Estado" class="form-control rounded-md shadow-sm" >
-                                            <option value="Aberto">Aberto</option>
-                                            <option value="Em curso">Em curso</option>
-                                            <option value="Alfandega">Alfandega</option>
-                                            <option value="Desafaldegamento">Desafaldegamento</option>
-                                            <option value="Inspensão">Inspensão</option>
-                                            <option value="Terminal">Terminal</option>
-                                            <option value="Retido">Retido</option>
-                                            <option value="Finalizado">Finalizado</option>
-                                            <!-- Adicione outras opções conforme necessário -->
+                                        <select name="Estado" id="Estado" class="form-control rounded-md shadow-sm">
+                                            <option value="Aberto" {{ old('Estado') == 'Aberto' ? 'selected' : '' }}>Aberto</option>
+                                            <option value="Em curso" {{ old('Estado') == 'Em curso' ? 'selected' : '' }}>Em curso</option>
+                                            <option value="Alfandega" {{ old('Estado') == 'Alfandega' ? 'selected' : '' }}>Alfandega</option>
+                                            <option value="Desafaldegamento" {{ old('Estado') == 'Desafaldegamento' ? 'selected' : '' }}>Desafaldegamento</option>
+                                            <option value="Inspensão" {{ old('Estado') == 'Inspensão' ? 'selected' : '' }}>Inspensão</option>
+                                            <option value="Terminal" {{ old('Estado') == 'Terminal' ? 'selected' : '' }}>Terminal</option>
+                                            <option value="Retido" {{ old('Estado') == 'Retido' ? 'selected' : '' }}>Retido</option>
+                                            <option value="Finalizado" {{ old('Estado') == 'Finalizado' ? 'selected' : '' }}>Finalizado</option>
                                         </select>
                                         @error('Estado')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
+
                             </div>
                             <hr>
                             <span style="color: red;">Dados do DU</span>
                             <div class="row">
                                 <div class="col-md-3 form-group">
                                     <label for="NrDU">Nº de Ordem</label>
-                                    <input type="text" name="NrDU" class="form-control" value="" >
+                                    <input type="text" name="NrDU" class="form-control" value="{{ old('NrDU') }}" >
                                     @error('NrDU')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="col-md-3 form-group">
                                     <label for="N_Dar">Nº DAR</label>
-                                    <input type = "text" name = "N_Dar" class="form-control" value="" >
+                                    <input type = "text" name = "N_Dar" class="form-control" value="{{ old('N_Dar') }}" >
                                     @error('N_Dar')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -191,14 +209,14 @@
                             
                                 <div class="form-group col-md-3">
                                     <label for="MarcaFiscal">Marca Fiscal:</label>
-                                    <input type="text" name="MarcaFiscal" class="form-control" value="">
+                                    <input type="text" name="MarcaFiscal" class="form-control" value="{{ old('MarcaFiscal') }}">
                                     @error('MarcaFiscal')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label for="BLC_Porte">BL/C Porte:</label>
-                                    <input type="text" name="BLC_Porte" class="form-control" value="">
+                                    <input type="text" name="BLC_Porte" class="form-control" value="{{ old('BLC_Porte') }}">
                                     @error('BLC_Porte')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -208,7 +226,9 @@
                             <span style="color: red;">Descrição e Origem da Mercadoria</span>
                             <div class="row">
                                 <div class="form-group mt-4 col-md-6">
-                                    <label for="Descricao">Descrição:</label>
+                                    <label for="Descricao">Descrição
+                                    <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-edit"></i></span>
@@ -220,8 +240,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
-                                    <label for="seguro">Peso Bruto</label>
-                                    <input type="text" id="peso_bruto" name="peso_bruto" class="form-control">
+                                    <label for="peso_bruto">Peso Bruto</label>
+                                    <input type="text" id="peso_bruto" name="peso_bruto" class="form-control" value="{{ old('peso_bruto', 0.00) }}">
                                     @error('seguro')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -234,9 +254,11 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-flag"></i></span>
                                         </div>
-                                        <select name="Fk_pais" class="form-control" id="Fk_pais" >
-                                            @foreach($paises as $pais)
-                                                <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
+                                        <select name="Fk_pais" class="form-control" id="Fk_pais">
+                                            @foreach($paises_porto as $pais)
+                                                <option value="{{$pais->pais_id}}" {{ old('Fk_pais') == $pais->pais_id ? 'selected' : '' }}>
+                                                    {{$pais->pais}} {{$pais->pais_id}}
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('Fk_pais')
@@ -251,12 +273,9 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                         </div>
-                                        <x-input type="text" name="PortoOrigem" class="form-control rounded-md shadow-sm" list="porto" />
-                                        <datalist id="porto">
-                                            @foreach($portos as $porto)
-                                                <option value="{{$porto->porto}}"> {{$porto->porto}} </option>
-                                            @endforeach
-                                        </datalist>
+                                        <select name="PortoOrigem" id="PortoOrigem" class="form-control rounded-md shadow-sm">
+                                            <!-- Lista de portos será preenchida dinamicamente -->
+                                        </select>
                                         @error('PortoOrigem')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -269,7 +288,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                                         </div>
-                                        <x-input type="date" name="DataPartida" class="form-control rounded-md shadow-sm" />
+                                        <x-input type="date" name="DataPartida" class="form-control rounded-md shadow-sm" value="{{ old('DataPartida') }}" />
                                         @error('DataPartida')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -282,7 +301,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-calendar"></i></span>
                                         </div>
-                                        <x-input type="date" name="DataChegada" class="form-control rounded-md shadow-sm" />
+                                        <x-input type="date" name="DataChegada" class="form-control rounded-md shadow-sm" value="{{ old('DataChegada') }}" />
                                         @error('DataChegada')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -298,7 +317,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-edit"></i></span>
                                         </div>
-                                        <x-input type="text" name="registo_transporte" class="form-control rounded-md shadow-sm" value="Desconhecido" />
+                                        <x-input type="text" name="registo_transporte" class="form-control rounded-md shadow-sm" value="{{ old('registo_transporte') }}" />
                                         @error('registo_transporte')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -311,9 +330,11 @@
                                             <span class="input-group-text"><i class="fas fa-country"></i></span>
                                         </div>
                                         <select name="TipoTransporte" class="form-control rounded-md shadow-sm" id="TipoTransporte" required>
-                                            <option value="Desconhecido">Selecionar</option>
+                                            <option value="Desconhecido" {{ old('TipoTransporte') == 'Desconhecido' ? 'selected' : '' }}>Selecionar</option>
                                             @foreach($tipoTransp as $tipoT)
-                                                <option value="{{ $tipoT->id }}"> {{$tipoT->descricao}} </option>
+                                                <option value="{{ $tipoT->id }}" {{ old('TipoTransporte') == $tipoT->id ? 'selected' : '' }}>
+                                                    {{ $tipoT->descricao }}
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('TipoTransporte')
@@ -323,14 +344,20 @@
                                 </div>
                                 
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="nacionalidade_transporte">Nacionalidade</label>
+                                    <label for="nacionalidade_transporte" class="form-label">
+                                        Nacionalidade 
+                                        <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                         </div>
-                                        <select name="nacionalidade_transporte" class="form-control" id="nacionalidade_transporte" >
+                                        <select name="nacionalidade_transporte" class="form-control" id="nacionalidade_transporte" required aria-required="true">
+                                            <option value="">Selecionar</option>
                                             @foreach($paises as $pais)
-                                                <option value="{{$pais->id}}">{{$pais->pais}} ({{$pais->codigo}})</option>
+                                                <option value="{{ $pais->id }}" {{ old('nacionalidade_transporte') == $pais->id ? 'selected' : '' }}>
+                                                    {{ $pais->pais }} ({{ $pais->codigo }})
+                                                </option>
                                             @endforeach
                                         </select>
                                         @error('nacionalidade_transporte')
@@ -338,6 +365,7 @@
                                         @enderror
                                     </div>
                                 </div>
+
                             </div> 
                             <hr>
                             <span style="color: red;">Dados Financeiros & Contabilísticos</span>
@@ -354,11 +382,13 @@
                                     @enderror
                                 </div>
                                 <div class="form-group mt-4 col-md-4">
-                                    <label for="codigo_banco">Código do Banco</label>
+                                    <label for="codigo_banco">Código do Banco
+                                    <span class="text-danger" title="Campo obrigatório">*</span>
+                                    </label>
                                     <select name="codigo_banco" id="codigo_banco" class="form-select select2" value="{{ old('codigo_banco') }}" aria-label="Selecionar código do banco">
                                         <option value="">Selecionar</option>
                                         @foreach($ibans as $iban)
-                                            <option value="{{ $iban['code'] }}" data-code="{{ $iban['code'] }}">
+                                            <option value="{{ $iban['code'] }}" data-code="{{ $iban['code'] }}" {{ old('codigo_banco') == $iban['code'] ? 'selected' : '' }}>
                                                 {{ $iban['code'] }} - {{ $iban['fname'] }} ({{ $iban['sname'] }})
                                             </option>
                                         @endforeach
@@ -386,7 +416,7 @@
                                 </div>
                                 <div class="form-group mt-4 col-md-2">
                                     <label for="Cambio">Cambio</label>
-                                    <input type="number" name="Cambio" id="Cambio" class="form-control" value="{{ $processo->importacao->Cambio ?? 0 }}" placeholder="Insira o câmbio" aria-describedby="cambioHelp">
+                                    <input type="decimal" name="Cambio" id="Cambio" class="form-control" value="{{ old('Cambio', 0.00) }}" placeholder="Insira o câmbio" aria-describedby="cambioHelp">
                                     <small id="cambioHelp" class="form-text text-muted">Insira o valor de câmbio atual.</small>
                                     @error('Cambio')
                                         <div class="text-danger">{{ $message }}</div>
@@ -394,14 +424,14 @@
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="ValorTotal">Valor Aduaneiro</label>
-                                    <input type="decimal" name="ValorTotal" id="ValorTotal" class="form-control input-ivaAduaneiro" value="" placeholder="Insira o valor total">
+                                    <input type="decimal" name="ValorTotal" id="ValorTotal" class="form-control input-ivaAduaneiro" value="{{ old('ValorTotal') }}" placeholder="Insira o valor total">
                                     @error('ValorTotal')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="ValorAduaneiro">Valor Aduaneiro (Kz)</label>
-                                    <input type="decimal" name="ValorAduaneiro" id="ValorAduaneiro" class="form-control input-ivaAduaneiro" value="" aria-label="Valor Aduaneiro em Kz">
+                                    <input type="decimal" name="ValorAduaneiro" id="ValorAduaneiro" class="form-control input-ivaAduaneiro" value="{{ old('ValorAduaneiro') }}" aria-label="Valor Aduaneiro em Kz">
                                     @error('ValorAduaneiro')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
@@ -411,7 +441,7 @@
                             <div class="row">
                                 <div class="form-group mt-4 col-md-3">  
                                     <label for="fob_total">FOB</label>
-                                    <input type="number" id="fob_total" name="fob_total" class="form-control" placeholder="Insira o valor FOB" aria-describedby="fobHelp">
+                                    <input type="decimal" id="fob_total" name="fob_total" class="form-control" placeholder="Insira o valor FOB" aria-describedby="fobHelp" value="{{ old('fob_total') }}">
                                     <small id="fobHelp" class="form-text text-muted">Insira o valor FOB em dólares.</small>
                                     @error('fob_total')
                                         <div class="text-danger">{{ $message }}</div>
@@ -419,21 +449,21 @@
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="frete">Frete</label>
-                                    <input type="number" id="frete" name="frete" class="form-control" placeholder="Insira o valor do frete">
+                                    <input type="decimal" id="frete" name="frete" class="form-control" placeholder="Insira o valor do frete"  value="{{ old('frete') }}">
                                     @error('frete')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="seguro">Seguro</label>
-                                    <input type="number" id="seguro" name="seguro" class="form-control" placeholder="Insira o valor do seguro">
+                                    <input type="decimal" id="seguro" name="seguro" class="form-control" placeholder="Insira o valor do seguro"  value="{{ old('seguro') }}">
                                     @error('seguro')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="form-group mt-4 col-md-3">
                                     <label for="cif_total">CIF</label>
-                                    <input type="number" id="cif_total" name="cif" class="form-control" readonly>
+                                    <input type="decimal" id="cif_total" name="cif" class="form-control"  value="{{ old('cif_total') }}" readonly>
                                 </div>
                             </div>
 
@@ -766,16 +796,39 @@
 
     <script>
         $(document).ready(function() {
-            $('#PortoOrigem').on('input', function() {
-                var value = $(this).val();
-                var list = $('#porto option').map(function() { return $(this).val(); }).get();
+            // Quando o país for selecionado
+            $('#Fk_pais').change(function() {
+                var paisId = $(this).val();
                 
-                // Se o valor não estiver na lista, limpar o campo
-                if (!list.includes(value)) {
-                    $(this).val('');
-                    alert('Por favor, selecione um porto válido da lista.');
+                if (paisId) {
+                    $.ajax({
+                        url: "{{ route('portos.get', ['paisId' => ':paisId']) }}".replace(':paisId', paisId), // URL para buscar os portos
+                        type: 'GET',
+                        success: function(data) {
+                            $('#PortoOrigem').empty(); // Limpa os portos anteriores
+
+                            // Adiciona a opção padrão
+                            $('#PortoOrigem').append('<option value="">Selecionar Porto</option>');
+
+                            // Verifica se existem portos na resposta
+                            if (data.length > 0) {
+                                // Preenche os portos com a resposta
+                                $.each(data, function(index, porto) {
+                                    console.log(porto); // Verifique o conteúdo de cada item
+                                    $('#PortoOrigem').append('<option value="' + porto.porto + '">' + porto.porto + '('+porto.sigla+')' +'</option>');
+                                });
+                            } else {
+                                // Se não houver portos, exibe a mensagem
+                                $('#PortoOrigem').append('<option value="">Sem portos cadastrados</option>');
+                            }
+                            }
+                        });
+                    } else {
+                    // Se não houver país selecionado, limpa o campo de portos
+                    $('#PortoOrigem').empty().append('<option value="">Não há porto para o pais escolhido</option>');
                 }
             });
         });
     </script>
+
 </x-app-layout>
