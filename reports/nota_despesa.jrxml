@@ -1022,7 +1022,7 @@ WHERE
 			<staticText>
 				<reportElement x="0" y="88" width="218" height="18" uuid="13d7566c-253d-4f1f-a9eb-d65de9569c24"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="Sarai" size="7" isItalic="true"/>
+					<font fontName="SansSerif" size="7" isItalic="true"/>
 				</textElement>
 				<text><![CDATA[Documento processado por Computador]]></text>
 			</staticText>
@@ -1076,7 +1076,7 @@ WHERE
 			<line>
 				<reportElement x="180" y="46" width="169" height="1" uuid="ce92782b-08f8-4e87-b219-e6357f9fd2f1"/>
 			</line>
-			<textField pattern="MMMM dd, yyyy">
+			<textField pattern="EEEE, MMMM dd, yyyy">
 				<reportElement x="415" y="92" width="137" height="14" uuid="cd022333-5d6a-4040-a206-c343f96e292d"/>
 				<textElement textAlignment="Right">
 					<font size="8" isBold="true"/>
