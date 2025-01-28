@@ -55,6 +55,14 @@ class ProcessoRequest extends FormRequest
             'frete' => 'nullable|numeric|min:0|max:99999999.99',
             'seguro' => 'nullable|numeric|min:0|max:99999999.99',
             'cif' => 'nullable|numeric|min:0|max:99999999.99',
+            'peso_bruto' => 'nullable|numeric|min:0|max:99999999.99',
+            'quantidade_barris' => 'nullable|integer|min:0',
+            'data_carregamento' => 'nullable|date|after:DataAbertura',
+            'valor_barril_usd' => 'nullable|numeric|min:0|max:99999999.99',
+            'num_deslocacoes' => 'nullable|string|max:100',
+            'rsm_num' => 'nullable|string|max:100',
+            'certificado_origem' => 'nullable|string|max:100',
+            'guia_exportacao' => 'nullable|string|max:100',
         ];
 
         // Regras adicionais no caso de criação

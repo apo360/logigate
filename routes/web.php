@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\UserRoleController;
 use App\Http\Controllers\OtpController;
-use App\Http\Middleware\EnsureOtpIsVerified;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\ModuleController;
@@ -27,7 +26,6 @@ use App\Http\Controllers\ProcessoController;
 use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\UserController;
-use App\Models\Empresa;
 use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\PasswordController;
@@ -37,7 +35,6 @@ use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
 use App\Http\Controllers\PortoController;
-use PHPJasper\PHPJasper;
 
     /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
@@ -126,11 +123,10 @@ use PHPJasper\PHPJasper;
         // Rota o Rascunho do Licenciamento
         Route::post('licenciamento/rascunho', [LicenciamentoController::class, 'storeDraft'])->name('licenciamento.rascunho.store');
 
-        Route::get('customer/conta_corrente/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
+        
         Route::get('customers/{id}/conta_corrente', [CustomerController::class, 'conta'])->name('cliente.cc');
         Route::get('customers/avenca/listagem', [CustomerController::class, 'avenca_list'])->name('cliente.listagem.avenca');
         Route::get('customers/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
-        //Route::get('processos/{id}/documentos/factura', [DocumentoController::class, 'create'])->name('documentos.create');
 
         // Rota para Inserir Grupo/Categoria de Produtos
         Route::post('/produto/grupo/insert', [ProdutoController::class, 'InsertGrupo'])->name('insert.grupo.produto');
@@ -138,6 +134,7 @@ use PHPJasper\PHPJasper;
         Route::prefix('customer/conta_corrente')->group(function () {
             Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
             Route::post('/store/{cliente_id}', [ContaCorrenteController::class, 'store'])->name('conta_corrente.store');
+            Route::get('/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
         });
 
         // Rotas específicas de usuários e funções

@@ -233,7 +233,17 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-edit"></i></span>
                                         </div>
-                                        <input type="text" name="Descricao" value="{{ old('Descricao') }}" class="form-control rounded-md shadow-sm" required>
+                                        <select name="Descricao" id="Descricao"  class="form-control rounded-md shadow-sm" required>
+                                            <option value="" disabled selected>Selecione</option>
+                                            <option value="Congelados" {{ old('Descricao') == 'Congelados' ? 'selected' : '' }}>Congelados</option>
+                                            <option value="Plantas/Cereias/Sementes" {{ old('Descricao') == 'Plantas/Cereias/Sementes' ? 'selected' : '' }}>Plantas/Cereias/Sementes</option>
+                                            <option value="Maquinas/Auto" {{ old('Descricao') == 'Maquinas/Auto' ? 'selected' : '' }}>Maquinas e Automoveis</option>
+                                            <option value="Expor Crud" {{ old('Descricao') == 'Exp.Crud' ? 'selected' : '' }}>Exportação de CRUD</option>
+                                            <option value="Madeira/Papel/Livros" {{ old('Descricao') == 'Madeira/Papel/Livros' ? 'selected' : '' }}>Madeira/Papel/Livros</option>
+                                            <option value="Minerais e Metais" {{ old('Descricao') == 'Minerais e Metais' ? 'selected' : '' }}>Minerais e Metais</option>
+                                            <option value="Vestuarios" {{ old('Descricao') == 'Vestuarios' ? 'selected' : '' }}>Vestuarios...</option>
+                                            <option value="Mercadorias Diversas" {{ old('Descricao') == 'Mercadorias Diversas' ? 'selected' : '' }}>Mercadorias Diversas</option>
+                                        </select>
                                         @error('Descricao')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -308,6 +318,56 @@
                                     </div>
                                 </div>
                             </div>
+                            <!-- Torna-se visivel quando a Descrição for selecionada para "Expor Crud" -->
+                            <div id="crudFields" style="display: none;">
+                                <div class="row">
+                                    <input type="hidden" name="Descricao" value="Exportação de CRUD">
+                                    <!-- Data de Carregamento -->
+                                    <div class="col-md-4 mb-4">
+                                        <x-label for="data_carregamento" value="Data de Carregamento" />
+                                        <x-input id="data_carregamento" name="data_carregamento" type="date" class="block w-full mt-1" />
+                                    </div>
+
+                                    <!-- Quantidade de Barris -->
+                                    <div class="col-md-3 mb-4">
+                                        <x-label for="quantidade_barris" value="Quantidade de Barris" />
+                                        <x-input id="quantidade_barris" name="quantidade_barris" type="number" min="0" class="block w-full mt-1" placeholder="Exemplo: 1000" />
+                                    </div>
+
+                                    <!-- Peso Bruto -->
+                                    <div class="col-md-3 mb-4">
+                                        <x-label for="valor_barril_usd" value="Valor do Barril (USD)" />
+                                        <x-input id="valor_barril_usd" name="valor_barril_usd" type="number" step="0.01" class="block w-full mt-1" placeholder="Exemplo: 50.00" />
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <!-- Nº Deslocações -->
+                                    <div class="col-md-3 mb-4">
+                                        <x-label for="num_deslocacoes" value="Nº de Deslocações" />
+                                        <x-input id="num_deslocacoes" name="num_deslocacoes" type="number" min="0" class="block w-full mt-1" placeholder="Exemplo: 5" />
+                                    </div>
+
+                                    <!-- RSM nº -->
+                                    <div class="col-md-3 mb-4">
+                                        <x-label for="rsm_num" value="RSM Nº" />
+                                        <x-input id="rsm_num" name="rsm_num" type="text" class="block w-full mt-1" placeholder="Digite o RSM nº" />
+                                    </div>
+
+                                    <!-- Certificado de Origem Nº -->
+                                    <div class="col-md-3 mb-4">
+                                        <x-label for="certificado_origem" value="Certificado de Origem Nº" />
+                                        <x-input id="certificado_origem" name="certificado_origem" type="text" class="block w-full mt-1" placeholder="Digite o Certificado de Origem nº" />
+                                    </div>
+
+                                    <!-- Guia de Exportação -->
+                                    <div class="col-md-3 mb-4">
+                                        <x-label for="guia_exportacao" value="Guia de Exportação" />
+                                        <x-input id="guia_exportacao" name="guia_exportacao" type="text" class="block w-full mt-1" placeholder="Digite o Guia de Exportação" />
+                                    </div>
+                                </div>
+                            </div>
+
                             <hr>
                             <span style="color: red;">Dados do Transporte</span>
                             <div class="row">
@@ -374,6 +434,9 @@
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="forma_pagamento">Forma de Pagamento:</label>
                                     <select id="forma_pagamento" name="forma_pagamento" class="form-control" aria-label="Selecionar forma de pagamento">
+                                        <option value="" disabled selected>Selecione</option>
+                                        <option value="Transferência">Transferência Bancária</option>
+                                        <option value="Caixa kwanda">Caixa Única Tesouro Base Kwanda</option>
                                         <option value="RD">Pronto Pagamento</option>
                                         <option value="Outro">Outro</option>
                                     </select>
@@ -419,13 +482,6 @@
                                     <input type="decimal" name="Cambio" id="Cambio" class="form-control" value="{{ old('Cambio', 0.00) }}" placeholder="Insira o câmbio" aria-describedby="cambioHelp">
                                     <small id="cambioHelp" class="form-text text-muted">Insira o valor de câmbio atual.</small>
                                     @error('Cambio')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="ValorTotal">Valor Aduaneiro</label>
-                                    <input type="decimal" name="ValorTotal" id="ValorTotal" class="form-control input-ivaAduaneiro" value="{{ old('ValorTotal') }}" placeholder="Insira o valor total">
-                                    @error('ValorTotal')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -772,13 +828,12 @@
                 
                 var cif = fob + frete + seguro;
                 $('#cif_total').val(cif.toFixed(2));
-                $('#ValorTotal').val(cif.toFixed(2));
             }
             // Eventos de input para calcular CIF e Valor Aduaneiro em Kz
             $('#fob_total, #frete, #seguro').on('input', calcularCIF);
 
             function calcularValores() {
-                var valorAduaneiro = parseFloat($('#ValorTotal').val()) || 0;
+                var valorAduaneiro = parseFloat($('#fob_total').val()) || 0;
                 var cambio = parseFloat($('#cambio').val()) || 0;
                 
                 // Calcula Valor Aduaneiro em Kz
@@ -790,7 +845,7 @@
             }
             
             // Eventos de input para calcular os valores
-            $('#ValorTotal, #cambio').on('input', calcularValores);
+            $('#fob_total, #cambio').on('input', calcularValores);
         });
     </script>
 
@@ -828,6 +883,17 @@
                     $('#PortoOrigem').empty().append('<option value="">Não há porto para o pais escolhido</option>');
                 }
             });
+        });
+    </script>
+
+    <script>
+        document.getElementById('Descricao').addEventListener('change', function () {
+            const crudFields = document.getElementById('crudFields');
+            if (this.value === 'Expor Crud') {
+                crudFields.style.display = 'block';
+            } else {
+                crudFields.style.display = 'none';
+            }
         });
     </script>
 

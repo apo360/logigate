@@ -56,6 +56,9 @@
                                     <button class="nav-link active button" id="endereco-tab" data-bs-toggle="tab" data-bs-target="#endereco" type="button" role="tab" aria-controls="endereco" aria-selected="true">Endereço</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="aduaneiro-tab" data-bs-toggle="tab" data-bs-target="#aduaneiro" type="button" role="tab" aria-controls="aduaneiro" aria-selected="true">Info Aduaneira</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="fiscal-tab button" data-bs-toggle="tab" data-bs-target="#fiscal" type="button" role="tab" aria-controls="fiscal" aria-selected="false">Facturação</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -99,7 +102,7 @@
 
                                             <div class="col-md-4 mt-3">
                                                 <x-label for="PostalCode" value="{{ __('Código Postal') }}" />
-                                                <x-input id="PostalCode" class="form-control" type="text" name="PostalCode" value="{{ $customer->endereco->PostalCode }}" />
+                                                <x-input id="PostalCode" class="form-control" type="text" name="PostalCode" value="{{ $customer->endereco->PostalCode ?? '' }}" />
                                             </div>
                                             <div class="col-md-4 mt-3">
                                                 <x-label for="SelfBillingIndicator" value="{{ __('Indicador de Autofaturação') }}" />
@@ -147,11 +150,19 @@
                                                 <div class="form-group">
                                                     <x-label for="Province" value="{{ __('Província') }}" />
                                                     <select name="Province" id="Province" class="form-control">
-                                                        @foreach($provincias as $provincia)
-                                                            <option value="{{$provincia->Nome}}" {{ $provincia->Nome == $customer->endereco->Province ? 'selected' : '' }}>{{__($provincia->Nome)}}</option>
+                                                        <option value="" disabled {{ empty($customer->endereco->Province ?? null) ? 'selected' : '' }}>
+                                                            {{ __('Selecione uma Província') }}
+                                                        </option>
+                                                        @foreach ($provincias as $provincia)
+                                                            <option 
+                                                                value="{{ $provincia->Nome }}" 
+                                                                @selected($provincia->Nome === ($customer->endereco->Province ?? ''))>
+                                                                {{ __($provincia->Nome) }}
+                                                            </option>
                                                         @endforeach
                                                     </select>
                                                 </div>
+
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-group">
@@ -183,6 +194,45 @@
                                     </form>
                                     <!-- Fim dos campos de endereço -->
                                 </div>
+                                <div class="tab-pane fade show" id="aduaneiro" role="tabpanel" aria-labelledby="aduaneiro-tab">
+                                    <!-- Informações Aduaneiras -->
+                                    <fieldset class="mb-4">
+                                        <legend class="text-xl font-semibold text-gray-700">Informações Aduaneiras</legend>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                                        <div>
+                                            <label for="tipo_cliente" class="block font-medium text-gray-700">Tipo de Cliente *</label>
+                                            <select id="tipo_cliente" name="tipo_cliente" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-300">
+                                            <option value="" disabled selected>Selecione</option>
+                                            <option value="importador">Importador</option>
+                                            <option value="exportador">Exportador</option>
+                                            <option value="ambos">Ambos</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="mercadoria" class="block font-medium text-gray-700">Tipo de Mercadoria *</label>
+                                            <select id="mercadoria" name="mercadoria" required class="w-full border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-300">
+                                            <option value="" disabled selected>Selecione</option>
+                                            <option value="diversas">Mercadorias Diversas</option>
+                                            <option value="crud">CRUD</option>
+                                            <option value="outros">Outros</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="frequencia" class="block font-medium text-gray-700">Frequência de Operações</label>
+                                            <select id="frequencia" name="frequencia" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-300">
+                                            <option value="" disabled selected>Selecione</option>
+                                            <option value="ocasional">Ocasional</option>
+                                            <option value="mensal">Mensal</option>
+                                            <option value="anual">Anual</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="observacoes" class="block font-medium text-gray-700">Observações</label>
+                                            <textarea id="observacoes" name="observacoes" rows="4" class="w-full border-gray-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-300"></textarea>
+                                        </div>
+                                        </div>
+                                    </fieldset>
+                                </div>
                                 <div class="tab-pane fade show" id="fiscal" role="tabpanel" aria-labelledby="fiscal-tab">
                                     <div class="container">
                                         <div class="form-group">
@@ -212,7 +262,11 @@
 
                                 </div>
                                 <div class="tab-pane fade show" id="contabilidade" role="tabpanel" aria-labelledby="contabilidade-tab">
-                                    conta
+                                    Contabilidade <br>
+                                    Avença
+                                </div>
+                                <div class="tab-pane fade show" id="documento" role="tabpanel" aria-labelledby="documento-tab">
+                                    Documentos
                                 </div>
                             </div>
                         </div>

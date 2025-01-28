@@ -105,6 +105,21 @@
                                 @csrf
                                 @method('PUT')
 
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <label for="Cedula">Cedula</label>
+                                        <input type="text" class="form-control" id="Cedula" name="Cedula" value="{{ $empresa->Cedula }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="CodProcesso">Código do Processo</label>
+                                        <input type="text" class="form-control" id="CodProcesso" name="CodProcesso" value="{{ $empresa->CodProcesso }}">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="NIF">NIF</label>
+                                        <input type="text" class="form-control" id="NIF" name="NIF" value="{{ $empresa->NIF }}">
+                                    </div>
+                                </div>
+
                                 <!-- Campos de edição da empresa -->
                                 <div class="form-group">
                                     <label for="Slogan">Slogan:</label>

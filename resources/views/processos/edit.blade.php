@@ -332,23 +332,43 @@
                                 </div>
                                 <div class="form-group col-md-3">
                                     <label for="Moeda">Moeda</label>
-                                    <input 
-                                        type="text" 
-                                        name="Moeda" 
-                                        id="Moeda" 
-                                        class="form-control" 
-                                        value="{{ old('Moeda', $processo->Moeda) }}">
+                                    <input type="text" name="Moeda" id="Moeda" class="form-control" value="{{ old('Moeda', $processo->Moeda) }}">
                                 </div>
                                 <div class="form-group col-md-3">
-                                    <label for="ValorTotal">Valor Total</label>
-                                    <input 
-                                        type="text" 
-                                        name="ValorTotal" 
-                                        id="ValorTotal" 
-                                        class="form-control" 
-                                        value="{{ old('ValorTotal', $processo->ValorTotal) }}">
+                                    <label for="ValorAduaneiro">Valor Aduaneiro (Kz)</label>
+                                    <input type="decimal" name="ValorAduaneiro" id="ValorAduaneiro" class="form-control input-ivaAduaneiro" value="{{ old('ValorAduaneiro', $processo->ValorAduaneiro) }}">
                                 </div>
                             </div>
+
+                            <div class="row">
+                                <div class="form-group mt-4 col-md-3">  
+                                    <label for="fob_total">FOB</label>
+                                    <input type="decimal" id="fob_total" name="fob_total" class="form-control" placeholder="Insira o valor FOB" aria-describedby="fobHelp" value="{{ old('fob_total', $processo->fob_total) }}">
+                                    <small id="fobHelp" class="form-text text-muted">Insira o valor FOB em dólares.</small>
+                                    @error('fob_total')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="frete">Frete</label>
+                                    <input type="decimal" id="frete" name="frete" class="form-control" placeholder="Insira o valor do frete"  value="{{ old('frete', $processo->frete) }}">
+                                    @error('frete')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="seguro">Seguro</label>
+                                    <input type="decimal" id="seguro" name="seguro" class="form-control" placeholder="Insira o valor do seguro"  value="{{ old('seguro', $processo->seguro) }}">
+                                    @error('seguro')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="cif_total">CIF</label>
+                                    <input type="decimal" id="cif_total" name="cif" class="form-control"  value="{{ old('cif_total', $processo->cif_total) }}">
+                                </div>
+                            </div>
+
                             <x-button type="submit" class="btn btn-primary">
                                 Actualizar Processo
                             </x-button>
@@ -481,11 +501,30 @@
                                 </div>
 
                                 <div class="col-md-4 mt-4">
-                                    <label for="honorario">Honorário</label>
+                                    <label for="honorario">Honorários</label>
                                     <input type="decimal" name="honorario" class="form-control total-input" value="{{ old('honorario', $emolumentoTarifa->honorario ?? '0.00') }}">
                                 </div>
-
                             </div>
+
+                            <div class="row">
+                            <div class="col-md-3 mt-4">
+                                    <label for="emolumentos">Emolumentos Gerais</label>
+                                    <input type="decimal" name="emolumentos" class="form-control total-input" value="{{ old('emolumentos', $emolumentoTarifa->emolumentos ?? '0.00') }}">
+                                </div>
+                                <div class="col-md-3 mt-4">
+                                    <label for="iva_aduaneiro">IVA Aduaneiro</label>
+                                    <input type="decimal" name="iva_aduaneiro" class="form-control total-input" value="{{ old('iva_aduaneiro', $emolumentoTarifa->iva_aduaneiro ?? '0.00') }}">
+                                </div>
+                                <div class="col-md-3 mt-4">
+                                    <label for="impostoEstatistico">Imposto Estatístico</label>
+                                    <input type="decimal" name="impostoEstatistico" class="form-control total-input" value="{{ old('impostoEstatistico', $emolumentoTarifa->impostoEstatistico ?? '0.00') }}">
+                                </div>
+                                <div class="col-md-3 mt-4">
+                                    <label for="honorario_iva">IVA Honorários</label>
+                                    <input type="decimal" name="honorario_iva" class="form-control total-input" value="{{ old('honorario_iva', $emolumentoTarifa->honorario_iva ?? '0.00') }}">
+                                </div>
+                            </div>
+
                             <button type="submit" class="btn btn-primary">{{ isset($emolumentoTarifa) ? 'Actualizar' : 'Criar' }}</button>
                         </form>
                     </div>

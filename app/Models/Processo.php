@@ -59,6 +59,14 @@ class Processo extends Model implements Auditable
         'frete',
         'seguro',
         'cif',
+        'peso_bruto',
+        'quantidade_barris',
+        'data_carregamento',
+        'valor_barril_usd',
+        'num_deslocacoes',
+        'rsm_num',
+        'certificado_origem',
+        'guia_exportacao',
     ];
 
     protected $dates = [
