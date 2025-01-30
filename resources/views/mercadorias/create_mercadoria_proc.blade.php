@@ -104,7 +104,7 @@
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label for="Peso" class="form-label">Peso (Kg)</label>
-                                <input type="number" class="form-control" id="Peso" name="Peso" step="0.01" placeholder="Ex.: 500.50">
+                                <input type="number" class="form-control" id="Peso" name="Peso" step="0.01" placeholder="Ex.: 500.50" value="0">
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label for="volume" class="form-label">Volume (m³)</label>

@@ -516,7 +516,7 @@ class ProcessoController extends Controller
             'NIF' => Auth::user()->empresas->first()->NIF,
             'P_user' => Auth::user()->name,
             'Endereco_completo' => Auth::user()->empresas->first()->Endereco_completo  ?? '',
-            'Provincia' => Auth::user()->empresas->first()->Provincia  ?? '',
+            'Provincia' => Auth::user()->empresas->first()->provincia->Nome  ?? '',
             'logotipo' => Auth::user()->empresas->first()->Logotipo,
 
             // Cliente

@@ -455,7 +455,7 @@
                         </li>
                         <li class="mb-2">
                             <a class="dropdown-item btn btn-sm btn-warning" href="{{ route('processos.print', $processo->id) }}" target="_blank">
-                                <i class="fas fa-print"></i> {{ __('requisição') }}
+                                <i class="fas fa-print"></i> {{ __('Carta Diversa') }}
                             </a>
                         </li>
                         <li class="mb-2"> <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">

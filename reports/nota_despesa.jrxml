@@ -97,7 +97,7 @@ WHERE
 		<variableExpression><![CDATA[$P{direitos}+$P{emolumentos}+$P{iva_aduaneiro}+$P{iec}+$P{impostoEstatistico}+$P{lmc}+$P{carga_descarga}+$P{selos}+$P{frete}+$P{terminal}+$P{porto}+$P{caucao}+$P{honorario}+$P{honorario_iva}+$P{deslocacao}+$P{inerentes}+$P{navegacao}]]></variableExpression>
 	</variable>
 	<variable name="total_moeda" class="java.lang.Float">
-		<variableExpression><![CDATA[($P{direitos}+$P{emolumentos}+$P{iva_aduaneiro}+$P{iec}+$P{impostoEstatistico}+$P{lmc}+$P{carga_descarga}+$P{selos}+$P{frete}+$P{terminal}+$P{porto}+$P{caucao}+$P{honorario}+$P{honorario_iva}+$P{deslocacao}+$P{inerentes}+$P{navegacao})/$P{Cambio}]]></variableExpression>
+		<variableExpression><![CDATA[$P{guia_fiscal}/$P{Cambio}]]></variableExpression>
 		<initialValueExpression><![CDATA[0.00]]></initialValueExpression>
 	</variable>
 	<background>
@@ -1052,7 +1052,7 @@ WHERE
 				<textElement textAlignment="Right">
 					<font size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$V{TotalDespesa}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{guia_fiscal}]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement x="383" y="19" width="170" height="1" uuid="323175c3-ed70-47d1-9af2-723051835cdc"/>
