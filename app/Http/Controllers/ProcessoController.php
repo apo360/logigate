@@ -331,7 +331,7 @@ class ProcessoController extends Controller
             ->whereHas('emolumentoTarifa', function ($query) {
                 $query->whereNotNull('honorario')->where('honorario', '>=', 0);
             })
-            ->where('Estado', '!=', 'finalizado')
+            ->where('Estado', '!=', 'finalizado')->where('empresa_id', Auth::user()->empresas->first()->id)
             ->get();
 
         return response()->json($processos, 200);

@@ -91,16 +91,16 @@
                                                 <option value="Finalizado">Finalizado</option>
                                             </select>
                                         </div>
-                                    </div>
+                                    </div> 
                                 </li>
 
                                 <li class="list-group-item">
                                     <div class="row">
                                         <div class="col-md-6">
-                                        <strong>Data de Abertura do Processo:</strong> <br> {{ $processo->created_at->format('d/m/Y') }}
+                                        <strong>Abertura do Processo:</strong> <br> {{ $processo->created_at->format('d/m/Y') }}
                                         </div>
                                         <div class="col-md-6">
-                                        <strong>Data do Fecho do Processo:</strong> <br> {{ $processo->DataFecho }}
+                                        <strong>Fecho do Processo:</strong> <br> {{ $processo->DataFecho }}
                                         </div>
                                     </div>
                                     

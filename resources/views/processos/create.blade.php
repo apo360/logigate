@@ -55,18 +55,6 @@
                         <span class="text-danger" title="Campo obrigatório">* Campo Obrigatório</span> 
                         <input type="hidden" name="id_rascunho" id="id_rascunho">
                             <div class="row">
-                                <div class="form-group mt-4 col-md-4">
-                                    <label for="ContaDespacho">Conta Despacho:</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-check"></i></span>
-                                        </div>
-                                        <x-input type="text" name="ContaDespacho" value="{{ old('ContaDespacho') }}" class="form-control" />
-                                        @error('ContaDespacho')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
 
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="estancia_id">Região Aduaneira (Estância)
