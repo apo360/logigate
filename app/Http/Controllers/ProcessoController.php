@@ -15,6 +15,8 @@ use App\Models\PautaAduaneira;
 use App\Models\Porto;
 use App\Models\Processo;
 use App\Models\EmolumentoTarifa;
+use App\Models\MercadoriaAgrupada;
+use App\Models\ProcessoDraft;
 use App\Models\views\ProcessosView;
 use App\Models\RegiaoAduaneira;
 use App\Models\TipoTransporte;
@@ -36,15 +38,22 @@ class ProcessoController extends Controller
      */
     public function index(Request $request)
     {
+        $empresa = Auth::user()->empresas->first();
+        
+        if (!$empresa) {
+            return redirect()->back()->with('error', 'Nenhuma empresa associada.');
+        }
+
         $processos = Processo::query()
+            ->where('empresa_id', $empresa->id)
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('NrProcesso', 'like', "%{$search}%")
-                      ->orWhere('CompanyName', 'like', "%{$search}%");
+                    ->orWhere('CompanyName', 'like', "%{$search}%")
+                    ->orWhere('DataAbertura', 'like', "%{$search}%");
                 });
             })
-            ->where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Paginação com 10 itens por página
-
+            ->orderBy('DataAbertura', 'desc')->get(); // Paginação correta
         return view('processos.index', compact('processos'));
     }
 
@@ -71,6 +80,7 @@ class ProcessoController extends Controller
      */
     public function create()
     {
+        $empresa = Auth::user()->empresas->first();
         $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca os Clientes
         $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
         $paises = Pais::all();
@@ -80,6 +90,7 @@ class ProcessoController extends Controller
         $portos = Porto::all();
         $ibans = IbanController::getBankDetails();
         $tipoTransp = TipoTransporte::all();
+        $processos_drafts = ProcessoDraft::where('empresa_id', $empresa->id)->orderBy('DataAbertura', 'desc')->get();
 
         // Retornar uma view com o formulário para criar um novo processo
         return view('processos.create', 
@@ -92,7 +103,8 @@ class ProcessoController extends Controller
             'paises_porto',
             'portos',
             'ibans',
-            'tipoTransp'
+            'tipoTransp',
+            'processos_drafts'
         ));
     }
 
@@ -109,31 +121,25 @@ class ProcessoController extends Controller
 
             DB::beginTransaction();
 
-            // Verifica o botão clicado para definir a tabela
-            $tabela = $request->input('action') === 'draft' ? 'processos_draft' : 'processos';
-
-            // Define a tabela e cria o registro
-            $processo = new Processo();
-            $processo->setTable($tabela);
             // Cria o processo e obtém a instância completa
-            $novoProcesso = $processo->create($processo_request);
+            $novoProcesso = Processo::create($processo_request);
+
+            // Após cria o processos definitivo, deve apagar o rascunho
+            $rascunho = $request->input('id_rascunho');
+            $draft = new ProcessoDraftController();
+            $draft->destroy($rascunho);
 
             DB::commit();
 
-            if($tabela === 'draft'){
-                return redirect()->back()->with('success', 'Salvo como Rascunho!');
-            } else{
-                // Redirecione para a página de edição de processos com uma mensagem de sucesso
-                return redirect()->route('processos.edit', $novoProcesso->id)->with('success', 'Processo inserido com sucesso!');
-            }
+            // Redirecione para a página de edição de processos com uma mensagem de sucesso
+            return redirect()->route('processos.edit', $novoProcesso->id)->with('success', 'Processo inserido com sucesso!');
+
         } catch (QueryException $e) {
             DB::rollBack();
             return DatabaseErrorHandler::handle($e, $request);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'message' => 'Erro inesperado: ' . $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Erro inesperado: ' . $e->getMessage(),], 500);
         }
     }
 
@@ -146,10 +152,11 @@ class ProcessoController extends Controller
     public function show($processoID)
     {
         $processo = Processo::with('mercadorias')->findOrFail($processoID);
+        $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id',$processoID)->get();
 
         $pautaAduaneira = PautaAduaneira::all();
 
-        return view('processos.show', compact('processo', 'pautaAduaneira'));
+        return view('processos.show', compact('processo', 'pautaAduaneira', 'mercadoriasAgrupadas'));
     }
 
     /**
@@ -212,6 +219,123 @@ class ProcessoController extends Controller
         }
     }
 
+    /**
+     * Função para finalizar o processo
+     */
+    public function processoFinalizar($processoID)
+    {
+        $processo = Processo::find($processoID);
+
+        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
+
+        // Verificar se o processo existe
+        if (!$processo) {
+            Log::error('Processo não encontrado.', [
+                'processo_id' => $processoID,
+                'user_id' => Auth::user()->id,
+                'timestamp' => now(),
+            ]);
+            return response()->json(['error' => 'Processo não encontrado'], 404);
+        }
+
+        // Validar os campos obrigatórios
+        $erros = [];
+        if (empty($processo->NrDU)) {
+            $erros[] = 'O campo NrDU é obrigatório.';
+        }
+        if (empty($processo->BLC_Porte)) {
+            $erros[] = 'O campo BLC_Porte é obrigatório.';
+        }
+        if (empty($processo->ValorAduaneiro)) {
+            $erros[] = 'O campo ValorAduaneiro é obrigatório.';
+        }
+        if (empty($processo->cif)) {
+            $erros[] = 'O campo CIF é obrigatório.';
+        }
+        if (empty($processo->Cambio)) {
+            $erros[] = 'O campo Cambio é obrigatório.';
+        }
+
+        // Verificar se há pelo menos uma mercadoria
+        if ($processo->mercadorias()->count() == 0) {
+            $erros[] = 'Deve haver pelo menos uma mercadoria associada ao processo.';
+        }
+
+        // Verificar o emolumentoTarifa->honorario
+        if (is_null($emolumentoTarifa->honorario) || $emolumentoTarifa->honorario < 0) {
+            $erros[] = 'Os campos Honorários e Emolumentos Tarifa não podem ser nulo ou negativo.';
+        }
+
+        // Retornar erros, se existirem
+        if (count($erros) > 0) {
+            // Registrar os erros nos logs
+            Log::error('Erros ao finalizar o processo:', [
+                'processo_id' => $processoID, // Supondo que você tenha o ID do processo
+                'erros' => $erros,
+                'user_id' => Auth::user()->id ?? 'Usuário não autenticado',
+                'timestamp' => now()
+            ]);
+            return response()->json(['errors' => $erros], 422);
+            
+        }
+
+        // Atualizar o estado para finalizado
+        $processo->Estado = 'finalizado';
+        $processo->DataFecho = now();
+
+        // Gerar o próximo número de ContaDespacho
+        $processo->ContaDespacho = $this->gerarContaDespachoSequencial();
+
+        // Salvar as alterações
+        $processo->save();
+
+        return response()->json(['message' => 'Processo finalizado com sucesso'], 200);
+    }
+
+    /**
+     * Gera o próximo número sequencial para o campo ContaDespacho
+     *
+     * @return string O novo valor para ContaDespacho no formato CCD-xxx/ano
+     */
+    private function gerarContaDespachoSequencial()
+    {
+        $anoCorrente = date('Y'); // Obtém o ano atual
+        $ultimaConta = Processo::whereYear('created_at', $anoCorrente)
+            ->whereNotNull('ContaDespacho')
+            ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(ContaDespacho, '/', 1), '-', -1) AS UNSIGNED) DESC")
+            ->first();
+
+        // Determinar o próximo número sequencial
+        $sequencial = 1;
+        if ($ultimaConta) {
+            // Extrair o número sequencial da última ContaDespacho
+            preg_match('/\d+/', explode('/', $ultimaConta->ContaDespacho)[0], $match);
+            $sequencial = isset($match[0]) ? (int) $match[0] + 1 : 1;
+        }
+
+        // Formatar o número sequencial com zeros à esquerda
+        $numeroFormatado = str_pad($sequencial, 3, '0', STR_PAD_LEFT);
+
+        // Retornar o formato completo da ContaDespacho
+        return "CCD-{$numeroFormatado}/{$anoCorrente}";
+    }
+
+    public function processosNaoFinalizados()
+    {
+        $processos = Processo::whereNotNull('NrDU')
+            ->whereNotNull('BLC_Porte')
+            ->whereNotNull('ValorAduaneiro')
+            ->whereNotNull('cif')
+            ->whereNotNull('Cambio')
+            ->whereHas('mercadorias')
+            ->whereHas('emolumentoTarifa', function ($query) {
+                $query->whereNotNull('honorario')->where('honorario', '>=', 0);
+            })
+            ->where('Estado', '!=', 'finalizado')
+            ->get();
+
+        return response()->json($processos, 200);
+    }
 
     /**
      * Remove the specified resource from storage.
@@ -406,8 +530,8 @@ class ProcessoController extends Controller
             'ContaDespacho' => $processo->ContaDespacho  ?? '',
             'Cambio' => $processo->Cambio ?? '0.00',
             'ValorAduaneiro' => $processo->ValorAduaneiro  ?? '0.00',
-            'Fob_total' => $processo->Fob_total  ?? '0.00',
-            'Moeda' => $processo->Moeda  ?? '0.00',
+            'Fob_total' => $processo->cif  ?? '0.00',
+            'Moeda' => $processo->Moeda  ?? '',
             'NrDU' => $processo->NrDU  ?? '',
             'N_Dar' => $processo->N_Dar  ?? '',
             'DataAbertura' => $processo->DataAbertura ?? '',

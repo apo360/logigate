@@ -98,124 +98,145 @@
                 </div>
             </div>
         </div>
-        
-        <div class="card">
-            <div class="card-header">
-                <div class="float-left">
-                    <div class="btn-group">
-                        <a href="{{ route('licenciamentos.exportCsv') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-csv"></i> CSV</a>
-                        <a href="{{ route('licenciamentos.exportExcel') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-excel"></i> Excel</a>
-                        <a href="" class="btn btn-sm btn-default"><i class="fas fa-file-pdf"></i> PDF</a>
+
+        <div class="flex row border border-red-500">
+            <!-- Conteúdo principal -->
+            <div class="col-md-10 bg-gray-100 p-4 border border-blue-500">
+                <!-- Conteúdo da página -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="float-left">
+                            <div class="btn-group">
+                                <a href="{{ route('licenciamentos.exportCsv') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-csv"></i> CSV</a>
+                                <a href="{{ route('licenciamentos.exportExcel') }}" class="btn btn-sm btn-default"> <i class="fas fa-file-excel"></i> Excel</a>
+                                <a href="" class="btn btn-sm btn-default"><i class="fas fa-file-pdf"></i> PDF</a>
+                            </div>
+                        </div>
+                        <div class="float-right">
+                            <span>Nº de Processos: {{count($processos)}}</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Tabela de Processos -->
+                        <table class="table table-hover" id="ProcessoTable">
+                            <thead>
+                                <tr>
+                                    
+                                    <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'NrProcesso', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Número do Processo</a></th>
+                                    <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'TipoProcesso', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Tipo de Processo</a></th>
+                                    <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'Situacao', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Estado</a></th>
+                                    <th>Origem</th>
+                                    <th>Valor Aduaneiro</th>
+                                    <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'DataAbertura', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Data de Abertura</a></th>
+                                    <th>Factura</th>
+                                    <th>Acções</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($processos as $processo)
+                                    <tr>
+                                        <td>
+                                            <div class="text-wrap">
+                                                <a href="{{ route('customers.show', $processo->cliente->id) }}">
+                                                    {{ $processo->cliente->CompanyName }}
+                                                </a>
+                                                @if($processo->RefCliente)
+                                                    <small>({{ $processo->RefCliente }})</small>
+                                                @endif
+                                                <br>
+                                                <span class="badge bg-success mt-1">
+                                                    <a href="{{ route('processos.show', $processo->id) }}">
+                                                        {{ $processo->NrProcesso }}
+                                                    </a>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>{{ $processo->tipoProcesso->descricao }}</td>
+                                        <td>
+                                            <span class="badge {{ $processo->Situacao == 'Aberto' ? 'badge-success' : ($processo->Situacao == 'Desembaraçado' ? 'badge-warning' : 'badge-danger') }}">
+                                                {{ $processo->Estado }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="porto-origem">
+                                                <span class="pais-codigo" data-toggle="tooltip" title="{{ $processo->PortoOrigem }}">
+                                                    <span class="flag-icon flag-icon-{{ strtolower($processo->paisOrigem->codigo ?? '') }}"></span>
+                                                    {{ $processo->PortoOrigem }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {{ number_format($processo->ValorAduaneiro, 2, ',', '.') }} kz <br>
+                                            <small>({{ $processo->cif }} {{ $processo->Moeda }})</small>
+                                        </td>
+                                        <td>
+                                            {{ $processo->DataAbertura }} <br>
+                                            <small>
+                                                <span style="color: darkorange;">0</span> Semanas <span style="color: darkorange;">0</span> dias atrás
+                                            </small>
+                                        </td>
+                                        <!-- Exibir status da fatura -->
+                                        @if($processo->procLicenFaturas->isNotEmpty())
+                                            @php
+                                                $statusFatura = $processo->procLicenFaturas->last()->status_fatura;
+                                            @endphp
+                                            <td>{{ ucfirst($statusFatura) }} <br>
+                                                <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span>
+                                            </td>
+                                        @else
+                                            <td>{{ __('Sem Factura') }}</td>
+                                        @endif
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <div class="btn-group" role="group">
+                                                    <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Opções
+                                                    </button>
+                                                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                                        <li><a href="{{ route('processos.show', $processo->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Visualizar</a></li>
+                                                        <li><a href="{{ route('processos.edit', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
+                                                        <li><a href="" class="dropdown-item">  <i class="fas fa-file-xml"></i> DU Electronico</a></li>
+                                                        <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Factura</a></li>
+                                                        <li>
+                                                            <form action="{{ route('processos.destroy', $processo->id) }}" method="POST" style="display: inline-block;">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('processos.destroy', $processo->id) }}"> <i class="fas fa-trash"></i> Finalizar </button>
+                                                            </form>
+                                                        </li>
+
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center">Nenhum processo encontrado</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div class="float-right">
-                    <span>Nº de Processos: {{count($processos)}}</span>
+            </div>
+
+            <!-- Quadro de notificações (O Quadro só aparece quando existir notificações de processos) -->
+            <div class="card col-md-2 bg-white shadow-lg p-4 border border-green-500 hidden" id="quadro-notificacoes-container" style="overflow-y: auto; max-height: 100%;">
+                <div class="card-header">
+                        <span class="card-title"> <i class="fas fa-info-circle"></i> Notificações</span>
+                </div>
+                <div class="card-body">
+                    <div id="quadro-notificacoes">
+                        <!-- Notificações carregadas via AJAX -->
+                        <p class="text-gray-500">Carregando notificações...</p>
+                    </div>
                 </div>
             </div>
-
-            <div class="card-body">
-                <!-- Tabela de Processos -->
-                <table class="table table-hover" id="ProcessoTable">
-                    <thead>
-                        <tr>
-                            
-                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'NrProcesso', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Número do Processo</a></th>
-                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'TipoProcesso', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Tipo de Processo</a></th>
-                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'Situacao', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Estado</a></th>
-                            <th>Origem</th>
-                            <th>Valor Aduaneiro</th>
-                            <th><a href="?{{ http_build_query(array_merge(request()->all(), ['sort_by' => 'DataAbertura', 'sort_direction' => request('sort_direction') === 'asc' ? 'desc' : 'asc'])) }}">Data de Abertura</a></th>
-                            <th>Factura</th>
-                            <th>Acções</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($processos as $processo)
-                            <tr>
-                                <td>
-                                    <div class="text-wrap">
-                                        <a href="{{ route('customers.show', $processo->cliente->id) }}">
-                                            {{ $processo->cliente->CompanyName }}
-                                        </a>
-                                        @if($processo->RefCliente)
-                                            <small>({{ $processo->RefCliente }})</small>
-                                        @endif
-                                        <br>
-                                        <span class="badge bg-success mt-1">
-                                            <a href="{{ route('processos.show', $processo->id) }}">
-                                                {{ $processo->NrProcesso }}
-                                            </a>
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>{{ $processo->tipoProcesso->descricao }}</td>
-                                <td>
-                                    <span class="badge {{ $processo->Situacao == 'Aberto' ? 'badge-warning' : ($processo->Situacao == 'Desembaraçado' ? 'badge-success' : 'badge-danger') }}">
-                                        {{ $processo->Estado }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="porto-origem">
-                                        <span class="pais-codigo" data-toggle="tooltip" title="{{ $processo->PortoOrigem }}">
-                                            <span class="flag-icon flag-icon-{{ strtolower($processo->codigo) }}"></span>
-                                            {{ $processo->PortoOrigem }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    {{ number_format($processo->ValorAduaneiro, 2, ',', '.') }} kz <br>
-                                    <small>({{ $processo->cif }} {{ $processo->Moeda }})</small>
-                                </td>
-                                <td>
-                                    {{ $processo->DataAbertura }} <br>
-                                    <small>
-                                        <span style="color: darkorange;">0</span> Semanas <span style="color: darkorange;">0</span> dias atrás
-                                    </small>
-                                </td>
-                                <!-- Exibir status da fatura -->
-                                @if($processo->procLicenFaturas->isNotEmpty())
-                                    @php
-                                        $statusFatura = $processo->procLicenFaturas->last()->status_fatura;
-                                    @endphp
-                                    <td>{{ ucfirst($statusFatura) }} <br>
-                                        <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span>
-                                    </td>
-                                @else
-                                    <td>{{ __('Sem Factura') }}</td>
-                                @endif
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <div class="btn-group" role="group">
-                                            <button id="btnGroupDrop1" type="button" class="btn btn-sm btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Opções
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                                                <li><a href="{{ route('processos.show', $processo->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Visualizar</a></li>
-                                                <li><a href="{{ route('processos.edit', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
-                                                <li><a href="" class="dropdown-item">  <i class="fas fa-file-xml"></i> DU Electronico</a></li>
-                                                <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Factura</a></li>
-                                                <li>
-                                                    <form action="{{ route('processos.destroy', $processo->id) }}" method="POST" style="display: inline-block;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-action="{{ route('processos.destroy', $processo->id) }}"> <i class="fas fa-trash"></i> Eliminar </button>
-                                                    </form>
-                                                </li>
-
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">Nenhum processo encontrado</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
         </div>
+
+        
     </div>
 
     <!-- Inclua o JavaScript do Bootstrap Tooltip -->
@@ -301,10 +322,15 @@
 
     <script>
         $(function () {
-            $("#example1").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false, "paging": true, "info": true,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
-            }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+            $("#ProcessoTable").DataTable({
+                "responsive": true,
+                "lengthChange": false,
+                "autoWidth": false,
+                "paging": true,
+                "info": true,
+                "searching": false, // Desativa a pesquisa
+                "ordering": false // Desativa a ordenação
+            }).container().appendTo('#example1_wrapper .col-md-6:eq(0)');
         });
     </script>
 
@@ -341,4 +367,53 @@
             });
         }
     </script>
+    
+    <script>
+$(document).ready(function () {
+    function carregarNotificacoesPopup() {
+        $.ajax({
+            url: 'processo/nao-finalizados', // Endpoint para buscar notificações
+            method: 'GET',
+            success: function (data) {
+                if (data.length > 0) {
+                    let notificacoesHtml = '';
+
+                    data.forEach(function (processo) {
+                        notificacoesHtml += `
+                            <a href="processos/${processo.id}">
+                                <div class="p-2 bg-gradient-to-r from-red-200 via-red-300 to-red-500 rounded-lg mb-4 shadow-lg hover:shadow-2xl transition-all duration-300">
+                                    <p class="text-md font-semibold text-green"><strong>Processo:</strong> ${processo.NrProcesso}</p>
+                                    <p class="text-sm text-green"><strong>DU:</strong> ${processo.NrDU}</p>
+                                    <p class="text-sm text-black mb-2"><strong>Descrição:</strong> ${processo.Descricao || 'Sem descrição'}</p>
+                                    <div class="flex items-center space-x-2">
+                                        <p class="text-sm text-yellow-300"><strong>Valor Aduaneiro:</strong> ${processo.ValorAduaneiro} Kz</p>
+                                        <div class="flex-grow"></div>
+                                        <span class="text-xs text-gray-200 italic">Atualizado há x minutos</span>
+                                    </div>
+                                </div>
+                            </a>
+                        `;
+                    });
+
+                    // Atualizar o conteúdo do quadro de notificações
+                    $('#quadro-notificacoes').html(notificacoesHtml);
+
+                    // Exibir o quadro de notificações
+                    $('#quadro-notificacoes-container').removeClass('hidden');
+                } else {
+                    // Esconder o quadro se não houver notificações
+                    $('#quadro-notificacoes-container').addClass('hidden');
+                }
+            },
+            error: function (err) {
+                console.error('Erro ao carregar notificações:', err);
+            }
+        });
+    }
+
+    // Chamar a função ao carregar a página
+    carregarNotificacoesPopup();
+});
+</script>
+
 </x-app-layout>

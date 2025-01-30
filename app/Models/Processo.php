@@ -25,6 +25,7 @@ class Processo extends Model implements Auditable
     protected $table;
 
     protected $fillable = [
+        'id',
         'NrProcesso',
         'ContaDespacho',
         'RefCliente',
@@ -120,7 +121,7 @@ class Processo extends Model implements Auditable
                 Log::info('Alteração no processo:', $log); // Ou salve em uma tabela de auditoria.
             }
 
-            if ($processo->Estado === 'Concluído' && $processo->isDirty('Estado')) {
+            if ($processo->Estado === 'concluido' && $processo->isDirty('Estado')) {
                 throw new \Exception('Não é permitido alterar o estado de um processo concluído.');
             }
 
@@ -222,6 +223,15 @@ class Processo extends Model implements Auditable
     {
         return $this->hasMany(ProcessoLicenciamentoMercadoria::class, 'processo_id');
     }
+
+    /**
+     * Relacionamento com as Tarifas e Emolumentos
+     */
+
+     public function emolumentoTarifa()
+     {
+        return $this->belongsTo(EmolumentoTarifa::class, 'id', 'processo_id');
+     }
 
     /**
      * Gera um novo código de processo sequencial a cada ano.

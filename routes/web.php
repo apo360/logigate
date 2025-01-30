@@ -35,6 +35,8 @@ use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
 use App\Http\Controllers\PortoController;
+use App\Http\Controllers\ProcessoDraftController;
+use App\Models\ProcessoDraft;
 
     /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
@@ -91,6 +93,7 @@ use App\Http\Controllers\PortoController;
             'modulos' => ModuleController::class,
             'avenca' => CustomerAvencaController::class,
             'emolumento_tarifas' => EmolumentoTarifaController::class,
+            'processos-drafts' => ProcessoDraftController::class,
         ]);
 
         Route::post('customer/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);
@@ -162,6 +165,10 @@ use App\Http\Controllers\PortoController;
         Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
         Route::get('licenciamento/export-excel', [LicenciamentoController::class, 'exportExcel'])->name('licenciamentos.exportExcel');
         Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
+        Route::post('/processo/finalizar/{processoID}', [ProcessoController::class, 'processoFinalizar'])->name('processo.finalizar');
+        Route::get('/processo/nao-finalizados', [ProcessoController::class, 'processosNaoFinalizados']);
+
+
 
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
         Route::get('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');

@@ -1,4 +1,20 @@
 <x-app-layout>
+    <style>
+        /* Espaçamento entre os botões */
+        .text-blue-600, .text-red-600 {
+            margin-right: 10px; /* Adiciona espaçamento entre os botões */
+        }
+
+        /* Adicionando espaçamento entre o conteúdo e o rodapé */
+        li p:last-child {
+            margin-top: 10px; /* Dá um pouco mais de espaço ao usuário e data */
+        }
+
+        /* Certificando-se de que os botões não se sobreponham aos textos */
+        .btn-sm {
+            margin-top: 5px; /* Dê uma pequena margem superior para os botões */
+        }
+    </style>
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Pesquisar Processos', 'url' => route('processos.index')],
@@ -9,7 +25,7 @@
         <div class="row">
             <div class="col-9">
             
-                <form method="POST" action="{{ route('processos.store') }}">
+                <form method="POST" action="{{ route('processos.store') }}" id="processoIn">
                     @csrf
                     <div class="card">
                         <div class="card-header">
@@ -23,9 +39,9 @@
                                     <button type="submit" name="action" value="submit" class="btn btn-primary">
                                         <i class="fas fa-user-plus btn-icon" style="color: #0170cf;"></i> {{ __('Salvar') }}
                                     </button>
-                                    <button type="submit" name="action" value="draft" class="btn btn-secondary" title="Ao clicar o processo será um Rascunho!">
+                                    <a href="#" id="draft" class="btn btn-secondary" title="Ao clicar o processo será um Rascunho!">
                                         Salvar como Rascunho
-                                    </button>
+                                    </a>
                                     <a href="#" id="add-new-exportdor" class="btn btn-default" data-toggle="modal" data-target="#newExportadorModal" title="Adicionar ficheiro de importação de um Processo">
                                         Importar XML
                                     </a>
@@ -37,6 +53,7 @@
                     <div class="card">
                         <div class="card-body">
                         <span class="text-danger" title="Campo obrigatório">* Campo Obrigatório</span> 
+                        <input type="hidden" name="id_rascunho" id="id_rascunho">
                             <div class="row">
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="ContaDespacho">Conta Despacho:</label>
@@ -233,17 +250,19 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text"><i class="fas fa-edit"></i></span>
                                         </div>
-                                        <select name="Descricao" id="Descricao"  class="form-control rounded-md shadow-sm" required>
-                                            <option value="" disabled selected>Selecione</option>
-                                            <option value="Congelados" {{ old('Descricao') == 'Congelados' ? 'selected' : '' }}>Congelados</option>
+                                        <input type="text" name="Descricao" class="form-control rounded-md shadow-sm" list = "list_desc" required >
+                                        <datalist id="list_desc" id="Descricao">
+                                            <option value="Congelados"{{ old('Descricao') == 'Congelados' ? 'selected' : '' }}>Congelados</option>
                                             <option value="Plantas/Cereias/Sementes" {{ old('Descricao') == 'Plantas/Cereias/Sementes' ? 'selected' : '' }}>Plantas/Cereias/Sementes</option>
                                             <option value="Maquinas/Auto" {{ old('Descricao') == 'Maquinas/Auto' ? 'selected' : '' }}>Maquinas e Automoveis</option>
-                                            <option value="Expor Crud" {{ old('Descricao') == 'Exp.Crud' ? 'selected' : '' }}>Exportação de CRUD</option>
+                                            <option value="Exportação de CRUD" {{ old('Descricao') == 'Exportação de CRUD' ? 'selected' : '' }}>Exportação de CRUD</option>
                                             <option value="Madeira/Papel/Livros" {{ old('Descricao') == 'Madeira/Papel/Livros' ? 'selected' : '' }}>Madeira/Papel/Livros</option>
                                             <option value="Minerais e Metais" {{ old('Descricao') == 'Minerais e Metais' ? 'selected' : '' }}>Minerais e Metais</option>
                                             <option value="Vestuarios" {{ old('Descricao') == 'Vestuarios' ? 'selected' : '' }}>Vestuarios...</option>
-                                            <option value="Mercadorias Diversas" {{ old('Descricao') == 'Mercadorias Diversas' ? 'selected' : '' }}>Mercadorias Diversas</option>
-                                        </select>
+                                            <option value="Electrónicos/Material Informático" {{ old('Descricao') == 'Electrónicos/Material Informático' ? 'selected' : '' }}>Electrónicos/Material Informático</option>
+                                            <option value="Material de Escritório" {{ old('Descricao') == 'Material de Escritório' ? 'selected' : '' }}>Material de Escritório</option>
+                                        </datalist>
+                                        <input type="text" name="" id="" class="form-control rounded-md shadow-sm" style="display: none;">
                                         @error('Descricao')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
@@ -390,7 +409,7 @@
                                             <span class="input-group-text"><i class="fas fa-country"></i></span>
                                         </div>
                                         <select name="TipoTransporte" class="form-control rounded-md shadow-sm" id="TipoTransporte" required>
-                                            <option value="Desconhecido" {{ old('TipoTransporte') == 'Desconhecido' ? 'selected' : '' }}>Selecionar</option>
+                                            <option value="" disabled selected>Selecionar</option>
                                             @foreach($tipoTransp as $tipoT)
                                                 <option value="{{ $tipoT->id }}" {{ old('TipoTransporte') == $tipoT->id ? 'selected' : '' }}>
                                                     {{ $tipoT->descricao }}
@@ -413,7 +432,7 @@
                                             <span class="input-group-text"><i class="fas fa-plane"></i></span>
                                         </div>
                                         <select name="nacionalidade_transporte" class="form-control" id="nacionalidade_transporte" required aria-required="true">
-                                            <option value="">Selecionar</option>
+                                            <option value="" disabled selected>Selecionar</option>
                                             @foreach($paises as $pais)
                                                 <option value="{{ $pais->id }}" {{ old('nacionalidade_transporte') == $pais->id ? 'selected' : '' }}>
                                                     {{ $pais->pais }} ({{ $pais->codigo }})
@@ -449,7 +468,7 @@
                                     <span class="text-danger" title="Campo obrigatório">*</span>
                                     </label>
                                     <select name="codigo_banco" id="codigo_banco" class="form-select select2" value="{{ old('codigo_banco') }}" aria-label="Selecionar código do banco">
-                                        <option value="">Selecionar</option>
+                                        <option value="" disabled selected>Selecione</option>
                                         @foreach($ibans as $iban)
                                             <option value="{{ $iban['code'] }}" data-code="{{ $iban['code'] }}" {{ old('codigo_banco') == $iban['code'] ? 'selected' : '' }}>
                                                 {{ $iban['code'] }} - {{ $iban['fname'] }} ({{ $iban['sname'] }})
@@ -459,6 +478,35 @@
                                     @error('codigo_banco')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group mt-4 col-md-3">  
+                                    <label for="fob_total">FOB</label>
+                                    <input type="decimal" id="fob_total" name="fob_total" class="form-control" placeholder="Insira o valor FOB" aria-describedby="fobHelp" value="{{ old('fob_total') }}">
+                                    <small id="fobHelp" class="form-text text-muted">Insira o valor FOB em dólares.</small>
+                                    @error('fob_total')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="frete">Frete</label>
+                                    <input type="decimal" id="frete" name="frete" class="form-control" placeholder="Insira o valor do frete"  value="{{ old('frete') }}">
+                                    @error('frete')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="seguro">Seguro</label>
+                                    <input type="decimal" id="seguro" name="seguro" class="form-control" placeholder="Insira o valor do seguro"  value="{{ old('seguro') }}">
+                                    @error('seguro')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="cif">CIF</label>
+                                    <input type="decimal" id="cif_total" name="cif" class="form-control"  value="{{ old('cif') }}" readonly>
                                 </div>
                             </div>
 
@@ -494,42 +542,55 @@
                                 </div>
                             </div>
 
-                            <div class="row">
-                                <div class="form-group mt-4 col-md-3">  
-                                    <label for="fob_total">FOB</label>
-                                    <input type="decimal" id="fob_total" name="fob_total" class="form-control" placeholder="Insira o valor FOB" aria-describedby="fobHelp" value="{{ old('fob_total') }}">
-                                    <small id="fobHelp" class="form-text text-muted">Insira o valor FOB em dólares.</small>
-                                    @error('fob_total')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="frete">Frete</label>
-                                    <input type="decimal" id="frete" name="frete" class="form-control" placeholder="Insira o valor do frete"  value="{{ old('frete') }}">
-                                    @error('frete')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="seguro">Seguro</label>
-                                    <input type="decimal" id="seguro" name="seguro" class="form-control" placeholder="Insira o valor do seguro"  value="{{ old('seguro') }}">
-                                    @error('seguro')
-                                        <div class="text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group mt-4 col-md-3">
-                                    <label for="cif_total">CIF</label>
-                                    <input type="decimal" id="cif_total" name="cif" class="form-control"  value="{{ old('cif_total') }}" readonly>
-                                </div>
-                            </div>
-
                             </div>
                         </div>
                         
                     </form>
                 </div>
-                <div class="col-md-3">
-                    <div class="card">
+                <div class="col-md-3 flex row border border-red-500">
+                    <div class="card shadow-sm border-primary mb-4">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <div class="card-title d-flex align-items-center">
+                                <i class="fas fa-file-alt mr-2"></i> <strong>Rascunhos</strong>
+                            </div>
+                            <!-- Você pode adicionar aqui um botão para carregar os rascunhos ou outra ação -->
+                            <button class="btn btn-light btn-sm">
+                                <i class="fas fa-sync-alt"></i> Atualizar
+                            </button>
+                        </div>
+
+                        <div class="card-body" id="quadro-rascunho-processos">
+                            <!-- Notificações carregadas via AJAX -->
+                            @if($processos_drafts->isEmpty())
+                                <p class="text-gray-500">Sem Rascunhos...</p>
+                            @else
+                                <!-- Se houver rascunhos, exibe cada um deles -->
+                                <ul id="lista-processos">
+                                    @foreach($processos_drafts as $draft)
+                                    <li class="mb-2 p-4 bg-blue-100 rounded-lg shadow list-group-item" data-id="{{ $draft->id }}" data-nr-processo="{{ $draft->NrProcesso }}" data-descricao="{{ $draft->Descricao }}" data-valor-aduaneiro="{{ $draft->ValorAduaneiro }}">
+                                        <p><strong>Cliente:</strong> {{ $draft->cliente->CompanyName }} <strong>DU:</strong> {{ $draft->NrDU }}</p>
+                                        <p><strong>Descrição:</strong> {{ $draft->Descricao ?? 'Sem descrição' }}</p>
+                                        <p><strong>Valor Aduaneiro:</strong> {{ number_format($draft->ValorAduaneiro, 2, ',', '.') }} Kz</p>
+                                        
+                                        <!-- Botões alinhados com espaço -->
+                                        <div class="d-flex justify-content-start mb-3">
+                                            <a href="#" class="text-blue-600 hover:underline carregar-rascunho btn btn-sm btn-info mr-2"><i class="fas fa-eye"></i> Visualizar</a>
+                                            <a href="{{ route('processos-drafts.destroy', $draft->id) }}" class="text-red-600 hover:underline apagar-rascunho btn btn-sm btn-danger"><i class="fas fa-remove"></i> Apagar</a>
+                                        </div>
+                                        
+                                        <!-- Informações do usuário -->
+                                        <small><strong>Usuário:</strong>  {{ $draft->user->name }} <strong>Data:</strong> {{ $draft->created_at }}</small>
+                                    </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </div>
+
+                        <!-- Botão para expandir/recolher -->
+                        <button id="btn-rollup" class="btn btn-primary mt-3">Expandir/Colapsar</button>
+                    </div>
+
+                    <div class="card p-4">
                         <div class="card-header">
                             <div class="card-title">Resumo do Processo</div>
                         </div>
@@ -833,19 +894,16 @@
             $('#fob_total, #frete, #seguro').on('input', calcularCIF);
 
             function calcularValores() {
-                var valorAduaneiro = parseFloat($('#fob_total').val()) || 0;
-                var cambio = parseFloat($('#cambio').val()) || 0;
+                var valorCif = parseFloat($('#cif_total').val()) || 0;
+                var cambio = parseFloat($('#Cambio').val()) || 0;
                 
                 // Calcula Valor Aduaneiro em Kz
-                var valorAduaneiroKz = valorAduaneiro * cambio;
+                var valorAduaneiroKz = valorCif * cambio;
                 $('#ValorAduaneiro').val(valorAduaneiroKz.toFixed(2));
-
-                // CIF é igual ao Valor Aduaneiro
-                $('#cif_total').val(valorAduaneiro.toFixed(2));
             }
             
             // Eventos de input para calcular os valores
-            $('#fob_total, #cambio').on('input', calcularValores);
+            $('#Cambio').on('input', calcularValores);
         });
     </script>
 
@@ -887,13 +945,225 @@
     </script>
 
     <script>
-        document.getElementById('Descricao').addEventListener('change', function () {
+        document.addEventListener('DOMContentLoaded', function () {
+            const descricaoInput = document.querySelector('input[name="Descricao"]');
             const crudFields = document.getElementById('crudFields');
-            if (this.value === 'Expor Crud') {
-                crudFields.style.display = 'block';
-            } else {
-                crudFields.style.display = 'none';
+
+            descricaoInput.addEventListener('input', function () {
+                if (this.value === 'Exportação de CRUD') {
+                    crudFields.style.display = 'block';
+                } else {
+                    crudFields.style.display = 'none';
+                }
+            });
+        });
+    </script>
+
+
+    <!-- Enviar dados via Ajax do Rascunho -->
+    <script>
+        $(document).ready(function() {
+
+            toastr.options = {
+                "closeButton": true, // Botão de fechar
+                "debug": false,
+                "newestOnTop": true, // Exibir o mais novo no topo
+                "progressBar": true, // Mostrar a barra de progresso
+                "positionClass": "toast-top-right", // Posição do toast
+                "preventDuplicates": true, // Evitar mensagens duplicadas
+                "onclick": null, // Nada ao clicar
+                "showDuration": "300", // Duração da animação de entrada
+                "hideDuration": "1000", // Duração da animação de saída
+                "timeOut": "5000", // Tempo para desaparecer
+                "extendedTimeOut": "1000", // Tempo de extensão
+            };
+
+            $('#draft').click(function(e) {
+                e.preventDefault(); // Prevenir o comportamento padrão do link
+
+                // Capturar todos os dados do formulário
+                var formData = $('#processoIn').serialize();
+
+                // Enviar os dados via AJAX para a rota 'processos-drafts.store'
+                $.ajax({
+                    url: '{{ route('processos-drafts.store') }}', // Defina a URL correta para o método store
+                    method: 'POST',
+                    data: formData,  // Dados serializados do formulário
+                    success: function(response) {
+                        // Exibir mensagem de sucesso ou redirecionar para outra página
+                        atualizarRascunhos();
+                        toastr.success('Processo salvo como rascunho!');
+                        // Ou se necessário, redirecionar:
+                        // window.location.href = '/alguma-rota';
+                    },
+                    error: function(xhr, status, error) {
+                        // Exibir mensagem de erro
+                        toastr.error('Erro ao salvar como rascunho. Tente novamente.');
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Listar os dados via Ajax do Rascunho -->
+    <script>
+        $(document).ready(function() {
+            // Ao clicar em um rascunho da lista
+            $('.carregar-rascunho').click(function(e) {
+                e.preventDefault();  // Previne o comportamento padrão do link
+
+                // Pega o id do rascunho do atributo data-id
+                var rascunhoId = $(this).closest('li').data('id');
+                
+                // Faz uma requisição AJAX para buscar os dados do rascunho
+                $.ajax({
+                    url: "{{ route('processos-drafts.show', ['processos_draft' => ':rascunhoId']) }}".replace(':rascunhoId', rascunhoId),
+                    method: 'GET',
+                    dataType: 'json', // Garante que o JSON seja tratado corretamente
+                    success: function(response) {
+                        // Preenche os campos do formulário com os dados do rascunho
+                        $('#processoIn input[name="id_rascunho"]').val(rascunhoId);
+                        $('#processoIn input[name="customer_id"]').val(response.customer_id);
+                        $('#processoIn input[name="exportador_id"]').val(response.exportador_id);
+                        $('#processoIn input[name="RefCliente"]').val(response.RefCliente);
+                        $('#processoIn input[name="Descricao"]').val(response.Descricao);
+                        $('#processoIn input[name="Cambio"]').val(response.Cambio);
+                        $('#processoIn input[name="ValorAduaneiro"]').val(response.ValorAduaneiro);
+                        // Preenchendo os campos do formulário com os valores do JSON
+                        $('input[name="NrDU"]').val(response.NrDU);
+                        $('input[name="N_Dar"]').val(response.N_Dar);
+                        $('input[name="MarcaFiscal"]').val(response.MarcaFiscal);
+                        $('input[name="BLC_Porte"]').val(response.BLC_Porte);
+                        $('input[name="peso_bruto"]').val(response.peso_bruto);
+                        $('input[name="registo_transporte"]').val(response.registo_transporte);
+                        // Preenche os campos de FOB, Frete, Seguro e CIF
+                        $('#processoIn input[name="fob_total"]').val(response.fob_total);
+                        $('#processoIn input[name="frete"]').val(response.frete);
+                        $('#processoIn input[name="seguro"]').val(response.seguro);
+
+                        // Recalcula e preenche o CIF automaticamente
+                        let cif = (parseFloat(response.fob_total) || 0) + 
+                                (parseFloat(response.frete) || 0) + 
+                                (parseFloat(response.seguro) || 0);
+                        
+                        $('#processoIn input[name="cif"]').val(cif.toFixed(2)); // Formata para 2 casas decimais
+                        $('#processoIn input[name="data_carregamento"]').val(response.data_carregamento);
+                        $('#processoIn input[name="quantidade_barris"]').val(response.quantidade_barris);
+                        $('#processoIn input[name="valor_barril_usd"]').val(response.valor_barril_usd);
+                        $('#processoIn input[name="num_deslocacoes"]').val(response.num_deslocacoes);
+                        $('#processoIn input[name="rsm_num"]').val(response.rsm_num);
+                        $('#processoIn input[name="certificado_origem"]').val(response.certificado_origem);
+                        $('#processoIn input[name="guia_exportacao"]').val(response.guia_exportacao);
+
+                        // Selecionando o item correto no Datalist
+                        $('#list_desc option').each(function() {
+                            if ($(this).val() === response.Descricao) {
+                                $('input[name="Descricao"]').val(response.Descricao);
+                            }
+                        });
+                        
+                        // Preencha outros campos conforme necessário
+                        // Atualizando selects
+                        $('#processoIn select[name="TipoProcesso"]').val(response.TipoProcesso).change();
+                        $('#processoIn select[name="Estado"]').val(response.Estado).change();
+                        $('#processoIn select[name="estancia_id"]').val(response.estancia_id).change();
+                        $('#processoIn select[name="Fk_pais"]').val(response.Fk_pais).change();
+                        $('#processoIn select[name="PortoOrigem"]').val(response.PortoOrigem).change();
+                        $('#processoIn select[name="nacionalidade_transporte"]').val(response.nacionalidade_transporte).change();
+                        $('#processoIn select[name="forma_pagamento"]').val(response.forma_pagamento).change();
+                        $('#processoIn select[name="codigo_banco"]').val(response.codigo_banco).change();
+                        $('#processoIn select[name="Moeda"]').val(response.Moeda).change();
+                        
+
+                        // Actualizando Datas
+                        $('#processoIn input[name="DataAbertura"]').val(response.DataAbertura);
+                        $('#processoIn input[name="DataPartida"]').val(response.DataPartida);
+                        $('#processoIn input[name="DataChegada"]').val(response.DataChegada);
+                        
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Erro ao carregar o rascunho. Tente novamente.');
+                    }
+                });
+            });
+        });
+
+        // Inicialmente, o quadro de rascunhos está visível
+        $('#btn-rollup').click(function() {
+            $('#quadro-rascunho-processos').slideToggle(); // Alterna entre esconder/mostrar
+            // Atualiza o texto do botão dependendo do estado
+            var textoBotao = $('#quadro-rascunho-processos').is(':visible') ? 'Ocultar' : 'Expandir';
+            $('#btn-rollup').text(textoBotao);
+        });
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Função para atualizar a lista de rascunhos
+            function atualizarRascunhos() {
+                $.ajax({
+                    url: "{{ route('processos-drafts.index') }}", // Rota que retorna os rascunhos
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        var listaProcessos = $('#lista-processos');
+                        //listaProcessos.empty(); // Limpa a lista existente
+                        // Percorre os rascunhos e os adiciona na lista
+                        response.forEach(function(draft) {
+                            listaProcessos.append(
+                                '<li class="mb-2 p-4 bg-blue-100 rounded-lg shadow list-group-item" data-id="' + draft.id + '" data-nr-processo="' + draft.NrProcesso + '" data-descricao="' + draft.Descricao + '" data-valor-aduaneiro="' + draft.ValorAduaneiro + '">' +
+                                '<p><strong>Cliente:</strong> ' + draft.cliente.CompanyName + ' <strong>DU:</strong> ' + draft.NrDU + '</p>' +
+                                '<p><strong>Descrição:</strong> ' + (draft.Descricao || 'Sem descrição') + '</p>' +
+                                '<p><strong>Valor Aduaneiro:</strong> ' + draft.ValorAduaneiro.toFixed(2).replace('.', ',') + ' Kz</p>' +
+
+                                '<div class="d-flex justify-content-start mb-3">'+
+                                    '<a href="#" class="text-blue-600 hover:underline carregar-rascunho btn btn-sm btn-info mr-2"><i class="fas fa-eye"></i> Visualizar</a>'+
+                                    // Corrigindo o link para a ação de apagar
+                                    '<a href="' + '/processos-drafts/' + draft.id + '/destroy' + '" class="text-red-600 hover:underline apagar-rascunho btn btn-sm btn-danger"><i class="fas fa-remove"></i> Apagar</a>'+
+                                '</div>'+
+
+                                '<small><strong>Usuário:</strong> ' + draft.user.name + ' : <strong>Data:</strong> ' + draft.created_at + '</small>'+
+                                '</li>'
+                            );
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Erro ao carregar os rascunhos.');
+                    }
+                });
             }
+
+            // Chama a função para atualizar a lista de rascunhos inicialmente
+            atualizarRascunhos();
+            // Seleciona o link com a classe .apagar-rascunho
+            $('.apagar-rascunho').on('click', function(e) {
+                e.preventDefault(); // Impede o redirecionamento do link
+                
+                var link = $(this).attr('href'); // Obtém o URL de exclusão
+                var confirmDelete = confirm('Tem certeza que deseja apagar este rascunho?'); // Confirmação de exclusão
+                
+                if (confirmDelete) {
+                    $.ajax({
+                        url: link, // Envia para o URL de exclusão
+                        method: 'DELETE', // Método de requisição DELETE
+                        data: {
+                            _token: '{{ csrf_token() }}' // Envia o token CSRF para segurança
+                        },
+                        success: function(response) {
+                            // Exibe a mensagem de sucesso
+                            atualizarRascunhos();
+                            toastr.success('Rascunho excluído com sucesso!');
+                            
+                            // Você pode remover o elemento da lista, se necessário
+                            $(e.target).closest('tr').fadeOut(); // Exemplo de remoção do item na tabela (se for uma tabela)
+                        },
+                        error: function(xhr, status, error) {
+                            // Exibe a mensagem de erro
+                            toastr.error('Erro ao excluir o rascunho. Tente novamente.');
+                        }
+                    });
+                }
+            });
         });
     </script>
 

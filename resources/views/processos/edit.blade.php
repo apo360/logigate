@@ -334,10 +334,7 @@
                                     <label for="Moeda">Moeda</label>
                                     <input type="text" name="Moeda" id="Moeda" class="form-control" value="{{ old('Moeda', $processo->Moeda) }}">
                                 </div>
-                                <div class="form-group col-md-3">
-                                    <label for="ValorAduaneiro">Valor Aduaneiro (Kz)</label>
-                                    <input type="decimal" name="ValorAduaneiro" id="ValorAduaneiro" class="form-control input-ivaAduaneiro" value="{{ old('ValorAduaneiro', $processo->ValorAduaneiro) }}">
-                                </div>
+                                
                             </div>
 
                             <div class="row">
@@ -363,9 +360,24 @@
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
+                                
+                            </div>
+
+                            <div class="row">
                                 <div class="form-group mt-4 col-md-3">
-                                    <label for="cif_total">CIF</label>
-                                    <input type="decimal" id="cif_total" name="cif" class="form-control"  value="{{ old('cif_total', $processo->cif_total) }}">
+                                    <label for="Cambio">Cambio</label>
+                                    <input type="decimal" id="Cambio" name="Cambio" class="form-control" placeholder="Insira o valor do Cambio"  value="{{ old('Cambio', $processo->Cambio) }}">
+                                    @error('seguro')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="cif">CIF</label>
+                                    <input type="decimal" id="cif_total" name="cif" class="form-control"  value="{{ old('cif', $processo->cif) }}">
+                                </div>
+                                <div class="form-group col-md-3 mt-4">
+                                    <label for="ValorAduaneiro">Valor Aduaneiro (Kz)</label>
+                                    <input type="decimal" name="ValorAduaneiro" id="ValorAduaneiro" class="form-control input-ivaAduaneiro" value="{{ old('ValorAduaneiro', $processo->ValorAduaneiro) }}">
                                 </div>
                             </div>
 
@@ -671,6 +683,35 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
 
+    <!-- Calculos do aduaneiro(KZ) e o CIF -->
+    <script>
+        $(document).ready(function() {
+            // Função para calcular o CIF
+            function calcularCIF() {
+                var fob = parseFloat($('#fob_total').val()) || 0;
+                var frete = parseFloat($('#frete').val()) || 0;
+                var seguro = parseFloat($('#seguro').val()) || 0;
+                
+                var cif = fob + frete + seguro;
+                $('#cif_total').val(cif.toFixed(2));
+            }
+            // Eventos de input para calcular CIF e Valor Aduaneiro em Kz
+            $('#fob_total, #frete, #seguro').on('input', calcularCIF);
+
+            function calcularValores() {
+                var valorCif = parseFloat($('#cif_total').val()) || 0;
+                var cambio = parseFloat($('#Cambio').val()) || 0;
+                
+                // Calcula Valor Aduaneiro em Kz
+                var valorAduaneiroKz = valorCif * cambio;
+                $('#ValorAduaneiro').val(valorAduaneiroKz.toFixed(2));
+            }
+            
+            // Eventos de input para calcular os valores
+            $('#Cambio').on('input', calcularValores);
+        });
+    </script>
+    
     <script>
 
         // Função para calcular o preço total automaticamente
@@ -944,16 +985,6 @@
             const response = await fetch('/mercadorias/list'); // Substitua pela sua rota de listagem
             const mercadorias = await response.json();
             // Atualize a tabela ou lista de mercadorias aqui
-        }
-    </script>
-
-    <script>
-        function calculateValorAduaneiro() {
-            let fob = parseFloat(document.getElementById('FOB').value) || 0;
-            let freight = parseFloat(document.getElementById('Freight').value) || 0;
-            let insurance = parseFloat(document.getElementById('Insurance').value) || 0;
-            let valorAduaneiro = fob + freight + insurance;
-            document.getElementById('ValorAduaneiro').value = valorAduaneiro;
         }
     </script>
 

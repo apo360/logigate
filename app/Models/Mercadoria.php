@@ -109,4 +109,22 @@ class Mercadoria extends Model
     {
         return $this->attributes['quantidade'] * $this->attributes['preco_unitario'];
     }
+
+    // Função auxiliar para calcular o direito aduaneiro
+    public static function calcularDireito($valorAduaneiro, $rg) {
+        if (is_numeric($rg)) {
+            return $valorAduaneiro * ($rg / 100);
+        }
+        return $rg;
+    }
+
+    // Função auxiliar para calcular os emolumentos
+    public static function calcularEmolumentos($valorAduaneiro, $taxaEmolumentos) {
+        return $valorAduaneiro * $taxaEmolumentos;
+    }
+
+    // Função auxiliar para calcular o IVA aduaneiro
+    public static function calcularIVA($valorAduaneiro, $emolumentos, $direito) {
+        return ($valorAduaneiro + $emolumentos + $direito) * 0.14;
+    }
 }

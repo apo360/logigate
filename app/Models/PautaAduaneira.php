@@ -28,4 +28,10 @@ class PautaAduaneira extends Model
         // Customize the array as needed
         return $array;
     }
+
+    // Definir um Accessor para remover os pontos do código automaticamente
+    public function getCodigoSemPontosAttribute()
+    {
+        return str_replace('.', '', $this->codigo);
+    }
 }
