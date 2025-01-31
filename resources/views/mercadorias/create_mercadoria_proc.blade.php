@@ -302,4 +302,41 @@
 
     </script>
 
+    <script>
+        $(document).ready(function() {
+            // Ao clicar no botão de excluir
+            $('.btn-delete').click(function(e) {
+                e.preventDefault();
+                
+                let mercadoriaId = $(this).data('id');
+                
+                // Confirmação antes de excluir
+                if (!confirm("Tem certeza que deseja excluir esta mercadoria?")) {
+                    return;
+                }
+                
+                $.ajax({
+                    url: `{{ route('mercadorias.destroy', ':id') }}`.replace(':id', mercadoriaId),  // URL da rota de exclusão com o ID dinâmico
+                    type: 'DELETE',
+                    dataType: 'json',
+                    data: {
+                        _token: '{{ csrf_token() }}'  // Token CSRF para segurança
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Remove a linha da mercadoria na tabela
+                            $(`#mercadoria-${mercadoriaId}`).remove();
+                            alert(response.message);
+                        } else {
+                            alert("Erro: " + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Erro ao excluir a mercadoria. Por favor, tente novamente.");
+                    }
+                });
+            });
+        });
+    </script>
+
 </x-app-layout>
