@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Helpers\DatabaseErrorHandler;
 use App\Helpers\PdfHelper;
 use App\Http\Requests\ProcessoRequest;
+use App\Models\ContaCorrente;
 use App\Models\Customer;
+use App\Models\Documento;
 use App\Models\Estancia;
 use App\Models\Exportador;
-use App\Models\Importacao;
 use App\Models\Mercadoria;
 use App\Models\Pais;
 use App\Models\PautaAduaneira;
@@ -33,6 +34,79 @@ use SimpleXMLElement;
 class ProcessoController extends Controller
 {
     
+    function numeroParaExtenso($numero) {
+        $unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
+        $dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+        $dez_a_vinte = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+        $centenas = ['', 'cem', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+        $milhares = ['mil', 'milhão', 'bilhão'];
+    
+        // Formatar número para ter sempre duas casas decimais
+        $numero = number_format($numero, 2, '.', '');
+        list($inteiro, $centavos) = explode('.', $numero);
+        $inteiro = intval($inteiro);
+        $centavos = intval($centavos);
+    
+        // Função interna para converter um número menor que 1000
+        function converteMenorQueMil($num) {
+            global $unidades, $dezenas, $dez_a_vinte, $centenas;
+            $extenso = '';
+    
+            if ($num == 100) return 'cem';
+    
+            if ($num >= 100) {
+                $extenso .= $centenas[intval($num / 100)];
+                $num %= 100;
+                if ($num > 0) $extenso .= ' e ';
+            }
+    
+            if ($num >= 10 && $num <= 19) {
+                $extenso .= $dez_a_vinte[$num - 10];
+            } else {
+                if ($num >= 20) {
+                    $extenso .= $dezenas[intval($num / 10)];
+                    $num %= 10;
+                    if ($num > 0) $extenso .= ' e ';
+                }
+                if ($num > 0) {
+                    $extenso .= $unidades[$num];
+                }
+            }
+    
+            return $extenso;
+        }
+    
+        // Converter a parte inteira
+        $partes = [];
+        $milharesIndex = 0;
+    
+        while ($inteiro > 0) {
+            $parte = $inteiro % 1000;
+            if ($parte > 0) {
+                $prefixo = converteMenorQueMil($parte);
+                if ($milharesIndex > 0) {
+                    if ($parte == 1 && $milharesIndex == 1) {
+                        $prefixo = 'mil';
+                    } else {
+                        $prefixo .= ' ' . $milhares[$milharesIndex - 1];
+                    }
+                }
+                array_unshift($partes, $prefixo);
+            }
+            $inteiro = intval($inteiro / 1000);
+            $milharesIndex++;
+        }
+    
+        $extenso = implode(' ', $partes) . ' Kwanzas';
+    
+        // Adicionar os centavos, se houver
+        if ($centavos > 0) {
+            $extenso .= ' e ' . converteMenorQueMil($centavos) . ' cêntimos';
+        }
+    
+        return ucfirst($extenso);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -125,9 +199,19 @@ class ProcessoController extends Controller
             $novoProcesso = Processo::create($processo_request);
 
             // Após cria o processos definitivo, deve apagar o rascunho
-            $rascunho = $request->input('id_rascunho');
+
+            // Verifica se há um rascunho para excluir
+            if ($request->filled('id_rascunho')) {
+                $rascunho = $request->input('id_rascunho');
+
+                // Verifica se o rascunho existe antes de tentar excluí-lo
+                if (ProcessoDraft::find($rascunho)) {
+                    ProcessoDraft::destroy($rascunho);
+                }
+            }
+            /*$rascunho = $request->input('id_rascunho');
             $draft = new ProcessoDraftController();
-            $draft->destroy($rascunho);
+            $draft->destroy($rascunho);*/
 
             DB::commit();
 
@@ -146,9 +230,6 @@ class ProcessoController extends Controller
     /**
      * Display the specified resource.
      */
-    /**
-     * Display the specified resource.
-     */
     public function show($processoID)
     {
         $processo = Processo::with('mercadorias')->findOrFail($processoID);
@@ -156,7 +237,14 @@ class ProcessoController extends Controller
 
         $pautaAduaneira = PautaAduaneira::all();
 
-        return view('processos.show', compact('processo', 'pautaAduaneira', 'mercadoriasAgrupadas'));
+        $transacoes = ContaCorrente::where('cliente_id', $processo->cliente->id)->orderBy('data', 'desc')->get();
+
+        // Calcular o saldo baseado nas transações
+        $saldo = $transacoes->sum(function ($transacao) {
+            return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
+        });
+
+        return view('processos.show', compact('processo', 'pautaAduaneira', 'mercadoriasAgrupadas', 'saldo'));
     }
 
     /**
@@ -320,6 +408,9 @@ class ProcessoController extends Controller
         return "CCD-{$numeroFormatado}/{$anoCorrente}";
     }
 
+    /**
+     * Função que permite listar todos os processos em condições de finalizar, mas não estão finalizados
+     */
     public function processosNaoFinalizados()
     {
         $processos = Processo::whereNotNull('NrDU')
@@ -350,17 +441,7 @@ class ProcessoController extends Controller
         return redirect()->route('processos.index')->with('error', 'Processo não encontrado.');
     }
 
-
-    public function print($processoID)
-    {
-        $processo = Processo::where('ProcessoID', $processoID)->first();
-
-        $header_footer = new PdfHelper();
-        $header_footer::generatePrint($processo->cliente->Id);
-
-        // Importante: Não é necessário retornar nada nesta rota
-    }
-
+    // -------------------------------   Blocos para ser eliminados ----------------------------------------
     public function tarifas()
     {
         // Lógica para calcular impostos com base nos dados do formulário
@@ -400,91 +481,7 @@ class ProcessoController extends Controller
         return redirect()->back()->with('success', 'Códigos aduaneiros atualizados com sucesso!');
     }
 
-    public function GerarXml($IdProcesso) {
-
-        $processo = Processo::where('id', $IdProcesso)->first();
-        $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
-        $mercadoriasAgrupadas = $mercadorias->groupBy('codigo_aduaneiro');
-        $pautaAduaneira = PautaAduaneira::all();
-
-        $xml = new SimpleXMLElement('<MercadoriasAgrupadas/>');
-    
-        foreach ($mercadoriasAgrupadas as $codigoAduaneiro => $mercadorias) {
-            $codigoNode = $xml->addChild('CodigoAduaneiro');
-            $codigoNode->addAttribute('codigo', $codigoAduaneiro);
-            $descricao = $pautaAduaneira->firstWhere('codigo', $codigoAduaneiro)->descricao;
-            $codigoNode->addChild('Descricao', $descricao);
-    
-            $quantidadeTotal = 0;
-            $fobTotal = 0;
-    
-            foreach ($mercadorias as $mercadoria) {
-                $mercadoriaNode = $codigoNode->addChild('Mercadoria');
-                $mercadoriaNode->addChild('Descricao', $mercadoria->Descricao);
-                $mercadoriaNode->addChild('Quantidade', $mercadoria->Quantidade);
-                $mercadoriaNode->addChild('PrecoUnitario', $mercadoria->preco_unitario);
-                $mercadoriaNode->addChild('FOB', $mercadoria->preco_total);
-    
-                $quantidadeTotal += $mercadoria->Quantidade;
-                $fobTotal += $mercadoria->preco_total;
-            }
-    
-            $codigoNode->addChild('QuantidadeTotal', $quantidadeTotal);
-            $codigoNode->addChild('FOBTotal', $fobTotal);
-        }
-    
-        $xmlString = $xml->asXML();
-        $filename = 'mercadorias_agrupadas_' . date('Ymd_His') . '.xml';
-        Storage::put('public/' . $filename, $xmlString);
-    
-        return response()->download(storage_path('app/public/' . $filename));
-    }
-
-    public function GerarTxT($IdProcesso)
-    {
-        // Buscando o processo pelo ID
-        $processo = Processo::findOrFail($IdProcesso);
-        $importacao = $processo->importacao;  // Supondo que importacao seja um relacionamento
-        $mercadorias = $importacao->mercadorias;  // Supondo que mercadorias seja um relacionamento
-
-        $peso_bruto = 0;
-        $FOB = $importacao->FOB;
-        $Frete = $importacao->Freight;
-        $Seguro = $importacao->Insurance;
-        $CIF = $FOB + $Frete + $Seguro;
-
-        // Linha 0 - Cabeçalho do processo
-        $linha0 = "0|" . count($mercadorias) . "|{$processo->estancia_id}|{$processo->cliente->CompanyName}|{$processo->empresa->Empresa}|{$processo->empresa->Cedula}|{$processo->empresa->Email}|{$processo->RefCliente}|||||||||||||||||||||||||||||";
-        
-        // Linha 2 - Adições de mercadorias
-        $adicoes = [];
-        foreach ($mercadorias as $key => $adicao) {
-            $ordem = $key + 1;
-            $peso_bruto += $adicao->Peso;
-            
-            // Calculando Frete e Seguro proporcionais
-            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete) 
-                        + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
-            
-            // Criando a linha de adição
-            $adicoes[] = "2|{$ordem}|||||{$adicao->codigo_aduaneiro}|{$adicao->Quantidade}||{$importacao->origem->codigo}|{$adicao->Peso}|{$importacao->Moeda}|{$adicao->preco_total}|{$frete_seguro}|{$CIF}|||{$adicao->Unidade}|||||||||||||||||||";
-        }
-
-        // Linha 1 - Informações do exportador e transporte
-        $linha1 = "1|{$processo->exportador->ExportadorTaxID}|{$processo->exportador->Exportador}|{$processo->cliente->CustomerTaxID}||{$processo->empresa->Cedula}|{$importacao->TipoTransporte}||||A19 32077|//|LAD|{$processo->TipoDocumento}|{$processo->estancia->cod_estancia}|" . count($mercadorias) . "|{$peso_bruto}||||GATT|RD|051|F|1|{$processo->Descricao}||||{$importacao->origem->codigo}{$importacao->PortoOrigem}|{$importacao->origem->codigo}|AO||||";
-        
-
-        // Montando o conteúdo completo
-        $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);
-
-        // Nome do arquivo
-        $nomeArquivo = 'licenciamento_' . $processo->NrProcesso . '.txt';
-
-        // Criando e retornando o arquivo .txt para download
-        return response($conteudo)
-            ->header('Content-Type', 'text/plain')
-            ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
-    }
+    // -------------------------------   */Blocos para ser eliminados/* ---------------------------------------- //
 
     public function getProcessesByIdAndStatus($ProcessoId, $status)
     {
@@ -500,6 +497,9 @@ class ProcessoController extends Controller
         ]);
     }
 
+    /**
+     * Metodo para imprimir Nota de Despesas do Processo
+     */
     public function printNotaDespesa($ProcessoID){
 
         $processo = Processo::where('id', $ProcessoID)->first();
@@ -566,7 +566,7 @@ class ProcessoController extends Controller
             'honorario' => $emolumentoTarifa->honorario  ?? '0.00',
             'honorario_iva' => $emolumentoTarifa->honorario_iva  ?? '0.00',
             'orgaos_ofiais' => $emolumentoTarifa->orgaos_ofiais  ?? '0.00',
-            'guia_fiscal' => $emolumentoTarifa->guia_fiscal  ?? '0.00',
+            'guia_fiscal' => $emolumentoTarifa->guia_fiscal ?? '0.00',   /// Esta linha deve ser o somatório de todas as linhas acima
               
         ];
 
@@ -589,18 +589,593 @@ class ProcessoController extends Controller
 
         $jasper = new PHPJasper();
 
+        $jasper->process($input, $output, $options)->execute();
+
+        $file = $output . '/nota_despesa.pdf';
+
+        if (!file_exists($file)) {abort(404);}
+
+        return response()->file($file);
+    }
+
+    /**
+     * Metodo para imprimir a Carta Diversa do Processos
+     */
+    public function printCartaDiversa(Request $request, $ProcessoID)
+    {
+        $request->merge([
+            'valor' => (float) str_replace(',', '.', $request->valor),
+            'saldoCliente' => (float) str_replace(',', '.', $request->saldoCliente),
+            'fobTotal' => (float) str_replace(',', '.', $request->fobTotal),
+        ]);
+        // Validar dados recebidos
+        $request->validate([
+            'valor' => 'required|numeric|min:0',
+            'saldoCliente' => 'required|numeric',
+            'fobTotal' => 'required|numeric|min:0',
+            'emitirComFatura' => 'nullable|boolean',
+        ]);
+
+        // Caminho completo para o template .jasper
+        $input = base_path('reports/Requisicao.jrxml'); // Certifique-se de que este arquivo existe
+        $output = base_path('reports');
+
+        // Identificar se o Cliente e o Processos Existem
+        $processo = Processo::findOrFail($ProcessoID);
+        $clienteID = $processo->cliente->id;
+
+        // Pegar saldo Anterior
+        $saldoClienteAnterior = (float) $request->saldoCliente;
+
+        // Variaveis para inserir na conta corrente
+        ContaCorrente::create([
+            'cliente_id' => $clienteID,
+            'valor' => $request->valor,
+            'tipo' => 'debito',
+            'descricao' => 'Desconto Refrente ao Processo Nº : '.$processo->NrProcesso,
+            'data' => now(),
+        ]);
+
+       // Obter saldo Actual
+       $saldoClienteActual = ContaCorrente::where('cliente_id', $clienteID)->get()
+       ->sum(fn ($transacao) => $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor);
+
+        // Verificar se o Usuario Quer facturas
+        if($request->emitirComFatura){
+            // Verificar condições de saldo para emissão de facturas
+            $valorPagar = (float) $request->valor;
+
+            // Se o valor cobre
+            if($saldoClienteAnterior >= $valorPagar){
+                // Emitir uma Factura recibo (FR Paga)
+                $this->emitirFatura($clienteID, $valorPagar, 'FR', $processo->NrProcesso);
+            }
+
+            // Se saldo menor que 0
+            elseif($saldoClienteAnterior <= 0){
+                // Emitir uma Factura Comercial (FT)
+                $this->emitirFatura($clienteID, $valorPagar, 'FT', $processo->NrProcesso);
+            }
+
+            // Se saldo menor que o valor a pagar e maior que zero
+            elseif($saldoClienteAnterior > 0 && $saldoClienteAnterior < $valorPagar){
+                // Emitir duas Facturas uma FR e FT
+                $valorFT = $valorPagar - $saldoClienteAnterior; // Factura de Divida
+                $this->emitirFatura($clienteID, $saldoClienteAnterior, 'FR', $processo->NrProcesso);
+                $this->emitirFatura($clienteID, $valorFT, 'FT', $processo->NrProcesso);
+            }
+
+        }
+
+        // Função para transformar o numerario em descritivo (Valor ($request->valor))
+        $descricaoValorPagar = $this->numeroParaExtenso($request->valor);
+
+        // Enviar Parametros para Report
+        $params = [
+            'ProcessoID' => $processo->id,
+            'saldo' => $saldoClienteAnterior,
+            'saldoActual' => $saldoClienteActual,
+            'descricao' => $descricaoValorPagar
+        ];
+
+        $jasper = new PHPJasper();
+
+         // Definir os parâmetros
+         $options = [
+            'format' => ['pdf'],
+            'locale' => 'en',
+            'params' => $params,
+            'db_connection' => [
+                'driver' => env('DB_CONNECTION', 'mysql'),
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '3306'),
+                'database' => env('DB_DATABASE', 'forge'),
+                'username' => env('DB_USERNAME', 'forge'),
+                'password' => env('DB_PASSWORD', ''),
+                'jdbc_driver' => 'com.mysql.cj.jdbc.Driver', // Driver JDBC para MySQL
+                'jdbc_url' => 'jdbc:mysql://' . env('DB_HOST') . ':' . env('DB_PORT') . '/' . env('DB_DATABASE'),
+            ],
+        ];
+
         $jasper->process(
             $input,
             $output,
             $options
         )->execute();
 
-        $file = $output . '/nota_despesa.pdf';
+        $file = $output . '/Requisicao.pdf';
 
         if (!file_exists($file)) {
             abort(404);
         }
 
         return response()->file($file);
+        
     }
+
+    // Metodo para enviar os parametros e emitir uma factura
+    private function emitirFatura($clienteID, $valor, $tipo, $processo)
+    {
+        // Simulação de emissão de fatura (pode ser ajustado conforme sua lógica)
+        /*Documento::create([
+            'cliente_id' => $clienteID,
+            'valor' => $valor,
+            'tipo' => $tipo, // 'FR' ou 'FT'
+            'descricao' => "Fatura $tipo referente ao Processo Nº: $processo",
+            'data' => now(),
+        ]);*/
+    }
+
+    public function printExtratoMercadoria($ProcessoID){
+
+        $processo = Processo::where('id', $ProcessoID)->first();
+
+        // Caminho completo para o template .jasper
+        $input = base_path('reports/extrato_mercadoria.jrxml'); // Certifique-se de que este arquivo existe
+        $output = base_path('reports');
+
+        // Definir os parâmetros
+        $options = [
+            'format' => ['pdf'],
+            'locale' => 'en',
+            'params' => ['id' => $processo->id],
+            'db_connection' => [
+                'driver' => env('DB_CONNECTION', 'mysql'),
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', '3306'),
+                'database' => env('DB_DATABASE', 'forge'),
+                'username' => env('DB_USERNAME', 'forge'),
+                'password' => env('DB_PASSWORD', ''),
+                'jdbc_driver' => 'com.mysql.cj.jdbc.Driver', // Driver JDBC para MySQL
+                'jdbc_url' => 'jdbc:mysql://' . env('DB_HOST') . ':' . env('DB_PORT') . '/' . env('DB_DATABASE'),
+            ],
+        ];
+
+        $jasper = new PHPJasper();
+
+        $jasper->process($input, $output, $options)->execute();
+
+        $file = $output . '/extrato_mercadoria.pdf';
+
+        if (!file_exists($file)) {abort(404);}
+
+        return response()->file($file);
+    }
+
+    // Estrutura Basica
+    public function gerarXML($ProcessoID)
+    {
+        // Obter informações do processo
+        $processo = Processo::where('id', $ProcessoID)->first();
+
+        if (!$processo) {
+            return response()->json(['error' => 'Processo não encontrado'], 404);
+        }
+
+        // Criar o XML com cabeçalho UTF-8
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><ASYCUDA></ASYCUDA>');
+
+        // Adicionar identificação
+        $this->adicionarIdentificacaoXML($xml, $processo);
+
+        // Traders
+        $trader = $xml->addChild('Traders');
+
+            // Exportador
+            $exporter = $trader->addChild('Exporter');
+            $exporter->addChild('Exporter_code', optional($processo->exportador)->ExportadorTaxID ?? '');
+            $exporter->addChild('Exporter_name', optional($processo->exportador)->Exportador ?? 'N/D');
+
+            // Consignee (Destinatário)
+            $consignee = $trader->addChild('Consignee');
+            $consignee->addChild('Consignee_code', optional($processo->cliente)->CustomerTaxID ?? 'N/D');
+            $consignee->addChild('Consignee_name', optional($processo->cliente)->CompanyName ?? 'N/D');
+
+            // Financeiro
+            $financial = $trader->addChild('Financial');
+            $financial->addChild('Financial_code');
+            $financial->addChild('Financial_name');
+
+        // Declarant
+        $declarant = $xml->addChild('Declarant');
+            $empresa = Auth::user()->empresas->first();
+            $declarant->addChild('Declarant_code', $empresa->Cedula);
+            $declarant->addChild('Declarant_name', "{$empresa->Empresa} {$empresa->Endereco_completo}");
+            $declarant->addChild('Declarant_representative', $empresa->Empresa);
+
+            $reference = $declarant->addChild('Reference');
+            $reference->addChild('Number', 463);
+
+        // Adicionar outras seções do XML
+        $this->adicionarInformacoesGeraisXML($xml, $processo);
+        $this->adicionarTransporteXML($xml, $processo);
+        $this->adicionarInformacoesFinanceirasXML($xml, $processo);
+        $this->adicionarValuationXML($xml, $processo);
+        $this->adicionarContainerXML($xml, $processo);
+
+        // Buscar Mercadorias Agrupadas
+        $mercadoriasAgrupadas = MercadoriaAgrupada::with('pautaAduaneira')->where('processo_id', $ProcessoID)->get();
+
+        // Verifica se existem mercadorias antes de tentar adicionar
+        if ($mercadoriasAgrupadas->isEmpty()) {
+            return response()->json(['error' => 'Nenhuma mercadoria encontrada para este processo'], 400);
+        }
+
+        // Adicionar cada mercadoria como Item no XML
+        foreach ($mercadoriasAgrupadas as $mercadoria) {
+            $this->adicionarItemXML($xml, $mercadoria, $processo);
+        }
+
+        // Adicionar lista de veículos (se aplicável)
+        $xml->addChild('Vehicle_List');
+
+        // Caminho do Arquivo XML Gerado
+        $fileName = 'processo_' . $processo->NrProcesso . '.xml';
+        $filePath = storage_path("app/public/{$fileName}");
+
+        // Salvar XML no Servidor
+        $xml->asXML($filePath);
+
+        // Retornar o XML para download
+        return response()->download($filePath, $fileName, ['Content-Type' => 'application/xml']);
+    }
+
+    function adicionarIdentificacaoXML($xml, $processo)
+    {
+        $identification = $xml->addChild('Identification');
+
+        // Office Segment
+        $officeSegment = $identification->addChild('Office_segment');
+        $officeSegment->addChild('Customs_clearance_office_code', $processo->estancia->cod_estancia ?? '');
+        $officeSegment->addChild('Customs_Clearance_office_name', $processo->estancia->desc_estancia ?? '');
+
+        // Type
+        $type = $identification->addChild('Type');
+        $type->addChild('Type_of_declaration', $processo->tipoProcesso->abrev ?? 'IM');
+        $type->addChild('Declaration_gen_procedure_code', $processo->tipoProcesso->codigo ?? '4');
+        $type->addChild('Type_of_transit_document', null);
+
+        // Manifest Reference Number
+        $identification->addChild('Manifest_reference_number', $processo->RefCliente ?? '');
+
+        // Registration
+        $registration = $identification->addChild('Registration');
+        $registration->addChild('Serial_number', null);
+        $registration->addChild('Number');
+        $registration->addChild('Date');
+
+        // Assessment
+        $assessment = $identification->addChild('Assessment');
+        $assessment->addChild('Serial_number', null);
+        $assessment->addChild('Number');
+        $assessment->addChild('Date');
+
+        // Receipt
+        $receipt = $identification->addChild('receipt');
+        $receipt->addChild('Serial_number', null);
+        $receipt->addChild('Number');
+        $receipt->addChild('Date');
+    }
+
+    private function adicionarItemXML($xml, $mercadoria, $processo)
+    {
+        $item = $xml->addChild('Item');
+
+        // Documentos Anexados
+        $attachedDocs = $item->addChild('Attached_documents');
+        $attachedDocs->addChild('Attached_document_code', '403');
+        $attachedDocs->addChild('Attached_document_name', 'Factura (s) Comercial Definitiva / Declaração de Valores');
+        $attachedDocs->addChild('Attached_document_reference', $processo
+        ->documento_referencia);
+        $attachedDocs->addChild('Attached_document_from_rule', '1');
+        $attachedDocs->addChild('Attached_document_date', date('m/d/y', strtotime($mercadoria->data_documento)));
+
+        // Pacotes
+        $packages = $item->addChild('Packages');
+        $packages->addChild('Number_of_packages', $mercadoria->numero_pacotes);
+        $packages->addChild('Marks1_of_packages', $mercadoria->mercadoria->Descricao);
+        $packages->addChild('Marks2_of_packages', $mercadoria->marcacao_pacotes_2);
+        $packages->addChild('Kind_of_packages_code', 'PK');
+        $packages->addChild('Kind_of_packages_name', 'Volumes n.e.');
+
+        // Incoterms
+        $incoTerms = $item->addChild('IncoTerms');
+        $incoTerms->addChild('Code', 'CIF');
+        $incoTerms->addChild('Place', $processo->cif);
+
+        // Tarifação
+        $tarification = $item->addChild('Tarification');
+            $hscode = $tarification->addChild('HScode');
+            $hscode->addChild('Commodity_code', $mercadoria->codigo_aduaneiro);
+            $hscode->addChild('Precision_1', '00');
+        $tarification->addChild('Item_price', $mercadoria->preco_total);
+
+        $tarification->addChild('Extended_customs_procedure', '4100');
+        $tarification->addChild('National_customs_procedure', '000');
+
+        // Descrição da Mercadoria
+        $descricao = $item->addChild('Goods_description');
+        $descricao->addChild('Country_of_origin_code', $mercadoria->pais_origem);
+        $descricao->addChild('Description_of_goods', $mercadoria->mercadoria->Descricao);
+        $descricao->addChild('Commercial_Description', $mercadoria->mercadoria->Descricao);
+
+        // Licença
+        $licenca = $item->addChild('Licence');
+        $licenca->addChild('Licence_number', $mercadoria->numero_licenca);
+
+        // Peso e CIF
+        $valuation = $item->addChild('Valuation_item');
+        $weight = $valuation->addChild('Weight_itm');
+        $weight->addChild('Gross_weight_itm', $mercadoria->peso_bruto);
+        $weight->addChild('Net_weight_itm', $mercadoria->peso_bruto);
+    }
+
+    function adicionarInformacoesGeraisXML($xml, $processo)
+    {
+        $generalInfo = $xml->addChild('General_information');
+
+        // Country Section
+        $country = $generalInfo->addChild('Country');
+        $country->addChild('Country_first_destination', $processo->paisOrigem->codigo ?? '');
+        $country->addChild('Trading_country', $processo->paisOrigem->codigo ?? '');
+
+        // Export
+        $export = $country->addChild('Export');
+        $export->addChild('Export_country_code', $processo->paisOrigem->codigo ?? '');
+        $export->addChild('Export_country_name', $processo->paisOrigem->pais ?? '');
+        $export->addChild('Export_country_region');
+
+        // Destination
+        $destination = $country->addChild('Destination');
+        $destination->addChild('Destination_country_code', $processo->paisDestino->codigo ?? 'AO');
+        $destination->addChild('Destination_country_name', $processo->paisDestino->pais ?? 'Angola');
+        $destination->addChild('Destination_country_region');
+
+        $country->addChild('Country_of_origin_name', $processo->paisOrigem->pais ?? '');
+
+        // Value Details
+        $generalInfo->addChild('Value_details', $processo->fob_total ?? '0.00');
+
+        // Additional Information
+        $generalInfo->addChild('CAP');
+        $generalInfo->addChild('Additional_information');
+        $generalInfo->addChild('Comments_free_text');
+    }
+
+    function adicionarTransporteXML($xml, $processo)
+    {
+        $transport = $xml->addChild('Transport');
+
+        // Means of Transport
+        $meansOfTransport = $transport->addChild('Means_of_transport');
+
+        // Departure/Arrival Information
+        $departureArrival = $meansOfTransport->addChild('Departure_arrival_information');
+        $departureArrival->addChild('Identity', $processo->registo_transporte ?? '');
+        $departureArrival->addChild('Nationality', $processo->nacionalidadeNavio->pais ?? '');
+
+        // Border Information
+        $borderInfo = $meansOfTransport->addChild('Border_information');
+        $borderInfo->addChild('Identity', $processo->registo_transporte ?? '');
+        $borderInfo->addChild('Nationality', $processo->nacionalidadeNavio->pais ?? '');
+        $borderInfo->addChild('Mode', $processo->TipoTransporte ?? '1');
+
+        // Inland Mode of Transport
+        $meansOfTransport->addChild('Inland_mode_of_transport');
+
+        // Container Flag
+        $transport->addChild('Container_flag', 'true');
+
+        // Delivery Terms
+        $deliveryTerms = $transport->addChild('Delivery_terms');
+        $deliveryTerms->addChild('Code','CIF');
+        $deliveryTerms->addChild('Place', $processo->Moeda.': '.$processo->cif ?? '');
+        $deliveryTerms->addChild('Situation');
+
+        // Border Office
+        $borderOffice = $transport->addChild('Border_office');
+        $borderOffice->addChild('Code', $processo->estancia->cod_estancia ?? '');
+        $borderOffice->addChild('Name', $processo->estancia->desc_estancia ?? '');
+
+        // Place of Loading
+        $placeOfLoading = $transport->addChild('Place_of_loading');
+        $placeOfLoading->addChild('Code', $processo->paisDestino->codigo.$processo->paisDestino->porto->sigla ?? 'AOLAD');
+        $placeOfLoading->addChild('Name', $processo->PortoOrigem ?? 'Luanda');
+        $placeOfLoading->addChild('Country');
+
+        // Location of Goods
+        $transport->addChild('Location_of_goods', '');
+    }
+
+    function adicionarInformacoesFinanceirasXML($xml, $processo)
+    {
+        $financial = $xml->addChild('Financial');
+
+        // Financial Transaction
+        $financialTransaction = $financial->addChild('Financial_transaction');
+        $financialTransaction->addChild('code1', $processo->transacao_codigo1 ?? '1');
+        $financialTransaction->addChild('code2', $processo->transacao_codigo2 ?? '2');
+
+        // Bank Information
+        $bank = $financial->addChild('Bank');
+        $bank->addChild('Code');
+        $bank->addChild('Name');
+        $bank->addChild('Branch');
+        $bank->addChild('Reference');
+
+        // Payment Terms
+        $terms = $financial->addChild('Terms');
+        $terms->addChild('Code');
+        $terms->addChild('Description');
+
+        // Invoice Total
+        $financial->addChild('Total_invoice');
+
+        // Deferred Payment Reference
+        $financial->addChild('Deffered_payment_reference');
+
+        // Mode of Payment
+        $financial->addChild('Mode_of_payment', 'PRONTO PAGAMENTO');
+
+        // Amounts Section
+        $amounts = $financial->addChild('Amounts');
+        $amounts->addChild('Total_manual_taxes');
+        $amounts->addChild('Global_taxes', '0.00');
+        $amounts->addChild('Totals_taxes', '0.00');
+
+        // Guarantee Information
+        $guarantee = $financial->addChild('Guarantee');
+        $guarantee->addChild('Name');
+        $guarantee->addChild('Amount', '0.0');
+        $guarantee->addChild('Date');
+
+        // Excluded Country
+        $excludedCountry = $guarantee->addChild('Excluded_country');
+        $excludedCountry->addChild('Code');
+        $excludedCountry->addChild('Name');
+    }
+
+    function adicionarTransitXML($xml, $processo)
+    {
+        $transit = $xml->addChild('Transit');
+
+        // Principal
+        $principal = $transit->addChild('Principal');
+        $principal->addChild('Code');
+        $principal->addChild('Name');
+        $principal->addChild('Representative');
+
+        // Signature
+        $signature = $transit->addChild('Signature');
+        $signature->addChild('Place');
+        $signature->addChild('Date');
+
+        // Destination
+        $destination = $transit->addChild('Destination');
+        $destination->addChild('Office');
+        $destination->addChild('Country');
+
+        // Seals
+        $seals = $transit->addChild('Seals');
+        $seals->addChild('Number');
+        $seals->addChild('Identity');
+
+        $transit->addChild('Result_of_control');
+        $transit->addChild('Time_limit');
+        $transit->addChild('Officer_name');
+    }
+
+    function adicionarValuationXML($xml, $processo)
+    {
+        $frete_nacional = $processo->frete*$processo->Cambio;
+        $seguro_nacional = $processo->seguro*$processo->Cambio;
+        $totalCIF = $processo->ValorAduaneiro + $frete_nacional + $seguro_nacional; // O valor deve estar em anotação cientifica
+
+        $valuation = $xml->addChild('Valuation');
+
+        // Modo de Cálculo
+        $valuation->addChild('Calculation_working_mode', '0');
+
+        // Peso Total
+        $weight = $valuation->addChild('Weight');
+        $weight->addChild('Gross_weight', $processo->peso_bruto ?? '');
+
+        // Custos Totais
+        //$valuation->addChild('Total_cost', $processo->custo_total ?? '0.00');
+        $valuation->addChild('Total_CIF', $processo->totalCIF ?? '0.00');
+
+        // Fatura
+        $gsInvoice = $valuation->addChild('Gs_Invoice');
+        $gsInvoice->addChild('Amount_national_currency', $processo->ValorAduaneiro ?? '0.00');
+        $gsInvoice->addChild('Amount_foreign_currency', $processo->fob_total ?? '20350');
+        $gsInvoice->addChild('Currency_code', $processo->Moeda);
+        $gsInvoice->addChild('Currency_name', 'Nao existe Divisa');
+        $gsInvoice->addChild('Currency_rate', $processo->Cambio ?? '0.00');
+
+        // Frete Externo
+        $gsExternalFreight = $valuation->addChild('Gs_external_freight');
+        $gsExternalFreight->addChild('Amount_national_currency', $frete_nacional ?? '0.00');
+        $gsExternalFreight->addChild('Amount_foreign_currency', $processo->frete ?? '0.00');
+        $gsExternalFreight->addChild('Currency_code', 'EUR');
+        $gsExternalFreight->addChild('Currency_name', 'Nao existe Divisa');
+        $gsExternalFreight->addChild('Currency_rate', $processo->Cambio ?? '0.00');
+
+        // Frete Interno
+        $gsInternalFreight = $valuation->addChild('Gs_internal_freight');
+        $gsInternalFreight->addChild('Amount_national_currency', '0.00');
+        $gsInternalFreight->addChild('Amount_foreign_currency', '0');
+        $gsInternalFreight->addChild('Currency_code');
+        $gsInternalFreight->addChild('Currency_name', 'Nao existe Divisa');
+        $gsInternalFreight->addChild('Currency_rate', '0');
+
+        // Seguro
+        $gsInsurance = $valuation->addChild('Gs_insurance');
+        $gsInsurance->addChild('Amount_national_currency', $seguro_nacional ?? '0.00');
+        $gsInsurance->addChild('Amount_foreign_currency', $processo->seguro ?? '0.00');
+        $gsInsurance->addChild('Currency_code', 'EUR');
+        $gsInsurance->addChild('Currency_name', 'Nao existe Divisa');
+        $gsInsurance->addChild('Currency_rate', $processo->Cambio ?? '0.00');
+
+        // Outros Custos
+        $gsOtherCost = $valuation->addChild('Gs_other_cost');
+        $gsOtherCost->addChild('Amount_national_currency', '0.00');
+        $gsOtherCost->addChild('Amount_foreign_currency', '0');
+        $gsOtherCost->addChild('Currency_code');
+        $gsOtherCost->addChild('Currency_name', 'Nao existe Divisa');
+        $gsOtherCost->addChild('Currency_rate', '0');
+
+        // Dedução
+        $gsDeduction = $valuation->addChild('Gs_deduction');
+        $gsDeduction->addChild('Amount_national_currency', '0.00');
+        $gsDeduction->addChild('Amount_foreign_currency', '0');
+        $gsDeduction->addChild('Currency_code');
+        $gsDeduction->addChild('Currency_name', 'Nao existe Divisa');
+        $gsDeduction->addChild('Currency_rate', '0');
+
+        // Totais
+        $total = $valuation->addChild('Total');
+        $total->addChild('Total_invoice', $processo->fob_total ?? '0.00');
+        $total->addChild('Total_weight', $processo->peso_total ?? '0.00');
+    }
+
+    function adicionarContainerXML($xml, $processo)
+    {
+        // Recupera os containers associados ao processo
+        $containers = DB::table('containers')->where('processo_id', $processo->id)->get();
+
+        foreach ($containers as $index => $container) {
+            $containerXml = $xml->addChild('Container');
+            
+            $containerXml->addChild('Item_Number', $index + 1);
+            $containerXml->addChild('Container_identity', $container->identidade ?? 'Desconhecido');
+            $containerXml->addChild('Container_type', $container->tipo ?? 'Desconhecido');
+            $containerXml->addChild('Empty_full_indicator', $container->indicador_vazio_cheio ?? 'FCL');
+            $containerXml->addChild('Gross_weight', $container->peso_bruto ?? '');
+            $containerXml->addChild('Goods_description', $container->descricao_mercadoria ?? 'OUTRAS');
+            $containerXml->addChild('Packages_type', $container->tipo_pacote ?? 'PK');
+            $containerXml->addChild('Packages_number', $container->numero_pacotes ?? '0');
+            $containerXml->addChild('Packages_weight', $container->peso_pacotes ?? '0.00');
+        }
+    }
+
 }

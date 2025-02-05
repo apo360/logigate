@@ -51,8 +51,12 @@ class MercadoriaController extends Controller
         { 
             $licenciamento = Licenciamento::findOrFail(request()->get('licenciamento_id'));
             $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('licenciamento_id',request()->get('licenciamento_id'))->get();
+
+            // Calcular o somatório dos preco_total de todas as mercadorias associadas ao processo
+            $somaPrecoTotal = Mercadoria::where('licenciamento_id',request()->get('licenciamento_id'))->sum('preco_total');
+
             // Redireciona para o formulário de mercadorias com os dados apropriados
-            return view('mercadorias.create_mercadoria', compact('licenciamento', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias'));
+            return view('mercadorias.create_mercadoria', compact('licenciamento', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias','somaPrecoTotal', 'porcentagem'));
     
         }
 
@@ -60,12 +64,17 @@ class MercadoriaController extends Controller
         if (request()->get('processo_id')) { 
             $processo = Processo::find(request()->get('processo_id'));
             $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id',request()->get('processo_id'))->get();
-            return view('mercadorias.create_mercadoria_proc', compact('processo', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias'));
+
+            // Calcular o somatório dos preco_total de todas as mercadorias associadas ao processo
+            $somaPrecoTotal = Mercadoria::where('Fk_Importacao',request()->get('processo_id'))->sum('preco_total');
+
+            $porcentagem = ($somaPrecoTotal / $processo->fob_total) * 100;
+            // Redireciona para o formulário de mercadorias com os dados apropriados
+            return view('mercadorias.create_mercadoria_proc', compact('processo', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias','somaPrecoTotal', 'porcentagem'));
         }
 
         
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -130,22 +139,27 @@ class MercadoriaController extends Controller
      */
     public function edit(Mercadoria $mercadoria)
     {
-        
+        return response()->json($mercadoria);
     }
+
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(MercadoriaRequest $request, Mercadoria $mercadoria)
+    public function update(Request  $request, Mercadoria $mercadoria)
     {
-        // Find the existing mercadoria by ID
-        $mercadoria = Mercadoria::findOrFail($mercadoria->id);
-
-        // Validating the request
-        $validatedData = $request->validated();
-
-        // Updating the mercadoria with new data
-        $mercadoria->update($validatedData);
+        $request->validate([
+            'Descricao' => 'required|string|max:255',
+            'Quantidade' => 'nullable|integer|min:1',
+            'Unidade' => 'nullable|string',
+            'Qualificacao' => 'nullable|string',
+            'Peso' => 'nullable|numeric|min:0',
+            'volume' => 'nullable|numeric|min:0',
+            'preco_unitario' => 'nullable|numeric|min:0',
+            'preco_total' => 'required|numeric|min:0',
+        ]);
+    
+        $mercadoria->update($request->all());
 
         MercadoriaAgrupada::StoreAndUpdateAgrupamento($mercadoria);
 
@@ -288,6 +302,5 @@ class MercadoriaController extends Controller
             return redirect()->back()->with('error', 'Erro ao limpar agrupamentos inativos: ' . $e->getMessage());
         }
     }
-
 
 }

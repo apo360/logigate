@@ -159,7 +159,6 @@ use App\Models\ProcessoDraft;
         Route::get('processo/DU-Electronico', [ProcessoController::class, 'du_electronico'])->name('processos.du');
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
-        Route::get('processo/imprimir', [ProcessoController::class, 'print'])->name('processos.print');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
         Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
         Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
@@ -168,6 +167,9 @@ use App\Models\ProcessoDraft;
         Route::post('/processo/finalizar/{processoID}', [ProcessoController::class, 'processoFinalizar'])->name('processo.finalizar');
         Route::get('/processo/nao-finalizados', [ProcessoController::class, 'processosNaoFinalizados']);
 
+        Route::get('processos/report/{ProcessoID}/visualizar', [ProcessoController::class, 'printNotaDespesa'])->name('processos.print');
+        Route::post('processos/report/{ProcessoID}/imprimir-carta', [ProcessoController::class, 'printCartaDiversa'])->name('processos.imprimirCarta');
+        Route::get('processos/report/{ProcessoID}/Extrato-Mercadoria', [ProcessoController::class, 'printExtratoMercadoria'])->name('processos.Extrato_mercadoria');
 
 
         Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
@@ -184,7 +186,6 @@ use App\Models\ProcessoDraft;
         Route::post('empresa/importar/processos', [MigracaoController::class, 'importProcessos'])->name('import.processos');
         Route::post('empresa/logotipo/inserir', [EmpresaController::class, 'storeLogo'])->name('empresa.logotipo');
 
-        Route::get('processos/report/{ProcessoID}/visualizar', [ProcessoController::class, 'printNotaDespesa'])->name('processos.print');
         // Documentos
         Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
         Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');

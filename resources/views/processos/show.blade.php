@@ -171,7 +171,11 @@
                                                     <strong>Manifesto:</strong> {{ $processo->registo_transporte }}
                                                 </li>
                                                 <li class="mb-2">
-                                                    <strong>Transporte:</strong> {{ $processo->tipoTransporte->descricao }}
+                                                    <div class="row">
+                                                        <div class="col-md-4"><strong>Transporte:</strong> {{ $processo->tipoTransporte->descricao }}</div>
+                                                        <div class="col-md-4"><strong>Nacionalidade:</strong> {{ optional($processo->nacionalidadeNavio)->pais }}</div>
+                                                    </div>
+                                                    
                                                 </li>
                                             </ul>
                                         </div>
@@ -419,6 +423,12 @@
                                         <span id="financeIva">{{ number_format($processo->ValorAduaneiro * 0.14, 2, ',', '.') }} Kz</span>
                                     </div>
                                 </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-4">
+                                        <strong>Tarifas e Emolumentos:</strong> 
+                                        <span id="financeIva">{{ number_format(optional($processo->emolumentoTarifa)->guia_fiscal, 2, ',', '.') ?? 0.00 }} Kz</span>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- Sistema de Analise do processos de modo a comparar se este processos em função de outros processos (processos mais parecidos) por intermedio de mercadorias (codigo pautal), 
@@ -454,29 +464,29 @@
                             </a>
                         </li>
                         <li class="mb-2">
-                            <a class="dropdown-item btn btn-sm btn-warning" href="{{ route('processos.print', $processo->id) }}" target="_blank">
+                            <!-- Botão para abrir o modal -->
+                            <a class="dropdown-item btn btn-sm btn-warning {{ $processo->Estado == 'finalizado' ? '' : 'disabled' }}" 
+                            href="#" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#cartaDiversaModal">
                                 <i class="fas fa-print"></i> {{ __('Carta Diversa') }}
                             </a>
                         </li>
-                        <li class="mb-2"> <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('Extrato Mercadorias') }}
+                        <li class="mb-2"> 
+                            <a href="{{ route('processos.Extrato_mercadoria', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning" disable>
+                                <i class="fas fa-file-download"></i> {{ __('Extrato Mercadorias') }}*
                             </a> 
                         </li>
-                        <li class="mb-2"> <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
+                        <li class="mb-2"> <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning" disable>
+                                <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}*
                             </a> 
                         </li>
-                        
-                        <li class="mb-2"> <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                        <li class="mb-2"> <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
                                 <i class="fas fa-file-download"></i> {{ __('DU (xml)') }}
                             </a> 
                         </li>
                         <li class="mb-2"> <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
-                            </a> 
-                        </li>
-                        <li class="mb-2"> <a href="{{ route('gerar.processo', ['idLicenciamento' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('Constituir Processo') }}
+                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}*
                             </a> 
                         </li>
                         <hr>
@@ -500,8 +510,79 @@
         </div>
     </div>
     
+    <!-- Modal -->
+    <div class="modal fade" id="cartaDiversaModal" tabindex="-1" aria-labelledby="cartaDiversaModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cartaDiversaModalLabel">Gerar Carta Diversa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Saldo do Cliente -->
+                    <div class="mb-3">
+                        <label for="saldoCliente" class="form-label">Saldo do Cliente</label>
+                        <input type="text" class="form-control" id="saldoCliente" 
+                            value="{{ $saldo ?? 0.00 }}" 
+                            readonly>
+                    </div>
+
+                    <!-- FOB Total -->
+                    <div class="mb-3">
+                        <label for="fobTotal" class="form-label">FOB Total</label>
+                        <input type="text" class="form-control" id="fobTotal" 
+                            value="{{ $processo->emolumentoTarifa->guia_fiscal ?? 0.00 }}" readonly>
+                    </div>
+
+                    <!-- Mensagem de Saldo -->
+                    <div id="mensagemSaldo" class="alert" role="alert"></div>
+
+                    <!-- Opção para Prosseguir (Se Saldo Insuficiente) -->
+                    <div id="opcaoProsseguir" class="mb-3" style="display: none;">
+                        <label>Deseja Prosseguir Mesmo com Saldo Insuficiente?</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="prosseguir" id="prosseguirSim">
+                            <label class="form-check-label" for="prosseguirSim">SIM</label>
+                        </div>
+                    </div>
+
+                    <!-- Modo de Pagamento -->
+                    <div class="mb-3">
+                        <label for="modoPagamento" class="form-label">Modo de Pagamento</label>
+                        <select class="form-control" id="modoPagamento" name="modoPagamento" required disabled>
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="completo">Completo</option>
+                            <option value="parcelar">Parcelar</option>
+                        </select>
+                    </div>
+
+                    <!-- Valor da Parcela -->
+                    <div class="mb-3" id="valorParcelaDiv" style="display: none;">
+                        <label for="valorParcela" class="form-label">Valor da Parcela</label>
+                        <input type="number" class="form-control" id="valorParcela" name="valorParcela" placeholder="Digite o valor" disabled>
+                    </div>
+
+                    <!-- Checkbox para Emissão com Fatura -->
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="emitirComFatura">
+                        <label class="form-check-label" for="emitirComFatura">Emitir com Fatura</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <a class="btn btn-primary" id="btnGerarCarta" target="_blank">
+                        <i class="fas fa-print"></i> {{ __('Gerar Carta') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script para Finalizar o processo -->
     <script>
         $(document).ready(function () {
             $('#situacao').on('change', function () {
@@ -589,6 +670,108 @@
                 "searching": false, // Desativa a pesquisa
                 "ordering": false // Desativa a ordenação
             }).container().appendTo('#example1_wrapper .col-md-6:eq(0)');
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let saldoCliente = parseFloat(document.getElementById("saldoCliente").value.replace(",", "")) || 0;
+            let fobTotal = parseFloat(document.getElementById("fobTotal").value.replace(",", "")) || 0;
+
+            let mensagemSaldo = document.getElementById("mensagemSaldo");
+            let opcaoProsseguir = document.getElementById("opcaoProsseguir");
+            let prosseguirSim = document.getElementById("prosseguirSim");
+
+            let modoPagamento = document.getElementById("modoPagamento");
+            let valorParcelaDiv = document.getElementById("valorParcelaDiv");
+            let valorParcela = document.getElementById("valorParcela");
+
+            let btnGerarCarta = document.getElementById("btnGerarCarta");
+
+            // Verifica se o saldo é suficiente
+            function verificarSaldo() {
+                if (saldoCliente >= fobTotal) {
+                    mensagemSaldo.classList.remove("alert-danger");
+                    mensagemSaldo.classList.add("alert-success");
+                    mensagemSaldo.innerHTML = "Saldo suficiente para pagamento.";
+
+                    // Habilita inputs diretamente
+                    modoPagamento.removeAttribute("disabled");
+                    btnGerarCarta.removeAttribute("disabled");
+                    opcaoProsseguir.style.display = "none";
+                } else {
+                    mensagemSaldo.classList.remove("alert-success");
+                    mensagemSaldo.classList.add("alert-danger");
+                    mensagemSaldo.innerHTML = "Saldo inferior para pagamento.";
+
+                    // Exibe opção para continuar
+                    opcaoProsseguir.style.display = "block";
+                    modoPagamento.setAttribute("disabled", true);
+                    btnGerarCarta.setAttribute("disabled", true);
+                }
+            }
+
+            // Habilita inputs se "SIM" for selecionado
+            prosseguirSim.addEventListener("change", function() {
+                if (this.checked) {
+                    modoPagamento.removeAttribute("disabled");
+                    btnGerarCarta.removeAttribute("disabled");
+                }
+            });
+
+            // Lógica para exibir campo de parcelas e preencher automaticamente com FOB
+            modoPagamento.addEventListener("change", function() {
+                if (this.value === "parcelar") {
+                    valorParcelaDiv.style.display = "block";
+                    valorParcela.value = "";
+                    valorParcela.removeAttribute("disabled");
+                } else if (this.value === "completo") {
+                    valorParcelaDiv.style.display = "block";
+                    valorParcela.value = fobTotal.toFixed(2);
+                    valorParcela.setAttribute("disabled", true);
+                } else {
+                    valorParcelaDiv.style.display = "none";
+                    valorParcela.value = "";
+                }
+            });
+
+            // Executa a verificação ao carregar a página
+            verificarSaldo();
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $("#btnGerarCarta").click(function (e) {
+                e.preventDefault(); // Evita o reload da página
+
+                var ProcessoID = {{$processo->id}};
+                let dados = {
+                    saldoCliente: $("#saldoCliente").val(),
+                    fobTotal: $("#fobTotal").val(),
+                    modoPagamento: $("#modoPagamento").val(),
+                    valor: $("#valorParcela").val() || null,
+                    emitirComFatura: $("#emitirComFatura").is(":checked") ? 1 : 0,
+                    _token: "{{ csrf_token() }}" // Proteção contra CSRF
+                };
+
+                $.ajax({
+                    url: "{{ route('processos.imprimirCarta', ['ProcessoID' => ':ProcessoID']) }}".replace(':ProcessoID', ProcessoID),
+                    type: "POST",
+                    data: dados,
+                    xhrFields: {
+                    responseType: "blob" // Importante para lidar com arquivos binários (PDF)
+                    },
+                    success: function (response) {
+                        var blob = new Blob([response], { type: "application/pdf" }); // Corrigido para usar 'response'
+                        var url = URL.createObjectURL(blob);
+                        window.open(url, "_blank"); // Abre o PDF em nova aba
+                    },
+                    error: function (xhr) {
+                        alert("Ocorreu um erro: " + xhr.responseText);
+                    }
+                });
+            });
         });
     </script>
 

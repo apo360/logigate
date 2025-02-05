@@ -1,4 +1,9 @@
 <x-app-layout>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Serviços/Produtos', 'url' => route('produtos.index')],
+        ['name' => 'Novo Serviço/Produto' , 'url' => '']
+    ]" separator="/" />
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Novo Serviço/Produto') }}

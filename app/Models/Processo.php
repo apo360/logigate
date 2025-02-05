@@ -217,6 +217,14 @@ class Processo extends Model implements Auditable
     }
 
     /**
+     * Relação com o modelo de país de destino.
+     */
+    public function nacionalidadeNavio()
+    {
+        return $this->belongsTo(Pais::class, 'nacionalidade_transporte');
+    }
+
+    /**
      * Relacionamento com a Mercadorias.
      */
     public function procLicenMercadorias()
@@ -355,5 +363,37 @@ class Processo extends Model implements Auditable
     public function procLicenFaturas()
     {
         return $this->hasMany(ProcLicenFactura::class, 'processo_id');
+    }
+
+    public function porto()
+    {
+        return $this->belongsTo(Porto::class, 'PortoOrigem', 'porto');
+    }
+
+    protected $appends = ['guia_fiscal'];
+
+    public function getGuiaFiscalAttribute()
+    {
+        return (float) array_sum([
+            $this->direitos ?? 0.00,
+            $this->emolumentos ?? 0.00,
+            $this->porto ?? 0.00,
+            $this->terminal ?? 0.00,
+            $this->lmc ?? 0.00,
+            $this->navegacao ?? 0.00,
+            $this->inerentes ?? 0.00,
+            $this->frete ?? 0.00,
+            $this->carga_descarga ?? 0.00,
+            $this->deslocacao ?? 0.00,
+            $this->selos ?? 0.00,
+            $this->iva_aduaneiro ?? 0.00,
+            $this->iec ?? 0.00,
+            $this->impostoEstatistico ?? 0.00,
+            $this->juros_mora ?? 0.00,
+            $this->caucao ?? 0.00,
+            $this->honorario ?? 0.00,
+            $this->honorario_iva ?? 0.00,
+            $this->orgaos_ofiais ?? 0.00,
+        ]);
     }
 }

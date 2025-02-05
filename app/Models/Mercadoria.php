@@ -28,9 +28,6 @@ class Mercadoria extends Model
         'potencia',
         'licenciamento_id',
         'subcategoria_id',
-
-        // 'volume'
-        // 'hs_code',
     ];
 
     public function processos()

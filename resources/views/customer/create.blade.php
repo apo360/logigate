@@ -7,7 +7,7 @@
         ['name' => 'Clientes', 'url' => route('customers.index')],
         ['name' => 'Novo Cliente' , 'url' => '']
     ]" separator="/" />
-        <div class="row">
+        <div class="container">
             <div class="col-12">
                 <form method="POST" action="{{ route('customers.store') }}">
                     @csrf

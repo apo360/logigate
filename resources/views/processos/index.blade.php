@@ -223,9 +223,20 @@
             </div>
 
             <!-- Quadro de notificações (O Quadro só aparece quando existir notificações de processos) -->
-            <div class="card col-md-2 bg-white shadow-lg p-4 border border-green-500 hidden" id="quadro-notificacoes-container" style="overflow-y: auto; max-height: 100%;">
+            <div class="card col-md-2 direct-chat direct-chat-primary" id="quadro-notificacoes-container" style="overflow-y: auto; max-height: 100%;">
                 <div class="card-header">
-                        <span class="card-title"> <i class="fas fa-info-circle"></i> Notificações</span>
+                    <span class="card-title"> <i class="fas fa-info-circle"></i> Notificações</span>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget = "collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool" title="Contactos" data-widget = "chat-pane-toggle">
+                            <i class="fas fa-comments"></i>
+                        </button>
+                        <button type="button" class="btn btn-tool" data-card-widget = "remove">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div id="quadro-notificacoes">

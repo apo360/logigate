@@ -14,7 +14,7 @@
     @endphp
 
 
-    <form action="{{ route('mercadorias.store') }}" method="POST">
+    <form action="{{ route('mercadorias.store') }}" method="POST" id="formNovaMercadoria">
         @csrf
         <!-- Enviar os IDs escondidos no formulário -->
 
@@ -54,13 +54,14 @@
 
                                 </datalist>
                             </div>
+                            
                             <div class="col-md-3 form-group">
                                 <label for="NCM_HS">Marca</label>
-                                <input type="text" name="NCM_HS" id="NCM_HS" placeholder="Marcas do Contentor" class="form-control">
+                                <input type="text" name="NCM_HS" id="NCM_HS" placeholder="Marcas do Contentor" class="form-control" value="{{ old('NCM_HS') }}">
                             </div>
                             <div class="col-md-3 form-group">
                                 <label for="NCM_HS_Numero">Números</label>
-                                <input type="text" name="NCM_HS_Numero" id="NCM_HS_Numero" placeholder="Números do Contentor" class="form-control">
+                                <input type="text" name="NCM_HS_Numero" id="NCM_HS_Numero" placeholder="Números do Contentor" class="form-control" value="{{ old('NCM_HS_Numero') }}">
                             </div>
                         </div>
 
@@ -167,17 +168,80 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card">
-                    <div class="card-header"></div>
+                <div class="card shadow-lg border-0">
+                    <div class="card-header text-white fw-bold d-flex justify-content-between align-items-center" id="card-header">
+                        <h4 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Detalhes do Processo</h4>
+                        <span class="badge" id="status-badge">Analisando...</span>
+                    </div>
+
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-12">
-                                <label for="fob_total">FOB Total</label>
-                                <input type="text" id="fob_total" name="fob_total" class="form-control" readonly value="{{$fob}}">
+                            <!-- Valor FOB -->
+                            <div class="col-md-12 mb-3">
+                                <label class="fw-bold text-secondary"><i class="fas fa-coins"></i> FOB Total</label>
+                                <p class="fs-5 text-primary mb-0"><strong>Kz {{ number_format($fob, 2) }}</strong></p>
+                            </div>
+
+                            <!-- Somatório das Mercadorias -->
+                            <div class="col-md-12 mb-3">
+                                <label class="fw-bold text-secondary"><i class="fas fa-box-open"></i> Somatório das Mercadorias</label>
+                                <p class="fs-5 text-primary mb-0"><strong>Kz {{ number_format($somaPrecoTotal, 2) }}</strong></p>
                             </div>
                         </div>
+
+                        <hr>
+
+                        <!-- Barra de Progresso -->
+                        <div class="progress mb-2">
+                            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ $porcentagem }}%;" 
+                                aria-valuenow="{{ $porcentagem }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ number_format($porcentagem, 2) }}%
+                            </div>
+                        </div>
+
+                        <!-- Mensagens de Status -->
+                        <p class="text-center fw-bold" id="progress-message"></p>
+
+                        <!-- Alerta caso o valor exceda 100% -->
+                        @if($porcentagem >= 100)
+                            <div class="alert alert-danger text-center fw-bold">
+                                <i class="fas fa-exclamation-triangle"></i> Atenção! O total das mercadorias excede o valor FOB do processo.
+                            </div>
+                        @endif
                     </div>
                 </div>
+
+                <!-- SCRIPT PARA ALTERAR A APARÊNCIA DINAMICAMENTE -->
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        var porcentagem = {{ $porcentagem }};
+                        var progressBar = document.getElementById('progress-bar');
+                        var cardHeader = document.getElementById('card-header');
+                        var statusBadge = document.getElementById('status-badge');
+                        var progressMessage = document.getElementById('progress-message');
+
+                        // Definição de cores e mensagens baseadas na porcentagem
+                        if (porcentagem >= 100) {
+                            progressBar.classList.add('bg-danger');
+                            cardHeader.classList.add('bg-danger');
+                            statusBadge.classList.add('bg-danger', 'text-white');
+                            statusBadge.textContent = "Excedente!";
+                            progressMessage.innerHTML = "O somatório das mercadorias <strong>excedeu</strong> o limite permitido.";
+                        } else if (porcentagem >= 80) {
+                            progressBar.classList.add('bg-warning');
+                            cardHeader.classList.add('bg-warning');
+                            statusBadge.classList.add('bg-warning', 'text-dark');
+                            statusBadge.textContent = "Quase no limite";
+                            progressMessage.innerHTML = "O valor das mercadorias está próximo ao limite do FOB.";
+                        } else {
+                            progressBar.classList.add('bg-success');
+                            cardHeader.classList.add('bg-success');
+                            statusBadge.classList.add('bg-success', 'text-white');
+                            statusBadge.textContent = "Dentro do Limite";
+                            progressMessage.innerHTML = "O somatório das mercadorias está dentro do permitido.";
+                        }
+                    });
+                </script>
             </div>
             
         </div>
@@ -255,10 +319,88 @@
             </table>
         </div>
     </div>
+    <!-- Modal para edição de Mercadoria -->
+    <div class="modal fade" id="modalEditarMercadoria" tabindex="-1" aria-labelledby="modalEditarMercadoriaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarMercadoriaLabel">Editar Mercadoria</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarMercadoria">
+                        <input type="text" id="edit_id" name="id">
+                        
+                        <div class="form-group">
+                            <label for="edit_descricao">Descrição da Mercadoria:</label>
+                            <input type="text" name="Descricao" class="form-control" id="edit_descricao" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_Quantidade">Quantidade</label>
+                                <input type="number" class="form-control" id="edit_Quantidade" name="Quantidade" min="1" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_Unidade">Unidade de Medida</label>
+                                <select class="form-control" id="edit_Unidade" name="Unidade" required>
+                                    <option value="kg">Kg</option>
+                                    <option value="l">Litros</option>
+                                    <option value="uni">Unidades</option>
+                                    <option value="m">Metros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit_Qualificacao">Qualificação</label>
+                                <select name="Qualificacao" id="edit_Qualificacao" class="form-control">
+                                    <option value="cont">Contentor</option>
+                                    <option value="auto">Automóvel</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_Peso">Peso (Kg)</label>
+                                <input type="number" class="form-control" id="edit_Peso" name="Peso" step="0.01">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_volume">Volume (m³)</label>
+                                <input type="number" class="form-control" id="edit_volume" name="volume" step="0.01">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_preco_unitario">Valor Unitário (Moeda)</label>
+                                <input type="number" class="form-control" id="edit_preco_unitario" name="preco_unitario" step="0.01" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="edit_preco_total">Valor Total (FOB)</label>
+                                <input type="number" class="form-control" id="edit_preco_total" name="preco_total" step="0.01" required>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FONT AWESOME PARA OS ÍCONES -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         $(document).ready(function() {
+
+            $('#subcategoria_id').focus().css('border', '2px solid #007bff'); // Exemplo com estilização após focar
+
             $('#subcategoria_id').on('change', function() {
                 // Captura o código da subcategoria selecionada
                 var cod_pauta = $(this).find(':selected').data('code');
@@ -290,6 +432,63 @@
             });
         });
 
+        $(document).ready(function() {
+            // Validação ao sair do campo
+            $('#codigo_aduaneiro').on('input', function() {
+                var inputValue = $(this).val().trim();
+                var isValid = false;
+                var isIncomplete = false;
+
+                // Percorre todas as opções do datalist
+                $('#pauta_list option').each(function() {
+                    var optionValue = $(this).val();
+
+                    // Verifica se o valor digitado está exatamente na lista
+                    if (optionValue === inputValue) {
+                        isValid = true;
+                    }
+
+                    // Verifica se o valor digitado é um prefixo de um código maior
+                    if (optionValue.startsWith(inputValue) && optionValue.length > inputValue.length) {
+                        isIncomplete = true;
+                    }
+                });
+
+                // Exibir erro se o valor não estiver na lista
+                if (!isValid || isIncomplete) {
+                    $('.erro_pauta').text(isIncomplete ? 'Código incompleto! Digite o código completo.' : 'Código inválido! Selecione um da lista.')
+                        .css('color', 'red');
+                    $(this).addClass('is-invalid');
+                } else {
+                    $('.erro_pauta').text('');
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Evita submissão de formulário com código inválido
+            $('#formNovaMercadoria').on('submit', function(event) {
+                var inputValue = $('#codigo_aduaneiro').val().trim();
+                var isValid = false;
+                var isIncomplete = false;
+
+                $('#pauta_list option').each(function() {
+                    var optionValue = $(this).val();
+                    if (optionValue === inputValue) {
+                        isValid = true;
+                    }
+                    if (optionValue.startsWith(inputValue) && optionValue.length > inputValue.length) {
+                        isIncomplete = true;
+                    }
+                });
+
+                if (!isValid || isIncomplete) {
+                    event.preventDefault();
+                    alert(isIncomplete ? 'Erro: Código incompleto! Digite o código completo.' : 'Erro: Código inválido. Escolha um da lista.');
+                }
+            });
+        });
+
+
         document.getElementById('Quantidade').addEventListener('input', calcularValorTotal);
         document.getElementById('preco_unitario').addEventListener('input', calcularValorTotal);
 
@@ -304,39 +503,102 @@
 
     <script>
         $(document).ready(function() {
-            // Ao clicar no botão de excluir
             $('.btn-delete').click(function(e) {
                 e.preventDefault();
-                
+
                 let mercadoriaId = $(this).data('id');
-                
-                // Confirmação antes de excluir
+                let rowMercadoria = $(`#mercadoria-${mercadoriaId}`);
+                let tableMercadorias = rowMercadoria.closest('tbody');
+                let rowAgrupamento = rowMercadoria.closest('.expandable-body').prev('tr'); // Linha principal do agrupamento
+
                 if (!confirm("Tem certeza que deseja excluir esta mercadoria?")) {
                     return;
                 }
-                
+
                 $.ajax({
-                    url: `{{ route('mercadorias.destroy', ':id') }}`.replace(':id', mercadoriaId),  // URL da rota de exclusão com o ID dinâmico
-                    type: 'DELETE',
+                    url: `{{ route('mercadorias.destroy', ':id') }}`.replace(':id', mercadoriaId),
+                    type: 'POST', // Laravel exige POST para DELETE
                     dataType: 'json',
                     data: {
-                        _token: '{{ csrf_token() }}'  // Token CSRF para segurança
+                        _token: '{{ csrf_token() }}',
+                        _method: 'DELETE'
                     },
                     success: function(response) {
                         if (response.success) {
-                            // Remove a linha da mercadoria na tabela
-                            $(`#mercadoria-${mercadoriaId}`).remove();
+                            rowMercadoria.remove();
+
+                            // Se não houver mais mercadorias no grupo, remover o agrupamento principal
+                            if (tableMercadorias.children('tr').length === 0) {
+                                rowAgrupamento.remove();
+                                tableMercadorias.closest('.expandable-body').remove();
+                            }
+
                             alert(response.message);
                         } else {
                             alert("Erro: " + response.message);
                         }
                     },
-                    error: function(xhr, status, error) {
+                    error: function() {
                         alert("Erro ao excluir a mercadoria. Por favor, tente novamente.");
                     }
                 });
             });
         });
-    </script>
 
+        $(document).ready(function() {
+             // Clique no botão Editar
+            $('.btn-edit').click(function(e) {
+                e.preventDefault();
+
+                let mercadoriaId = $(this).data('id');
+
+                // Buscar os dados da mercadoria via AJAX
+                $.ajax({
+                    url: `{{ route('mercadorias.edit', ':id') }}`.replace(':id', mercadoriaId),
+                    type: 'GET',
+                    success: function(data) {
+                        // Preencher os campos do modal com os dados retornados
+                        $('#edit_id').val(data.id);
+                        $('#edit_descricao').val(data.Descricao);
+                        $('#edit_Quantidade').val(data.Quantidade);
+                        $('#edit_Unidade').val(data.Unidade);
+                        $('#edit_Qualificacao').val(data.Qualificacao);
+                        $('#edit_Peso').val(data.Peso);
+                        $('#edit_volume').val(data.volume);
+                        $('#edit_preco_unitario').val(data.preco_unitario);
+                        $('#edit_preco_total').val(data.preco_total);
+
+                        // Abrir o modal
+                        $('#modalEditarMercadoria').modal('show');
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Erro ao buscar os dados da mercadoria.");
+                    }
+                });
+            });
+
+             // Submit do formulário de edição
+             $('#editMercadoriaForm').submit(function(e) {
+                e.preventDefault();
+
+                let mercadoriaId = $('#edit_id').val();
+                let formData = $(this).serialize();
+
+                $.ajax({
+                    url: `{{ route('mercadorias.update', ':id') }}`.replace(':id', mercadoriaId),
+                    type: 'POST', 
+                    data: formData,
+                    success: function(response) {
+                        alert("Mercadoria atualizada com sucesso!");
+                        $('#modalEditarMercadoria').modal('hide');
+                        //location.reload(); // Atualiza a página para refletir as mudanças
+                    },
+                    error: function(xhr, status, error) {
+                        alert("Erro ao atualizar a mercadoria.");
+                    }
+                });
+            });
+
+        });
+    </script>
 </x-app-layout>
