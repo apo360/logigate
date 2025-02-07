@@ -13,7 +13,6 @@ class EmolumentoTarifa extends Model
     protected $table = 'emolumento_tarifas';
 
     protected $fillable = [
-        'processo_id',
         'direitos',
         'emolumentos',
         'porto',
@@ -52,28 +51,15 @@ class EmolumentoTarifa extends Model
     {
         parent::boot();
 
-        // Evento executado antes de criar o registro
-        static::creating(function ($emolumentoTarifa) {
-            // Adicionar lógica, se necessário
-            // Exemplo: Garantir valores padrões
-            if (is_null($emolumentoTarifa->direitos)) {
-                $emolumentoTarifa->direitos = 0.00;
-            }
-
-            self::calcularValores($emolumentoTarifa);
+        // Evento antes de criar ou atualizar
+        static::saving(function ($tarifa) {
+            self::calcularValores($tarifa);
+            $tarifa->guia_fiscal = $tarifa->calcularGuiaFiscal();
         });
 
-        // Evento executado antes de atualizar o registro
-        static::updating(function ($emolumentoTarifa) {
-            // Exemplo: Log para auditoria
-            self::calcularValores($emolumentoTarifa); 
-            logger()->info('Atualizando EmolumentoTarifa ID: ' . $emolumentoTarifa->id);
-        });
-
-        // Evento executado antes de excluir (soft delete) o registro
-        static::deleting(function ($emolumentoTarifa) {
-            // Exemplo: Impedir exclusão de registros específicos
-            if ($emolumentoTarifa->honorario > 10000) {
+        // Evento antes de excluir
+        static::deleting(function ($tarifa) {
+            if ($tarifa->honorario > 10000) {
                 throw new \Exception('Não é permitido excluir tarifas com honorários acima de 10.000.');
             }
         });
@@ -100,4 +86,14 @@ class EmolumentoTarifa extends Model
             $emolumentoTarifa->honorario_iva = $emolumentoTarifa->honorario * 0.14;
         }
     }
+
+    // Método para calcular o total de guia_fiscal
+    public function calcularGuiaFiscal()
+    {
+        return collect($this->attributes)
+            ->except(['processo_id', 'guia_fiscal', 'created_at', 'updated_at', 'deleted_at'])
+            ->map(fn($value) => (float) ($value ?? 0))
+            ->sum();
+    }
+
 }
