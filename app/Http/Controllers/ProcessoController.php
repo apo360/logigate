@@ -506,7 +506,7 @@ class ProcessoController extends Controller
         $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $ProcessoID)->first();
 
         // Caminho completo para o template .jasper
-        $input = base_path('reports/nota_despesa.jasper'); // Certifique-se de que este arquivo existe
+        $input = base_path('reports/nota_despesa.jrxml'); // Certifique-se de que este arquivo existe
         $output = base_path('reports');
 
         $params = [
