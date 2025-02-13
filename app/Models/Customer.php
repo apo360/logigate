@@ -43,7 +43,14 @@ class Customer extends Model
         'doc_type',
         'doc_num',
         'validade_date_doc',
-        'metodo_pagamento'
+        'metodo_pagamento',
+        'tipo_cliente',
+        'tipo_mercadoria',
+        'frequencia',
+        'observacoes',
+        'num_licenca',
+        'validade_licenca',
+        'moeda_operacao'
     ];
 
     protected $dates = [

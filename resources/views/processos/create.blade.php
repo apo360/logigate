@@ -442,10 +442,10 @@
                                     <label for="forma_pagamento">Forma de Pagamento:</label>
                                     <select id="forma_pagamento" name="forma_pagamento" class="form-control" aria-label="Selecionar forma de pagamento">
                                         <option value="" disabled selected>Selecione</option>
-                                        <option value="Transferência">Transferência Bancária</option>
-                                        <option value="Caixa kwanda">Caixa Única Tesouro Base Kwanda</option>
+                                        <option value="Tr">Transferência Bancária</option>
+                                        <option value="CK">Caixa Única Tesouro Base Kwanda</option>
                                         <option value="RD">Pronto Pagamento</option>
-                                        <option value="Outro">Outro</option>
+                                        <option value="Ou">Outro</option>
                                     </select>
                                     @error('forma_pagamento')
                                         <div class="text-danger">{{ $message }}</div>

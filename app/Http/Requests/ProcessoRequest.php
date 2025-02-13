@@ -41,7 +41,7 @@ class ProcessoRequest extends FormRequest
             'Pais_origem' => 'nullable|exists:paises,id',
             'Pais_destino' => 'nullable|exists:paises,id',
             'PortoOrigem' => 'nullable',
-            'DataChegada' => 'nullable|date|after_or_equal:DataAbertura',
+            'DataChegada' => 'nullable|date',
             'TipoTransporte' => 'nullable|exists:tipo_transportes,id',
             'registo_transporte' => 'nullable|string|max:100',
             'nacionalidade_transporte' => 'nullable|string|max:50',

@@ -445,7 +445,40 @@ class ProcessoController extends Controller
     public function tarifas()
     {
         // Lógica para calcular impostos com base nos dados do formulário
-        return view('processos.tarifas');
+        // Buscar todas as mercadorias com seus processos e códigos aduaneiros
+    $mercadorias = Mercadoria::with('processos', 'pautaAduaneira')->get();
+
+    $impostos = $mercadorias->map(function ($mercadoria) {
+        $pauta = $mercadoria->pautaAduaneira;
+
+        if (!$pauta) {
+            return null; // Se não houver pauta, ignora o cálculo
+        }
+
+        // Definição das taxas e valores base
+        $valorBase = $mercadoria->valor; // Assumindo que cada mercadoria tem um valor atribuído
+        $taxaImportacao = (float) $pauta->rg;
+        $iva = (float) $pauta->iva;
+        $ieq = (float) $pauta->ieq;
+
+        // Cálculo dos tributos
+        $valorImportacao = ($taxaImportacao / 100) * $valorBase;
+        $valorIva = ($iva / 100) * ($valorBase + $valorImportacao);
+        $valorIeq = ($ieq / 100) * $valorBase;
+        $totalTributos = $valorImportacao + $valorIva + $valorIeq;
+
+        return [
+            'codigo' => $pauta->getCodigoSemPontosAttribute(),
+            'descricao' => $mercadoria->Descricao,
+            'taxa_importacao' => $taxaImportacao,
+            'iva' => $iva,
+            'ieq' => $ieq,
+            'valor_base' => $valorBase,
+            'total_tributos' => $totalTributos
+        ];
+    })->filter(); // Remove valores nulos
+
+        return view('processos.tarifas', compact('impostos'));
     }
 
     public function rastreamento(){

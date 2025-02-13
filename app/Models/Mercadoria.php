@@ -40,6 +40,11 @@ class Mercadoria extends Model
         return $this->belongsTo(Licenciamento::class, 'licenciamento_id');
     }
 
+    public function pautaAduaneira()
+    {
+        return $this->belongsTo(PautaAduaneira::class, 'codigo_aduaneiro', 'codigo');
+    }
+
     public function categoria_mercadoria(){
 
         $categoria = [

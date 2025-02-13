@@ -20,6 +20,8 @@ class PautaAduaneira extends Model
         'ua',
         'requisitos',
         'observacao',
+        'iva',
+        'ieq'
     ];
 
     public function toSearchableArray()

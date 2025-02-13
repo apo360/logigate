@@ -8,6 +8,7 @@ use App\Http\Requests\CustomerRequest;
 use App\Imports\CustomersImport;
 use App\Models\ContaCorrente;
 use App\Models\Customer;
+use App\Models\Endereco;
 use App\Models\Municipio;
 use App\Models\Pais;
 use App\Models\Processo;
@@ -138,10 +139,13 @@ class CustomerController extends Controller
             DB::beginTransaction();
             
             // Atualize os atributos do cliente com base nos dados recebidos no $request
-            Customer::where('CustomerID',$customer->CustomerID)->update($request->validated());
+            Customer::where('id',$customer->id)->update($request->validated());
 
             // Chama o método update do EnderecoController para atualizar o endereço
+            $endereco = $customer->endereco ?? Endereco::create(['customer_id' => $customer->id]);
+
             $enderecoController = new EnderecoController();
+
             $enderecoRequest = new Request($request->only([
                 'BuildingNumber',
                 'StreetName',
@@ -151,12 +155,13 @@ class CustomerController extends Controller
                 'PostalCode',
                 'Country',
             ]));
-            $enderecoController->update($enderecoRequest, $customer->endereco);
+
+            $enderecoController->update($enderecoRequest, $endereco);
 
             DB::commit();
 
             // Redirecione para a página de listagem de clientes
-            return redirect()->route('customers.index')->with('success', 'Cliente atualizado com sucesso!');;
+            return redirect()->route('customers.edit', $customer->id)->with('success', 'Cliente atualizado com sucesso!');;
         } catch (QueryException $e) {
             DB::rollBack();
 

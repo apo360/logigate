@@ -1,37 +1,68 @@
-<nav x-data="{ open: false }" class="border-gray-100 main-header navbar navbar-expand navbar-white navbar-light">
-    <!-- Primary Navigation Menu -->
-    <!-- Left navbar links -->
-    <ul class="navbar-nav">
-        <li class="nav-item">
-            <a class="nav-link" data-widget="pushmenu" href="#" role="button">
-                <i class="fas fa-bars"></i> <span class="brand-text font-weight-light">Logi<b>Gate</b></span>
-            </a>
-        </li>
-    </ul>
+<nav x-data="{ open: false, notificationsOpen: false }" class="bg-white border-b border-gray-100 shadow-sm fixed w-full top-0 z-50">
+    <!-- Container Principal -->
+    <div class="max-w-7xl mx-auto px-12 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <!-- Logo e Menu Hambúrguer -->
+            <div class="flex items-center">
+                <!-- Botão do Menu Hambúrguer (para mobile) -->
+                <button @click="open = !open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
 
-    <!-- Right navbar links -->
-    <ul class="navbar-nav ml-auto">
-        <li class="nav-item">
-            <div class="navbar-search-block">
-                <form class="form-inline">
-                    <div class="input-group input-group-sm">
-                        <input class="form-control form-control-navbar" type="search" placeholder="Search" aria-label="Search">
-                        <div class="input-group-append">
-                            <button class="btn btn-navbar" type="submit">
-                                <i class="fas fa-search"></i>
-                            </button>
-                            <button class="btn btn-navbar" type="button" data-widget="navbar-search">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
+                <!-- Logo -->
+                <a href="#" class="ml-4 flex items-center">
+                    <span class="text-xl font-semibold text-gray-800">Logi<b class="text-blue-600">Gate</b></span>
+                </a>
+            </div>
+
+            <!-- Barra de Pesquisa -->
+            <div class="flex items-center">
+                <form class="hidden md:flex">
+                    <div class="relative">
+                        <input type="search" placeholder="Pesquisar..." class="w-64 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="absolute right-0 top-0 mt-2 mr-3 text-gray-500 hover:text-blue-600">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
                 </form>
             </div>
-        </li>
 
-        <li class="nav-item">
-            <!-- Settings Dropdown -->
-            <div class="ms-3 relative">
+            <!-- Menu de Notificações e Usuário -->
+            <div class="flex items-center space-x-4">
+                <!-- Menu de Notificações -->
+                <div class="relative">
+                    <button @click="notificationsOpen = !notificationsOpen" class="p-2 text-gray-500 hover:text-blue-600 focus:outline-none transition duration-150 ease-in-out">
+                        <i class="fas fa-bell text-lg"></i>
+                        <!-- Indicador de Notificações Não Lidas -->
+                        <span class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">3</span>
+                    </button>
+
+                    <!-- Dropdown de Notificações -->
+                    <div x-show="notificationsOpen" @click.away="notificationsOpen = false" class="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg z-50">
+                        <div class="p-4">
+                            <h3 class="text-sm font-semibold text-gray-800">Notificações</h3>
+                            <div class="mt-2 space-y-2">
+                                <!-- Exemplo de Notificação -->
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+                                    Nova mensagem recebida
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+                                    Atualização do sistema disponível
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+                                    Tarefa concluída com sucesso
+                                </a>
+                            </div>
+                            <div class="mt-4">
+                                <a href="#" class="block text-center text-sm text-blue-600 hover:text-blue-800">
+                                    Ver todas as notificações
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Menu do Usuário -->
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
@@ -42,7 +73,6 @@
                             <span class="inline-flex rounded-md">
                                 <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
                                     {{ Auth::user()->name }}
-
                                     <svg class="ms-2 -me-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                                     </svg>
@@ -52,7 +82,7 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <!-- Account Management -->
+                        <!-- Links do Dropdown -->
                         @foreach(auth()->user()->empresas as $empresa)
                             <div class="block px-4 py-2 text-xs text-gray-400">
                                 {{ __($empresa->Empresa) }}
@@ -89,21 +119,21 @@
                             </x-dropdown-link>
                         @endif
 
+                        <!-- Divisor -->
                         <div class="border-t border-gray-200"></div>
 
-                        <!-- Authentication -->
-                         <!-- Logout Form -->
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        <!-- Logout -->
+                        <form method="POST" action="{{ route('logout') }}">
                             @csrf
+                            <x-dropdown-link href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
+                                {{ __('Sair') }}
+                            </x-dropdown-link>
                         </form>
-
-                        <!-- Logout Link -->
-                        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            Sair
-                        </a>
                     </x-slot>
                 </x-dropdown>
+
             </div>
-        </li>
-    </ul>
+
+        </div>
+    </div>
 </nav>

@@ -50,18 +50,20 @@
         ['name' => 'Pesquisar Clientes' , 'url' => '']
     ]" separator="/" />
     
-    <div class="card">
+    <div class="card shadow-lg">
         <div class="card-header">
             <div class="float-right">
-                <a href="{{ route('customers.create') }}" type="button" class="btn btn-default" style="color: black;">
-                    <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
-                </a>
-                <a type="button" href="{{ route('customers.create') }}" class="btn btn-default" style="color: black;">
-                    <i class="fas fa-download" style="color: #0170cf;"></i> Upload Clientes CSV
-                </a>
-                <a type="button" href="{{ route('customers.create') }}" class="btn btn-default" data-toggle="modal" data-target="#modal-lg" style="color: black;">
-                    <i class="fas fa-upload" style="color: #0170cf;"></i> Exportar Clientes
-                </a>
+                <div class="btn-group">
+                    <a href="{{ route('customers.create') }}" class="btn btn-primary" style="color: black;">
+                        <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
+                    </a>
+                    <a type="button" href="{{ route('customers.create') }}" class="btn btn-success" style="color: black;">
+                        <i class="fas fa-download" style="color:rgb(130, 23, 69);"></i> Upload Clientes CSV
+                    </a>
+                    <a type="button" href="{{ route('customers.create') }}" class="btn btn-info" data-toggle="modal" data-target="#modal-lg" style="color: black;">
+                        <i class="fas fa-upload" style="color: rgb(130, 23, 69);"></i> Exportar Clientes
+                    </a>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -152,12 +154,10 @@
                                         id="statusSwitch{{ $customer->id }}" 
                                         data-id="{{ $customer->id }}" 
                                         data-status="{{ $customer->is_active ? 0 : 1 }}"
-                                        {{ $customer->is_active ? 'checked' : '' }}
-                                    >
+                                        {{ $customer->is_active ? 'checked' : '' }}>
                                     <span class="spinner-border spinner-border-sm text-primary d-none" id="spinner{{ $customer->id }}"></span>
                                 </div>
                             </td>
-
                             
                             <!-- Ações -->
                             <td class="text-end">
@@ -209,8 +209,8 @@
 
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="importacaoModal" tabindex="-1" role="dialog" aria-labelledby="importacaoModalLabel" aria-hidden="true">
+    <!-- Modal -->
+    <div class="modal fade" id="importacaoModal" tabindex="-1" role="dialog" aria-labelledby="importacaoModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -248,7 +248,7 @@
     </div>
 
     <!-- Modal de Confirmação -->
-<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
@@ -268,7 +268,7 @@
             </div>
         </div>
     </div>
-</div>
+    </div>
 
     <script>
         $('#confirmDeleteModal').on('show.bs.modal', function (event) {
@@ -282,42 +282,18 @@
  <!-- Ensure you have included jQuery and Bootstrap JS at the end of the body tag -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
     <script>
-        $(document).ready(function () {
-            var rowsPerPage = 10; // Número de linhas por página
-            var rows = $('#customerTable tbody tr');
-            var rowsCount = rows.length;
-            var pageCount = Math.ceil(rowsCount / rowsPerPage); // Número total de páginas
-            var pagination = $('#pagination');
-
-            // Adiciona os botões de paginação
-            for (var i = 1; i <= pageCount; i++) {
-                pagination.append('<li class="page-item"><a class="page-link" href="#">' + i + '</a></li>');
-            }
-
-            // Exibe as primeiras linhas
-            rows.hide();
-            rows.slice(0, rowsPerPage).show();
-            pagination.find('li:first-child').addClass('active');
-
-            // Controle de clique dos botões de paginação
-            pagination.find('li').on('click', function (e) {
-                e.preventDefault();
-                pagination.find('li').removeClass('active');
-                $(this).addClass('active');
-                var page = $(this).text();
-                var start = (page - 1) * rowsPerPage;
-                var end = start + rowsPerPage;
-                rows.hide();
-                rows.slice(start, end).show();
-            });
-
-            $('#search').on('keyup', function() {
-                var value = $(this).val().toLowerCase();
-                $('#customerTableBody tr').filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
-            });
+        $(function () {
+            $("#customerTable").DataTable({
+                "responsive": true,
+                "lengthChange": false,
+                "autoWidth": false,
+                "paging": true,
+                "info": true,
+                "searching": false, // Desativa a pesquisa
+                "ordering": false // Desativa a ordenação
+            }).container().appendTo('#example1_wrapper .col-md-6:eq(0)');
         });
     </script>
 

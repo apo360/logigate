@@ -380,51 +380,51 @@
     </script>
     
     <script>
-$(document).ready(function () {
-    function carregarNotificacoesPopup() {
-        $.ajax({
-            url: 'processo/nao-finalizados', // Endpoint para buscar notificações
-            method: 'GET',
-            success: function (data) {
-                if (data.length > 0) {
-                    let notificacoesHtml = '';
+        $(document).ready(function () {
+            function carregarNotificacoesPopup() {
+                $.ajax({
+                    url: 'processo/nao-finalizados', // Endpoint para buscar notificações
+                    method: 'GET',
+                    success: function (data) {
+                        if (data.length > 0) {
+                            let notificacoesHtml = '';
 
-                    data.forEach(function (processo) {
-                        notificacoesHtml += `
-                            <a href="processos/${processo.id}">
-                                <div class="p-2 bg-gradient-to-r from-red-200 via-red-300 to-red-500 rounded-lg mb-4 shadow-lg hover:shadow-2xl transition-all duration-300">
-                                    <p class="text-md font-semibold text-green"><strong>Processo:</strong> ${processo.NrProcesso}</p>
-                                    <p class="text-sm text-green"><strong>DU:</strong> ${processo.NrDU}</p>
-                                    <p class="text-sm text-black mb-2"><strong>Descrição:</strong> ${processo.Descricao || 'Sem descrição'}</p>
-                                    <div class="flex items-center space-x-2">
-                                        <p class="text-sm text-yellow-300"><strong>Valor Aduaneiro:</strong> ${processo.ValorAduaneiro} Kz</p>
-                                        <div class="flex-grow"></div>
-                                        <span class="text-xs text-gray-200 italic">Atualizado há x minutos</span>
-                                    </div>
-                                </div>
-                            </a>
-                        `;
-                    });
+                            data.forEach(function (processo) {
+                                notificacoesHtml += `
+                                    <a href="processos/${processo.id}">
+                                        <div class="p-2 bg-gradient-to-r from-red-200 via-red-300 to-red-500 rounded-lg mb-4 shadow-lg hover:shadow-2xl transition-all duration-300">
+                                            <p class="text-md font-semibold text-green"><strong>Processo:</strong> ${processo.NrProcesso}</p>
+                                            <p class="text-sm text-green"><strong>DU:</strong> ${processo.NrDU}</p>
+                                            <p class="text-sm text-black mb-2"><strong>Descrição:</strong> ${processo.Descricao || 'Sem descrição'}</p>
+                                            <div class="flex items-center space-x-2">
+                                                <p class="text-sm text-yellow-300"><strong>Valor Aduaneiro:</strong> ${processo.ValorAduaneiro} Kz</p>
+                                                <div class="flex-grow"></div>
+                                                <span class="text-xs text-gray-200 italic">Atualizado há x minutos</span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                `;
+                            });
 
-                    // Atualizar o conteúdo do quadro de notificações
-                    $('#quadro-notificacoes').html(notificacoesHtml);
+                            // Atualizar o conteúdo do quadro de notificações
+                            $('#quadro-notificacoes').html(notificacoesHtml);
 
-                    // Exibir o quadro de notificações
-                    $('#quadro-notificacoes-container').removeClass('hidden');
-                } else {
-                    // Esconder o quadro se não houver notificações
-                    $('#quadro-notificacoes-container').addClass('hidden');
-                }
-            },
-            error: function (err) {
-                console.error('Erro ao carregar notificações:', err);
+                            // Exibir o quadro de notificações
+                            $('#quadro-notificacoes-container').removeClass('hidden');
+                        } else {
+                            // Esconder o quadro se não houver notificações
+                            $('#quadro-notificacoes-container').addClass('hidden');
+                        }
+                    },
+                    error: function (err) {
+                        console.error('Erro ao carregar notificações:', err);
+                    }
+                });
             }
-        });
-    }
 
-    // Chamar a função ao carregar a página
-    carregarNotificacoesPopup();
-});
-</script>
+            // Chamar a função ao carregar a página
+            carregarNotificacoesPopup();
+        });
+    </script>
 
 </x-app-layout>

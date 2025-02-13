@@ -5,11 +5,12 @@ namespace App\Http\Requests;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Customer; // Certifique-se de importar o modelo de clientes
 
 class CustomerRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determina se o usuário está autorizado a fazer essa solicitação.
      */
     public function authorize(): bool
     {
@@ -17,26 +18,35 @@ class CustomerRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * Retorna as regras de validação que se aplicam à solicitação.
      */
     public function rules()
     {
-        $id = $this->isMethod('PUT') ? $this->route('customers') : null;
+        $id = $this->route('customer'); // Obtém o ID do cliente se estiver na atualização
         $empresaId = Auth::user()->empresas->first()->id;
+        $customer = Customer::where('id', $id)->first(); 
+
+        // Verifica se o cliente possui faturas ou processos fechados
+        $possuiFaturasOuProcessosFechados = $customer && (
+            $customer->invoices()->exists() || // Cliente tem faturas
+            $customer->processos()->where('Estado', 'fechado')->exists() // Cliente tem processo fechado
+        );
 
         return [
-            'CustomerTaxID' => 
-                [
-                    'required', 
-                    'string', 
-                    'min:6', 
-                    'max:14', 
-                    Rule::unique('customers')->where(function ($query) use ($empresaId) {
-                        return $query->where('empresa_id', $empresaId);
-                    })->ignore($id, 'CustomerID')
-                ], // NIF deve ter exatamente 14 dígitos
+            'CustomerTaxID' => [
+                'required',
+                'string',
+                'min:6',
+                'max:14',
+                Rule::unique('customers')->where(function ($query) use ($empresaId) {
+                    return $query->where('empresa_id', $empresaId);
+                })->ignore($id, 'id'),
+                function ($attribute, $value, $fail) use ($customer, $possuiFaturasOuProcessosFechados) {
+                    if ($customer && $possuiFaturasOuProcessosFechados && $customer->CustomerTaxID !== $value) {
+                        $fail('O NIF não pode ser alterado porque o cliente possui faturas ou processos fechados.');
+                    }
+                }
+            ],
             'AccountID' => ['nullable', 'string', 'max:30'],
             'CompanyName' => ['required', 'string', 'max:100'],
             'Telephone' => ['nullable', 'string', 'max:20'],
@@ -48,9 +58,20 @@ class CustomerRequest extends FormRequest
             'doc_num' => 'nullable|string|max:255',
             'validade_date_doc' => 'nullable|date|after_or_equal:today',
             'metodo_pagamento' => 'nullable|string',
+
+            'tipo_cliente' => 'nullable|in:importador,exportador,ambos',
+            'tipo_mercadoria' => 'nullable|string',
+            'frequencia' => 'nullable|in:ocasional,mensal,anual',
+            'observacoes' => 'nullable|string|max:500',
+            'num_licenca' => 'nullable|string|max:50',
+            'validade_licenca' => 'nullable|date',
+            'moeda_operacao' => 'nullable|string|max:10'
         ];
     }
 
+    /**
+     * Mensagens de erro personalizadas.
+     */
     public function messages()
     {
         return [
@@ -65,7 +86,6 @@ class CustomerRequest extends FormRequest
             'Email.max' => 'O Email deve ter no máximo :max caracteres.',
             'Website.url' => 'O campo Website deve ser uma URL válida.',
             'Website.max' => 'O Website deve ter no máximo :max caracteres.',
-            // Adicione mensagens personalizadas para outras regras de validação conforme necessário
         ];
     }
 }

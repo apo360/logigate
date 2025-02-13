@@ -111,12 +111,17 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Exemplo: Buscar a quantidade de processos por estado
+        $processosPorEstado = Processo::select('Estado', DB::raw('count(*) as total'))
+        ->groupBy('Estado')
+        ->orderByDesc('total')
+        ->get();
 
         return view('dashboard', compact('clientes','exportadores',
         'processos','licenciamento','topCountries', 
         'processesByCustomer', 'processesByCountries', 'totalFaturamento',
         'totalFaturamento', 
-        'numeroFaturas', 'dailyRevenue', 'monthlyRevenue', 'yearlyRevenue', 'previousYearRevenue'));
+        'numeroFaturas', 'dailyRevenue', 'monthlyRevenue', 'yearlyRevenue', 'previousYearRevenue', 'processosPorEstado'));
     }
 
 

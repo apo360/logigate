@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\ExportadorRequest;
 use App\Models\Exportador;
+use App\Models\Pais;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,10 @@ class ExportadorController extends Controller
      */
     public function index()
     {
-        //
+        $empresa = Auth::user()->empresas->first();
+        $exportadors = Exportador::where('empresa_id', $empresa->id)->get();
+
+        return view('exportadors.index', compact('exportadors'));
     }
 
     /**
@@ -25,7 +29,8 @@ class ExportadorController extends Controller
      */
     public function create()
     {
-        //
+        $paises = Pais::all();
+        return view('exportadors.create', compact('paises'));
     }
 
     /**
@@ -84,7 +89,15 @@ class ExportadorController extends Controller
      */
     public function edit(Exportador $exportador)
     {
-        //
+        $paises = [
+            'AO' => 'Angola',
+            'BR' => 'Brasil',
+            'PT' => 'Portugal',
+            'US' => 'Estados Unidos',
+            // Adicione mais países conforme necessário
+        ];
+
+        return view('exportadors.edit', compact('exportador', 'paises'));
     }
 
     /**

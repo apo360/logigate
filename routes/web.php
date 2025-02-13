@@ -154,8 +154,6 @@ use App\Models\ProcessoDraft;
         Route::put('empresa/cambios/actualizar', [PaisController::class, 'update'])->name('cambios.update');
 
         Route::get('processo/tarifas', [ProcessoController::class, 'tarifas'])->name('processos.tarifa');
-        Route::get('processo/rastreamento', [ProcessoController::class, 'rastreamento'])->name('processos.rastreamento');
-        Route::get('processo/autorizacoes', [ProcessoController::class, 'autorizacao'])->name('processos.autorizar');
         Route::get('processo/DU-Electronico', [ProcessoController::class, 'du_electronico'])->name('processos.du');
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
