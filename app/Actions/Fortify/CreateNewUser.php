@@ -2,7 +2,6 @@
 
 namespace App\Actions\Fortify;
 
-use App\Http\Controllers\OtpController;
 use App\Mail\ConfirmationMail;
 use App\Models\Empresa;
 use App\Models\User;
@@ -34,14 +33,32 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input)
     {
         // Validação dos dados de entrada
-        Validator::make($input, [
+        $validator = Validator::make($input, [
             'empresa' => ['required', 'string', 'max:255'],
             'nif' => ['nullable', 'string', 'max:50', 'unique:empresas'],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'Designacao' => ['required', 'string', 'in:Despachante Oficial,Transitário,Agente de Carga'],
+            'cedula' => ['nullable', 'string', 'max:50'], // Adicionado validação para cédula
+            'endereco' => ['nullable', 'string', 'max:255'],
+            'provincia' => ['nullable', 'string', 'max:255'],
+            'cidade' => ['nullable', 'string', 'max:255'],
+            'apelido' => ['nullable', 'string', 'max:255'],
+            'telefone' => ['nullable', 'string', 'max:20'],
+            'tipo_representante' => ['nullable', 'string', 'max:255'],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : ['nullable'],
-        ])->validate();
+        ]);
+
+        // Validação adicional para cédula se a designação for "Despachante Oficial"
+        if ($input['Designacao'] === 'Despachante Oficial') {
+            $validator->sometimes('cedula', ['required', 'string', 'max:50'], function ($input) {
+                return $input['Designacao'] === 'Despachante Oficial';
+            });
+        }
+
+        // Lançar exceção se a validação falhar
+        $validator->validate();
 
         // Gerar o código da conta da empresa
         $currentYear = Carbon::now()->year;
@@ -54,22 +71,21 @@ class CreateNewUser implements CreatesNewUsers
 
             // Cria a empresa que o administrador vai gerir
             $empresa = Empresa::create([
-                'conta' => $contaCode,
                 'Empresa' => $input['empresa'],
-                'Designacao' => 'Despachante Oficial',
+                'Designacao' => $input['Designacao'],
                 'NIF' => $input['nif'],
-                'Cedula' => $input['cedula'],
-                'Endereco_completo' => $input['endereco'],
-                'Provincia' => $input['provincia'],
-                'Cidade' => $input['cidade'], // Corrigido para 'Cidade'
+                'Cedula' => $input['cedula'] ?? null, // Usar null se cédula não for fornecida
+                'Endereco_completo' => $input['endereco'] ?? null,
+                'Provincia' => $input['provincia'] ?? null,
+                'Cidade' => $input['cidade'] ?? null,
             ]);
 
             // Introduzir dados do Representante
             Representante::create([
                 'nome' => $input['name'],
-                'apelido' => $input['apelido'],
-                'telefone' => $input['telefone'],
-                'tipo' => $input['tipo_representante'],
+                'apelido' => $input['apelido'] ?? null,
+                'telefone' => $input['telefone'] ?? null,
+                'tipo' => $input['tipo_representante'] ?? null,
                 'empresa_id' => $empresa->id,
             ]);
 
@@ -82,6 +98,7 @@ class CreateNewUser implements CreatesNewUsers
 
             // Dados do Relacionamento
             EmpresaUser::create([
+                'conta' => $contaCode,
                 'empresa_id' => $empresa->id,
                 'user_id' => $user->id,
             ]);
@@ -114,7 +131,6 @@ class CreateNewUser implements CreatesNewUsers
                 'activation_date' => now(),
             ]);
 
-
             // Atribuir permissões de Administrador
             $role = Role::findOrCreate('Administrador');
             $user->assignRole($role);
@@ -130,23 +146,19 @@ class CreateNewUser implements CreatesNewUsers
             Mail::to($user->email)->send(new ConfirmationMail($otp));
 
             // Pasta Raiz no S3
-            // Inicializar o cliente S3
             $s3Client = new S3Client([
                 'version' => 'latest',
                 'region'  => 'us-east-1', // A região do seu bucket S3
             ]);
 
             $bucket = 'logigate-docs'; // Nome do bucket
-
-            // Criar o caminho completo da pasta, incluindo a raiz e o nome da pasta
             $caminhoCompleto = 'Despachantes/' . $contaCode;
 
             $s3Client->putObject([
                 'Bucket' => $bucket,
-                'Key'    => $caminhoCompleto . '/', 
+                'Key'    => $caminhoCompleto . '/',
                 'Body'   => "", // Corpo vazio para simular uma pasta
             ]);
-
 
             // Confirmar a transação
             DB::commit();

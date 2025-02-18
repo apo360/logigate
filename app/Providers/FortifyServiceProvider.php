@@ -6,20 +6,18 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
-use App\Models\User;
 use Illuminate\Auth\Events\Failed;
-use Illuminate\Auth\Events\Login as EventsLogin;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Login;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use App\Http\Responses\LoginResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -28,7 +26,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
     }
 
     /**
@@ -39,7 +37,7 @@ class FortifyServiceProvider extends ServiceProvider
         Event::listen(Login::class, function ($event) {
             Log::info('Login successful', [
                 'email' => $event->user->email,
-                'roles' => $event->user->roles->pluck('name')
+                'roles' => $event->user->roles->pluck('name') // Ensure `roles` is a relationship
             ]);
         });
 
@@ -56,7 +54,7 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
-        
+
         Event::listen(Failed::class, function ($event) {
             Log::warning('Login failed', ['email' => $event->credentials['email']]);
         });
