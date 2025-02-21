@@ -1,349 +1,1237 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="description" content="" />
-        <meta name="author" content="Apolinário Ferreira Ernesto" />
-        <title>Logigate - Inicie com Logigate</title>
-        <!-- Favicon-->
-        <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}" />
-        <!-- Custom Google font-->
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet" />
-        <!-- Bootstrap icons-->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet" />
-        <!-- Core theme CSS (includes Bootstrap)-->
-        <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
-    </head>
-    <body class="d-flex flex-column h-100">
-        <main class="flex-shrink-0">
-            <!-- Navigation-->
-            <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
-                <div class="container px-5">
-                
-                    <a class="navbar-brand" href="index.html">
-                        <img src="{{ asset('dist/img/LOGIGATE.png') }}" alt="LogiGate" class="brand-image img-circle elevation-3" style="opacity: .8; max-width: 120px;">
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                            <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{route('modulos.index')}}">Modulos</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Markteplace</a></li>
-                            <li class="nav-item"><a class="nav-link" href="{{ route('consultar.licenciamento') }}">Consulta</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Suporte ao Cliente</a></li>
-                            @if (Route::has('login'))
-                                @auth
-                                    <li class="nav-item">
-                                        <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Pagina Inicial</a>
-                                    </li>
-                                @else
-                                    <li class="nav-item">
-                                        <a href="{{ route('login') }}" class="nav-link btn">Acesso</a>
-                                    </li>
-                                    @if (Route::has('register'))
-                                        <li class="nav-item">
-                                            <a href="{{ route('register') }}" class="nav-link btn btn-outline-dark">Experimente Grátis</a>
-                                        </li>
-                                    @endif
-                                @endauth
-                            @endif
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            <!-- Header-->
-            <header class="py-5">
-                <div class="container px-5 pb-5">
-                    <div class="row gx-5 align-items-center">
-                        <div class="col-xxl-5">
-                            <!-- Header text content-->
-                            <div class="text-center text-xxl-start">
-                                <div class="badge bg-gradient-primary-to-secondary text-white mb-4"><div class="text-uppercase">Processos Aduaneiro &middot; Facturação &middot; Logistica</div></div>
-                                <div class="fs-3 fw-light text-muted">Posso ajudar na sua gestão </div>
-                                <h1 class="display-3 fw-bolder mb-5"><span class="text-gradient d-inline">15 Dias Gratuitos Sem Compromisso</span></h1>
-                                <div class="d-grid gap-3 d-sm-flex justify-content-sm-center justify-content-xxl-start mb-3">
-                                    <a class="btn btn-primary btn-lg px-5 py-3 me-sm-3 fs-6 fw-bolder" href="{{ route('cedula') }}">Experimente Grátis</a>
-                                    <a class="btn btn-outline-dark btn-lg px-5 py-3 fs-6 fw-bolder" href="projects.html">Planos</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xxl-7">
-                            <!-- Header profile picture-->
-                            <div class="d-flex justify-content-center mt-5 mt-xxl-0">
-                                <div class="profile bg-gradient-primary-to-secondary">
-                                    <!-- TIP: For best results, use a photo with a transparent background like the demo example below-->
-                                    <!-- Watch a tutorial on how to do this on YouTube (link)-->
-                                    <img class="profile-img" src="assets/24277922-mercado-pesquisa-e-analise-ilustracao-com-equipe-gestao-e-analytics-para-fazer-dados-estatisticas-dentro-plano-desenho-animado-mao-desenhado-modelos-vetor.jpg" alt="..." />
-                                    <div class="dots-1">
-                                        <!-- SVG Dots-->
-                                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 191.6 1215.4" style="enable-background: new 0 0 191.6 1215.4" xml:space="preserve">
-                                            <g transform="translate(0.000000,1280.000000) scale(0.100000,-0.100000)">
-                                                <path d="M227.7,12788.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,12801.6,289.7,12808.6,227.7,12788.6z"></path>
-                                                <path d="M1507.7,12788.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,12801.6,1569.7,12808.6,1507.7,12788.6z"></path>
-                                                <path d="M227.7,11508.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,11521.6,289.7,11528.6,227.7,11508.6z"></path>
-                                                <path d="M1507.7,11508.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,11521.6,1569.7,11528.6,1507.7,11508.6z"></path>
-                                                <path d="M227.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,10241.6,289.7,10248.6,227.7,10228.6z"></path>
-                                                <path d="M1507.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,10241.6,1569.7,10248.6,1507.7,10228.6z"></path>
-                                                <path d="M227.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,8961.6,289.7,8968.6,227.7,8948.6z"></path>
-                                                <path d="M1507.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,8961.6,1569.7,8968.6,1507.7,8948.6z"></path>
-                                                <path d="M227.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,7681.6,289.7,7688.6,227.7,7668.6z"></path>
-                                                <path d="M1507.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,7681.6,1569.7,7688.6,1507.7,7668.6z"></path>
-                                                <path d="M227.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,6401.6,289.7,6408.6,227.7,6388.6z"></path>
-                                                <path d="M1507.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,6401.6,1569.7,6408.6,1507.7,6388.6z"></path>
-                                                <path d="M227.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,5121.6,289.7,5128.6,227.7,5108.6z"></path>
-                                                <path d="M1507.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,5121.6,1569.7,5128.6,1507.7,5108.6z"></path>
-                                                <path d="M227.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,3841.6,289.7,3848.6,227.7,3828.6z"></path>
-                                                <path d="M1507.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,3841.6,1569.7,3848.6,1507.7,3828.6z"></path>
-                                                <path d="M227.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,2561.6,289.7,2568.6,227.7,2548.6z"></path>
-                                                <path d="M1507.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,2561.6,1569.7,2568.6,1507.7,2548.6z"></path>
-                                                <path d="M227.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,1281.6,289.7,1288.6,227.7,1268.6z"></path>
-                                                <path d="M1507.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,1281.6,1569.7,1288.6,1507.7,1268.6z"></path>
-                                            </g>
-                                        </svg>
-                                        <!-- END of SVG dots-->
-                                    </div>
-                                    <div class="dots-2">
-                                        <!-- SVG Dots-->
-                                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 191.6 1215.4" style="enable-background: new 0 0 191.6 1215.4" xml:space="preserve">
-                                            <g transform="translate(0.000000,1280.000000) scale(0.100000,-0.100000)">
-                                                <path d="M227.7,12788.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,12801.6,289.7,12808.6,227.7,12788.6z"></path>
-                                                <path d="M1507.7,12788.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,12801.6,1569.7,12808.6,1507.7,12788.6z"></path>
-                                                <path d="M227.7,11508.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,11521.6,289.7,11528.6,227.7,11508.6z"></path>
-                                                <path d="M1507.7,11508.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,11521.6,1569.7,11528.6,1507.7,11508.6z"></path>
-                                                <path d="M227.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,10241.6,289.7,10248.6,227.7,10228.6z"></path>
-                                                <path d="M1507.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,10241.6,1569.7,10248.6,1507.7,10228.6z"></path>
-                                                <path d="M227.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,8961.6,289.7,8968.6,227.7,8948.6z"></path>
-                                                <path d="M1507.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,8961.6,1569.7,8968.6,1507.7,8948.6z"></path>
-                                                <path d="M227.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,7681.6,289.7,7688.6,227.7,7668.6z"></path>
-                                                <path d="M1507.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,7681.6,1569.7,7688.6,1507.7,7668.6z"></path>
-                                                <path d="M227.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,6401.6,289.7,6408.6,227.7,6388.6z"></path>
-                                                <path d="M1507.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,6401.6,1569.7,6408.6,1507.7,6388.6z"></path>
-                                                <path d="M227.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,5121.6,289.7,5128.6,227.7,5108.6z"></path>
-                                                <path d="M1507.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,5121.6,1569.7,5128.6,1507.7,5108.6z"></path>
-                                                <path d="M227.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,3841.6,289.7,3848.6,227.7,3828.6z"></path>
-                                                <path d="M1507.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,3841.6,1569.7,3848.6,1507.7,3828.6z"></path>
-                                                <path d="M227.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,2561.6,289.7,2568.6,227.7,2548.6z"></path>
-                                                <path d="M1507.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,2561.6,1569.7,2568.6,1507.7,2548.6z"></path>
-                                                <path d="M227.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,1281.6,289.7,1288.6,227.7,1268.6z"></path>
-                                                <path d="M1507.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,1281.6,1569.7,1288.6,1507.7,1268.6z"></path>
-                                            </g>
-                                        </svg>
-                                        <!-- END of SVG dots-->
-                                    </div>
-                                    <div class="dots-3">
-                                        <!-- SVG Dots-->
-                                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 191.6 1215.4" style="enable-background: new 0 0 191.6 1215.4" xml:space="preserve">
-                                            <g transform="translate(0.000000,1280.000000) scale(0.100000,-0.100000)">
-                                                <path d="M227.7,12788.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,12801.6,289.7,12808.6,227.7,12788.6z"></path>
-                                                <path d="M1507.7,12788.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,12801.6,1569.7,12808.6,1507.7,12788.6z"></path>
-                                                <path d="M227.7,11508.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,11521.6,289.7,11528.6,227.7,11508.6z"></path>
-                                                <path d="M1507.7,11508.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,11521.6,1569.7,11528.6,1507.7,11508.6z"></path>
-                                                <path d="M227.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,10241.6,289.7,10248.6,227.7,10228.6z"></path>
-                                                <path d="M1507.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,10241.6,1569.7,10248.6,1507.7,10228.6z"></path>
-                                                <path d="M227.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,8961.6,289.7,8968.6,227.7,8948.6z"></path>
-                                                <path d="M1507.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,8961.6,1569.7,8968.6,1507.7,8948.6z"></path>
-                                                <path d="M227.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,7681.6,289.7,7688.6,227.7,7668.6z"></path>
-                                                <path d="M1507.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,7681.6,1569.7,7688.6,1507.7,7668.6z"></path>
-                                                <path d="M227.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,6401.6,289.7,6408.6,227.7,6388.6z"></path>
-                                                <path d="M1507.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,6401.6,1569.7,6408.6,1507.7,6388.6z"></path>
-                                                <path d="M227.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,5121.6,289.7,5128.6,227.7,5108.6z"></path>
-                                                <path d="M1507.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,5121.6,1569.7,5128.6,1507.7,5108.6z"></path>
-                                                <path d="M227.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,3841.6,289.7,3848.6,227.7,3828.6z"></path>
-                                                <path d="M1507.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,3841.6,1569.7,3848.6,1507.7,3828.6z"></path>
-                                                <path d="M227.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,2561.6,289.7,2568.6,227.7,2548.6z"></path>
-                                                <path d="M1507.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,2561.6,1569.7,2568.6,1507.7,2548.6z"></path>
-                                                <path d="M227.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,1281.6,289.7,1288.6,227.7,1268.6z"></path>
-                                                <path d="M1507.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,1281.6,1569.7,1288.6,1507.7,1268.6z"></path>
-                                            </g>
-                                        </svg>
-                                        <!-- END of SVG dots-->
-                                    </div>
-                                    <div class="dots-4">
-                                        <!-- SVG Dots-->
-                                        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 191.6 1215.4" style="enable-background: new 0 0 191.6 1215.4" xml:space="preserve">
-                                            <g transform="translate(0.000000,1280.000000) scale(0.100000,-0.100000)">
-                                                <path d="M227.7,12788.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,12801.6,289.7,12808.6,227.7,12788.6z"></path>
-                                                <path d="M1507.7,12788.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,12801.6,1569.7,12808.6,1507.7,12788.6z"></path>
-                                                <path d="M227.7,11508.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,11521.6,289.7,11528.6,227.7,11508.6z"></path>
-                                                <path d="M1507.7,11508.6c-151-50-253-216-222-362c25-119,136-230,254-255c194-41,395,142,375,339c-11,105-90,213-190,262        C1663.7,11521.6,1569.7,11528.6,1507.7,11508.6z"></path>
-                                                <path d="M227.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,10241.6,289.7,10248.6,227.7,10228.6z"></path>
-                                                <path d="M1507.7,10228.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,10241.6,1569.7,10248.6,1507.7,10228.6z"></path>
-                                                <path d="M227.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,8961.6,289.7,8968.6,227.7,8948.6z"></path>
-                                                <path d="M1507.7,8948.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,8961.6,1569.7,8968.6,1507.7,8948.6z"></path>
-                                                <path d="M227.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,7681.6,289.7,7688.6,227.7,7668.6z"></path>
-                                                <path d="M1507.7,7668.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,7681.6,1569.7,7688.6,1507.7,7668.6z"></path>
-                                                <path d="M227.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,6401.6,289.7,6408.6,227.7,6388.6z"></path>
-                                                <path d="M1507.7,6388.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,6401.6,1569.7,6408.6,1507.7,6388.6z"></path>
-                                                <path d="M227.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,5121.6,289.7,5128.6,227.7,5108.6z"></path>
-                                                <path d="M1507.7,5108.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,5121.6,1569.7,5128.6,1507.7,5108.6z"></path>
-                                                <path d="M227.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,3841.6,289.7,3848.6,227.7,3828.6z"></path>
-                                                <path d="M1507.7,3828.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,3841.6,1569.7,3848.6,1507.7,3828.6z"></path>
-                                                <path d="M227.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,2561.6,289.7,2568.6,227.7,2548.6z"></path>
-                                                <path d="M1507.7,2548.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,2561.6,1569.7,2568.6,1507.7,2548.6z"></path>
-                                                <path d="M227.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C383.7,1281.6,289.7,1288.6,227.7,1268.6z"></path>
-                                                <path d="M1507.7,1268.6c-105-35-200-141-222-248c-43-206,163-412,369-369c155,32,275,190,260,339c-11,105-90,213-190,262        C1663.7,1281.6,1569.7,1288.6,1507.7,1268.6z"></path>
-                                            </g>
-                                        </svg>
-                                        <!-- END of SVG dots-->
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-            <!-- About Section-->
-            <section class="bg-light bd_about py-5">
-                <div class="container px-5">
-                    <h2>Sobre Logigate</h2>
-                </div>
-            </section>
+<h lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon-->
+  <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}" />
+  <title>Logigate - Gestão Aduaneira Simplificada</title>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Tailwind CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans&family=Poppins:wght@500&display=swap" rel="stylesheet">
+  <!-- AOS (Animate On Scroll) -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <!-- Estilos Personalizados -->
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans&family=Poppins:wght@500&display=swap" rel="stylesheet">
+  <!-- Estilos Personalizados -->
+   <!-- Particles.js -->
+   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <!-- Estilos Personalizados -->
+  <style>
+    /* Efeito de vidro nos botões */
+    .glass-button {
+      background: rgba(255, 255, 255, 0.1); /* Fundo semi-transparente */
+      backdrop-filter: blur(10px); /* Efeito de desfoque */
+      border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+      border-radius: 8px; /* Bordas arredondadas */
+      padding: 12px 24px;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .glass-button:hover {
+      background: rgba(255, 255, 255, 0.2); /* Fundo mais claro no hover */
+      transform: scale(1.05); /* Efeito de zoom */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    }
 
-            <!-- Modulo Section -->
-            <section class="bg-light bg_modulo py-5">
-                <div class="container px-5">
-                    <div class="row gx-5 justify-content-center">
-                        <div class="text-center my-5">
-                            <h2 class="display-5 fw-bolder"><span class="text-gradient d-inline">Modulos</span></h2>
-                        </div>
-                        @foreach($modulos as $modulo)
-                            @if(!$modulo->parent_id)
-                                <div class="card card-primary">
-                                    <div class="card-header">
-                                        <span class="card-title">{{$modulo->module_name}} </span>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="card-text">
-                                            {{$modulo->description}} 
-                                        </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <span>{{$modulo->price}} </span>
-                                        <a href=""><button class="btn btn-primary">Saíba Mais</button></a>
-                                        <a href="{{route('modulos.show', $modulo)}}"><button class="btn btn-primary">Planos</button></a>
-                                    </div>
-                                </div>
-                            @endif
-                        @endforeach
-                    </div>
-                </div>
-                
-            </section>
+    /* Container do Hero Section */
+    .hero-section {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: white;
+      overflow: hidden;
+    }
 
-            <!-- Reason -->
-            <section class="bg-light bg_reason py-5">
-                <div class="container px-5">
-                    <h2 class="text-center">Por Que Escolher Logigate?</h2>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h3>Automatização Completa</h3>
-                            <p>Nosso software permite que você automatize seus processos aduaneiros e de faturação, reduzindo o tempo e os erros manuais.</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h3>Integração Simplificada</h3>
-                            <p>Integrado com sistemas de logística e CRM, o Logigate conecta suas operações em uma única plataforma.</p>
-                        </div>
-                        <div class="col-md-4">
-                            <h3>Suporte 24/7</h3>
-                            <p>Com nossa equipe dedicada de suporte, você nunca estará sozinho para resolver problemas ou tirar dúvidas.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+    /* Fundo animado com particles.js */
+    #particles-js {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
 
+    /* Imagem no Hero Section */
+    .hero-image {
+      max-width: 400px;
+      margin: 0 auto 2rem;
+    }
+  </style>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+    }
+    h1, h2, h3 {
+      font-family: 'Montserrat', sans-serif;
+    }
+    .menu-hamburguer {
+      display: none;
+    }
 
-            <!-- Planos -->
-            <section class="bg-light bg_plans py-5">
-                <div class="container px-5">
-                    <h2 class="text-center">Escolha o Melhor Plano para Sua Empresa</h2>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>Plano Básico</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>Inclui funcionalidades essenciais para a gestão de processos aduaneiros.</p>
-                                    <p><strong>$19.99/mês</strong></p>
-                                </div>
-                                <div class="card-footer">
-                                    <a href="#" class="btn btn-primary">Escolher Plano</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>Plano Avançado</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>Funcionalidades avançadas com suporte a múltiplos usuários e relatórios.</p>
-                                    <p><strong>$49.99/mês</strong></p>
-                                </div>
-                                <div class="card-footer">
-                                    <a href="#" class="btn btn-primary">Escolher Plano</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3>Plano Premium</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>O plano completo com todas as funcionalidades e suporte prioritário.</p>
-                                    <p><strong>$99.99/mês</strong></p>
-                                </div>
-                                <div class="card-footer">
-                                    <a href="#" class="btn btn-primary">Escolher Plano</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+    /* Responsividade: Ocultar em telas maiores, exibir em telas menores *//* Responsividade: Ocultar em telas maiores, exibir em telas menores */
+    @media (min-width: 768px) {
+      .floating-button {
+        display: none; /* Oculta em telas maiores */
+      }
+    }
+    @media (max-width: 767px) {
+      .floating-button {
+        display: flex; /* Exibe em telas menores */
+      }
+    }
+    .glass-card {
+      background: linear-gradient(135deg, rgba(0, 71, 171, 0.8), rgba(128, 196, 255, 0.8)); /* Gradiente azul com transparência */
+      backdrop-filter: blur(10px); /* Efeito de desfoque */
+      border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+      border-radius: 12px; /* Bordas arredondadas */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+      transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transição suave */
+    }
+    .glass-card:hover {
+      transform: scale(1.05); /* Efeito de zoom no hover */
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2); /* Sombra mais intensa no hover */
+    }
 
-            <!-- xbxxvkcndkcncknkfsnksdnskfs -->
-            <section class="bg-light py-5">
-                <div class="container px-5">
-                    <div class="row gx-5 justify-content-center">
-                        <div class="col-xxl-8">
-                            <div class="text-center my-5">
-                                <h2 class="display-5 fw-bolder"><span class="text-gradient d-inline">Logigate</span></h2>
-                                <p class="lead fw-light mb-4">É um software de gestão para Processos Aduaneiros e Facturação Online.</p>
-                                <p class="text-muted">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Fugit dolorum itaque qui unde quisquam consequatur autem. Eveniet quasi nobis aliquid cumque officiis sed rem iure ipsa! Praesentium ratione atque dolorem?</p>
-                                <div class="d-flex justify-content-center fs-2 gap-4">
-                                    <a class="text-gradient" href="#!"><i class="bi bi-twitter"></i></a>
-                                    <a class="text-gradient" href="#!"><i class="bi bi-linkedin"></i></a>
-                                    <a class="text-gradient" href="#!"><i class="bi bi-skype"></i></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-        <!-- Footer-->
-        <footer class="bg-white py-4 mt-auto">
-            <div class="container px-5">
-                <div class="row align-items-center justify-content-between flex-column flex-sm-row">
-                    <div class="col-auto"><div class="small m-0">Copyright &copy; LogiGate 2024</div></div>
-                    <div class="col-auto">
-                        <a class="small" href="#!">Privacidade</a>
-                        <span class="mx-1">&middot;</span>
-                        <a class="small" href="#!">Termos</a>
-                        <span class="mx-1">&middot;</span>
-                        <a class="small" href="#!">Contactos</a>
-                    </div>
-                </div>
+    /* Botão flutuante */
+    .floating-button {
+      position: fixed;
+      bottom: 3rem;
+      right: 1rem;
+      width: 50px;
+      height: 50px;
+      background-color: #0047AB;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      z-index: 1000;
+    }
+    .floating-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Ícone do menu */
+    .menu-icon {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    /* Menu circular */
+    .circular-menu {
+      position: fixed;
+      bottom: 3rem;
+      right: 1rem;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: rgba(0, 71, 171, 0.9);
+      backdrop-filter: blur(10px);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: scale(0);
+      transition: transform 0.3s ease;
+      z-index: 999;
+    }
+    .circular-menu.active {
+      display: flex;
+      transform: scale(1);
+    }
+
+    /* Itens do menu */
+    .menu-item {
+      position: absolute;
+      width: 45px;
+      height: 45px;
+      background-color: black;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0047AB;
+      font-size: 14px;
+      text-decoration: none;
+      box-shadow: 0 2px 4px rgba(225, 6, 6, 0.1);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+    .menu-item:hover {
+      background-color: #f0f0f0;
+      transform: scale(1.1);
+    }
+  </style>
+  <style>
+    /* Efeito de vidro */
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1); /* Fundo semi-transparente */
+        backdrop-filter: blur(10px); /* Efeito de desfoque */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+      }
+
+      /* Gradiente para o header */
+      .gradient-bg {
+        background: linear-gradient(135deg, rgba(0, 71, 171, 0.9), rgba(128, 196, 255, 0.9));
+      }
+
+      /* Efeito de sublinhado animado */
+      .underline-effect {
+        position: relative;
+      }
+      .underline-effect::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: #1E88E5;
+        transition: width 0.3s ease;
+      }
+      .underline-effect:hover::after {
+        width: 100%;
+      }
+
+      /* Botão de login com gradiente */
+      .login-button {
+        background: linear-gradient(135deg, #1E88E5, #0D47A1);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+      .login-button:hover {
+        background: linear-gradient(135deg, #0D47A1, #1E88E5);
+        transform: scale(1.05);
+      }
+  </style>
+
+</head>
+<body class="bg-gray-900">
+
+  <!-- Header Fixo -->
+  <nav id="header" class="fixed top-0 w-full text-white py-4 z-50 transition-all duration-300">
+    <div class="container mx-auto flex justify-between items-center px-4">
+      <!-- Logo e Nome da Empresa -->
+      <div class="flex items-center space-x-4">
+        <img src="{{ asset('dist/img/LOGIGATE.png') }}" alt="LogiGate" style="opacity: .8; max-width: 70px;" class="hidden md:block">
+        <a href="#home" class="text-2xl font-bold hidden md:block">LogiGate</a>
+      </div>
+
+      <!-- Menu Horizontal -->
+      <ul class="hidden md:flex space-x-8 items-center">
+        <li>
+          <a href="#sobre" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-info-circle"></i> <!-- Ícone do Font Awesome -->
+            <span>Sobre</span>
+          </a>
+        </li>
+        <li>
+          <a href="#servicos" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-cogs"></i> <!-- Ícone do Font Awesome -->
+            <span>Funcionalidades</span>
+          </a>
+        </li>
+        <li>
+          <a href="#transitarios" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-truck"></i> <!-- Ícone do Font Awesome -->
+            <span>Marketplace</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ route('consultar.licenciamento') }}" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-comments"></i> <!-- Ícone do Font Awesome -->
+            <span>Consultar</span>
+          </a>
+        </li>
+        <li>
+          <a href="#noticias" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-blog"></i> <!-- Ícone do Font Awesome -->
+            <span>Notícias</span>
+          </a>
+        </li>
+        <li>
+          <a href="#contactos" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-envelope"></i> <!-- Ícone do Font Awesome -->
+            <span>Contacto</span>
+          </a>
+        </li>
+        <li>
+          @if (Route::has('login'))
+              @auth
+                  <li class="nav-item">
+                      <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Pagina Inicial</a>
+                  </li>
+              @else
+                  <li>
+                      <a href="{{ route('login') }}" class="login-button flex items-center space-x-2 underline-effect">
+                        <i class="fas fa-sign-in-alt"></i> <!-- Ícone do Font Awesome -->
+                        <span>Acesso</span>
+                      </a>
+                  </li>
+              @endauth
+          @endif
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Botão Flutuante -->
+  <div class="floating-button" onclick="toggleMenu()">
+    <!-- Ícone do menu hambúrguer via CDN -->
+    <img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/icons/list.svg" alt="Menu" class="menu-icon">
+  </div>
+
+  <!-- Menu Circular -->
+  <div class="circular-menu" id="circularMenu">
+    <a href="#home" class="menu-item" style="transform: translateY(-80px);">Home</a>
+    <a href="#sobre" class="menu-item" style="transform: translateX(-60px) translateY(-60px);">Sobre</a>
+    <a href="#servicos" class="menu-item" style="transform: translateX(-80px);">Funcionalidades</a>
+    <a href="#contacto" class="menu-item" style="transform: translateX(-60px) translateY(60px);">Contato</a>
+    <a href="{{ route('login') }}" class="menu-item" style="transform: translateY(80px);">Login</a>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <!-- Fundo animado com particles.js -->
+    <div id="particles-js"></div>
+    <!-- Conteúdo do Hero -->
+    <div class="relative z-10">
+      <!-- Imagem temática com animação de fade-up -->
+      <img 
+        src="https://via.placeholder.com/400x300.png?text=Ilustração+Aduaneira" 
+        alt="Gestão Aduaneira" 
+        class="hero-image" 
+        data-aos="fade-up" 
+        data-aos-duration="800"
+      >
+      <!-- Título com animação de fade-up e delay -->
+      <h3 
+        class="text-5xl font-bold mb-4" 
+        data-aos="fade-up" 
+        data-aos-delay="200" 
+        data-aos-duration="800"
+      >
+        Automatizando a Gestão Aduaneira
+      </h3>
+      <!-- Texto com animação de fade-up e delay -->
+      <p 
+        class="text-lg mb-8" 
+        data-aos="fade-up" 
+        data-aos-delay="400" 
+        data-aos-duration="800"
+      >
+        Soluções inteligentes para importação, exportação e logística portuária.
+      </p>
+      <!-- Botões com animação de fade-up e delay -->
+      <div 
+        class="space-x-4" 
+        data-aos="fade-up" 
+        data-aos-delay="600" 
+        data-aos-duration="800"
+      >
+        <button class="glass-button">Saiba Mais</button>
+        <button class="glass-button">
+          <a href="{{ route('register') }}">Experimente Grátis</a>
+        </button>
+        <button class="glass-button">
+          <a href="#planos">Pacotes</a>
+        </button>
+      </div>
+    </div>
+
+    <!-- Rodapé do Hero Section -->
+    <div class="absolute bottom-0 w-full py-6 bg-blue-900 bg-opacity-30">
+      <div class="container mx-auto flex flex-wrap justify-center gap-8 text-sm">
+        <div 
+          class="absolute inset-0 bg-cover bg-center opacity-30" 
+          style="background-image: url('https://source.unsplash.com/1600x900/?cargo,shipping')"
+        ></div>
+        <!-- Grid de estatísticas com animação de fade-up e delay -->
+        <div 
+          class="relative z-10 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6"
+          data-aos="fade-up" 
+          data-aos-delay="800" 
+          data-aos-duration="800"
+        >
+          <!-- Estatística 1 -->
+          <div 
+            class="bg-white/10 backdrop-blur-md shadow-lg p-6 rounded-2xl border border-white/30 text-white text-center transition-transform transform hover:scale-105 hover:border-blue-400 hover:shadow-blue-500/50"
+            data-aos="zoom-in" 
+            data-aos-delay="1000" 
+            data-aos-duration="800"
+          >
+            <span class="text-4xl font-extrabold text-blue-300">24-72h</span>
+            <p class="text-base mt-2 text-gray-200">Tempo médio de liberação</p>
+          </div>
+          <!-- Estatística 2 -->
+          <div 
+            class="bg-white/10 backdrop-blur-md shadow-lg p-6 rounded-2xl border border-white/30 text-white text-center transition-transform transform hover:scale-105 hover:border-green-400 hover:shadow-green-500/50"
+            data-aos="zoom-in" 
+            data-aos-delay="1200" 
+            data-aos-duration="800"
+          >
+            <span class="text-4xl font-extrabold text-green-300">10.000+</span>
+            <p class="text-base mt-2 text-gray-200">Processos este ano</p>
+          </div>
+          <!-- Estatística 3 -->
+          <div 
+            class="bg-white/10 backdrop-blur-md shadow-lg p-6 rounded-2xl border border-white/30 text-white text-center transition-transform transform hover:scale-105 hover:border-yellow-400 hover:shadow-yellow-500/50"
+            data-aos="zoom-in" 
+            data-aos-delay="1400" 
+            data-aos-duration="800"
+          >
+            <span class="text-4xl font-extrabold text-yellow-300">Kz 5M+</span>
+            <p class="text-base mt-2 text-gray-200">Mercadorias processadas</p>
+          </div>
+          <!-- Estatística 4 -->
+          <div 
+            class="bg-white/10 backdrop-blur-md shadow-lg p-6 rounded-2xl border border-white/30 text-white text-center transition-transform transform hover:scale-105 hover:border-red-400 hover:shadow-red-500/50"
+            data-aos="zoom-in" 
+            data-aos-delay="1600" 
+            data-aos-duration="800"
+          >
+            <span class="text-4xl font-extrabold text-red-300">98%</span>
+            <p class="text-base mt-2 text-gray-200">Cargas disponibilizadas no prazo</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <svg class="wave-bottom" viewBox="0 95 1430 225">
+    <path fill="#f8f9fa" fill-opacity="0.9" d="M0,224L1440,96L1440,320L0,320Z"></path>
+  </svg>
+
+  <!-- Seção Sobre -->
+  <section id="sobre" class="py-16 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div data-aos="fade-right">
+          <h2 class="text-3xl font-bold text-blue-900 mb-4">Sobre a Logigate</h2>
+          <p class="text-gray-700 mb-4 leading-relaxed">
+            O <strong>Logigate</strong> é uma plataforma inovadora que simplifica e automatiza processos aduaneiros, proporcionando eficiência e segurança para despachantes aduaneiros e transitários.
+          </p>
+          <p class="text-gray-700 mb-4 leading-relaxed">
+            <strong>Logigate</strong> robusto e versátil, criado para resolver os desafios enfrentados pelas empresas e despachantes aduaneiros na gestão de processos. 
+            Nossa solução oferece uma gama de módulos integrados que abrangem não apenas a <strong>gestão aduaneira</strong>, mas também áreas essenciais como:
+          </p>
+          <ul class="text-gray-700 list-disc list-inside mb-4">
+            <li><strong>Recursos Humanos</strong></li>
+            <li><strong>Finanças</strong></li>
+            <li><strong>Contabilidade</strong></li>
+            <li><strong>Gestão de Arquivos</strong></li>
+          </ul>
+          <p class="text-gray-700 leading-relaxed">
+            Nossa missão é transformar a logística global com <strong>tecnologia de ponta</strong> e soluções personalizadas.
+          </p>
+        </div>
+        <div data-aos="fade-left" class="relative">
+          <img src="https://via.placeholder.com/500x300" alt="Ilustração Logística" class="rounded-lg shadow-md w-full">
+          <div class="absolute inset-0 bg-gradient-to-t from-blue-900/60 rounded-lg"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção Funcionalidades -->
+  <section id="servicos" class="py-16 bg-gray-90">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center" data-aos="fade-up">Funcionalidades</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Gestão Aduaneira -->
+        <div class="glass-card bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg" data-aos="fade-up" data-aos-delay="100">
+          <i class="fas fa-ship text-4xl mb-4"></i> <!-- Ícone de navio -->
+          <h3 class="text-xl font-bold mb-4">Gestão Aduaneira</h3>
+          <p class="mb-4">Automatização completa de processos aduaneiros.</p>
+          <ul class="text-left mb-4">
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Redução de custos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Processos mais ágeis.</span>
+            </li>
+          </ul>
+          <button class="bg-white text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition-all">
+            Saiba Mais
+          </button>
+        </div>
+
+        <!-- Despachos Alfandegários -->
+        <div class="glass-card bg-gradient-to-r from-green-600 to-green-500 text-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg" data-aos="fade-up" data-aos-delay="200">
+          <i class="fas fa-truck text-4xl mb-4"></i> <!-- Ícone de caminhão -->
+          <h3 class="text-xl font-bold mb-4">Despachos Alfandegários</h3>
+          <p class="mb-4">Agilidade e segurança na liberação de cargas.</p>
+          <ul class="text-left mb-4">
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Liberação rápida.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Segurança garantida.</span>
+            </li>
+          </ul>
+          <button class="bg-white text-green-600 px-6 py-2 rounded-lg hover:bg-green-50 transition-all">
+            Saiba Mais
+          </button>
+        </div>
+
+        <!-- Automação de Processos -->
+        <div class="glass-card bg-gradient-to-r from-purple-600 to-purple-500 text-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg" data-aos="fade-up" data-aos-delay="300">
+          <i class="fas fa-cogs text-4xl mb-4"></i> <!-- Ícone de engrenagens -->
+          <h3 class="text-xl font-bold mb-4">Automação de Processos</h3>
+          <p class="mb-4">Redução de custos e erros operacionais.</p>
+          <ul class="text-left mb-4">
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Menos erros humanos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Processos otimizados.</span>
+            </li>
+          </ul>
+          <button class="bg-white text-purple-600 px-6 py-2 rounded-lg hover:bg-purple-50 transition-all">
+            Saiba Mais
+          </button>
+        </div>
+
+        <!-- Integração de APIs -->
+        <div class="glass-card bg-gradient-to-r from-orange-600 to-orange-500 text-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg" data-aos="fade-up" data-aos-delay="400">
+          <i class="fas fa-network-wired text-4xl mb-4"></i> <!-- Ícone de rede -->
+          <h3 class="text-xl font-bold mb-4">Integração de APIs</h3>
+          <p class="mb-4">Conectividade com sistemas de terceiros.</p>
+          <ul class="text-left mb-4">
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Integração simplificada.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-2">
+              <i class="fas fa-check-circle text-green-300"></i>
+              <span>Compatibilidade com vários sistemas.</span>
+            </li>
+          </ul>
+          <button class="bg-white text-orange-600 px-6 py-2 rounded-lg hover:bg-orange-50 transition-all">
+            Saiba Mais
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção Para Transitários -->
+  <section id="transitarios" class="py-16 bg-gradient-to-r from-white-900 to-blue-50 text-white">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold mb-8 text-center" data-aos="fade-up">Para Transitários</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <!-- Imagem com Efeito de Vidro -->
+        <div class="relative" data-aos="fade-right">
+          <img src="https://via.placeholder.com/500x300.png?text=Ilustração+Transitários" alt="Transitários" class="rounded-lg shadow-md">
+          <div class="absolute inset-0 bg-gradient-to-t from-blue-900 opacity-50 rounded-lg"></div>
+        </div>
+
+        <!-- Conteúdo -->
+        <div data-aos="fade-left">
+          <h3 class="text-2xl font-bold mb-4">Transforme sua Operação com a LogiGate</h3>
+          <p class="text-lg mb-6">
+            Oferecemos soluções personalizadas para otimizar a gestão aduaneira e logística dos transitários.
+          </p>
+          <ul class="mb-6">
+            <li class="mb-4 flex items-center space-x-2">
+              <i class="fas fa-check-circle text-green-400"></i>
+              <span>Redução de 30% no tempo de despacho.</span>
+            </li>
+            <li class="mb-4 flex items-center space-x-2">
+              <i class="fas fa-check-circle text-green-400"></i>
+              <span>Integração com mais de 50 sistemas aduaneiros.</span>
+            </li>
+            <li class="mb-4 flex items-center space-x-2">
+              <i class="fas fa-check-circle text-green-400"></i>
+              <span>Suporte 24/7 para sua equipe.</span>
+            </li>
+            <li class="mb-4 flex items-center space-x-2">
+              <i class="fas fa-check-circle text-green-400"></i>
+              <span>Relatórios em tempo real para decisões estratégicas.</span>
+            </li>
+          </ul>
+          <div class="space-x-4">
+            <button class="glass-button">Saiba Mais</button>
+            <button class="glass-button">
+              <a href="{{ route('register') }}">Experimente Grátis</a>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Seção Planos -->
+  <section id="planos" data-aos="fade-up" class="container mx-auto py-16 bg-gradient-to-r from-white to-blue-50 relative overflow-hidden">
+    <!-- Formas no Background -->
+    <div class="absolute inset-0 z-0">
+      <!-- Navio -->
+      <div class="absolute -left-20 -bottom-20 w-64 h-64 opacity-20">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 0L0 32L32 64L64 32L32 0Z" fill="#1E88E5"/>
+        </svg>
+      </div>
+      <!-- Avião -->
+      <div class="absolute -right-20 -top-20 w-64 h-64 opacity-20">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 0L0 32L32 64L64 32L32 0Z" fill="#1E88E5"/>
+        </svg>
+      </div>
+      <!-- Caminhão -->
+      <div class="absolute -left-40 top-1/4 w-64 h-64 opacity-20">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 0L0 32L32 64L64 32L32 0Z" fill="#1E88E5"/>
+        </svg>
+      </div>
+      <!-- Contêiner -->
+      <div class="absolute -right-40 bottom-1/4 w-64 h-64 opacity-20">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 0L0 32L32 64L64 32L32 0Z" fill="#1E88E5"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="container mx-auto px-4 relative z-10">
+      <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center">Planos e Preços</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Plano Básico -->
+        <div data-aos="zoom-in" data-aos-delay="100" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-black-500">
+          <h3 class="text-xl font-bold text-blue-900 mb-4">Básico</h3>
+          <p class="text-gray-700 mb-4">Ideal para pequenas empresas.</p>
+          <p class="text-4xl font-bold text-blue-900 mb-6">AOA 20.000<span class="text-lg text-gray-500">/mês</span></p>
+          <ul class="text-left mb-6">
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de Licenciamentos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Relatórios básicos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Conexão com a Pauta Aduaneira.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Suporte por e-mail.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3 text-gray-400">
+              <i class="fas fa-times-circle"></i>
+              <span>Extração Ficheiro .txt</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3 text-gray-400">
+              <i class="fas fa-times-circle"></i>
+              <span>Suporte 24/7.</span>
+            </li>
+          </ul>
+          <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all w-full">
+            Assinar
+          </button>
+        </div>
+
+        <!-- Plano Profissional (Recomendado) -->
+        <div data-aos="zoom-in" data-aos-delay="200" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-blue-500">
+          <div class="absolute top-0 right-0 bg-blue-500 text-white px-4 py-1 rounded-bl-lg">
+            Mais Popular
+          </div>
+          <h3 class="text-xl font-bold text-blue-900 mb-4">Profissional</h3>
+          <p class="text-gray-700 mb-4">Perfeito para empresas em crescimento.</p>
+          <p class="text-4xl font-bold text-blue-900 mb-6">AOA 35.000<span class="text-lg text-gray-500">/mês</span></p>
+          <ul class="text-left mb-6">
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de processos aduaneiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de Licenciamentos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Relatórios avançados.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Integração com sistemas de terceiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Suporte por e-mail e chat.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3 text-gray-400">
+              <i class="fas fa-times-circle"></i>
+              <span>Suporte 24/7.</span>
+            </li>
+          </ul>
+          <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all w-full">
+            Assinar
+          </button>
+        </div>
+
+        <!-- Plano Empresarial -->
+        <div data-aos="zoom-in" data-aos-delay="300" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-black-500">
+          <h3 class="text-xl font-bold text-blue-900 mb-4">Empresarial</h3>
+          <p class="text-gray-700 mb-4">Solução completa para grandes empresas.</p>
+          <p class="text-4xl font-bold text-blue-900 mb-6">AOA 50.000<span class="text-lg text-gray-500">/mês</span></p>
+          <ul class="text-left mb-6">
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de Licenciamentos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de processos aduaneiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Relatórios avançados e personalizados.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Integração com sistemas de terceiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Suporte 24/7 por e-mail, chat e telefone.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Personalização avançada.</span>
+            </li>
+          </ul>
+          <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all w-full">
+            Assinar
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nossos Clientes -->
+  <section id="customers" class="relative py-16 bg-gray-50" data-aos="zoom-in">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold text-blue-900 mb-6">Nossos Clientes</h2>
+      <p class="text-gray-700 mb-10">O que nossos clientes dizem sobre nós.</p>
+
+      <!-- Swiper Container -->
+      <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+          <!-- Cliente 1 -->
+          <div class="swiper-slide bg-white shadow-lg p-6 rounded-xl flex space-x-4 items-center">
+            <div class="w-16 h-16 bg-blue-100 flex justify-center items-center rounded-full">
+              <span class="text-blue-700 text-2xl font-bold">C1</span>
             </div>
-        </footer>
-        <!-- Bootstrap core JS-->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Core theme JS-->
-        <script src="{{ asset('js/scripts.js') }}"></script>
-    </body>
+            <div class="text-left">
+              <p class="text-gray-700 italic">"A Logigate revolucionou nossa operação. Agora tudo é mais rápido e eficiente!"</p>
+              <p class="text-blue-900 font-semibold mt-2">Carlos Silva</p>
+              <p class="text-gray-500 text-sm">Gerente de Logística</p>
+            </div>
+          </div>
+
+          <!-- Cliente 2 -->
+          <div class="swiper-slide bg-white shadow-lg p-6 rounded-xl flex space-x-4 items-center">
+            <div class="w-16 h-16 bg-green-100 flex justify-center items-center rounded-full">
+              <span class="text-green-700 text-2xl font-bold">C2</span>
+            </div>
+            <div class="text-left">
+              <p class="text-gray-700 italic">"A tecnologia da Logigate nos deu total controle sobre os processos aduaneiros."</p>
+              <p class="text-blue-900 font-semibold mt-2">Ana Pereira</p>
+              <p class="text-gray-500 text-sm">Diretora de Importação</p>
+            </div>
+          </div>
+
+          <!-- Cliente 3 -->
+          <div class="swiper-slide bg-white shadow-lg p-6 rounded-xl flex space-x-4 items-center">
+            <div class="w-16 h-16 bg-red-100 flex justify-center items-center rounded-full">
+              <span class="text-red-700 text-2xl font-bold">C3</span>
+            </div>
+            <div class="text-left">
+              <p class="text-gray-700 italic">"Uma solução robusta e confiável, essencial para nossa empresa."</p>
+              <p class="text-blue-900 font-semibold mt-2">Fernando Costa</p>
+              <p class="text-gray-500 text-sm">CEO - TransLog</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Notícias -->
+  <section id="noticias" class="bg-blue-50 py-16" data-aos="zoom-in" data-aos-duration="1000" data-aos-easing="ease-in-out">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center">Notícias</h2>
+
+      <!-- Carrossel de Destaques -->
+      <div class="relative w-full max-w-4xl mx-auto overflow-hidden rounded-lg shadow-md">
+        <div x-data="{ active: 0, noticias: [
+            { title: 'Nova Regulamentação Aduaneira', desc: 'Confira as novas regras para importação e exportação.', img: 'https://via.placeholder.com/800x400', date: '15/02/2025', slug: 'nova-regulamentacao' },
+            { title: 'Dicas para Despachantes', desc: 'Como agilizar processos e evitar multas.', img: 'https://via.placeholder.com/800x400', date: '10/02/2025', slug: 'dicas-despachantes' },
+            { title: 'Atualização no Sistema Logigate', desc: 'Melhorias e novas funcionalidades no sistema.', img: 'https://via.placeholder.com/800x400', date: '05/02/2025', slug: 'atualizacao-sistema' }
+          ] }">
+          
+          <div class="relative">
+            <template x-for="(noticia, index) in noticias" :key="index">
+              <div x-show="active === index" class="absolute inset-0 transition-opacity duration-500 animate-fadeIn">
+                <a :href="`/noticias/${noticia.slug}`">
+                  <img :src="noticia.img" alt="" class="w-full h-64 object-cover rounded-lg">
+                  <div class="absolute inset-0 bg-gradient-to-b from-black/40 to-black/70 rounded-lg"></div>
+                  <div class="absolute bottom-4 left-4 text-white">
+                    <h3 class="text-lg font-bold" x-text="noticia.title"></h3>
+                    <p class="text-sm" x-text="noticia.desc"></p>
+                    <span class="text-xs text-gray-300" x-text="noticia.date"></span>
+                  </div>
+                </a>
+              </div>
+            </template>
+          </div>
+
+          <!-- Controles -->
+          <div class="absolute inset-0 flex items-center justify-between p-4">
+            <button @click="active = active > 0 ? active - 1 : noticias.length - 1" aria-label="Slide Anterior" class="text-white bg-black/50 p-2 rounded-full">❮</button>
+            <button @click="active = active < noticias.length - 1 ? active + 1 : 0" aria-label="Próximo Slide" class="text-white bg-black/50 p-2 rounded-full">❯</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="mt-8 flex justify-center space-x-4">
+        <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700" @click="categoria = 'todas'">Todas</button>
+        <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-400" @click="categoria = 'legislacao'">Legislação</button>
+        <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-400" @click="categoria = 'dicas'">Dicas</button>
+        <button class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-400" @click="categoria = 'atualizacoes'">Atualizações</button>
+      </div>
+
+      <!-- Lista de Notícias -->
+      <div class="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6" x-data="{ categoria: 'todas' }">
+        <template x-for="noticia in [
+            { title: 'Nova Regulamentação Aduaneira', desc: 'Novas regras para importação.', date: '15/02/2025', category: 'legislacao', slug: 'nova-regulamentacao' },
+            { title: 'Dicas para Despachantes', desc: 'Agilize seus processos!', date: '10/02/2025', category: 'dicas', slug: 'dicas-despachantes' },
+            { title: 'Atualização no Sistema', desc: 'Novas funcionalidades.', date: '05/02/2025', category: 'atualizacoes', slug: 'atualizacao-sistema' },
+            { title: 'Taxas Aduaneiras', desc: 'Mudanças no ICMS.', date: '01/02/2025', category: 'legislacao', slug: 'taxas-aduaneiras' }
+          ]" :key="noticia.title">
+          
+          <div x-show="categoria === 'todas' || categoria === noticia.category" class="p-4 bg-white shadow rounded-lg">
+            <a :href="`/noticias/${noticia.slug}`" class="block">
+              <h3 class="text-lg font-semibold text-blue-900" x-text="noticia.title"></h3>
+              <p class="text-gray-700 text-sm mt-2" x-text="noticia.desc"></p>
+              <span class="text-xs text-gray-500" x-text="noticia.date"></span>
+            </a>
+          </div>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rodapé com Notícias Rolantes -->
+  <footer class="bg-blue-900 text-white py-4">
+    <div class="container mx-auto px-4">
+      <div class="overflow-hidden whitespace-nowrap">
+        <div class="inline-block animate-marquee">
+          <span class="mx-4">Destaque 1: Nova Regulamentação Aduaneira</span>
+          <span class="mx-4">Destaque 2: Dicas para Despachantes</span>
+          <span class="mx-4">Destaque 3: Atualização no Sistema Logigate</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <style>
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .animate-marquee {
+      animation: marquee 20s linear infinite;
+    }
+  </style>
+
+  <!-- Perguntas Frequentes -->
+  <section id="faq" class="relative container mx-auto py-16 px-4 overflow-hidden">
+    <!-- Shapes no fundo -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute -top-10 left-1/4 w-40 h-40 bg-blue-100 rounded-full opacity-50"></div>
+      <div class="absolute bottom-10 right-1/4 w-56 h-56 bg-blue-200 rounded-full opacity-50"></div>
+      <div class="absolute top-20 right-10 w-20 h-20 bg-blue-300 rounded-full opacity-40"></div>
+    </div>
+
+    <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center relative z-10">Perguntas Frequentes</h2>
+
+    <div class="max-w-2xl mx-auto space-y-4 relative z-10">
+      <!-- Pergunta 1 -->
+      <div x-data="{ open: false }" class="border border-gray-200 rounded-lg shadow-sm bg-white">
+        <button @click="open = !open" class="w-full text-left p-4 flex justify-between items-center">
+          <span class="font-semibold text-blue-900">O Logigate atende às normas aduaneiras locais?</span>
+          <svg x-show="!open" class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <svg x-show="open" class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path>
+          </svg>
+        </button>
+        <div x-show="open" class="p-4 text-gray-700">
+          Sim! O Logigate é desenvolvido para estar sempre atualizado conforme as regulamentações locais e internacionais de comércio exterior.
+        </div>
+      </div>
+
+      <!-- Pergunta 2 -->
+      <div x-data="{ open: false }" class="border border-gray-200 rounded-lg shadow-sm bg-white">
+        <button @click="open = !open" class="w-full text-left p-4 flex justify-between items-center">
+          <span class="font-semibold text-blue-900">Como posso acessar o Logigate?</span>
+          <svg x-show="!open" class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <svg x-show="open" class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path>
+          </svg>
+        </button>
+        <div x-show="open" class="p-4 text-gray-700">
+          O Logigate pode ser acessado de qualquer dispositivo conectado à internet, através do nosso portal web seguro.
+        </div>
+      </div>
+
+      <!-- Pergunta 3 -->
+      <div x-data="{ open: false }" class="border border-gray-200 rounded-lg shadow-sm bg-white">
+        <button @click="open = !open" class="w-full text-left p-4 flex justify-between items-center">
+          <span class="font-semibold text-blue-900">Existe suporte para integração com outros sistemas?</span>
+          <svg x-show="!open" class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+          </svg>
+          <svg x-show="open" class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4"></path>
+          </svg>
+        </button>
+        <div x-show="open" class="p-4 text-gray-700">
+          Sim! O Logigate oferece APIs abertas para integração com ERPs, CRMs e outros sistemas corporativos.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contactos -->
+  <section id="contactos" class="bg-gray-50 py-16">
+    <div class="container mx-auto px-4">
+      <!-- Título com animação de fade-up -->
+      <h2 
+        class="text-3xl font-bold text-blue-900 mb-8 text-center" 
+        data-aos="fade-up" 
+        data-aos-duration="800"
+      >
+        Contactos
+      </h2>
+
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Informações de Contato com animação de fade-left -->
+        <div 
+          class="bg-white p-6 rounded-lg shadow-md" 
+          data-aos="fade-left" 
+          data-aos-duration="800"
+        >
+          <h3 class="text-xl font-semibold text-blue-900 mb-4">Informações de Contato</h3>
+          <ul class="space-y-4">
+            <li class="flex items-center">
+              <i class="fas fa-map-marker-alt text-blue-500 mr-3"></i>
+              <span>Rua Amilcar Cabral nº 66 Luanda, Ingombota</span>
+            </li>
+            <li class="flex items-center">
+              <i class="fas fa-phone-alt text-blue-500 mr-3"></i>
+              <span><a href="tel:+244948242262"> +244 948 242 262</a></span>
+            </li>
+            <li class="flex items-center">
+              <i class="fas fa-envelope text-blue-500 mr-3"></i>
+              <span><a href="mailto:geral@hongayetu.com">geral@hongayetu.com</a></span>
+            </li>
+          </ul>
+
+          <!-- Redes Sociais com animação de fade-up -->
+          <div 
+            class="mt-6" 
+            data-aos="fade-up" 
+            data-aos-delay="200" 
+            data-aos-duration="800"
+          >
+            <h4 class="text-lg font-semibold text-blue-900 mb-3">Siga-nos</h4>
+            <div class="flex space-x-4">
+              <a href="#" class="text-gray-600 hover:text-blue-500">
+                <i class="fab fa-facebook-f text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-600 hover:text-blue-500">
+                <i class="fab fa-twitter text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-600 hover:text-blue-500">
+                <i class="fab fa-linkedin-in text-xl"></i>
+              </a>
+              <a href="#" class="text-gray-600 hover:text-blue-500">
+                <i class="fab fa-instagram text-xl"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Mapa com animação de fade-up -->
+          <div 
+            class="mt-6" 
+            data-aos="fade-up" 
+            data-aos-delay="400" 
+            data-aos-duration="800"
+          >
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13261.338516925976!2d13.227187731542303!3d-8.821766782606543!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x5f4c7b5ee3c3402d!2sHONGAYETU%2C+LDA!5e0!3m2!1spt-PT!2sao!4v1529436113669" 
+            frameborder="0" style="border:0; width: 100%; height: 200px;" allowfullscreen="" loading="lazy"></iframe>
+          </div>
+        </div>
+
+        <!-- Formulário de Contato com animação de fade-right -->
+        <div 
+          class="bg-white p-6 rounded-lg shadow-md" 
+          data-aos="fade-right" 
+          data-aos-duration="800"
+        >
+          <h3 class="text-xl font-semibold text-blue-900 mb-4">Envie-nos uma Mensagem</h3>
+          <form id="contactForm" class="space-y-4">
+            <!-- Campo Nome -->
+            <div data-aos="fade-up" data-aos-delay="200" data-aos-duration="800">
+              <label for="nome" class="block text-sm font-medium text-gray-700">Nome</label>
+              <input 
+                type="text" 
+                id="nome" 
+                name="nome" 
+                required 
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+            <!-- Campo Email -->
+            <div data-aos="fade-up" data-aos-delay="300" data-aos-duration="800">
+              <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                required 
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+            <!-- Campo Mensagem -->
+            <div data-aos="fade-up" data-aos-delay="400" data-aos-duration="800">
+              <label for="mensagem" class="block text-sm font-medium text-gray-700">Mensagem</label>
+              <textarea 
+                id="mensagem" 
+                name="mensagem" 
+                rows="4" 
+                required 
+                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              ></textarea>
+            </div>
+            <!-- Botão Enviar -->
+            <div data-aos="fade-up" data-aos-delay="500" data-aos-duration="800">
+              <button 
+                type="submit" 
+                class="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Enviar Mensagem
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rodapé -->
+  <footer class="bg-blue-900 text-white py-8">
+    <div class="container mx-auto px-4 text-center">
+      <p>&copy; 2023 Logigate. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Alpine.js -->
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x/dist/cdn.min.js" defer></script>
+
+  <!-- Script para Efeito de Scroll -->
+  <script>
+    const header = document.getElementById('header');
+
+    // Função para verificar o scroll
+    function handleScroll() {
+      if (window.scrollY > 50) {
+        header.classList.add('gradient-bg', 'glass-effect');
+        header.classList.remove('bg-transparent');
+      } else {
+        header.classList.remove('gradient-bg', 'glass-effect');
+        header.classList.add('bg-transparent');
+      }
+    }
+
+    // Adiciona o evento de scroll
+    window.addEventListener('scroll', handleScroll);
+
+    // Inicializa o estado do header
+    handleScroll();
+  </script>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <script>
+    // Inicializa AOS
+    AOS.init({
+      duration: 1000,
+      once: true,
+    });
+
+   
+    function toggleMenu() {
+      const circularMenu = document.getElementById('circularMenu');
+      circularMenu.classList.toggle('active');
+    }
+
+    // Fechar o menu ao clicar fora
+    document.addEventListener('click', (event) => {
+      const circularMenu = document.getElementById('circularMenu');
+      const floatingButton = document.querySelector('.floating-button');
+      if (!circularMenu.contains(event.target) && !floatingButton.contains(event.target)) {
+        circularMenu.classList.remove('active');
+      }
+    });
+  
+  </script>
+
+  <!-- Configuração do particles.js (particles.json) -->
+  <script>
+    // Configuração do particles.js
+    particlesJS('particles-js', {
+      "particles": {
+        "number": {
+          "value": 80,
+          "density": {
+            "enable": true,
+            "value_area": 800
+          }
+        },
+        "color": {
+          "value": "#1E88E5" /* Azul claro para representar o mar/transporte */
+        },
+        "shape": {
+          "type": "circle",
+          "stroke": {
+            "width": 0,
+            "color": "#000000"
+          },
+          "polygon": {
+            "nb_sides": 5
+          }
+        },
+        "opacity": {
+          "value": 0.5,
+          "random": false,
+          "anim": {
+            "enable": false,
+            "speed": 1,
+            "opacity_min": 0.1,
+            "sync": false
+          }
+        },
+        "size": {
+          "value": 3,
+          "random": true,
+          "anim": {
+            "enable": false,
+            "speed": 40,
+            "size_min": 0.1,
+            "sync": false
+          }
+        },
+        "line_linked": {
+          "enable": true,
+          "distance": 150,
+          "color": "#ffffff",
+          "opacity": 0.4,
+          "width": 1
+        },
+        "move": {
+          "enable": true,
+          "speed": 6,
+          "direction": "none",
+          "random": false,
+          "straight": false,
+          "out_mode": "out",
+          "bounce": false,
+          "attract": {
+            "enable": false,
+            "rotateX": 600,
+            "rotateY": 1200
+          }
+        }
+      },
+      "interactivity": {
+        "detect_on": "canvas",
+        "events": {
+          "onhover": {
+            "enable": true,
+            "mode": "repulse"
+          },
+          "onclick": {
+            "enable": true,
+            "mode": "push"
+          },
+          "resize": true
+        },
+        "modes": {
+          "repulse": {
+            "distance": 100,
+            "duration": 0.4
+          },
+          "push": {
+            "particles_nb": 4
+          }
+        }
+      },
+      "retina_detect": true
+    });
+  
+  </script>
+
+  <!-- Swiper.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script>
+    var swiper = new Swiper(".mySwiper", {
+      loop: true,
+      autoplay: { delay: 5000 },
+      pagination: { el: ".swiper-pagination", clickable: true },
+      navigation: { nextEl: ".swiper-button-next", prevEl: ".swiper-button-prev" },
+      breakpoints: {
+        768: { slidesPerView: 2, spaceBetween: 20 },
+        1024: { slidesPerView: 3, spaceBetween: 30 }
+      }
+    });
+  </script>
+</body>
 </html>
