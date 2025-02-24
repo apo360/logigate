@@ -3,7 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Logigate | Cadastro</title>
+
+	<!-- Canonical SEO -->
+    <link rel="canonical" href="https://www.logigate.ao"/>
+
+    <!-- Meta Tags -->
+    <meta name="keywords" content="logigate, sistema de gestão aduaneira, gestão financeira, gestão contabilística, automação aduaneira, hongayetu lda, software aduaneiro, controle logístico, contabilidade aduaneira, despacho aduaneiro, gestão de operações, Angola, África">
+    <meta name="description" content="Logigate: Solução completa para gestão aduaneira, financeira e contabilística. Automatize processos, reduza custos e aumente a eficiência dos seus despachos com a Hongayetu Lda.">
+
+    <!-- Schema.org markup -->
+    <meta itemprop="name" content="Logigate - Gestão Aduaneira, Financeira e Contabilística">
+    <meta itemprop="description" content="Logigate oferece uma solução robusta e integrada para automação e controle de processos aduaneiros, financeiros e contabilísticos, garantindo eficiência e precisão.">
+    <meta itemprop="image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
+    <meta itemprop="datePublished" content="2023-10-01">
+    <meta itemprop="ratingValue" content="4.9">
+    <meta itemprop="reviewCount" content="150">
+
+    <!-- Twitter Card data -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@hongayetu">
+    <meta name="twitter:title" content="Logigate - Sistema de Gestão Aduaneira, Financeira e Contabilística">
+    <meta name="twitter:description" content="Aumente a eficiência dos seus processos com o Logigate, desenvolvido pela Hongayetu Lda. Automatize despachos e gestão financeira com uma plataforma avançada. #Logística #Angola">
+    <meta name="twitter:creator" content="@hongayetu">
+    <meta name="twitter:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
+    <meta name="twitter:image:alt" content="Logigate - Sistema de Gestão Aduaneira">
+
+    <!-- Open Graph data -->
+    <meta property="og:title" content="Logigate | Sistema de Gestão Aduaneira e Financeira" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.logigate.ao" />
+    <meta property="og:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="628" />
+    <meta property="og:description" content="Logigate é uma solução desenvolvida pela Hongayetu Lda para gestão aduaneira, financeira e contabilística, garantindo automação e eficiência nos processos de despacho e controle financeiro." />
+    <meta property="og:site_name" content="Logigate" />
+    <meta property="og:locale" content="pt_AO" />
+    <meta property="og:updated_time" content="2023-10-01T00:00:00+01:00" />
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
@@ -244,23 +281,6 @@
                 $('.step').eq(step - 1).addClass('active');
             }
 
-			// Monitora a seleção dos radio buttons
-			/*$('input[name="Designacao"]').change(function() {
-				const selectedValue = $('input[name="Designacao"]:checked').val();
-
-				if (selectedValue === 'Despachante Oficial') {
-					// Torna o campo Cedula obrigatório
-					$('#cedula').attr('required', true);
-					$('#cedula').addClass('border-red-500'); // Adiciona borda vermelha
-					$('#cedula-error').removeClass('hidden'); // Exibe a mensagem de erro
-				} else {
-					// Remove a obrigatoriedade e o destaque
-					$('#cedula').removeAttr('required');
-					$('#cedula').removeClass('border-red-500');
-					$('#cedula-error').addClass('hidden');
-				}
-			});*/
-
             $('.btn-next').click(function() {
 				const isDesignacaoSelected = $('input[name="Designacao"]:checked').length > 0;
 				var selectedValue = $('input[name="Designacao"]:checked').val(); // Valor selecionado na designação
@@ -333,19 +353,6 @@
 					// Lógica para carregar cidades
 				}, 1000);
 			});
-
-			$('#registerForm input, #registerForm select').on('input change', function() {
-				const formData = $('#registerForm').serializeArray();
-				localStorage.setItem('formData', JSON.stringify(formData));
-			});
-
-			// Recuperar dados ao carregar a página
-			const savedData = JSON.parse(localStorage.getItem('formData'));
-			if (savedData) {
-				savedData.forEach(function(item) {
-					$(`[name="${item.name}"]`).val(item.value);
-				});
-			}
 
 			$('#password').on('input', function() {
 				const password = $(this).val();

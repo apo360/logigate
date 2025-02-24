@@ -18,7 +18,7 @@ class ProvinciasSeeder extends Seeder
             ['id' => 2, 'Nome' => 'Benguela'],
             ['id' => 3, 'Nome' => 'Bié'],
             ['id' => 4, 'Nome' => 'Cabinda'],
-            ['id' => 5, 'Nome' => 'Cuando Cubango'],
+            ['id' => 5, 'Nome' => 'Cubango'],
             ['id' => 6, 'Nome' => 'Cuanza Norte'],
             ['id' => 7, 'Nome' => 'Cuanza Sul'],
             ['id' => 8, 'Nome' => 'Cunene'],
@@ -32,6 +32,9 @@ class ProvinciasSeeder extends Seeder
             ['id' => 16, 'Nome' => 'Namibe'],
             ['id' => 17, 'Nome' => 'Uíge'],
             ['id' => 18, 'Nome' => 'Zaire'],
+            ['id' => 19, 'Nome' => 'Icolo e Bengo'],
+            ['id' => 20, 'Nome' => 'Cuando'],
+            ['id' => 21, 'Nome' => 'Moxico Leste'],
         ]);
     }
 }

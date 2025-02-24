@@ -3,6 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Canonical SEO -->
+  <link rel="canonical" href="https://www.logigate.ao"/>
+
+  <!-- Meta Tags -->
+  <meta name="keywords" content="logigate, sistema de gestão aduaneira, gestão financeira, gestão contabilística, automação aduaneira, hongayetu lda, software aduaneiro, controle logístico, contabilidade aduaneira, despacho aduaneiro, gestão de operações, Angola, África">
+  <meta name="description" content="Logigate: Solução completa para gestão aduaneira, financeira e contabilística. Automatize processos, reduza custos e aumente a eficiência dos seus despachos com a Hongayetu Lda.">
+
+  <!-- Schema.org markup -->
+  <meta itemprop="name" content="Logigate - Gestão Aduaneira, Financeira e Contabilística">
+  <meta itemprop="description" content="Logigate oferece uma solução robusta e integrada para automação e controle de processos aduaneiros, financeiros e contabilísticos, garantindo eficiência e precisão.">
+  <meta itemprop="image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
+  <meta itemprop="datePublished" content="2023-10-01">
+  <meta itemprop="ratingValue" content="4.9">
+  <meta itemprop="reviewCount" content="150">
+
+  <!-- Twitter Card data -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@hongayetu">
+  <meta name="twitter:title" content="Logigate - Sistema de Gestão Aduaneira, Financeira e Contabilística">
+  <meta name="twitter:description" content="Aumente a eficiência dos seus processos com o Logigate, desenvolvido pela Hongayetu Lda. Automatize despachos e gestão financeira com uma plataforma avançada. #Logística #Angola">
+  <meta name="twitter:creator" content="@hongayetu">
+  <meta name="twitter:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
+  <meta name="twitter:image:alt" content="Logigate - Sistema de Gestão Aduaneira">
+
+  <!-- Open Graph data -->
+  <meta property="og:title" content="Logigate | Sistema de Gestão Aduaneira e Financeira" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.logigate.ao" />
+  <meta property="og:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="628" />
+  <meta property="og:description" content="Logigate é uma solução desenvolvida pela Hongayetu Lda para gestão aduaneira, financeira e contabilística, garantindo automação e eficiência nos processos de despacho e controle financeiro." />
+  <meta property="og:site_name" content="Logigate" />
+  <meta property="og:locale" content="pt_AO" />
+  <meta property="og:updated_time" content="2023-10-01T00:00:00+01:00" />
+
   <!-- Favicon-->
   <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}" />
   <title>Logigate - Gestão Aduaneira Simplificada</title>
@@ -238,52 +275,53 @@
       <ul class="hidden md:flex space-x-8 items-center">
         <li>
           <a href="#sobre" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
-            <i class="fas fa-info-circle"></i> <!-- Ícone do Font Awesome -->
+            <i class="fas fa-info-circle" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Sobre</span>
           </a>
         </li>
         <li>
           <a href="#servicos" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
-            <i class="fas fa-cogs"></i> <!-- Ícone do Font Awesome -->
+            <i class="fas fa-cogs" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Funcionalidades</span>
           </a>
         </li>
         <li>
-          <a href="#transitarios" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
-            <i class="fas fa-truck"></i> <!-- Ícone do Font Awesome -->
+          <a href="{{ route('marketplace') }}" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-truck" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Marketplace</span>
           </a>
         </li>
         <li>
           <a href="{{ route('consultar.licenciamento') }}" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
-            <i class="fas fa-comments"></i> <!-- Ícone do Font Awesome -->
+            <i class="fas fa-comments" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Consultar</span>
           </a>
         </li>
         <li>
           <a href="#noticias" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
-            <i class="fas fa-blog"></i> <!-- Ícone do Font Awesome -->
+            <i class="fas fa-blog" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Notícias</span>
           </a>
         </li>
         <li>
           <a href="#contactos" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
-            <i class="fas fa-envelope"></i> <!-- Ícone do Font Awesome -->
+            <i class="fas fa-envelope" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Contacto</span>
           </a>
         </li>
         <li>
           @if (Route::has('login'))
               @auth
-                  <li class="nav-item">
-                      <a href="{{ url('/dashboard') }}" class="font-semibold text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white focus:outline focus:outline-2 focus:rounded-sm focus:outline-red-500">Pagina Inicial</a>
-                  </li>
+                <a href="{{ url('/dashboard') }}" class="flex items-center space-x-2">
+                  <i class="fas fa-home"></i>
+                  <span>Pagina Inicial</span>
+                </a>
               @else
                   <li>
-                      <a href="{{ route('login') }}" class="login-button flex items-center space-x-2 underline-effect">
-                        <i class="fas fa-sign-in-alt"></i> <!-- Ícone do Font Awesome -->
-                        <span>Acesso</span>
-                      </a>
+                    <a href="{{ route('login') }}" class="login-button flex items-center space-x-2 bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">
+                      <i class="fas fa-sign-in-alt"></i>
+                      <span>Acesso</span>
+                    </a>
                   </li>
               @endauth
           @endif
@@ -617,7 +655,7 @@
     <!-- Conteúdo -->
     <div class="container mx-auto px-4 relative z-10">
       <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center">Planos e Preços</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Plano Básico -->
         <div data-aos="zoom-in" data-aos-delay="100" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-black-500">
           <h3 class="text-xl font-bold text-blue-900 mb-4">Básico</h3>
@@ -646,7 +684,19 @@
             </li>
             <li class="flex items-center space-x-2 mb-3 text-gray-400">
               <i class="fas fa-times-circle"></i>
-              <span>Suporte 24/7.</span>
+              <span>Serviço de e-mail.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3 text-gray-400">
+              <i class="fas fa-times-circle"></i>
+              <span>Integração com sistemas de terceiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3 text-gray-400">
+              <i class="fas fa-times-circle"></i>
+              <span>Gestão de Arquivos</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3 text-gray-400">
+              <i class="fas fa-times-circle"></i>
+              <span>Suporte prioritário 24/7.</span>
             </li>
           </ul>
           <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all w-full">
@@ -694,10 +744,46 @@
         </div>
 
         <!-- Plano Empresarial -->
-        <div data-aos="zoom-in" data-aos-delay="300" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-black-500">
+        <div data-aos="zoom-in" data-aos-delay="300" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-red-500">
           <h3 class="text-xl font-bold text-blue-900 mb-4">Empresarial</h3>
-          <p class="text-gray-700 mb-4">Solução completa para grandes empresas.</p>
+          <p class="text-gray-700 mb-4">Solução completa para empresas.</p>
           <p class="text-4xl font-bold text-blue-900 mb-6">AOA 50.000<span class="text-lg text-gray-500">/mês</span></p>
+          <ul class="text-left mb-6">
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de Licenciamentos.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Gestão de processos aduaneiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Relatórios avançados e personalizados.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Integração com sistemas de terceiros.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Suporte 24/7 por e-mail, chat e telefone.</span>
+            </li>
+            <li class="flex items-center space-x-2 mb-3">
+              <i class="fas fa-check-circle text-green-500"></i>
+              <span>Personalização avançada.</span>
+            </li>
+          </ul>
+          <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all w-full">
+            Assinar
+          </button>
+        </div>
+
+        <!-- Plano Empresarial PLUS -->
+        <div data-aos="zoom-in" data-aos-delay="300" class="bg-white p-6 rounded-lg shadow-md text-center transform transition-all hover:scale-105 hover:shadow-lg border-2 border-purple-500">
+          <h3 class="text-xl font-bold text-blue-900 mb-4">Empresarial Plus</h3>
+          <p class="text-gray-700 mb-4">Solução completa para grandes empresas.</p>
+          <p class="text-4xl font-bold text-blue-900 mb-6">AOA 70.000<span class="text-lg text-gray-500">/mês</span></p>
           <ul class="text-left mb-6">
             <li class="flex items-center space-x-2 mb-3">
               <i class="fas fa-check-circle text-green-500"></i>

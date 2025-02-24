@@ -143,22 +143,22 @@ class CreateNewUser implements CreatesNewUsers
             ]);
 
             // Enviar o e-mail de confirmação
-            Mail::to($user->email)->send(new ConfirmationMail($otp));
+            // Mail::to($user->email)->send(new ConfirmationMail($otp));
 
             // Pasta Raiz no S3
-            $s3Client = new S3Client([
+            /*$s3Client = new S3Client([
                 'version' => 'latest',
                 'region'  => 'us-east-1', // A região do seu bucket S3
             ]);
 
-            $bucket = 'logigate-docs'; // Nome do bucket
+            $bucket = 'logigate-arquivos'; // Nome do bucket
             $caminhoCompleto = 'Despachantes/' . $contaCode;
 
             $s3Client->putObject([
                 'Bucket' => $bucket,
                 'Key'    => $caminhoCompleto . '/',
                 'Body'   => "", // Corpo vazio para simular uma pasta
-            ]);
+            ]);*/
 
             // Confirmar a transação
             DB::commit();

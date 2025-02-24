@@ -131,10 +131,10 @@ class MunicipiosSeeder extends Seeder
             ['id' => 102, 'Nome' => 'Belas', 'provincia_id' => 11],
             ['id' => 103, 'Nome' => 'Cacuaco', 'provincia_id' => 11],
             ['id' => 104, 'Nome' => 'Cazenga', 'provincia_id' => 11],
-            ['id' => 105, 'Nome' => 'Ícolo e Bengo', 'provincia_id' => 11],
-            ['id' => 106, 'Nome' => 'Luanda', 'provincia_id' => 11],
+            ['id' => 105, 'Nome' => 'Maianga', 'provincia_id' => 11],
+            ['id' => 106, 'Nome' => 'Samba', 'provincia_id' => 11],
             ['id' => 107, 'Nome' => 'Quiçama', 'provincia_id' => 11],
-            ['id' => 108, 'Nome' => 'Quissama', 'provincia_id' => 11],
+            ['id' => 108, 'Nome' => 'Ingombota', 'provincia_id' => 11],
             ['id' => 109, 'Nome' => 'Talatona', 'provincia_id' => 11],
             // Lunda Norte
             ['id' => 110, 'Nome' => 'Cambulo', 'provincia_id' => 12],

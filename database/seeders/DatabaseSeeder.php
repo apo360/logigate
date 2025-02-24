@@ -14,20 +14,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
         // DB::statement('TRUNCATE TABLE menus');
         // DB::statement('TRUNCATE TABLE paises');
         // DB::statement('TRUNCATE TABLE portos');
 
         $this->call([
             
-            TipoTransporteSeeder::class
-            /*
+            TipoTransporteSeeder::class,
+
             TaxTableSeeder::class,
             ProdutoSeeder::class,
             UserRoleSeeder::class,
-            //RolesAndPermissionsSeeder::class,
-
             EmpresasSeeder::class,
             ProductGroupsSeeder::class,
             ProvinciasSeeder::class,
@@ -37,17 +35,16 @@ class DatabaseSeeder extends Seeder
             MenuSeeder::class, 
             ProductTypeSeeder::class,
             ProductExemptionReasonSeeder::class, 
-            
             InvoiceTypesSeeder::class,
             RegiaoAduaneirasSeeder::class,
             EstanciasSeeder::class, 
             PortosSeeder::class,
             CategoriaAduaneiraSeeder::class,
             SubcategoriaSeeder::class,
-            */
+            
 
         ]);
 
-        // DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+        DB::statement('SET FOREIGN_KEY_CHECKS = 1');
     }
 }
