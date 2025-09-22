@@ -17,10 +17,21 @@ class DashboardController extends Controller
 {
     
     // Faturamento diário
-    public function dailyRevenue()
+    public function dailyRevenue($days)
     {
         return SalesDoctotal::selectRaw('DATE(created_at) as date, SUM(gross_total) as total')
-            ->whereDate('created_at', Carbon::today())
+            ->where('created_at', '>=', Carbon::today()->subDays($days - 1))
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+    }
+
+    // Faturamento do dia anterior
+    public function previousDayRevenue()
+    {
+        $yesterday = Carbon::yesterday()->toDateString();
+        return SalesDoctotal::selectRaw('DATE(created_at) as date, SUM(gross_total) as total')
+            ->whereDate('created_at', $yesterday)
             ->groupBy('date')
             ->get();
     }
@@ -34,6 +45,17 @@ class DashboardController extends Controller
             ->get();
     }
 
+    // Faturamento do mês anterior
+    public function previousMonthRevenue()
+    {
+        $previousMonth = Carbon::now()->subMonth();
+        return SalesDoctotal::selectRaw('MONTH(created_at) as month, YEAR(created_at) as year, SUM(gross_total) as total')
+            ->whereYear('created_at', $previousMonth->year)
+            ->whereMonth('created_at', $previousMonth->month)
+            ->groupBy('month', 'year')
+            ->get();
+    }
+
     // Faturamento anual
     public function yearlyRevenue()
     {
@@ -42,11 +64,11 @@ class DashboardController extends Controller
             ->get();
     }
 
-    // Faturamento do ano anterior
-    public function previousYearRevenue()
+    // Faturamento do ano anterior ou de um ano específico
+    public function previousYearRevenue($year)
     {
         return SalesDoctotal::selectRaw('YEAR(created_at) as year, SUM(gross_total) as total')
-            ->whereYear('created_at', Carbon::now()->subYear()->year)
+            ->whereYear('created_at', $year)
             ->groupBy('year')
             ->get();
     }
@@ -64,22 +86,33 @@ class DashboardController extends Controller
         });
 
         // Dados de faturamento diário, mensal e anual
-        $dailyRevenue = $this->dailyRevenue();
+        $dailyRevenue = $this->dailyRevenue(1);
         $monthlyRevenue = $this->monthlyRevenue();
         $yearlyRevenue = $this->yearlyRevenue();
-        $previousYearRevenue = $this->previousYearRevenue();
+        $previousYearRevenue = $this->previousYearRevenue(Carbon::now()->subYear(1)->year); // ano anterior
 
         // Total de faturamento
-        $totalFaturamento = SalesDoctotal::sum('gross_total');
+        // $totalFaturamento = SalesDoctotal::sum('gross_total');
     
         // Faturamento do Mês Atual
         // $faturamentoMes = SalesDocTotal::whereMonth('created_at', now()->month)->sum('gross_total');
+
+        // Faturamento de Hoje
+        $faturacaoHoje = SalesDoctotal::whereDate('created_at', Carbon::today())->sum('gross_total');
+        // Faturamento do Mês Anterior
+        $mesAnterior = SalesDoctotal::whereMonth('created_at', now()->month - 1)->sum('gross_total');
         
         // Faturamento do Ano Anterior
         // $faturamentoAnoAnterior = SalesDoctotal::whereYear('created_at', now()->month - 1)->sum('gross_total');
         
         // Número de Faturas Emitidas
         $numeroFaturas = SalesInvoice::where('empresa_id', auth()->user()->empresas->first()->id)->get();
+
+        // Calcule no controller e envie para a view:
+        $ticketMedio = $totalFaturamento / max(count($numeroFaturas), 1);
+
+        // Calcule no controller e envie para a view:
+        $percentCrescimento = $mesAnterior > 0 ? (($faturacaoHoje - $mesAnterior) / $mesAnterior) * 100 : 0;
 
         // Número de Transações Processadas (exemplo de como pode ser feito, depende da estrutura do seu modelo)
         // $numeroTransacoes = SalesInvoice::sum('total_transactions'); // Exemplo de campo "total_transactions"
@@ -119,9 +152,13 @@ class DashboardController extends Controller
 
         return view('dashboard', compact('clientes','exportadores',
         'processos','licenciamento','topCountries', 
-        'processesByCustomer', 'processesByCountries', 'totalFaturamento',
+        'processesByCustomer', 'processesByCountries',
         'totalFaturamento', 
-        'numeroFaturas', 'dailyRevenue', 'monthlyRevenue', 'yearlyRevenue', 'previousYearRevenue', 'processosPorEstado'));
+        'numeroFaturas', 'dailyRevenue', 
+        'monthlyRevenue', 'yearlyRevenue', 
+        'previousYearRevenue', 'processosPorEstado', 
+        'faturacaoHoje', 'mesAnterior',
+        'ticketMedio', 'percentCrescimento') );
     }
 
 
@@ -271,6 +308,198 @@ class DashboardController extends Controller
 
     public function ProcessosEstatisticas(){
 
+    }
+
+    // Estatísticas de Faturação - Controller
+    public function FacturaEstatisticas(){
+
+        // Total de faturamento
+        $ano = request()->input('ano', Carbon::now()->year); // Pega o ano do request ou o ano atual
+        $empresaId = auth()->user()->empresas->first()->id; // Pega o ID da empresa do usuário autenticado
+        
+        $totalFaturamentos = SalesInvoice::with('salesdoctotal')
+            ->where('empresa_id', $empresaId)
+            ->whereYear('created_at', $ano)
+            ->get()
+            ->sum(function ($invoice) {
+                return $invoice->salesdoctotal->gross_total ?? 0;
+            });
+        
+        // return view('dashboard_factura');
+        // Número de Faturas Emitidas
+        $numeroFaturas = SalesInvoice::where('empresa_id', $empresaId)->whereYear('created_at', $ano)->get();
+        // Calcule no controller e envie para a view:
+        $ticketMedio = $totalFaturamentos / max(count($numeroFaturas), 1);
+        // Faturamento do Mês Atual
+        $faturamentoMes = SalesDocTotal::whereMonth('created_at', now()->month)->sum('gross_total');
+        // Faturamento de Hoje
+        $faturacaoHoje = SalesDoctotal::whereDate('created_at', Carbon::today())->sum('gross_total');
+        // Faturamento do Mês Anterior
+        $mesAnterior = SalesDoctotal::whereMonth('created_at', now()->month - 1)->sum('gross_total');
+        // Calcule no controller e envie para a view:
+        $percentCrescimento = $mesAnterior > 0 ? (($faturacaoHoje - $mesAnterior) / $mesAnterior) * 100 : 0;
+        // Faturamento do Ano Anterior
+        $faturamentoAnoAnterior = SalesDoctotal::whereYear('created_at', now()->month - 1)->sum('gross_total');
+        // Número de Transações Processadas (exemplo de como pode ser feito, depende da estrutura do seu modelo)
+        // $numeroTransacoes = SalesInvoice::sum('total_transactions'); // Exemplo de campo "total_transactions"
+        
+        // Percentual de Faturas Pagas vs. Pendentes
+        // $faturasPagas = SalesInvoice::where('status', 'paid')->count();
+        // $faturasPendentes = SalesInvoice::where('status', 'pending')->count();
+        // $totalFaturas = $faturasPagas + $faturasPendentes;
+        // $percentualPagas = $totalFaturas > 0 ? ($faturasPagas / $totalFaturas) * 100 : 0;
+        // $percentualPendentes = $totalFaturas > 0 ? ($faturasPendentes / $totalFaturas) * 100 : 0;
+        
+        //Lucro Líquido Total
+        $lucroLiquidoTotal = SalesInvoice::where('empresa_id', $empresaId)->whereYear('created_at', $ano)
+        ->get()
+        ->sum(function ($invoice) {
+            return ($invoice->salesdoctotal->gross_total ?? 0) - ($invoice->total_costs ?? 0);
+        });
+
+        $percentualCrescimentoLucro = $faturamentoAnoAnterior > 0 ? (($lucroLiquidoTotal - $faturamentoAnoAnterior) / $faturamentoAnoAnterior) * 100 : 0;
+
+        //Custos Totais
+        $custosTotais = SalesInvoice::where('empresa_id', $empresaId)
+        ->get()
+        ->sum(function ($invoice) {
+            return $invoice->total_costs ?? 0;
+        });
+
+        $percentualCrescimentoCustos = $faturamentoAnoAnterior > 0 ? (($custosTotais - $faturamentoAnoAnterior) / $faturamentoAnoAnterior) * 100 : 0;
+
+        // Margem de Lucro Média
+        // $margemLucroMedia = $totalFaturamentos > 0 ? ($lucroLiquidoTotal / $totalFaturamentos) * 100 : 0;  
+
+        // Facturamento por Categoria de Produto
+        // $facturamentoPorCategoria = SalesInvoice::where('empresa_id', auth()->user()->empresas->first()->id)
+        // ->join('sales_items', 'sales_invoices.id', '=', 'sales_items.sales_invoice_id')
+        // ->join('products', 'sales_items.product_id', '=', 'products.id')
+        // ->select('products.category', DB::raw('SUM(sales_items.total) as total'))
+        // ->groupBy('products.category')
+        // ->get();
+
+        // Dados para gráficos de faturamento diário, mensal e anual  
+        $dailyRevenue = $this->dailyRevenue(1); // dia
+        $previousDayRevenue = $this->previousDayRevenue(); // dia anterior
+        $sevenpreviousDaysRevenue = $this->dailyRevenue(7); // 7 dias atrás
+
+        $monthlyRevenue = $this->monthlyRevenue(); // mês
+        $previousMonthRevenue = $this->previousMonthRevenue(); // mês anterior
+
+        // Calcular faturamento anual e dos anos anteriores
+        $yearlyRevenue = $this->yearlyRevenue(); // ano atual
+        $previousYearRevenue = $this->previousYearRevenue(Carbon::now()->subYear(1)->year); // ano anterior
+        $previousYearRevenue2 = $this->previousYearRevenue(Carbon::now()->subYears(2)->year); // 2 anos atrás
+        $previousYearRevenue3 = $this->previousYearRevenue(Carbon::now()->subYears(3)->year); // 3 anos atrás
+
+        // Percentual de crescimento anual
+        $percentualCrescimentoAnual = $previousYearRevenue->first()->total > 0
+            ? (($yearlyRevenue->first()->total - $previousYearRevenue->first()->total) / $previousYearRevenue->first()->total) * 100
+            : 0;
+
+        // Dados para gráficos de faturamento por cliente
+        $faturamentoPorCliente = SalesInvoice::where('sales_invoice.empresa_id', auth()->user()->empresas->first()->id)
+        ->join('customers', 'sales_invoice.customer_id', '=', 'customers.id')
+        ->join('sales_document_totals', 'sales_invoice.id', '=', 'sales_document_totals.documentoID')
+        ->select('customers.CompanyName', DB::raw('SUM(sales_document_totals.gross_total) as total'))
+        ->groupBy('customers.CompanyName')
+        ->orderByDesc('total')
+        ->limit(5)
+        ->get();
+
+        // Dados para gráficos de faturamento por produto
+        $faturamentoPorProduto = SalesInvoice::where('sales_invoice.empresa_id', auth()->user()->empresas->first()->id)
+        ->join('sales_line', 'sales_invoice.id', '=', 'sales_line.documentoID')
+        ->join('produtos', 'sales_line.productID', '=', 'produtos.id')
+        ->join('sales_document_totals', 'sales_invoice.id', '=', 'sales_document_totals.documentoID')
+        ->select('produtos.ProductDescription', DB::raw('SUM(sales_line.credit_amount) as total'))
+        ->groupBy('produtos.ProductDescription')
+        ->orderByDesc('total')
+        ->limit(5)
+        ->get();
+
+        // Previsão de faturamento para o próximo mês (simples média dos últimos 3 meses)
+        $faturamentoUltimos3Meses = SalesDoctotal::where('created_at', '>=', Carbon::now()->subMonths(3))
+        ->sum('gross_total');
+        $previsaoProximoMes = $faturamentoUltimos3Meses / 3;
+
+        // Previsão de faturamento para o próximo ano (simples média dos últimos 3 anos)
+        $faturamentoUltimos3Anos = SalesDoctotal::where('created_at', '>=', Carbon::now()->subYears(3))
+        ->sum('gross_total');
+        $previsaoProximoAno = $faturamentoUltimos3Anos / 3;
+
+        // Tempo Médio Entre Compras por cliente
+        $tempos = SalesInvoice::where('empresa_id', auth()->user()->empresas->first()->id)
+            ->orderBy('customer_id')->orderBy('created_at')
+            ->get()
+            ->groupBy('customer_id')
+            ->map(function($compras) {
+                $datas = $compras->pluck('created_at')->map(fn($d) => Carbon::parse($d));
+                if ($datas->count() < 2) return null;
+                $intervalos = [];
+                for ($i = 1; $i < $datas->count(); $i++) {
+                    $intervalos[] = $datas[$i]->diffInDays($datas[$i-1]);
+                }
+                return count($intervalos) ? array_sum($intervalos) / count($intervalos) : null;
+            })->filter()->avg();
+
+        // 
+        $faturacaoMensal = SalesDocTotal::selectRaw('MONTH(created_at) as mes, SUM(gross_total) as total')
+            ->whereYear('created_at', $ano)
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get()
+            ->pluck('total', 'mes')
+            ->all();
+
+        // Garante que todos os meses estejam presentes no array (meses sem vendas ficam com 0)
+        $faturacaoMensalCompleto = [];
+        for ($i = 1; $i <= 12; $i++) {
+            $faturacaoMensalCompleto[] = isset($faturacaoMensal[$i]) ? $faturacaoMensal[$i] : 0;
+        }
+
+        // Definir o intervalo de anos (ex: últimos 4 anos incluindo o atual)
+        $anoAtual = Carbon::now()->year;
+        $anosDisponiveis = range($anoAtual, $anoAtual - 3); // retorna [2025, 2024, 2023, 2022]
+
+        // Inicializa array para armazenar os dados completos de faturação por ano
+        $dadosPorAno = [];
+
+        foreach ($anosDisponiveis as $ano) {
+            // Buscar total de faturação por mês para o ano atual
+            $faturacaoBruta = SalesDocTotal::selectRaw('MONTH(created_at) as mes, SUM(gross_total) as total')
+                ->whereYear('created_at', $ano)
+                ->groupBy('mes')
+                ->orderBy('mes')
+                ->get()
+                ->pluck('total', 'mes')
+                ->all();
+
+            // Garantir que todos os 12 meses estejam presentes com valores (0 se ausente)
+            $faturacaoMensal = [];
+            for ($mes = 1; $mes <= 12; $mes++) {
+                $faturacaoMensal[] = $faturacaoBruta[$mes] ?? 0;
+            }
+
+            // Armazena os dados completos do ano
+            $dadosPorAno[$ano] = $faturacaoMensal;
+        }
+        // Enviar todos os dados para a view
+        return view('dashboard_factura', compact(
+            'totalFaturamentos', 'numeroFaturas', 'ticketMedio',
+            'faturamentoMes', 'faturacaoHoje', 'mesAnterior', 'percentCrescimento',
+            'faturamentoAnoAnterior', 'anosDisponiveis', 'dadosPorAno',
+            // 'numeroTransacoes', 
+            // 'faturasPagas', 'faturasPendentes', 'percentualPagas', 'percentualPendentes',
+            'lucroLiquidoTotal', 'custosTotais', // 'margemLucroMedia', 'facturamentoPorCategoria',
+            'dailyRevenue', 'previousDayRevenue', 'sevenpreviousDaysRevenue',
+            'monthlyRevenue', 'previousMonthRevenue', 'faturacaoMensalCompleto',
+            'yearlyRevenue', 'previousYearRevenue', 'previousYearRevenue2', 'previousYearRevenue3',
+            'percentualCrescimentoAnual', 'percentualCrescimentoLucro', 'percentualCrescimentoCustos',
+            'faturamentoPorCliente', 'faturamentoPorProduto',
+            'previsaoProximoMes',  'previsaoProximoAno'
+        ));
     }
 
 

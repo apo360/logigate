@@ -200,39 +200,78 @@
                         </div>
 
                         <div class="col-md-3">
-                            <div class="col-md-12">
-                                <div class="col-lg-12">
-                                    <!-- small box -->
-                                    <div class="small-box bg-danger">
-                                        <div class="inner">
-                                            <h3>{{ number_format($totalFaturamento, 2, ',', '.') }} KZ</h3> <!-- Exibe o total formatado -->
-                                            <p>Total de Faturamento</p>
+                            <div class="flex">
+                                <div class="w-full p-2">
+                                    <div class="bg-gradient-to-r from-red-600 via-red-500 to-red-400 rounded-lg shadow-lg text-black mb-4">
+                                        <div class="flex justify-between items-center p-4">
+                                            <div>
+                                                <h3 class="text-2xl font-bold">{{ number_format($totalFaturamento, 2, ',', '.') }} KZ</h3>
+                                                <p class="text-sm">Total de Faturamento</p>
+                                            </div>
+                                            <i class="fas fa-dollar-sign text-4xl" aria-label="Ícone de dinheiro"></i>
                                         </div>
-                                        <div class="icon">
-                                            <i class="fas fa-dollar-sign"></i> <!-- Ícone de dinheiro -->
-                                        </div>
-                                        <div class="container">
-
-                                            <div class="row text-center">
+                                        <!-- small box -->
+                                        <div class="mt-4 p-4 rounded-lg text-black">
+                                            <div class="flex justify-between items-center">
                                                 <!-- Número de Faturas -->
-                                                <div class="col-md-6">
-                                                    <h5>Faturas Emitidas</h5>
-                                                    <h4>{{ count($numeroFaturas) }}</h4> <!-- Número total de faturas -->
+                                                <div class="flex flex-col text-center">
+                                                    <i class="fas fa-file-invoice-dollar text-2xl mb-2" aria-label="Ícone de fatura"></i>
+                                                    <div>
+                                                        <span class="text-sm">Facturas Emitidas</span>
+                                                        <h4 class="text-lg font-bold">{{ count($numeroFaturas) }}</h4>
+                                                    </div>
+                                                </div>
+                                                <!-- Transações Processadas -->
+                                                <div class="flex flex-col text-center">
+                                                    <i class="fas fa-exchange-alt text-2xl mb-2" aria-label="Ícone de transação"></i>
+                                                    <div>
+                                                        <span class="text-sm">Transações Processadas</span>
+                                                        <h4 class="text-lg font-bold">{{ $transacoesProcessadas ?? 0 }}</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="flex justify-between items-center mt-4">
+                                                <!-- Facturação Hoje -->
+                                                <div class="flex flex-col text-center">
+                                                    <i class="fas fa-calendar-day text-2xl mb-2" aria-label="Ícone de hoje"></i>
+                                                    <div>
+                                                        <span class="text-sm">Facturação Hoje</span>
+                                                        <h4 class="text-lg font-bold">{{ $faturacaoHoje ?? 0 }}</h4>
+                                                    </div>
+                                                </div>
+                                                <!-- Facturação Ontem -->
+                                                <div class="flex flex-col text-center">
+                                                    <i class="fas fa-calendar-minus text-2xl mb-2" aria-label="Ícone de ontem"></i>
+                                                    <div>
+                                                        <span class="text-sm">Facturação Ontem</span>
+                                                        <h4 class="text-lg font-bold">{{ $faturacaoOntem ?? 0 }}</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex justify-between items-center mt-4">
+                                                <!-- Ticket Médio -->
+                                                 <div class="flex flex-col text-center">
+                                                    <i class="fas fa-coins text-2xl mb-2" aria-label="Ícone de ticket médio"></i>
+                                                    <div>
+                                                        <span class="text-sm">Valor Médio por factura</span>
+                                                        <h4 class="text-lg font-bold">{{ number_format($ticketMedio, 2, ',', '.') }} KZ</h4>
+                                                    </div>
                                                 </div>
 
-                                                <!-- Transações Processadas -->
-                                                <div class="col-md-6">
-                                                    <h5>Transações Processadas</h5>
-                                                    <h4></h4> <!-- Número total de transações -->
+                                                <!-- Percentual de Crescimento -->
+                                                <div class="flex flex-col text-center">
+                                                    <i class="fas fa-chart-line text-2xl mb-2" aria-label="Ícone de crescimento"></i>
+                                                    <div>
+                                                        <span class="text-sm">Crescimento Mês</span>
+                                                        <h4 class="text-lg font-bold">{{ number_format($percentCrescimento, 2, ',', '.') }}%</h4>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div class="row text-center">
-
-                                        </div>
-
-                                        <a href="" class="small-box-footer">Mais info <i class="fas fa-arrow-circle-right"></i></a>
+                                        <a href="{{ route('factura.estatistica') }}" class="block p-4 text-center text-white hover:text-gray-200">
+                                            Mais info <i class="fas fa-arrow-circle-right"></i>
+                                        </a>
                                     </div>
                                 </div>
                             </div>

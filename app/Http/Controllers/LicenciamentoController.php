@@ -219,85 +219,106 @@ class LicenciamentoController extends Controller
                             ->with('error', 'Erro ao excluir o licenciamento. Tente novamente.');
         }
     }
-
-
+    /**
+     * Gerar arquivo TXT para o licenciamento.
+     */
+    // ...existing code...
     public function GerarTxT($Idlice)
     {
-        // Buscando o processo pelo ID
-        $licenciamento = Licenciamento::findOrFail($Idlice);
-
-        // Verificar se os campos importantes estão preenchidos
-        if (is_null($licenciamento->frete) || is_null($licenciamento->seguro) || $licenciamento->frete === 0 || $licenciamento->seguro === 0) {
-            // Redirecionar de volta com uma mensagem de erro
-            return redirect()->back()->withErrors(['error' => 'Os campos Frete e Seguro precisam estar preenchidos e diferentes de zero antes de gerar o licenciamento.']);
-        }
-
-        $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
-
-        $porto = DB::table('portos')->join('paises', 'portos.pais_id', '=', 'paises.id')
-        ->where('portos.porto', $licenciamento->porto_origem)
-        ->select('portos.sigla', 'paises.codigo as codigo_pais')->first();
-
-        $FOB = $licenciamento->fob_total;
-        $Frete = $licenciamento->frete;
-        $Seguro = $licenciamento->seguro;
-
-        // Linha 0 - Cabeçalho do processo
-        $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
-        
-        // Linha 1 - Informações do exportador e transporte
-        $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo_pais}{$porto->sigla}||{$porto->codigo_pais}|AO||||";
-        
-        // Linha 2 - Adições de mercadorias
-        $adicoes = [];
-        foreach ($mercadoriaAgrupada as $key => $adicao) {
-
-            $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->first();
-
-            $ordem = $key + 1;
-            
-            // Calculando Frete e Seguro proporcionais
-            $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete) 
-                        + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
-            
-            $CIF = $frete_seguro + $adicao->preco_total;
-            
-            if ($adicao->peso_total == 0) {
-                $peso = $licenciamento->peso_bruto / count($mercadoriaAgrupada);
-            }else{
-                $peso = $adicao->peso_total;
+        try {
+            // Buscando o processo pelo ID
+            $licenciamento = Licenciamento::findOrFail($Idlice);
+    
+            // Verificar se os campos importantes estão preenchidos
+            if (is_null($licenciamento->frete) || is_null($licenciamento->seguro) || $licenciamento->frete === 0 || $licenciamento->seguro === 0) {
+                return redirect()->back()->withErrors(['error' => 'Os campos Frete e Seguro precisam estar preenchidos e diferentes de zero antes de gerar o licenciamento.']);
             }
-            // Criando a linha de adição
-            $adicoes[] = sprintf(
-                "2|%d|||||%s|%d||%s|%s|%s|%s|%s|%s|||%s|||||||||||||||||||",
-                $ordem,
-                $adicao->codigo_aduaneiro ?? 'N/A',             // Código aduaneiro ou padrão 'N/A'
-                $adicao->quantidade_total ?? 0,                 // Quantidade total ou padrão '0'
-                $porto->codigo_pais ?? 'N/A',                   // País de origem ou padrão 'N/A'
-                $peso ?? '0.00',                                // Peso ou padrão '0.00'
-                $licenciamento->moeda ?? 'N/A',                 // Moeda ou padrão 'N/A'
-                $adicao->preco_total ?? '0.00',                 // Preço total ou padrão '0.00'
-                $frete_seguro ?? '0.00',                        // Frete e seguro proporcionais ou padrão '0.00'
-                $CIF ?? '0.00',                                 // CIF ou padrão '0.00'
-                $pautaAduaneira->uq ?? 'N/A'                    // Unidade de quantidade ou padrão 'N/A'
-            );
-            
+    
+            $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
+    
+            if ($mercadoriaAgrupada->isEmpty()) {
+                return redirect()->back()->withErrors(['error' => 'Nenhuma mercadoria agrupada encontrada para este licenciamento.']);
+            }
+    
+            $porto = DB::table('portos')
+                ->join('paises', 'portos.pais_id', '=', 'paises.id')
+                ->where('portos.porto', $licenciamento->porto_origem)
+                ->select('portos.sigla', 'paises.codigo as codigo_pais')
+                ->first();
+    
+            if (!$porto) {
+                return redirect()->back()->withErrors(['error' => 'Porto de origem não encontrado ou sem país associado.']);
+            }
+    
+            $FOB = $licenciamento->fob_total;
+            $Frete = $licenciamento->frete;
+            $Seguro = $licenciamento->seguro;
+    
+            // Linha 0 - Cabeçalho do processo
+            $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
+    
+            // Linha 1 - Informações do exportador e transporte
+            $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo_pais}{$porto->sigla}||{$porto->codigo_pais}|AO||||";
+    
+            // Linha 2 - Adições de mercadorias
+            $adicoes = [];
+            foreach ($mercadoriaAgrupada as $key => $adicao) {
+                $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->first();
+    
+                $ordem = $key + 1;
+    
+                // Calculando Frete e Seguro proporcionais
+                $frete_seguro = 0;
+                $CIF = 0;
+                try {
+                    $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete)
+                        + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
+                    $CIF = $frete_seguro + $adicao->preco_total;
+                } catch (\Throwable $e) {
+                    return redirect()->back()->withErrors(['error' => 'Erro ao calcular frete/seguro: ' . $e->getMessage()]);
+                }
+    
+                if ($adicao->peso_total == 0) {
+                    $peso = $licenciamento->peso_bruto / count($mercadoriaAgrupada);
+                } else {
+                    $peso = $adicao->peso_total;
+                }
+    
+                $adicoes[] = sprintf(
+                    "2|%d|||||%s|%d||%s|%s|%s|%s|%s|%s|||%s|||||||||||||||||||",
+                    $ordem,
+                    $adicao->codigo_aduaneiro ?? 'N/A',
+                    $adicao->quantidade_total ?? 0,
+                    $porto->codigo_pais ?? 'N/A',
+                    $peso ?? '0.00',
+                    $licenciamento->moeda ?? 'N/A',
+                    $adicao->preco_total ?? '0.00',
+                    $frete_seguro ?? '0.00',
+                    $CIF ?? '0.00',
+                    $pautaAduaneira->uq ?? 'N/A'
+                );
+            }
+    
+            $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);
+    
+            $nomeArquivo = 'licenciamento_' . $licenciamento->codigo_licenciamento . '.txt';
+    
+            $licenciamento->txt_gerado = 1;
+            $licenciamento->save();
+    
+            return response($conteudo)
+                ->header('Content-Type', 'text/plain')
+                ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->back()->withErrors(['error' => 'Licenciamento não encontrado.']);
+        } catch (\Throwable $e) {
+            return redirect()->back()->withErrors(['error' => 'Erro inesperado ao gerar o arquivo: ' . $e->getMessage()]);
         }
-
-        // Montando o conteúdo completo
-        $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);
-
-        // Nome do arquivo
-        $nomeArquivo = 'licenciamento_' . $licenciamento->codigo_licenciamento . '.txt';
-
-        $licenciamento->txt_gerado = 1;
-        $licenciamento->save();
-
-        // Criando e retornando o arquivo .txt para download
-        return response($conteudo)->header('Content-Type', 'text/plain')
-            ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
     }
-
+    
+    /**
+     * Constituir um processo a partir de um licenciamento.
+     */
     public function ConstituirProcesso(Request $request, $idLicenciamento)
     {
         // Busca o licenciamento pelo ID
@@ -411,9 +432,17 @@ class LicenciamentoController extends Controller
     {
         // Validar o arquivo
         $request->validate([
-            'file' => 'required|file|mimes:csv,xlsx,xls'
+            'file' => 'required|file|mimes:csv,xlsx,xls,txt|max:5120', // Limite de 5MB
         ]);
 
+        // verificar se o arquivo é txt
+        $fileMime = $request->file('file')->getClientMimeType();
+        if ($fileMime == 'text/plain') {
+            // Chama a Função para lidar com arquivos TXT
+            $this->handleTxtImport($request);
+            
+            //return back()->with('error', 'O formato TXT não é suportado para importação. Por favor, utilize CSV ou Excel.');
+        }
         // Processar o arquivo CSV ou Excel
         try {
             $file = $request->file('file');
@@ -432,6 +461,130 @@ class LicenciamentoController extends Controller
             return back()->with('success', 'Ficheiro importado com sucesso!');
         } catch (\Exception $e) {
             return back()->with('error', 'Erro ao importar o ficheiro: ' . $e->getMessage());
+        }
+    }
+
+    private function handleTxtImport(Request $request)
+    {
+        // Lógica para validar e processar o arquivo TXT
+
+        // Lógica para processar o arquivo TXT
+        // Exemplo: Ler o arquivo linha por linha e processar os dados
+        try {
+            DB::beginTransaction();
+            $file = $request->file('file');
+            $lines = file($file);
+
+            $licenciamento = null;
+            $adicoes = [];
+            $empresaLogada = Auth::user()->empresas->first();
+
+            $linha0 = null;
+            $linha1 = null;
+
+            // Primeiro, capturar as linhas 0 e 1 para validação
+            foreach ($lines as $line) {
+                $fields = explode('|', trim($line));
+                if ($fields[0] == '0') {
+                    $linha0 = $fields;
+                }
+                if ($fields[0] == '1') {
+                    $linha1 = $fields;
+                }
+                if ($linha0 && $linha1) break;
+            }
+
+             // Validação da empresa (nome e cedula/nif)
+            $nomeEmpresaArquivo = $linha0[4] ?? null;
+            $cedulaEmpresaArquivo = $linha0[5] ?? null;
+            if (
+                !$empresaLogada ||
+                $empresaLogada->Empresa !== $nomeEmpresaArquivo ||
+                $empresaLogada->Cedula !== $cedulaEmpresaArquivo
+            ) {
+                return back()->with('error', 'O ficheiro não pertence à empresa logada. Importação cancelada.');
+            }
+
+            // Validação do cliente
+            $nomeClienteArquivo = $linha0[3] ?? null;
+            $customerTaxIdArquivo = $linha1[3] ?? null;
+            $cliente = \App\Models\Customer::where('CompanyName', $nomeClienteArquivo)
+                ->where('CustomerTaxID', $customerTaxIdArquivo)
+                ->where('empresa_id', $empresaLogada->id)
+                ->first();
+
+            if (!$cliente) {
+                // Aqui você pode implementar lógica para perguntar ao usuário se deseja cadastrar automaticamente
+                // Exemplo: salvar em sessão e redirecionar para tela de confirmação/cadastro
+                // Por padrão, cancela a importação
+                return back()->with('error', 'Cliente não encontrado. Cadastre o cliente antes de importar ou implemente cadastro automático.');
+            }
+
+            // Validação do exportador
+            $nomeExportadorArquivo = $linha1[2] ?? null;
+            $exportadorTaxIdArquivo = $linha1[1] ?? null;
+            $exportador = \App\Models\Exportador::where('Exportador', $nomeExportadorArquivo)
+                ->where('ExportadorTaxID', $exportadorTaxIdArquivo)
+                ->where('empresa_id', $empresaLogada->id)
+                ->first();
+
+            if (!$exportador) {
+                // Mesma lógica do cliente
+                return back()->with('error', 'Exportador não encontrado. Cadastre o exportador antes de importar ou implemente cadastro automático.');
+            }
+
+            foreach ($lines as $line) {
+                // Processar cada linha do arquivo TXT
+                // Exemplo: Dividir a linha em campos e salvar no banco de dados
+                $fields = explode('|', trim($line));
+                $tipo = $fields[0];
+
+                // Aqui você pode mapear os campos para o modelo correspondente e salvar
+                if ($tipo == '0') {
+                    // Linha 0: Cabeçalho do processo
+                    $licenciamento = Licenciamento::create([
+                        'estancia_id' => $fields[2] ?? null,
+                        'descricao' => $fields[3] ?? null,
+                        'empresa_id' => Auth::user()->empresas->first()->id,
+                        'referencia_cliente' => $fields[7] ?? null,
+                        // Adicione outros campos conforme necessário
+                    ]);
+                } elseif ($tipo == '1' && $licenciamento) {
+                    // Linha 1: Informações do exportador e transporte
+                    $licenciamento->update([
+                        'tipo_transporte' => $fields[6] ?? null,
+                        'registo_transporte' => $fields[7] ?? null,
+                        'manifesto' => $fields[9] ?? null,
+                        'factura_proforma' => $fields[10] ?? null,
+                        'porto_entrada' => $fields[12] ?? null,
+                        'tipo_declaracao' => $fields[13] ?? null,
+                        'peso_bruto' => $fields[15] ?? null,
+                        // Adicione outros campos conforme necessário
+                    ]);
+                } elseif ($tipo == '2' && $licenciamento) {
+                    // Linha 2: Adições de mercadorias
+                    $adicoes[] = [
+                        'licenciamento_id' => $licenciamento->id,
+                        'codigo_aduaneiro' => $fields[6] ?? null,
+                        'quantidade_total' => $fields[7] ?? null,
+                        'peso_total' => $fields[10] ?? null,
+                        'moeda' => $fields[11] ?? null,
+                        'preco_total' => $fields[12] ?? null,
+                        // Adicione outros campos conforme necessário
+                    ];
+                }
+            }
+
+            // Salvar adições
+            foreach ($adicoes as $adicao) {
+                MercadoriaAgrupada::create($adicao);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Licenciamento importado com sucesso!');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Erro ao importar o arquivo TXT: ' . $e->getMessage());
         }
     }
 

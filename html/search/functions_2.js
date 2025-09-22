@@ -1,0 +1,7 @@
+var searchData=
+[
+  ['boot_571',['boot',['../classApp_1_1Models_1_1EmolumentoTarifa.html#a8af3c280c5f3a1fdbc86017a96693d82',1,'App\Models\EmolumentoTarifa\boot()'],['../classApp_1_1Providers_1_1AppServiceProvider.html#ace5b6b100b2a3d1ee0f006501bb6b02f',1,'App\Providers\AppServiceProvider\boot()'],['../classApp_1_1Providers_1_1EventServiceProvider.html#a316894ee1e83b63096b91fabadd27476',1,'App\Providers\EventServiceProvider\boot()'],['../classApp_1_1Providers_1_1FortifyServiceProvider.html#a10009274fc8962627165542960b7cecb',1,'App\Providers\FortifyServiceProvider\boot()'],['../classApp_1_1Providers_1_1JetstreamServiceProvider.html#adb730d4ec5370ab46d6abb92bb78cdbe',1,'App\Providers\JetstreamServiceProvider\boot()'],['../classApp_1_1Providers_1_1MasterRouteServiceProvider.html#aa7763d459e889558c85fe29e4f3cb395',1,'App\Providers\MasterRouteServiceProvider\boot()'],['../classApp_1_1Providers_1_1VoltServiceProvider.html#a3455ba17c036bc55fbed66bb30d7fd53',1,'App\Providers\VoltServiceProvider\boot()']]],
+  ['build_572',['build',['../classApp_1_1Mail_1_1ConfirmationMail.html#a6fa7f02aa111e01d0914879360c4ebdd',1,'App::Mail::ConfirmationMail']]],
+  ['bulkactions_573',['bulkActions',['../classApp_1_1Http_1_1Controllers_1_1ArquivoController.html#af453900bee7023dc6b54bee281d33d6e',1,'App::Http::Controllers::ArquivoController']]],
+  ['bulkupdate_574',['bulkUpdate',['../classApp_1_1Http_1_1Controllers_1_1ProdutoController.html#acbe2343d648babfc959107222ce68adc',1,'App::Http::Controllers::ProdutoController']]]
+];

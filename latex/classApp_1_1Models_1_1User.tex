@@ -1,0 +1,124 @@
+\hypertarget{classApp_1_1Models_1_1User}{}\doxysection{App\textbackslash{}Models\textbackslash{}User Class Reference}
+\label{classApp_1_1Models_1_1User}\index{App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}}
+
+
+Inheritance diagram for App\textbackslash{}Models\textbackslash{}User\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=256pt]{classApp_1_1Models_1_1User__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for App\textbackslash{}Models\textbackslash{}User\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=256pt]{classApp_1_1Models_1_1User__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classApp_1_1Models_1_1User_ae87ae30d297bef9f34e152f45a685863}{has\+Any\+Permission}} (\$permissions)
+\item 
+\mbox{\Hypertarget{classApp_1_1Models_1_1User_a2f9d68704cfe99e9be9e0546abd88457}\label{classApp_1_1Models_1_1User_a2f9d68704cfe99e9be9e0546abd88457}} 
+{\bfseries empresas} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classApp_1_1Models_1_1User_afc845f919d34d162c4500b1942d322d7}{casts}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries \$fillable}
+\item 
+{\bfseries \$hidden}
+\item 
+{\bfseries \$appends}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classApp_1_1Models_1_1User_afc845f919d34d162c4500b1942d322d7}\label{classApp_1_1Models_1_1User_afc845f919d34d162c4500b1942d322d7}} 
+\index{App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}!casts@{casts}}
+\index{casts@{casts}!App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}}
+\doxysubsubsection{\texorpdfstring{casts()}{casts()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Models\textbackslash{}\+User\+::casts (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}}
+
+Get the attributes that should be cast.
+
+\begin{DoxyReturn}{Returns}
+array$<$string, string$>$ 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Models_1_1User_ae87ae30d297bef9f34e152f45a685863}\label{classApp_1_1Models_1_1User_ae87ae30d297bef9f34e152f45a685863}} 
+\index{App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}!hasAnyPermission@{hasAnyPermission}}
+\index{hasAnyPermission@{hasAnyPermission}!App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}}
+\doxysubsubsection{\texorpdfstring{hasAnyPermission()}{hasAnyPermission()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Models\textbackslash{}\+User\+::has\+Any\+Permission (\begin{DoxyParamCaption}\item[{}]{\$permissions }\end{DoxyParamCaption})}
+
+Verifica se o usuário possui uma ou mais permissões específicas.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string | array & {\em \$permissions} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+bool 
+\end{DoxyReturn}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classApp_1_1Models_1_1User_aa3cdfa7145f05b9c91ed7b1ae818eb62}\label{classApp_1_1Models_1_1User_aa3cdfa7145f05b9c91ed7b1ae818eb62}} 
+\index{App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}!\$appends@{\$appends}}
+\index{\$appends@{\$appends}!App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}}
+\doxysubsubsection{\texorpdfstring{\$appends}{$appends}}
+{\footnotesize\ttfamily App\textbackslash{}\+Models\textbackslash{}\+User\+::\$appends\hspace{0.3cm}{\ttfamily [protected]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= [}
+\DoxyCodeLine{        \textcolor{stringliteral}{'profile\_photo\_url'},}
+\DoxyCodeLine{    ]}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classApp_1_1Models_1_1User_ab4030437e467a0cc396b0c3ea53199f7}\label{classApp_1_1Models_1_1User_ab4030437e467a0cc396b0c3ea53199f7}} 
+\index{App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}!\$fillable@{\$fillable}}
+\index{\$fillable@{\$fillable}!App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}}
+\doxysubsubsection{\texorpdfstring{\$fillable}{$fillable}}
+{\footnotesize\ttfamily App\textbackslash{}\+Models\textbackslash{}\+User\+::\$fillable\hspace{0.3cm}{\ttfamily [protected]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= [}
+\DoxyCodeLine{        \textcolor{stringliteral}{'name'}, \textcolor{stringliteral}{'email'}, \textcolor{stringliteral}{'password'}, \textcolor{stringliteral}{'otp'}, \textcolor{stringliteral}{'otp\_expires\_at'}, \textcolor{stringliteral}{'otp\_verified\_at'},}
+\DoxyCodeLine{    ]}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classApp_1_1Models_1_1User_a1f25bef37dae884e548034f839fa1f63}\label{classApp_1_1Models_1_1User_a1f25bef37dae884e548034f839fa1f63}} 
+\index{App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}!\$hidden@{\$hidden}}
+\index{\$hidden@{\$hidden}!App\textbackslash{}Models\textbackslash{}User@{App\textbackslash{}Models\textbackslash{}User}}
+\doxysubsubsection{\texorpdfstring{\$hidden}{$hidden}}
+{\footnotesize\ttfamily App\textbackslash{}\+Models\textbackslash{}\+User\+::\$hidden\hspace{0.3cm}{\ttfamily [protected]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= [}
+\DoxyCodeLine{        \textcolor{stringliteral}{'password'},}
+\DoxyCodeLine{        \textcolor{stringliteral}{'remember\_token'},}
+\DoxyCodeLine{        \textcolor{stringliteral}{'two\_factor\_recovery\_codes'},}
+\DoxyCodeLine{        \textcolor{stringliteral}{'two\_factor\_secret'},}
+\DoxyCodeLine{    ]}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+app/\+Models/User.\+php\end{DoxyCompactItemize}

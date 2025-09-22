@@ -1,15 +1,22 @@
 <x-app-layout>
 
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-</head>
-<x-breadcrumb :items="[
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    </head>
+    <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Pesquisar Exportadores', 'url' => route('exportadors.index')],
         ['name' => 'Novo Exportador', 'url' => route('exportadors.create')]
     ]" separator="/" />
     <div class="container mx-auto px-4 py-8">
+        <div class="mb-6 d-flex justify-content-between">
+            <div class="btn-group float-right">
+                <a class="btn btn-outline-secondary" href="{{ route('exportadors.index') }}">
+                    <i class="fas fa-search"></i> {{ __('Pesquisar') }}
+                </a>
+            </div>
+        </div>
 
         <!-- Formulário de criação -->
         <form action="{{ route('exportadors.store') }}" method="POST" class="bg-white rounded-lg shadow p-6">

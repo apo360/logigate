@@ -1,0 +1,121 @@
+\hypertarget{classApp_1_1Http_1_1Kernel}{}\doxysection{App\textbackslash{}Http\textbackslash{}Kernel Class Reference}
+\label{classApp_1_1Http_1_1Kernel}\index{App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}}
+
+
+Inheritance diagram for App\textbackslash{}Http\textbackslash{}Kernel\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=173pt]{classApp_1_1Http_1_1Kernel__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for App\textbackslash{}Http\textbackslash{}Kernel\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=173pt]{classApp_1_1Http_1_1Kernel__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+{\bfseries \$middleware}
+\item 
+{\bfseries \$middleware\+Groups}
+\item 
+{\bfseries \$route\+Middleware}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classApp_1_1Http_1_1Kernel_a86a97ee57a2141da9d08bf9878df7491}\label{classApp_1_1Http_1_1Kernel_a86a97ee57a2141da9d08bf9878df7491}} 
+\index{App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}!\$middleware@{\$middleware}}
+\index{\$middleware@{\$middleware}!App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}}
+\doxysubsubsection{\texorpdfstring{\$middleware}{$middleware}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Kernel\+::\$middleware\hspace{0.3cm}{\ttfamily [protected]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= [}
+\DoxyCodeLine{        }
+\DoxyCodeLine{        \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)TrustHosts::class,}
+\DoxyCodeLine{        \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)TrustProxies::class,}
+\DoxyCodeLine{        \(\backslash\)Illuminate\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)HandleCors::class,}
+\DoxyCodeLine{        \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)PreventRequestsDuringMaintenance::class,}
+\DoxyCodeLine{        \(\backslash\)Illuminate\(\backslash\)Foundation\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)ValidatePostSize::class,}
+\DoxyCodeLine{        \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)TrimStrings::class,}
+\DoxyCodeLine{        \(\backslash\)Illuminate\(\backslash\)Foundation\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)ConvertEmptyStringsToNull::class,}
+\DoxyCodeLine{        \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)EnsureAdminMaster::class,}
+\DoxyCodeLine{    ]}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classApp_1_1Http_1_1Kernel_a7ea2230a290c57e18ea58cdbc6480909}\label{classApp_1_1Http_1_1Kernel_a7ea2230a290c57e18ea58cdbc6480909}} 
+\index{App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}!\$middlewareGroups@{\$middlewareGroups}}
+\index{\$middlewareGroups@{\$middlewareGroups}!App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}}
+\doxysubsubsection{\texorpdfstring{\$middlewareGroups}{$middlewareGroups}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Kernel\+::\$middleware\+Groups\hspace{0.3cm}{\ttfamily [protected]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= [}
+\DoxyCodeLine{        \textcolor{stringliteral}{'web'} => [}
+\DoxyCodeLine{            }
+\DoxyCodeLine{            \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)EncryptCookies::class,}
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)Cookie\(\backslash\)Middleware\(\backslash\)AddQueuedCookiesToResponse::class,}
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)Session\(\backslash\)Middleware\(\backslash\)StartSession::class,}
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)Session\(\backslash\)Middleware\(\backslash\)AuthenticateSession::class,}
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)View\(\backslash\)Middleware\(\backslash\)ShareErrorsFromSession::class,}
+\DoxyCodeLine{            \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)VerifyCsrfToken::class,}
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)Routing\(\backslash\)Middleware\(\backslash\)SubstituteBindings::class,}
+\DoxyCodeLine{        ],}
+\DoxyCodeLine{}
+\DoxyCodeLine{        \textcolor{stringliteral}{'api'} => [}
+\DoxyCodeLine{            }
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)Routing\(\backslash\)Middleware\(\backslash\)ThrottleRequests::class . \textcolor{stringliteral}{':api'},}
+\DoxyCodeLine{            \(\backslash\)Illuminate\(\backslash\)Routing\(\backslash\)Middleware\(\backslash\)SubstituteBindings::class,}
+\DoxyCodeLine{        ],}
+\DoxyCodeLine{}
+\DoxyCodeLine{        \textcolor{stringliteral}{'master'} => [}
+\DoxyCodeLine{            }
+\DoxyCodeLine{            \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)EnsureAdminMaster::class,}
+\DoxyCodeLine{        ],}
+\DoxyCodeLine{    ]}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classApp_1_1Http_1_1Kernel_ae03e7f0ff8525fdd0e6165c66232d588}\label{classApp_1_1Http_1_1Kernel_ae03e7f0ff8525fdd0e6165c66232d588}} 
+\index{App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}!\$routeMiddleware@{\$routeMiddleware}}
+\index{\$routeMiddleware@{\$routeMiddleware}!App\textbackslash{}Http\textbackslash{}Kernel@{App\textbackslash{}Http\textbackslash{}Kernel}}
+\doxysubsubsection{\texorpdfstring{\$routeMiddleware}{$routeMiddleware}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Kernel\+::\$route\+Middleware\hspace{0.3cm}{\ttfamily [protected]}}
+
+{\bfseries Initial value\+:}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{= [}
+\DoxyCodeLine{        }
+\DoxyCodeLine{        \textcolor{stringliteral}{'auth'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)Authenticate::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'auth.basic'} => \(\backslash\)Illuminate\(\backslash\)Auth\(\backslash\)Middleware\(\backslash\)AuthenticateWithBasicAuth::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'auth.session'} => \(\backslash\)Illuminate\(\backslash\)Session\(\backslash\)Middleware\(\backslash\)AuthenticateSession::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'cache.headers'} => \(\backslash\)Illuminate\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)SetCacheHeaders::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'can'} => \(\backslash\)Illuminate\(\backslash\)Auth\(\backslash\)Middleware\(\backslash\)Authorize::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'guest'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)RedirectIfAuthenticated::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'password.confirm'} => \(\backslash\)Illuminate\(\backslash\)Auth\(\backslash\)Middleware\(\backslash\)RequirePassword::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'signed'} => \(\backslash\)Illuminate\(\backslash\)Routing\(\backslash\)Middleware\(\backslash\)ValidateSignature::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'throttle'} => \(\backslash\)Illuminate\(\backslash\)Routing\(\backslash\)Middleware\(\backslash\)ThrottleRequests::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'verified'} => \(\backslash\)Illuminate\(\backslash\)Auth\(\backslash\)Middleware\(\backslash\)EnsureEmailIsVerified::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'role'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)RoleMiddleware::class, }
+\DoxyCodeLine{        \textcolor{stringliteral}{'eventsProcess'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)LogProcessEvents::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'check.password.changed'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)CheckPasswordChanged::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'api.key'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)ApiKeyMiddleware::class,}
+\DoxyCodeLine{        \textcolor{stringliteral}{'admin.master'} => \(\backslash\)App\(\backslash\)Http\(\backslash\)Middleware\(\backslash\)EnsureAdminMaster::class,}
+\DoxyCodeLine{    ]}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+app/\+Http/Kernel.\+php\end{DoxyCompactItemize}

@@ -131,24 +131,6 @@ class ProcessoController extends Controller
         return view('processos.index', compact('processos'));
     }
 
-    public function buscarProcesso(Request $request)
-    {
-        $numeroProcesso = $request->input('processo_search');
-        $processo = Processo::where('NrProcesso', $numeroProcesso)->first();
-
-        if ($processo) {
-            $mercadorias = Mercadoria::where('Fk_Importacao', $processo->importacao->id)->get();
-            $mercadoriasAgrupadas = $mercadorias->groupBy('codigo_aduaneiro');
-        } else {
-            $mercadorias = collect(); // Retorna uma coleção vazia se não houver processo encontrado
-            $mercadoriasAgrupadas = collect();
-        }
-
-        $pautaAduaneira = PautaAduaneira::all();
-
-        return view('processos.du', compact('mercadorias', 'processo','numeroProcesso', 'pautaAduaneira', 'mercadoriasAgrupadas'));
-    }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -446,37 +428,37 @@ class ProcessoController extends Controller
     {
         // Lógica para calcular impostos com base nos dados do formulário
         // Buscar todas as mercadorias com seus processos e códigos aduaneiros
-    $mercadorias = Mercadoria::with('processos', 'pautaAduaneira')->get();
+        $mercadorias = Mercadoria::with('processos', 'pautaAduaneira')->get();
 
-    $impostos = $mercadorias->map(function ($mercadoria) {
-        $pauta = $mercadoria->pautaAduaneira;
+        $impostos = $mercadorias->map(function ($mercadoria) {
+            $pauta = $mercadoria->pautaAduaneira;
 
-        if (!$pauta) {
-            return null; // Se não houver pauta, ignora o cálculo
-        }
+            if (!$pauta) {
+                return null; // Se não houver pauta, ignora o cálculo
+            }
 
-        // Definição das taxas e valores base
-        $valorBase = $mercadoria->valor; // Assumindo que cada mercadoria tem um valor atribuído
-        $taxaImportacao = (float) $pauta->rg;
-        $iva = (float) $pauta->iva;
-        $ieq = (float) $pauta->ieq;
+            // Definição das taxas e valores base
+            $valorBase = $mercadoria->valor; // Assumindo que cada mercadoria tem um valor atribuído
+            $taxaImportacao = (float) $pauta->rg;
+            $iva = (float) $pauta->iva;
+            $ieq = (float) $pauta->ieq;
 
-        // Cálculo dos tributos
-        $valorImportacao = ($taxaImportacao / 100) * $valorBase;
-        $valorIva = ($iva / 100) * ($valorBase + $valorImportacao);
-        $valorIeq = ($ieq / 100) * $valorBase;
-        $totalTributos = $valorImportacao + $valorIva + $valorIeq;
+            // Cálculo dos tributos
+            $valorImportacao = ($taxaImportacao / 100) * $valorBase;
+            $valorIva = ($iva / 100) * ($valorBase + $valorImportacao);
+            $valorIeq = ($ieq / 100) * $valorBase;
+            $totalTributos = $valorImportacao + $valorIva + $valorIeq;
 
-        return [
-            'codigo' => $pauta->getCodigoSemPontosAttribute(),
-            'descricao' => $mercadoria->Descricao,
-            'taxa_importacao' => $taxaImportacao,
-            'iva' => $iva,
-            'ieq' => $ieq,
-            'valor_base' => $valorBase,
-            'total_tributos' => $totalTributos
-        ];
-    })->filter(); // Remove valores nulos
+            return [
+                'codigo' => $pauta->getCodigoSemPontosAttribute(),
+                'descricao' => $mercadoria->Descricao,
+                'taxa_importacao' => $taxaImportacao,
+                'iva' => $iva,
+                'ieq' => $ieq,
+                'valor_base' => $valorBase,
+                'total_tributos' => $totalTributos
+            ];
+        })->filter(); // Remove valores nulos
 
         return view('processos.tarifas', compact('impostos'));
     }
@@ -488,10 +470,6 @@ class ProcessoController extends Controller
     public function autorizacao(){
 
         return view('processos.autorizacao_regulamentacao');
-    }
-
-    public function du_electronico(){
-        return view('processos.du');
     }
 
     public function atualizarCodigoAduaneiro(Request $request)
@@ -806,7 +784,7 @@ class ProcessoController extends Controller
         }
 
         // Criar o XML com cabeçalho UTF-8
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><ASYCUDA></ASYCUDA>');
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"  standalone="no"?><ASYCUDA></ASYCUDA>');
 
         // Adicionar identificação
         $this->adicionarIdentificacaoXML($xml, $processo);
@@ -817,7 +795,7 @@ class ProcessoController extends Controller
             // Exportador
             $exporter = $trader->addChild('Exporter');
             $exporter->addChild('Exporter_code', optional($processo->exportador)->ExportadorTaxID ?? '');
-            $exporter->addChild('Exporter_name', optional($processo->exportador)->Exportador ?? 'N/D');
+            $exporter->addChild('Exporter_name', htmlspecialchars(optional($processo->exportador)->Exportador ?? 'N/D'));
 
             // Consignee (Destinatário)
             $consignee = $trader->addChild('Consignee');
@@ -844,7 +822,7 @@ class ProcessoController extends Controller
         $this->adicionarTransporteXML($xml, $processo);
         $this->adicionarInformacoesFinanceirasXML($xml, $processo);
         $this->adicionarValuationXML($xml, $processo);
-        $this->adicionarContainerXML($xml, $processo);
+        // $this->adicionarContainerXML($xml, $processo);
 
         // Buscar Mercadorias Agrupadas
         $mercadoriasAgrupadas = MercadoriaAgrupada::with('pautaAduaneira')->where('processo_id', $ProcessoID)->get();
@@ -863,7 +841,7 @@ class ProcessoController extends Controller
         $xml->addChild('Vehicle_List');
 
         // Caminho do Arquivo XML Gerado
-        $fileName = 'processo_' . $processo->NrProcesso . '.xml';
+        $fileName = 'processo_' . $processo->id . '.xml';
         $filePath = storage_path("app/public/{$fileName}");
 
         // Salvar XML no Servidor
@@ -926,7 +904,7 @@ class ProcessoController extends Controller
         // Pacotes
         $packages = $item->addChild('Packages');
         $packages->addChild('Number_of_packages', $mercadoria->numero_pacotes);
-        $packages->addChild('Marks1_of_packages', $mercadoria->mercadoria->Descricao);
+        $packages->addChild('Marks1_of_packages', $mercadoria->Descricao);
         $packages->addChild('Marks2_of_packages', $mercadoria->marcacao_pacotes_2);
         $packages->addChild('Kind_of_packages_code', 'PK');
         $packages->addChild('Kind_of_packages_name', 'Volumes n.e.');
@@ -949,8 +927,8 @@ class ProcessoController extends Controller
         // Descrição da Mercadoria
         $descricao = $item->addChild('Goods_description');
         $descricao->addChild('Country_of_origin_code', $mercadoria->pais_origem);
-        $descricao->addChild('Description_of_goods', $mercadoria->mercadoria->Descricao);
-        $descricao->addChild('Commercial_Description', $mercadoria->mercadoria->Descricao);
+        $descricao->addChild('Description_of_goods', $mercadoria->Descricao);
+        $descricao->addChild('Commercial_Description', $mercadoria->Descricao);
 
         // Licença
         $licenca = $item->addChild('Licence');
@@ -1032,7 +1010,7 @@ class ProcessoController extends Controller
 
         // Place of Loading
         $placeOfLoading = $transport->addChild('Place_of_loading');
-        $placeOfLoading->addChild('Code', $processo->paisDestino->codigo.$processo->paisDestino->porto->sigla ?? 'AOLAD');
+        $placeOfLoading->addChild('Code', $processo->paisDestino->codigo. $processo->PortoOrigem ?? 'AOLAD');
         $placeOfLoading->addChild('Name', $processo->PortoOrigem ?? 'Luanda');
         $placeOfLoading->addChild('Country');
 

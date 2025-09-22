@@ -1,0 +1,18 @@
+var searchData=
+[
+  ['activatedmodule_4',['ActivatedModule',['../classApp_1_1Models_1_1ActivatedModule.html',1,'App::Models']]],
+  ['activatedmodulecontroller_5',['ActivatedModuleController',['../classApp_1_1Http_1_1Controllers_1_1ActivatedModuleController.html',1,'App::Http::Controllers']]],
+  ['adjuststock_6',['adjustStock',['../classApp_1_1Http_1_1Controllers_1_1ProdutoController.html#abe6230dc0a25e7aac761bfe6a01cb6e2',1,'App::Http::Controllers::ProdutoController']]],
+  ['admincontroller_7',['AdminController',['../classApp_1_1Http_1_1Controllers_1_1Admin_1_1AdminController.html',1,'App::Http::Controllers::Admin']]],
+  ['analyze_8',['analyze',['../classApp_1_1Services_1_1OpenAIService.html#a009c28eac86009ad848eb53648ee2801',1,'App::Services::OpenAIService']]],
+  ['apikeymiddleware_9',['ApiKeyMiddleware',['../classApp_1_1Http_1_1Middleware_1_1ApiKeyMiddleware.html',1,'App::Http::Middleware']]],
+  ['applayout_10',['AppLayout',['../classApp_1_1View_1_1Components_1_1AppLayout.html',1,'App::View::Components']]],
+  ['appserviceprovider_11',['AppServiceProvider',['../classApp_1_1Providers_1_1AppServiceProvider.html',1,'App::Providers']]],
+  ['archive_12',['archive',['../classApp_1_1Http_1_1Controllers_1_1ProdutoController.html#a9dbb146c6157bd4f646a9b3dff7ec21d',1,'App::Http::Controllers::ProdutoController']]],
+  ['arquivocontroller_13',['ArquivoController',['../classApp_1_1Http_1_1Controllers_1_1ArquivoController.html',1,'App::Http::Controllers']]],
+  ['aside_14',['aside',['../classApp_1_1View_1_1Components_1_1aside.html',1,'App::View::Components']]],
+  ['asycudacontroller_15',['AsycudaController',['../classApp_1_1Http_1_1Controllers_1_1AsycudaController.html',1,'App::Http::Controllers']]],
+  ['asyscudaparse_16',['AsyscudaParse',['../classApp_1_1Services_1_1AsyscudaParse.html',1,'App::Services']]],
+  ['authenticate_17',['Authenticate',['../classApp_1_1Http_1_1Middleware_1_1Authenticate.html',1,'App::Http::Middleware']]],
+  ['authorize_18',['authorize',['../classApp_1_1Http_1_1Requests_1_1TarifaDURequest.html#ae69ff2a308fd04c9e3c1e3f165fc19b9',1,'App\Http\Requests\TarifaDURequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1ServicoProdutoRequest.html#aa78a4d80da404425c7bb92472989585d',1,'App\Http\Requests\ServicoProdutoRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1ProcessoRequest.html#ad6be9252ab1325749dcacdc2f98095a4',1,'App\Http\Requests\ProcessoRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1PortuariaRequest.html#a92f386420b9ad8722f34f760511e9b7d',1,'App\Http\Requests\PortuariaRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1MercadoriaRequest.html#a72392037053af8bce19606e5baededef',1,'App\Http\Requests\MercadoriaRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1LicenciamentoRequest.html#aebe1e139316fdb3b33843c08b8a9faaa',1,'App\Http\Requests\LicenciamentoRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1ImportacaoRequest.html#ac51a5504a4947993fe71343f532cf9cd',1,'App\Http\Requests\ImportacaoRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1ExportadorRequest.html#a9c248c82876b732ab8d0a6bbe5bc82ae',1,'App\Http\Requests\ExportadorRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1DocumentoAduRequest.html#ab8d7edff2370d3055554183f57239570',1,'App\Http\Requests\DocumentoAduRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1DARRequest.html#af259ad020d1e7c7f8cdf8e6b85505fb5',1,'App\Http\Requests\DARRequest\authorize()'],['../classApp_1_1Http_1_1Requests_1_1CustomerRequest.html#a09d8d8203a7e39414ef8c369faa23699',1,'App\Http\Requests\CustomerRequest\authorize()']]]
+];

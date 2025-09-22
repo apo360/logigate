@@ -1,6 +1,4 @@
 <x-app-layout>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
         #importacaoModal .modal-body {
@@ -17,7 +15,7 @@
         }
     </style>
     
-    <div class="py-12">
+    <div class="py-6">
         <x-breadcrumb :items="[
             ['name' => 'Dashboard', 'url' => route('dashboard')],
             ['name' => 'Licenciamentos', 'url' => route('licenciamentos.index')]
@@ -191,7 +189,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Por favor, faça upload de um ficheiro no formato <strong>CSV</strong> ou <strong>Excel</strong>.</p>
+                    <p>Por favor, faça upload de um ficheiro no formato <strong>CSV</strong> , <strong>Excel</strong> ou <strong>TXT</strong>.</p>
                     
                     <!-- Instruções de campos necessários -->
                     <div class="alert alert-info">
@@ -210,7 +208,7 @@
                         @csrf
                         <div class="form-group">
                             <label for="fileInput">Escolher Ficheiro</label>
-                            <input type="file" name="file" id="fileInput" class="form-control-file" accept=".csv, .xls, .xlsx" required>
+                            <input type="file" name="file" id="fileInput" class="form-control-file" accept=".csv, .xls, .xlsx, .txt" required>
                         </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary">Importar</button>

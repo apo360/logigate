@@ -22,6 +22,7 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Http\Middleware\EnsureAdminMaster::class,
     ];
 
     /**
@@ -45,6 +46,11 @@ class Kernel extends HttpKernel
             // Middleware do grupo API
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
+
+        'master' => [
+            // Middleware do grupo master
+            \App\Http\Middleware\EnsureAdminMaster::class,
         ],
     ];
 
@@ -71,5 +77,6 @@ class Kernel extends HttpKernel
         'eventsProcess' => \App\Http\Middleware\LogProcessEvents::class,
         'check.password.changed' => \App\Http\Middleware\CheckPasswordChanged::class,
         'api.key' => \App\Http\Middleware\ApiKeyMiddleware::class,
+        'admin.master' => \App\Http\Middleware\EnsureAdminMaster::class,
     ];
 }

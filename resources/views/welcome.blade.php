@@ -416,7 +416,7 @@
             data-aos-duration="800"
           >
             <span class="text-4xl font-extrabold text-blue-300">24-72h</span>
-            <p class="text-base mt-2 text-gray-200">Tempo médio de liberação</p>
+            <p class="text-base mt-2 text-gray-200">Tempo médio dos Processos</p>
           </div>
           <!-- Estatística 2 -->
           <div 
@@ -426,7 +426,7 @@
             data-aos-duration="800"
           >
             <span class="text-4xl font-extrabold text-green-300">10.000+</span>
-            <p class="text-base mt-2 text-gray-200">Processos este ano</p>
+            <p class="text-base mt-2 text-gray-200">Processos este Ano</p>
           </div>
           <!-- Estatística 3 -->
           <div 

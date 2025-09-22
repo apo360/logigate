@@ -1,0 +1,119 @@
+\hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController}{}\doxysection{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}Arquivo\+Controller Class Reference}
+\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController}\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+
+
+Inheritance diagram for App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}Arquivo\+Controller\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=196pt]{classApp_1_1Http_1_1Controllers_1_1ArquivoController__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}Arquivo\+Controller\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=196pt]{classApp_1_1Http_1_1Controllers_1_1ArquivoController__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a747d06b6bf361bd4bb6443bb8d46597c}{index}} ()
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a92ff83a3d77bf1411353507d50e006e3}{create}} (\$dir=null)
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a7e95465ce7e34cd954cd144bc682c1a0}{store}} (Request \$request)
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_af453900bee7023dc6b54bee281d33d6e}{bulk\+Actions}} (Request \$request)
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_ae633ba56023a016793ad5bf87ba5ee6d}{show}} (\$arquivo)
+\item 
+\mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_aa243a5141941ee3b95ce6633232d8d7b}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_aa243a5141941ee3b95ce6633232d8d7b}} 
+{\bfseries Pasta\+View} (\$dir=null)
+\item 
+\mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_af261844a1518c34e80c6b1af6b09e2c2}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_af261844a1518c34e80c6b1af6b09e2c2}} 
+{\bfseries criar\+Pasta} (Request \$request)
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a6159557f6935635cbc1ea42d5fdd28e0}{edit}} (\mbox{\hyperlink{classApp_1_1Models_1_1DocumentosAduaneiros}{Documentos\+Aduaneiros}} \$documentos\+Aduaneiros)
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a457cd52ef6f09358fed97e5d7d012e35}{update}} (Request \$request, \mbox{\hyperlink{classApp_1_1Models_1_1DocumentosAduaneiros}{Documentos\+Aduaneiros}} \$documentos\+Aduaneiros)
+\item 
+\mbox{\hyperlink{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a7a8638ba13031e57dec3d91648be09aa}{destroy}} (\$arquivo)
+\item 
+\mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a90ac3e82951f23e37eec787a0da67899}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a90ac3e82951f23e37eec787a0da67899}} 
+{\bfseries download} (\$key)
+\item 
+\mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_aa56d5f87eb2624668234bbb5e1348bb8}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_aa56d5f87eb2624668234bbb5e1348bb8}} 
+{\bfseries visualizar} (\$key)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_af453900bee7023dc6b54bee281d33d6e}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_af453900bee7023dc6b54bee281d33d6e}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!bulkActions@{bulkActions}}
+\index{bulkActions@{bulkActions}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{bulkActions()}{bulkActions()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::bulk\+Actions (\begin{DoxyParamCaption}\item[{Request}]{\$request }\end{DoxyParamCaption})}
+
+Processa as ações em lote (excluir, mover ou copiar arquivos).
+
+
+\begin{DoxyParams}[1]{Parameters}
+\textbackslash{}\+Illuminate\textbackslash{}\+Http\textbackslash{}\+Request & {\em \$request} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\textbackslash{}\+Illuminate\textbackslash{}\+Http\textbackslash{}\+Response 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a92ff83a3d77bf1411353507d50e006e3}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a92ff83a3d77bf1411353507d50e006e3}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!create@{create}}
+\index{create@{create}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{create()}{create()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::create (\begin{DoxyParamCaption}\item[{}]{\$dir = {\ttfamily null} }\end{DoxyParamCaption})}
+
+Show the form for creating a new resource. \mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a7a8638ba13031e57dec3d91648be09aa}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a7a8638ba13031e57dec3d91648be09aa}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!destroy@{destroy}}
+\index{destroy@{destroy}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{destroy()}{destroy()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::destroy (\begin{DoxyParamCaption}\item[{}]{\$arquivo }\end{DoxyParamCaption})}
+
+Remove the specified resource from storage. \mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a6159557f6935635cbc1ea42d5fdd28e0}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a6159557f6935635cbc1ea42d5fdd28e0}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!edit@{edit}}
+\index{edit@{edit}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{edit()}{edit()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::edit (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classApp_1_1Models_1_1DocumentosAduaneiros}{Documentos\+Aduaneiros}}}]{\$documentos\+Aduaneiros }\end{DoxyParamCaption})}
+
+Show the form for editing the specified resource. \mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a747d06b6bf361bd4bb6443bb8d46597c}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a747d06b6bf361bd4bb6443bb8d46597c}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!index@{index}}
+\index{index@{index}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{index()}{index()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::index (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+Display a listing of the resource. \mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_ae633ba56023a016793ad5bf87ba5ee6d}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_ae633ba56023a016793ad5bf87ba5ee6d}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!show@{show}}
+\index{show@{show}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{show()}{show()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::show (\begin{DoxyParamCaption}\item[{}]{\$arquivo }\end{DoxyParamCaption})}
+
+Display the specified resource. \mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a7e95465ce7e34cd954cd144bc682c1a0}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a7e95465ce7e34cd954cd144bc682c1a0}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!store@{store}}
+\index{store@{store}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{store()}{store()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::store (\begin{DoxyParamCaption}\item[{Request}]{\$request }\end{DoxyParamCaption})}
+
+Store a newly created resource in storage. \mbox{\Hypertarget{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a457cd52ef6f09358fed97e5d7d012e35}\label{classApp_1_1Http_1_1Controllers_1_1ArquivoController_a457cd52ef6f09358fed97e5d7d012e35}} 
+\index{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}!update@{update}}
+\index{update@{update}!App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController@{App\textbackslash{}Http\textbackslash{}Controllers\textbackslash{}ArquivoController}}
+\doxysubsubsection{\texorpdfstring{update()}{update()}}
+{\footnotesize\ttfamily App\textbackslash{}\+Http\textbackslash{}\+Controllers\textbackslash{}\+Arquivo\+Controller\+::update (\begin{DoxyParamCaption}\item[{Request}]{\$request,  }\item[{\mbox{\hyperlink{classApp_1_1Models_1_1DocumentosAduaneiros}{Documentos\+Aduaneiros}}}]{\$documentos\+Aduaneiros }\end{DoxyParamCaption})}
+
+Update the specified resource in storage. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+app/\+Http/\+Controllers/Arquivo\+Controller.\+php\end{DoxyCompactItemize}

@@ -39,6 +39,9 @@ use App\Http\Controllers\PortoController;
 use App\Http\Controllers\ProcessoDraftController;
 use App\Http\Controllers\Transitario\DashboardController as TransitarioDashboardController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\AsycudaController;
+use Illuminate\Support\Facades\DB;
 
     /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
@@ -51,7 +54,8 @@ use Illuminate\Http\Request;
             ['nome' => 'Produto 1', 'descricao' => 'Descrição do Produto 1', 'imagem' => 'https://via.placeholder.com/150'],
             ['nome' => 'Produto 2', 'descricao' => 'Descrição do Produto 2', 'imagem' => 'https://via.placeholder.com/150'],
         ];
-        return view('WebSite.marketplace', compact('produtos'));})->name('marketplace');
+        return view('WebSite.marketplace', compact('produtos'));
+    })->name('marketplace');
 
     // Processar a pesquisa do código
     Route::post('/consultar-licenciamento', [RastreamentoController::class, 'resultadoConsulta'])->name('resultado.consulta');
@@ -86,6 +90,7 @@ use Illuminate\Http\Request;
         Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
         Route::get('/dashboard-Licenciamento', [DashboardController::class, 'licenciamentoEstatisticas'])->name('licenciamento.estatistica');
         Route::get('/dashboard-Processos', [DashboardController::class, 'ProcessosEstatisticas'])->name('processos.estatistica');
+        Route::get('/dashboard-Factura', [DashboardController::class, 'FacturaEstatisticas'])->name('factura.estatistica');
 
         Route::resources([
             'activated-modules' => ActivatedModuleController::class,
@@ -164,7 +169,14 @@ use Illuminate\Http\Request;
         Route::put('empresa/cambios/actualizar', [PaisController::class, 'update'])->name('cambios.update');
 
         Route::get('processo/tarifas', [ProcessoController::class, 'tarifas'])->name('processos.tarifa');
-        Route::get('processo/DU-Electronico', [ProcessoController::class, 'du_electronico'])->name('processos.du');
+
+        // Rotas para analisar com IA Chatgpt
+        Route::get('processo/DU-Electronico/lista', [AsycudaController::class, 'listarXMLs'])->name('processos.du');
+        Route::post('processo/DU-Electronico/upload', [AsycudaController::class, 'uploadXML'])->name('asycuda.upload.post');
+        Route::post('processo/DU-Electronico/analisar', [AsycudaController::class, 'analyze'])->name('asycuda.analyze.post');
+        Route::post('processo/DU-Electronico/validar', [AsycudaController::class, 'validateFile'])->name('asycuda.validate.post');
+        Route::get('processo/DU-Electronico/analisar/{file}', [AsycudaController::class, 'analisarDeclaracao'])->name('xmls.analisar');
+
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
@@ -222,3 +234,7 @@ use Illuminate\Http\Request;
         });
         // ------------- /.Rotas do Agente de Carga ------------ //
     });
+
+    #call class master from routes.master.php
+    require_once __DIR__ . '/master.php';
+    

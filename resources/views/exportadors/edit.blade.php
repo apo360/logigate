@@ -1,6 +1,35 @@
 <x-app-layout>
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Exportadores', 'url' => route('exportadors.index')],
+        ['name' => $exportador->Exportador, 'url' => route('exportadors.show', $exportador->id)],
+        ['name' => 'Editar Exportador', 'url' => route('exportadors.edit', $exportador->id)]
+    ]" separator="/" />
+    
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-2xl font-bold mb-6">Editar Exportador</h1>
+        <div class="mb-6 d-flex justify-content-between">
+            <div class="btn-group float-right">
+                <a class="btn btn-outline-secondary" href="{{ route('exportadors.index') }}">
+                    <i class="fas fa-search"></i> {{ __('Pesquisar') }}
+                </a>
+                <a class="btn btn-outline-primary" href=" {{ route('exportadors.create') }} " class="btn btn-outline-secondary">
+                    <i class="fas fa-plus-o"></i> {{ __('Novo Exportador') }}
+                </a>
+                <div class="btn-group" role="group">
+                    <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-filter"></i> {{ __('Opções') }}
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                        
+                        <li>
+                            <a href="{{ route('exportadors.show', $exportador->id) }}" class="button dropdown-item">
+                                <i class="fas fa-eye"></i> {{ __('Visualizar') }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
 
         <!-- Formulário de edição -->
         <form action="{{ route('exportadors.update', $exportador->id) }}" method="POST" class="bg-white rounded-lg shadow p-6">

@@ -1,0 +1,32 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,873,72,899"/>
+<area shape="rect" id="node2" href="$classDatabase_1_1Seeders_1_1CategoriaAduaneiraSeeder.html" title=" " alt="" coords="148,5,355,47"/>
+<area shape="rect" id="node3" href="$classDatabase_1_1Seeders_1_1CustomerSeeder.html" title=" " alt="" coords="148,71,355,112"/>
+<area shape="rect" id="node4" href="$classDatabase_1_1Seeders_1_1DatabaseSeeder.html" title=" " alt="" coords="148,136,355,177"/>
+<area shape="rect" id="node5" href="$classDatabase_1_1Seeders_1_1DocumentosAduaneirosSeeder.html" title=" " alt="" coords="138,201,365,243"/>
+<area shape="rect" id="node6" href="$classDatabase_1_1Seeders_1_1EmpresasSeeder.html" title=" " alt="" coords="147,267,355,308"/>
+<area shape="rect" id="node7" href="$classDatabase_1_1Seeders_1_1EstanciasSeeder.html" title=" " alt="" coords="148,332,355,373"/>
+<area shape="rect" id="node8" href="$classDatabase_1_1Seeders_1_1ImportacaoSeeder.html" title=" " alt="" coords="142,397,361,439"/>
+<area shape="rect" id="node9" href="$classDatabase_1_1Seeders_1_1InvoiceTypesSeeder.html" title=" " alt="" coords="156,463,347,504"/>
+<area shape="rect" id="node10" href="$classDatabase_1_1Seeders_1_1MenuSeeder.html" title=" " alt="" coords="139,529,364,555"/>
+<area shape="rect" id="node11" href="$classDatabase_1_1Seeders_1_1MercadoriaSeeder.html" title=" " alt="" coords="143,580,360,621"/>
+<area shape="rect" id="node12" href="$classDatabase_1_1Seeders_1_1ModuleSeeder.html" title=" " alt="" coords="133,646,370,673"/>
+<area shape="rect" id="node13" href="$classDatabase_1_1Seeders_1_1MunicipiosSeeder.html" title=" " alt="" coords="144,697,359,739"/>
+<area shape="rect" id="node14" href="$classDatabase_1_1Seeders_1_1PaisesSeeder.html" title=" " alt="" coords="136,763,367,790"/>
+<area shape="rect" id="node15" href="$classDatabase_1_1Seeders_1_1PortosSeeder.html" title=" " alt="" coords="136,814,367,841"/>
+<area shape="rect" id="node16" href="$classDatabase_1_1Seeders_1_1ProcessoSeeder.html" title=" " alt="" coords="150,865,353,907"/>
+<area shape="rect" id="node17" href="$classDatabase_1_1Seeders_1_1ProductExemptionReasonSeeder.html" title=" " alt="" coords="155,931,348,972"/>
+<area shape="rect" id="node18" href="$classDatabase_1_1Seeders_1_1ProductGroupsSeeder.html" title=" " alt="" coords="155,996,348,1037"/>
+<area shape="rect" id="node19" href="$classDatabase_1_1Seeders_1_1ProductTypeSeeder.html" title=" " alt="" coords="155,1061,348,1103"/>
+<area shape="rect" id="node20" href="$classDatabase_1_1Seeders_1_1ProdutoSeeder.html" title=" " alt="" coords="154,1127,349,1168"/>
+<area shape="rect" id="node21" href="$classDatabase_1_1Seeders_1_1ProvinciasSeeder.html" title=" " alt="" coords="146,1192,357,1233"/>
+<area shape="rect" id="node22" href="$classDatabase_1_1Seeders_1_1RegiaoAduaneirasSeeder.html" title=" " alt="" coords="120,1257,383,1299"/>
+<area shape="rect" id="node23" href="$classDatabase_1_1Seeders_1_1SubcategoriaSeeder.html" title=" " alt="" coords="137,1323,366,1364"/>
+<area shape="rect" id="node24" href="$classDatabase_1_1Seeders_1_1TarifaDARSeeder.html" title=" " alt="" coords="125,1389,378,1415"/>
+<area shape="rect" id="node25" href="$classDatabase_1_1Seeders_1_1TarifaDUSeeder.html" title=" " alt="" coords="129,1439,374,1466"/>
+<area shape="rect" id="node26" href="$classDatabase_1_1Seeders_1_1TarifaPortuariaSeeder.html" title=" " alt="" coords="132,1491,371,1532"/>
+<area shape="rect" id="node27" href="$classDatabase_1_1Seeders_1_1TarifasSeeder.html" title=" " alt="" coords="158,1556,345,1597"/>
+<area shape="rect" id="node28" href="$classDatabase_1_1Seeders_1_1TaxTableSeeder.html" title=" " alt="" coords="151,1621,351,1663"/>
+<area shape="rect" id="node29" href="$classDatabase_1_1Seeders_1_1TipoTransporteSeeder.html" title=" " alt="" coords="131,1687,371,1728"/>
+<area shape="rect" id="node30" href="$classDatabase_1_1Seeders_1_1UserRoleSeeder.html" title=" " alt="" coords="150,1752,353,1793"/>
+</map>

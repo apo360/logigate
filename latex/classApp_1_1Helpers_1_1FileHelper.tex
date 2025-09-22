@@ -1,0 +1,152 @@
+\hypertarget{classApp_1_1Helpers_1_1FileHelper}{}\doxysection{App\textbackslash{}Helpers\textbackslash{}File\+Helper Class Reference}
+\label{classApp_1_1Helpers_1_1FileHelper}\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_a2cea8bcad164c3c2cd4ca7aed388d41f}{upload}} (\$file\+Key, \$destination\+Path, \$file\+Name\+Prefix=null)
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_a43c5d630b64a8aee7a949f8725873d12}{download}} (\$file\+Path, \$file\+Name=null, \$headers=\mbox{[}$\,$\mbox{]})
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_ad32139a17e9c204f685aa4dbb707ab0d}{delete}} (\$file\+Path)
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_a56357faa626c25d6f87bb5a4a400f4c6}{rename}} (\$file\+Path, \$new\+Name)
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_a2eeaac935004c6ba832183a5c6914a08}{exists}} (\$file\+Path)
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_a5f51fd0dc5a55b37d08155c41fa5d5a1}{get\+Info}} (\$file\+Path)
+\item 
+static \mbox{\hyperlink{classApp_1_1Helpers_1_1FileHelper_abd8d2e5f93d7f5adeae78d04c6777b52}{create\+Directory}} (\$directory\+Path)
+\item 
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_aef2b96d98b487579c269cd1ab00dc51d}\label{classApp_1_1Helpers_1_1FileHelper_aef2b96d98b487579c269cd1ab00dc51d}} 
+static {\bfseries save\+File} (\$file, \$cliente\+ID, \$processo\+ID)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_abd8d2e5f93d7f5adeae78d04c6777b52}\label{classApp_1_1Helpers_1_1FileHelper_abd8d2e5f93d7f5adeae78d04c6777b52}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!createDirectory@{createDirectory}}
+\index{createDirectory@{createDirectory}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{createDirectory()}{createDirectory()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::create\+Directory (\begin{DoxyParamCaption}\item[{}]{\$directory\+Path }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Cria um diretório.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$directory\+Path} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+bool 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_ad32139a17e9c204f685aa4dbb707ab0d}\label{classApp_1_1Helpers_1_1FileHelper_ad32139a17e9c204f685aa4dbb707ab0d}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!delete@{delete}}
+\index{delete@{delete}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{delete()}{delete()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::delete (\begin{DoxyParamCaption}\item[{}]{\$file\+Path }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Exclui um arquivo.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$file\+Path} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+bool 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_a43c5d630b64a8aee7a949f8725873d12}\label{classApp_1_1Helpers_1_1FileHelper_a43c5d630b64a8aee7a949f8725873d12}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!download@{download}}
+\index{download@{download}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{download()}{download()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::download (\begin{DoxyParamCaption}\item[{}]{\$file\+Path,  }\item[{}]{\$file\+Name = {\ttfamily null},  }\item[{}]{\$headers = {\ttfamily \mbox{[}\mbox{]}} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Faz o download de um arquivo.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$file\+Path} & \\
+\hline
+string | null & {\em \$file\+Name} & \\
+\hline
+array & {\em \$headers} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+\textbackslash{}\+Illuminate\textbackslash{}\+Http\textbackslash{}\+Response 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_a2eeaac935004c6ba832183a5c6914a08}\label{classApp_1_1Helpers_1_1FileHelper_a2eeaac935004c6ba832183a5c6914a08}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!exists@{exists}}
+\index{exists@{exists}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{exists()}{exists()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::exists (\begin{DoxyParamCaption}\item[{}]{\$file\+Path }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Verifica se um arquivo existe.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$file\+Path} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+bool 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_a5f51fd0dc5a55b37d08155c41fa5d5a1}\label{classApp_1_1Helpers_1_1FileHelper_a5f51fd0dc5a55b37d08155c41fa5d5a1}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!getInfo@{getInfo}}
+\index{getInfo@{getInfo}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{getInfo()}{getInfo()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::get\+Info (\begin{DoxyParamCaption}\item[{}]{\$file\+Path }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Obtém informações sobre um arquivo.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$file\+Path} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+array$\vert$false 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_a56357faa626c25d6f87bb5a4a400f4c6}\label{classApp_1_1Helpers_1_1FileHelper_a56357faa626c25d6f87bb5a4a400f4c6}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!rename@{rename}}
+\index{rename@{rename}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{rename()}{rename()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::rename (\begin{DoxyParamCaption}\item[{}]{\$file\+Path,  }\item[{}]{\$new\+Name }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Renomeia um arquivo.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$file\+Path} & \\
+\hline
+string & {\em \$new\+Name} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+string$\vert$false 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classApp_1_1Helpers_1_1FileHelper_a2cea8bcad164c3c2cd4ca7aed388d41f}\label{classApp_1_1Helpers_1_1FileHelper_a2cea8bcad164c3c2cd4ca7aed388d41f}} 
+\index{App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}!upload@{upload}}
+\index{upload@{upload}!App\textbackslash{}Helpers\textbackslash{}FileHelper@{App\textbackslash{}Helpers\textbackslash{}FileHelper}}
+\doxysubsubsection{\texorpdfstring{upload()}{upload()}}
+{\footnotesize\ttfamily static App\textbackslash{}\+Helpers\textbackslash{}\+File\+Helper\+::upload (\begin{DoxyParamCaption}\item[{}]{\$file\+Key,  }\item[{}]{\$destination\+Path,  }\item[{}]{\$file\+Name\+Prefix = {\ttfamily null} }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+Faz o upload de um arquivo.
+
+
+\begin{DoxyParams}[1]{Parameters}
+string & {\em \$file\+Key} & \\
+\hline
+string & {\em \$destination\+Path} & \\
+\hline
+string | null & {\em \$file\+Name\+Prefix} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+string$\vert$false 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+app/\+Helpers/File\+Helper.\+php\end{DoxyCompactItemize}
