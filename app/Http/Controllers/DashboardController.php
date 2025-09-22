@@ -307,6 +307,55 @@ class DashboardController extends Controller
     }
 
     public function ProcessosEstatisticas(){
+        $processos = Processo::where('empresa_id', Auth::user()->empresas->first()->id)
+        ->whereYear('created_at', now()->year)
+        ->get();
+
+        $totalProcessos = $processos->count();
+
+        // Distribuição por tipo de processo (Count)
+        $tipoProcessosCount = $processos->groupBy(function($processo) {
+            return $processo->tipoProcesso->descricao ?? 'Desconhecido';
+        })->map->count();
+        
+        // Cálculo das médias
+        $mediaValorTotal = $processos->avg('valor_total');
+        $mediaPesoBruto = $processos->avg('peso_bruto');
+        $mediaVolume = $processos->avg('volume');
+
+        // Variância e desvio padrão
+        $varianciaValorTotal = $processos->map(fn($item) => pow($item->valor_total - $mediaValorTotal, 2))->avg();
+        $desvioPadraoValorTotal = sqrt($varianciaValorTotal);
+
+        // Soma dos valores por estado do processo
+        $somaEstado = $processos->groupBy('Estado')->map->sum('valor_total');
+
+        // Distribuição por país de origem e destino
+        $distribuicaoPaisOrigem = $processos->groupBy('pais_origem')->map->count();
+        $distribuicaoPaisDestino = $processos->groupBy('pais_destino')->map->count();
+
+        // Estatísticas de peso e volume
+        $mediaPesoBruto = $processos->avg('peso_bruto');
+        $varianciaPesoBruto = $processos->map(fn($item) => pow($item->peso_bruto - $mediaPesoBruto, 2))->avg();
+        $desvioPadraoPesoBruto = sqrt($varianciaPesoBruto);
+        $mediaVolume = $processos->avg('volume');
+
+        // Tempo de processamento (simulação: diferença entre data_entrada e created_at)
+        $tempoMedioProcessamento = $processos->map(function($item) {
+            $entrada = Carbon::parse($item->data_entrada);
+            $criado = Carbon::parse($item->created_at);
+            return $entrada->diffInDays($criado);
+        })->avg();
+
+        // Distribuição por cliente
+        $distribuicaoCliente = $processos->groupBy(
+            fn($item) => $item->customer->CompanyName ?? 'Desconhecido'
+        )->map->count();
+
+        // Percentual por estado do processo
+        $estadoPercentual = $processos->groupBy('Estado')->map->count()->map(function ($count) use ($totalProcessos) {
+            return ($count / $totalProcessos) * 100;
+        });
 
     }
 
@@ -443,8 +492,7 @@ class DashboardController extends Controller
                 }
                 return count($intervalos) ? array_sum($intervalos) / count($intervalos) : null;
             })->filter()->avg();
-
-        // 
+// 
         $faturacaoMensal = SalesDocTotal::selectRaw('MONTH(created_at) as mes, SUM(gross_total) as total')
             ->whereYear('created_at', $ano)
             ->groupBy('mes')
