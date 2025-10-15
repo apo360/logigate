@@ -4,10 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
 
-class Representante extends Model
+class Representante extends Model implements Auditable
 {
     use HasFactory;
+    use \OwenIt\Auditing\Auditable;
+
+    protected $table = 'representantes';
 
     /**
      * Os atributos que são atribuíveis em massa.
@@ -30,15 +34,5 @@ class Representante extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
-    }
-
-    /**
-     * Relacionamento: O representante pode ter vários usuários.
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function users()
-    {
-        return $this->hasMany(User::class);
     }
 }

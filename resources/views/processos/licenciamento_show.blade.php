@@ -298,37 +298,76 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <ul aria-labelledby="btnGroupDrop1">
-                        <li> <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-plus-circle"></i> {{__('Adicionar Mercadoria')}}
-                            </a> 
-                        </li>
-                        
-                        <li> <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
-                            </a> 
-                        </li>
-                        
-                        <li> <a href="{{ route('gerar.txt', ['IdProcesso' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}
-                            </a> 
-                        </li>
-                        <li> <a href="{{ route('gerar.processo', ['idLicenciamento' => $licenciamento->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('Constituir Processo') }}
-                            </a> 
-                        </li>
-                    </ul>
-                    @if($licenciamento->procLicenFaturas->isNotEmpty())
-                        @php
-                            $statusFatura = $licenciamento->procLicenFaturas->last()->status_fatura;
-                        @endphp
-                        {{__('Documentos Relacionados') }}
+                    <i class="fas fa-hand"></i> {{-- Acções rápidas --}}
+                    <div class="mb-3">
+                        <h6 class="fw-bold text-secondary">{{ __('Ações') }}</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" 
+                                class="btn btn-sm btn-warning w-100 text-start">
+                                    <i class="fas fa-plus-circle"></i> {{ __('Adicionar Mercadoria') }}
+                                </a>
+                            </li>
+
+                            <li class="mb-2">
+                                <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" 
+                                class="btn btn-sm btn-warning w-100 text-start">
+                                    <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}
+                                </a>
+                            </li>
+
+                            <li class="mb-2">
+                                <a href="{{ route('gerar.txt', ['IdProcesso' => $licenciamento->id]) }}" 
+                                class="btn btn-sm btn-warning w-100 text-start">
+                                    <i class="fas fa-file-download"></i> {{ __('Licenciamento (TXT)') }}
+                                </a>
+                            </li>
+
+                            <li>
+                                <a href="{{ route('gerar.processo', ['idLicenciamento' => $licenciamento->id]) }}" 
+                                class="btn btn-sm btn-warning w-100 text-start">
+                                    <i class="fas fa-file-download"></i> {{ __('Constituir Processo') }}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    {{-- 📌 Documentos Relacionados --}}
+                    <div>
+                        <h6 class="fw-bold text-secondary">{{ __('Documentos Relacionados') }}</h6>
                         <hr>
-                        <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span> 
-                        <!-- Encontar um formar de buscar e listar todas as facturas relacionadas com a factura original -->
-                    @else
-                        <span>Sem Fatura</span>
-                    @endif
+
+                        @if($licenciamento->procLicenFaturas->isNotEmpty())
+                            @foreach($licenciamento->procLicenFaturas as $fatura)
+                                <div class="mb-2 p-2 border rounded bg-light">
+                                    <span>
+                                        <strong>{{ __('Fatura:') }}</strong>
+                                        <a href="{{ route('documentos.show', $fatura->fatura_id) }}">
+                                            {{ $fatura->licenciamento->Nr_factura }}
+                                        </a>
+                                    </span>
+                                    <br>
+                                    <span><strong>Status:</strong> {{ ucfirst($fatura->status_fatura) }}</span>
+                                    <br>
+                                    <span>
+                                        <strong>Valor:</strong> 
+                                        {{ number_format($fatura->valor_total, 2, ',', '.') }} {{ $licenciamento->moeda }}
+                                    </span>
+                                    <br>
+                                    @if($fatura->processo_id)
+                                        <span>
+                                            <strong>Processo:</strong> 
+                                            <a href="{{ route('processos.show', $fatura->processo_id) }}">
+                                                {{ $fatura->processo->NrProcesso }}
+                                            </a>
+                                        </span>
+                                    @endif
+                                </div>
+                            @endforeach
+                        @else
+                            <span class="text-muted">{{ __('Sem Faturas') }}</span>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

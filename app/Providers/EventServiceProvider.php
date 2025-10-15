@@ -54,7 +54,7 @@ class EventServiceProvider extends ServiceProvider
             ->count();
 
             if ($loginCount > 5) {
-                // Ative um alerta de comportamento anômalo
+                // Active um alerta de comportamento anômalo
                 Log::alert('Possível comportamento anômalo', ['user_id' => $event->user->id, 'email' => $event->user->email]);
             }
 

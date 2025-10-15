@@ -12,11 +12,11 @@ class Pais extends Model
     protected $table = "paises";
 
     protected $fillable = [
-        'codigo', 'pais', 'nacionalidade', 'moeda', 'capital', 'latitude', 'longitude', 'cambio', 'data_cambio'
+        'id','codigo', 'pais', 'nacionalidade', 'moeda', 'capital', 'latitude', 'longitude', 'cambio', 'data_cambio'
     ];
 
     public function portos()
     {
-        return $this->hasMany(Porto::class, 'pais_id');
+        return $this->hasMany(Porto::class, 'pais_id', 'id');
     }
 }

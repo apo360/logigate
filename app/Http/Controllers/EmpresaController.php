@@ -3,15 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DatabaseErrorHandler;
+use App\Http\Requests\EmpresaRequest;
 use App\Models\Empresa;
 use App\Models\EmpresaBanco;
 use App\Models\Municipio;
 use App\Models\Provincia;
+use App\Models\Representante;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class EmpresaController extends Controller
 {
@@ -40,9 +44,40 @@ class EmpresaController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(EmpresaRequest $request)
     {
-        //
+        try {
+            // Validação dos dados do request
+            $empresaRec = $request->validated();
+            // Iniciar transação
+            DB::beginTransaction();
+
+            // Criar a empresa
+            $empresa = Empresa::create($empresaRec);
+
+            // Introduzir dados do Representante
+            Representante::create([
+                'nome' => $empresaRec->input('name'),
+                'apelido' => $empresaRec->input('apelido') ?? null,
+                'telefone' => $empresaRec->input('telefone') ?? null,
+                'tipo' => $empresaRec->input('tipo_representante') ?? null,
+                'empresa_id' => $empresa->id,
+            ]);
+
+            $this->storeLogo(new Request([
+                'logotipo' => $empresaRec['logotipo'] ?? null,
+            ]));
+
+            // Commit da transação
+            DB::commit();
+
+            return $empresa;
+
+        } catch (QueryException $e) { 
+            // Rollback em caso de erro
+            DB::rollBack();
+            return DatabaseErrorHandler::handle($e, $request);
+        }
     }
 
     public function storeLogo(Request $request)
@@ -66,6 +101,7 @@ class EmpresaController extends Controller
             ],
         ]);
 
+        // Se já existir um logotipo, removê-lo
         if ($empresa->logotipo) {
             $key = str_replace(env('AWS_URL') . '/', '', $empresa->logotipo);
         

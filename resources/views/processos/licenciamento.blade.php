@@ -320,6 +320,24 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="fob_total">FOB Total</label>
+                                <input type="date" id="fob_total" name="fob_total" class="form-control" value="{{ old('fob_total') }}" required>
+                                @error('fob_total')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="cif">CIF</label>
+                                <input type="date" id="cif" name="cif" class="form-control" value="{{ old('cif') }}" required>
+                                @error('cif')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="card-footer">

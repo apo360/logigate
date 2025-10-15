@@ -27,6 +27,56 @@
                 </form>
             </div>
 
+            <!-- Barra de tempo da subscrição -->
+            <div class="w-full max-w-md bg-white p-4 rounded-2xl shadow-md">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-gray-600 font-medium">Tempo de subscrição</span>
+
+                    @php
+                        use Carbon\Carbon;
+                        use Illuminate\Support\Str;
+
+                        $empresa = auth()->user()->empresas->first();
+                        $subscricao = $empresa?->subscricoes()->latest('data_expiracao')->first();
+
+                        $startDate = $subscricao?->data_inicio ? Carbon::parse($subscricao->data_inicio) : Carbon::now();
+                        $endDate   = $subscricao?->data_expiracao ? Carbon::parse($subscricao->data_expiracao) : Carbon::now();
+                        $currentDate = Carbon::now();
+
+                        $totalDays = max($startDate->diffInDays($endDate), 1); // evita divisão por zero
+                        $daysLeft  = $currentDate->diffInDays($endDate, false); // negativo se expirado
+
+                        $progress = max(0, min(100, 100 - (($totalDays - max($daysLeft, 0)) / $totalDays) * 100));
+                    @endphp
+
+                    @if ($daysLeft >= 0)
+                        <span class="text-sm text-gray-500"
+                            title="Expira em {{ $endDate->format('d/m/Y') }}">
+                            {{ $daysLeft }} {{ Str::plural('dia', $daysLeft) }} restantes
+                        </span>
+                    @else
+                        <span class="text-sm text-red-500"
+                            title="Expirou em {{ $endDate->format('d/m/Y') }}">
+                            Expirada há {{ abs($daysLeft) }} {{ Str::plural('dia', abs($daysLeft)) }}
+                        </span>
+                    @endif
+                </div>
+
+                <!-- Barra de progresso -->
+                <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                    <div class="h-3 rounded-full transition-all duration-700 ease-in-out
+                        {{ $daysLeft > 10 ? 'bg-green-500' : ($daysLeft > 5 ? 'bg-yellow-500' : 'bg-red-500') }}"
+                        style="width: {{ $daysLeft < 0 ? '100%' : $progress . '%' }}">
+                    </div>
+                </div>
+
+                <!-- Rodapé informativo -->
+                <!-- <div class="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>Início: {{ $startDate->format('d/m/Y') }}</span>
+                    <span>Fim: {{ $endDate->format('d/m/Y') }}</span>
+                </div> -->
+            </div>
+
             <!-- Menu de Notificações e Usuário -->
             <div class="flex items-center space-x-4">
                 <!-- Menu de Notificações -->

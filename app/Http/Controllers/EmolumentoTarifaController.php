@@ -48,9 +48,9 @@ class EmolumentoTarifaController extends Controller
             return DatabaseErrorHandler::handle($e, $request);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'message' => 'Erro inesperado: ' . $e->getMessage(),
-            ], 500);
+            return redirect()->back()->with('error', 
+                'Erro inesperado: ' . $e->getMessage()
+            );
         }
     }
 

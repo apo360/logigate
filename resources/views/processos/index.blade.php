@@ -46,6 +46,11 @@
         }
 
     </style>
+
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Processos', 'url' => route('processos.index')]
+    ]" separator="/" />
     <div class="" style="padding: 10px;"> 
 
         <div class="card">
@@ -60,9 +65,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="card">
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4">
@@ -182,7 +184,11 @@
                                                 $statusFatura = $processo->procLicenFaturas->last()->status_fatura;
                                             @endphp
                                             <td>{{ ucfirst($statusFatura) }} <br>
-                                                <span><a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}">{{$licenciamento->Nr_factura}}</a></span>
+                                                <small>
+                                                    <a href="{{ route('documentos.show', $processo->procLicenFaturas->last()->id) }}">
+                                                        Ver Factura
+                                                    </a>
+                                                </small>
                                             </td>
                                         @else
                                             <td>{{ __('Sem Factura') }}</td>

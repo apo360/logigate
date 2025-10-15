@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,7 +23,41 @@ class Produto extends Model
         'ProductDescription',
         'ProductNumberCode',
         'imagem_path',
+        'status',
     ];
+
+    protected $dates = [
+        'created_at',
+        'updated_at'
+    ];
+
+    // Function boot
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            // Set the created_at timestamp to the current date and time
+            $model->created_at = Carbon::now()->toDateTimeString();
+        });
+
+        static::updating(function ($model) {
+            // Set the updated_at timestamp to the current date and time
+            $model->updated_at = Carbon::now()->toDateTimeString();
+        });
+
+        static::deleting(function ($model) {
+            // Aqui você pode adicionar lógica antes de um produto ser deletado, se necessário
+
+            // Se o produto estiver associado á uma venda não pode ser apagado
+            if ($model->salesLines()->count() > 0) {
+                throw new \Exception("Não é possível apagar o produto porque ele está associado a uma Factura.");
+            }
+        });
+    }
+
+    // Desabilitar timestamps se não estiver usando created_at e updated_at
+    public $timestamps = true;
 
     /**
      * Relacionamento com ProductGroup (Grupos de Produtos)
@@ -59,6 +94,14 @@ class Produto extends Model
     public function discounts()
     {
         return $this->hasMany(ProductDiscounst::class, 'product_id');
+    }
+
+    /**
+     * Relacionamento com Vendas (SalesInvoiceLines)
+     */
+    public function salesLines()
+    {
+        return $this->hasMany(SalesLine::class, 'productID');
     }
 }
 

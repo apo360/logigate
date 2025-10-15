@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<h lang="pt-BR">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -295,6 +295,12 @@
           <a href="{{ route('consultar.licenciamento') }}" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
             <i class="fas fa-comments" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
             <span>Consultar</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ route('consultar.pauta') }}" class="hover:text-blue-300 transition-all flex items-center space-x-2 underline-effect">
+            <i class="fas fa-file-alt" aria-hidden="true"></i> <!-- Ícone do Font Awesome -->
+            <span>Pauta Aduaneira</span>
           </a>
         </li>
         <li>
@@ -654,6 +660,23 @@
 
     <!-- Conteúdo -->
     <div class="container mx-auto px-4 relative z-10">
+      <!-- Modalidade de Pagamento (Mensal, Trimestral, Semestral e Anual) e mostrando os descontos -->
+      <div class="mb-8">
+        <h2 class="text-3xl font-bold text-blue-900 mb-4 text-center">Modalidade de Pagamento</h2>
+        <div class="flex justify-center space-x-4">
+          <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">
+            Mensal
+          </button>
+          <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all">
+            Trimestral (5% Desconto)
+          </button>
+          <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all">
+            Semestral (10% Desconto)
+          </button>
+          <button class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all">
+            Anual (15% Desconto)
+          </button>
+      </div>
       <h2 class="text-3xl font-bold text-blue-900 mb-8 text-center">Planos e Preços</h2>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Plano Básico -->

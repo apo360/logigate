@@ -23,7 +23,7 @@ class Module extends Model
 
     public function menus()
     {
-        return $this->hasMany(Menu::class);
+        return $this->hasMany(Menu::class, 'module_id', 'id');
     }
 
     public function subscricoes()
@@ -35,4 +35,10 @@ class Module extends Model
     {
         return $this->hasMany(ActivatedModule::class);
     }
+
+    public function planos()
+    {
+        return $this->belongsToMany(Plano::class, 'plano_modulos', 'modulo_id', 'plano_id');
+    }
+
 }

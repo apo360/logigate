@@ -11,8 +11,23 @@ class Porto extends Model
 
     protected $table = 'portos';
 
+    protected $fillable = [
+        'id',
+        'continente',
+        'pais',
+        'porto',
+        'link',
+        'pais_id',
+        'sigla',
+    ];
+
     public function pais()
     {
-        return $this->belongsTo(Pais::class, 'pais_id');
+        return $this->belongsTo(Pais::class, 'pais_id', 'id');
+    }
+
+    public function processos()
+    {
+        return $this->hasMany(Processo::class, 'porto_desembarque_id', 'id');
     }
 }

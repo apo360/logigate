@@ -92,7 +92,7 @@
                         </li>
                         <li>
                             <a href="{{ route('processo.print.requisicao', ['IdProcesso' => $processo->id]) }}" class="dropdown-item" target="_blank">
-                                <i class="fas fa-file-pdf"></i> {{ __('Requisição') }}
+                                <i class="fas fa-file-pdf"></i> {{ __('Requisição') }} {{$processo->id}}
                             </a>
                         </li>
                         <li>
@@ -139,6 +139,16 @@
                         <form action="{{ route('processos.update', $processo->id) }}" method="POST">
                             @csrf
                             @method('PUT')
+                            <div class="row">
+                                <div class="col-md-2 form-group">
+                                    <label for="NrProcesso">Nº Processo</label>
+                                    <input type="text" name="NrProcesso" id="NrProcesso" class="form-control" value="{{ old('NrProcesso', $processo->NrProcesso) }}" disabled>
+                                </div>
+                                <div class="col-md-3 form-group">
+                                    <label for="vinheta">Vinheta</label>
+                                    <input type="text" name="vinheta" id="vinheta" class="form-control" value="{{ old('vinheta', $processo->vinheta) }}">
+                                </div>
+                            </div>
                             <div class="row mt-4">
                                 <div class="col-md-2 form-group">
                                     <label for="NrDU">Nº DU</label>
@@ -306,6 +316,36 @@
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group col-md-3">
+                                    <label for="porto_desembarque_id">Porto de Desembarque</label>
+                                    <select name="porto_desembarque_id" id="porto_desembarque_id" class="form-control">
+                                        @foreach($portos as $porto)
+                                            <option value="{{ $porto->id }}" {{ old('porto_desembarque_id', $processo->porto_desembarque_id) == $porto->id ? 'selected' : '' }}>
+                                                {{ $porto->porto }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('porto_desembarque_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group col-md-3">
+                                    <label for="localizacao_mercadoria_id">Localização da Mercadoria</label>
+                                    <select name="localizacao_mercadoria_id" id="localizacao_mercadoria_id" class="form-control">
+                                        @foreach($localizacoes as $localizacao)
+                                            <option value="{{ $localizacao->id }}" {{ old('localizacao_mercadoria_id', $processo->localizacao_mercadoria_id) == $localizacao->id ? 'selected' : '' }}>
+                                                {{ $localizacao->descricao }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('localizacao_mercadoria_id')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
 

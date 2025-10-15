@@ -165,7 +165,6 @@
                                                     </tr>
                                                     <tr id="document-total-pay">
                                                         <th colspan="3">Total Geral</th>
-                                                        <th> </th>
                                                         <th class="text-right total">0.00 Kz</th>
                                                     </tr>
                                                 </tfoot>
@@ -509,7 +508,7 @@
         </div>
     </aside>
 
-    <!-- Script para controlar a abertura e o fechamento do modal -->
+    <!-- Script para controlar a abertura e o encerramento do modal -->
     <script>
         $(document).ready(function() {
             // Função para fechar todos os modais

@@ -99,7 +99,7 @@
                                 <td style="color: {{ $resultado['saldo'] >= 0 ? 'blue' : 'red' }}">
                                     {{ number_format(abs($resultado['saldo']), 2, ',', '.') }}
                                     @if($resultado['saldo'] < 0)
-                                        <span>(Dívida Atual)</span>
+                                        <span>(Dívida Actual)</span>
                                     @endif
                                 </td>
                                 <td>

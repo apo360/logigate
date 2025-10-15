@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use App\Exports\LicenciamentosExport;
+use App\Models\ProcLicenFactura;
 use Maatwebsite\Excel\Facades\Excel;
 
 class LicenciamentoController extends Controller
@@ -52,8 +53,7 @@ class LicenciamentoController extends Controller
         // Retornar a view com os licenciamentos paginados
         return view('processos.licenciamento_index', compact('licenciamentos'));
     }
-
-     
+    
     /**
      * Show the form for creating a new resource.
      */
@@ -203,7 +203,7 @@ class LicenciamentoController extends Controller
     public function destroy(Licenciamento $licenciamento)
     {
         try {
-            // Verificar se o licenciamento tem faturas ou outros registros relacionados
+            // Verificar se o licenciamento tem facturas, Processos ou outros registros relacionados
             if ($licenciamento->procLicenFaturas->isNotEmpty()) {
                 return redirect()->route('licenciamentos.index')
                                 ->with('error', 'Não é possível excluir o licenciamento. Existem faturas associadas.');
@@ -332,37 +332,40 @@ class LicenciamentoController extends Controller
             $processo = Processo::create([
                 'ContaDespacho' => $licenca->referencia_cliente,
                 'RefCliente' => $licenca->referencia_cliente,
+                'estancia_id' => $licenca->estancia_id,
                 'Descricao' => $licenca->descricao,
                 'DataAbertura' => now(),
                 'TipoProcesso' => $licenca->tipo_declaracao,
-                'Situacao' => 'Aberto',
+                'Estado' => 'Aberto',
                 'customer_id' => $licenca->cliente_id,
                 'user_id' => Auth::user()->id,
                 'empresa_id' => $licenca->empresa_id,
                 'exportador_id' => $licenca->exportador_id,
-                'estancia_id' => $licenca->estancia_id,
-            ]);
-
-            // Cria a importação associada ao processo
-            $importacao = Importacao::create([
-                'processo_id' => $processo->id,
-                'FOB' => $licenca->fob_total,
-                'Freight' => $licenca->frete,
-                'Insurance' => $licenca->seguro,
-                'Fk_pais_origem' => $licenca->pais_origem, // Supondo que seja um ID em uma tabela de países
-                'PortoOrigem' => $licenca->porto_origem,
+                'forma_pagamento' => $licenca->forma_pagamento,
+                'fob_total' => $licenca->fob_total,
+                'frete' => $licenca->frete,
+                'seguro' => $licenca->seguro,
+                'codigo_banco' => $licenca->codigo_banco,
+                'peso_bruto' => $licenca->peso_bruto,
                 'TipoTransporte' => $licenca->tipo_transporte,
-                'NomeTransporte' => $licenca->registo_transporte,
+                'registo_transporte' => $licenca->registo_transporte,
+                'nacionalidade_transporte' => $licenca->nacionalidade_transporte,
                 'DataChegada' => $licenca->data_entrada,
                 'Moeda' => $licenca->moeda,
                 'Cambio' => 1.0, // Ajuste conforme a lógica para câmbio
                 'ValorTotal' => $licenca->cif,
+                'cif' => $licenca->cif,
                 'ValorAduaneiro' => $licenca->cif + $licenca->frete + $licenca->seguro, // Ajuste se necessário
+            
             ]);
 
+            // Marca o licenciamento como utilizado
+            ProcLicenFactura::updateOrCreate(
+                ['licenciamento_id' => $licenca->id],
+                ['processo_id' => $processo->id]
+            );
             // Atualiza as mercadorias associadas ao licenciamento para vinculá-las ao novo processo
-            Mercadoria::where('licenciamento_id', $idLicenciamento)
-                ->update(['Fk_Importacao	' => $importacao->id]);
+            Mercadoria::where('licenciamento_id', $idLicenciamento)->update(['Fk_Importacao' => $processo->id]);
 
             // Confirma a transação
             DB::commit();
@@ -370,11 +373,10 @@ class LicenciamentoController extends Controller
             // Redireciona para edição do processo
             return redirect()->route('processos.edit', $processo->id)
                 ->with(['success' => true, 'message' => 'Processo constituído com sucesso pelo Licenciamento ' . $licenca->codigo_licenciamento . '.']);
-            }catch (QueryException $th) {
-                DB::rollBack();
-                return DatabaseErrorHandler::handle($th, $request);
-            }
-            
+        }catch (QueryException $th) {
+            DB::rollBack();
+            return DatabaseErrorHandler::handle($th, $request);
+        }   
     }
 
     public function exportCsv()
@@ -586,6 +588,33 @@ class LicenciamentoController extends Controller
             DB::rollBack();
             return back()->with('error', 'Erro ao importar o arquivo TXT: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Duplicar um licenciamento existente.
+     */
+    public function DuplicarLicenciamento($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $licenciamento = Licenciamento::findOrFail($id);
+            $novoLicenciamento = $licenciamento->replicate();
+            $novoLicenciamento->save();
+
+            DB::commit();
+            return back()->with('success', 'Licenciamento duplicado com sucesso!');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Erro ao duplicar o licenciamento: ' . $e->getMessage());
+        }
+    }
+
+    /** PICE */
+    public function pice()
+    {
+        // Lógica para exibir a lista PICE
+        return view('licenciamentos.pice');
     }
 
 }

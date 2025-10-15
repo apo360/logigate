@@ -918,7 +918,6 @@ WHERE
 							</textField>
 						</jr:detailCell>
 					</jr:column>
-					<jr:tableHeader splitType="Prevent"/>
 					<jr:detail/>
 				</jr:table>
 			</componentElement>

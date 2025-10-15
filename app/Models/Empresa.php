@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Contracts\Auditable;
+use App\Models\ActivatedModule;
+use App\Models\Subscricao;
+use App\Models\EmpresaUser;
 
 class Empresa extends Model implements Auditable
 {
@@ -36,6 +40,14 @@ class Empresa extends Model implements Auditable
         'Sigla',
     ];
 
+    /**
+     * Relação 1:N — Uma empresa pode ter vários representantes
+     */
+    public function representantes()
+    {
+        return $this->hasMany(Representante::class, 'empresa_id');
+    }
+
     // Definir relacionamento com usuários
     public function users(): BelongsToMany
     {
@@ -55,5 +67,45 @@ class Empresa extends Model implements Auditable
     public function provincia()
     {
         return $this->belongsTo(Provincia::class, 'Provincia', 'id');
+    }
+
+    // Function Boot
+    public static function boot()
+    {
+        parent::boot();
+
+        // Criar um evento de "created" para a empresa
+        static::created(function ($empresa) {
+            // // Gerar o código da conta da empresa Ex: HYSS00224
+            $currentYear = Carbon::now()->year;
+            // Buscar o total de Empresas
+            $totalEmpresas = Empresa::count();
+            // Gerar o código da empresa
+            $codEmpresa = 'HYLGA' . str_pad($totalEmpresas + 1, 5, '0', STR_PAD_LEFT).$currentYear;
+            // Inserir o código da empresa na empresa
+            $empresa->conta = $codEmpresa;
+        });
+
+        // Criar um evento de "deleting" para a empresa
+        static::deleting(function ($empresa) {
+            // Excluir os usuários associados à empresa
+            $empresa->users()->detach();
+
+            // Excluir os módulos ativados para a empresa
+            $empresa->activatedModules()->delete();
+
+            // Excluir as subscrições associadas à empresa
+            $empresa->subscricoes()->delete();
+        });
+    } 
+
+    /**
+     * Obter a subscrição ativa
+     */
+    public function subscricaoAtiva()
+    {
+        return $this->hasOne(Subscricao::class, 'empresa_id')
+            ->where('status', 'ATIVA')
+            ->latest();
     }
 }

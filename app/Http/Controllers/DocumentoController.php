@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DatabaseErrorHandler;
+use App\Models\ContaCorrente;
 use App\Models\Customer;
 use App\Models\Documento;
 use App\Models\InvoiceType;
@@ -79,7 +80,12 @@ class DocumentoController extends Controller
      */
     public function index(){
 
-        $invoices = SalesInvoice::all();
+        //$invoices = SalesInvoice::all();
+        $invoices = SalesInvoice::with(['Customer', 'InvoiceType', 'salesdoctotal', 'salesstatus.salesInvoice']) 
+                    ->where('empresa_id', Auth::user()->empresas->first()->id) 
+                    ->orderBy('invoice_date', 'desc')
+                    ->get();
+
 
         $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id)->get();
 
@@ -109,7 +115,7 @@ class DocumentoController extends Controller
      */
     public function create(Request $request)
     {
-        $tipoDocumentos = DB::table('invoice_types')->get();
+        $tipoDocumentos = DB::table('InvoiceType')->get();
         
         // Verifica se o parâmetro 'id' está presente no request
         if ($request->has('licenciamento_id')) {
@@ -117,18 +123,35 @@ class DocumentoController extends Controller
             $licenciamento = Licenciamento::Find($id);
 
             // 
-            $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->get();
+            $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->where('status', 0)->get();
+
+            $transacoes = ContaCorrente::where('cliente_id', $licenciamento->cliente->id)->orderBy('data', 'desc')->get();
+
+            // Calcular o saldo baseado nas transações
+            $saldo = $transacoes->sum(function ($transacao) {
+                return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
+            });
+            
+            // Retorna a view associada quando o 'id' existe
+            return view('Documentos.create_documento', compact('licenciamento', 'produtos', 'tipoDocumentos', 'transacoes', 'saldo'));
+        } elseif ($request->has('processo_id')) {
+            
+            $id = $request->input('processo_id');
+            $processo = Processo::Find($id);
+
+            // 
+            $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->where('status', 0)->get();
             
             // Busca o processo ou dado relacionado ao id
             $processo = Processo::findOrFail($id); // Encontrar o processo pelo ID
             
             // Retorna a view associada quando o 'id' existe
-            return view('Documentos.create_documento', compact('licenciamento', 'produtos', 'tipoDocumentos'));
+            return view('Documentos.create_documento_processo', compact('processo', 'produtos', 'tipoDocumentos'));
         } else {
-            
             $empresaId = Auth::user()->empresas->first()->id;
             // Obtém todos os produtos do banco de dados 
             $produtos = Produto::with(['prices', 'grupo'])
+            ->where('status', 0) // Apenas produtos ativos
             ->where(function ($query) use ($empresaId) {
                 $query->where('empresa_id', $empresaId)
                     ->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
@@ -147,7 +170,14 @@ class DocumentoController extends Controller
 
         // Inicializa variáveis para controle
         $licenciamento = null; $processo = null; $cliente = null;
-        $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->get();
+        $produtos = Produto::where('ProductType', 'S')
+            ->where('ProductGroup', 1)
+            ->where('status', 0) // Apenas produtos ativos
+            ->where(function ($query) {
+                $query->where('empresa_id', Auth::user()->empresas->first()->id)
+                    ->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
+            })
+            ->get();
 
         // Verifica se o licenciamento_id foi passado
         if ($licenciamento_id) 
@@ -178,12 +208,30 @@ class DocumentoController extends Controller
         $SumTax = $SumNetTotal = $SumGrossTotal = 0;
 
         $invoiceTypeID = (new InvoiceType())->getID($request->input('document_type'));
+        $saldoCliente = $request->input('saldo');
 
         try {
 
             // Executar o procedimento armazenado para obter o próximo número de fatura
             $result = DB::select("CALL GenerateInvoiceNo(?,?)", [$invoiceTypeID, Auth::user()->empresas->first()->id]);
 
+            // Para uma FT
+            if($request->input('document_type') == 'FT') {
+                if($saldoCliente > 0) {
+                    return redirect()->back()->with('error', 'O cliente possui um saldo positivo. Não é possível emitir uma factura normal.');
+                }elseif($saldoCliente == 0) {
+                    return redirect()->back()->with('error', 'O cliente não possui saldo. Não é possível emitir uma factura normal.');
+                }elseif($saldoCliente < 0 && $request->input('data_vencimento') != null) {
+                    return redirect()->back()->with('error', 'A data de vencimento não deve ser preenchida para facturas normais.');
+                }
+                return redirect()->back()->with('error', 'A data de vencimento não deve ser preenchida para facturas normais.');
+            }
+            if($request->input('document_type') == 'FR' && $request->input('data_vencimento') == null) {
+                return redirect()->back()->with('error', 'A data de vencimento é obrigatória para facturas a recibo.');
+            }
+            if($saldoCliente < 0 && $request->input('document_type') == 'FT'){
+                return redirect()->back()->with('error', 'O cliente possui um saldo negativo. Não é possível emitir uma factura normal.');
+            }
             $salesInvoice = SalesInvoice::create([
                 'invoice_no' => $result[0]->InvoiceNo,
                 'hash' => '0',
@@ -195,11 +243,12 @@ class DocumentoController extends Controller
                 'cash_vat_scheme_indicator' => 0,
                 'third_parties_billing_indicator' => 0,
                 'invoice_type_id' => $invoiceTypeID,
-                'source_id' => Auth::user()->id,
                 'system_entry_date' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
                 'transaction_id' => 1,
                 'customer_id' => $request->input('customer_id'),
+                'source_id' => Auth::user()->id,
                 'empresa_id' => Auth::user()->empresas->first()->id,
+                'detalhes_factura' => $request->input('detalhes_fatura'),
             ]);
 
            // Verificar se existe licenciamento ou processo no request
@@ -302,12 +351,56 @@ class DocumentoController extends Controller
                     'data_pagamento' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
                 ]);
             } elseif($request->input('document_type') == 'FT'){
+                
                 SalesDocTotal::create([
                     'tax_payable' => $SumTax, // total das taxas somatório das taxas dos produtos
                     'net_total' => $SumNetTotal, // total de preços sem taxa
                     'gross_total' => $SumGrossTotal, // total de preços com taxa
                     'documentoID' => $salesInvoice->id,
                 ]);
+
+                // Verificar se o cliente tem saldo maior que da factura e criar uma RG automática
+                if($saldoCliente >= $SumGrossTotal){
+                    // Criar uma RG automática
+                    MetodoPagamento::create([
+                        'documentoID' => $salesInvoice->id,
+                        'data_pagamento' => Carbon::now()->toDateTimeString(),
+                        'meio_pagamento' => 'RG',
+                        'detalhes' => 'Pagamento automático da factura nº ' . $salesInvoice->invoice_no,
+                        'valor' => $SumGrossTotal,
+                        'referencia' => 'RG' . $salesInvoice->invoice_no,
+                        'source_id' => Auth::user()->id,
+                    ]);
+                    // Actualizar o saldo do cliente na conta corrente
+                    ContaCorrente::create([
+                        'cliente_id' => $request->input('customer_id'),
+                        'valor' => $SumGrossTotal,
+                        'tipo' => 'debito',
+                        'descricao' => 'Pagamento automático da factura nº ' . $salesInvoice->invoice_no,
+                        'data' => Carbon::now()->toDateTimeString(),
+                    ]);
+                }elseif($saldoCliente < $SumGrossTotal && $saldoCliente > 0){
+                    // Criar uma RG automática com o valor do saldo do cliente
+                    MetodoPagamento::create([
+                        'documentoID' => $salesInvoice->id,
+                        'data_pagamento' => Carbon::now()->toDateTimeString(),
+                        'meio_pagamento' => 'RG',
+                        'detalhes' => 'Pagamento automático parcial da factura nº ' . $salesInvoice->invoice_no,
+                        'valor' => $saldoCliente,
+                        'referencia' => 'RG' . $salesInvoice->invoice_no,
+                        'source_id' => Auth::user()->id,
+                    ]);
+                    // Actualizar o saldo do cliente na conta corrente
+                    ContaCorrente::create([
+                        'cliente_id' => $request->input('customer_id'),
+                        'valor' => $saldoCliente,
+                        'tipo' => 'debito',
+                        'descricao' => 'Pagamento automático parcial da factura nº ' . $salesInvoice->invoice_no,
+                        'data' => Carbon::now()->toDateTimeString(),
+                    ]);
+                }elseif($saldoCliente <= 0){
+                    // Não fazer nada
+                }
             }
 
             // Assinar o campo Hash
@@ -334,9 +427,6 @@ class DocumentoController extends Controller
      * Show the form for editing the specified resource.
      */
     public function edit(SalesInvoice $documento){
-
-        
-
         return view('Documentos.ncredito_documento', compact('documento'));
     }
 
@@ -395,8 +485,18 @@ class DocumentoController extends Controller
     public function ViewPagamento($id){
 
         // Verificar se o usuario que está em sessão pertence a empresa em sessão
-        $salesInvoice = SalesInvoice::findOrFail($id);
+        $salesInvoice = SalesInvoice::with('Customer', 'InvoiceType', 'salesdoctotal', 'salesstatus.salesInvoice')
+        ->where('empresa_id', Auth::user()->empresas->first()->id)
+        ->findOrFail($id);
+
+        // Buscar outras faturas em aberto do mesmo cliente (excluindo a atual)
+        $outrasFaturas = SalesInvoice::with('salesdoctotal')
+            ->where('customer_id', $salesInvoice->customer_id)
+            ->where('id', '!=', $salesInvoice->id)
+            ->get();
+
         $meios = MetodoPagamento::all();
-        return view('Documentos.pagamento', compact('salesInvoice', 'meios'));
+
+        return view('Documentos.pagamento', compact('salesInvoice', 'outrasFaturas', 'meios'));
     }
 }

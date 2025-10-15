@@ -108,9 +108,9 @@ class Customer extends Model
         return $codigo;
     }
     
-        public function endereco(){
-            return $this->hasOne(Endereco::class, 'customer_id');
-        }
+    public function endereco(){
+        return $this->hasOne(Endereco::class, 'customer_id');
+    }
     
     /**
      * Define the "invoices" relationship. Each customer can have multiple invoices.
@@ -137,6 +137,14 @@ class Customer extends Model
 
     public function contaCorrente(){
         return $this->belongsTo(ContaCorrente::class, 'cliente_id');
+    }
+
+    public function getSaldoAttribute()
+    {
+        $creditos = $this->contaCorrente()->where('tipo', 'credito')->sum('valor');
+        $debitos  = $this->contaCorrente()->where('tipo', 'debito')->sum('valor');
+
+        return $creditos - $debitos;
     }
 
     public function avencas(){

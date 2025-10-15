@@ -56,6 +56,21 @@
                         <input type="hidden" name="id_rascunho" id="id_rascunho">
                             <div class="row">
 
+                            <!-- Vinheta -->
+                            <div class="form group mt-4 col-md-3">
+                                <label for="vinheta">Vinheta
+                                    <span class="text-danger" title="Campo obrigatório">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text"><i class="fas fa-check"></i></span>
+                                    </div>
+                                    <x-input type="text" name="vinheta" value="{{ old('vinheta') }}" class="form-control" />
+                                    @error('vinheta')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
                                 <div class="form-group mt-4 col-md-4">
                                     <label for="estancia_id">Região Aduaneira (Estância)
                                     <span class="text-danger" title="Campo obrigatório">*</span>
@@ -300,26 +315,40 @@
                                 </div>
 
                                 <div class="form-group mt-4 col-md-3">
-                                    <label for="DataPartida">Data de Partida:</label>
+                                    <label for="porto_desembarque_id">Porto de Desembarque</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                            <span class="input-group-text"><i class="fas fa-ship"></i></span>
                                         </div>
-                                        <x-input type="date" name="DataPartida" class="form-control rounded-md shadow-sm" value="{{ old('DataPartida') }}" />
-                                        @error('DataPartida')
+                                        <select name="porto_desembarque_id" id="porto_desembarque_id" class="form-control rounded-md shadow-sm">
+                                            <option value="" disabled selected>Selecionar</option>
+                                            @foreach($portos as $porto)
+                                                <option value="{{ $porto->id }}" {{ old('porto_desembarque_id') == $porto->id ? 'selected' : '' }}>
+                                                    {{ $porto->porto }}  - {{$porto->sigla}} ({{ $porto->pais}})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('porto_desembarque_id')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
 
                                 <div class="form-group mt-4 col-md-3">
-                                    <label for="DataChegada">Data de Chegada:</label>
+                                    <label for="localizacao_mercadoria_id">Loc. Mercadoria</label>
                                     <div class="input-group">
                                         <div class="input-group-prepend">
-                                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                            <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
                                         </div>
-                                        <x-input type="date" name="DataChegada" class="form-control rounded-md shadow-sm" value="{{ old('DataChegada') }}" />
-                                        @error('DataChegada')
+                                        <select name="localizacao_mercadoria_id" id="localizacao_mercadoria_id" class="form-control rounded-md shadow-sm">
+                                            <option value="" disabled selected>Selecionar</option>
+                                            @foreach($localizacoes as $localizacao)
+                                                <option value="{{ $localizacao->id }}" {{ old('localizacao_mercadoria_id') == $localizacao->id ? 'selected' : '' }}>
+                                                    {{ $localizacao->codigo }} - {{ $localizacao->descricao }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('localizacao_mercadoria_id')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -432,8 +461,34 @@
                                         @enderror
                                     </div>
                                 </div>
-
                             </div> 
+                            <div class="row">
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="DataPartida">Data de Partida:</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                        </div>
+                                        <x-input type="date" name="DataPartida" class="form-control rounded-md shadow-sm" value="{{ old('DataPartida') }}" />
+                                        @error('DataPartida')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="DataChegada">Data de Chegada:</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                        </div>
+                                        <x-input type="date" name="DataChegada" class="form-control rounded-md shadow-sm" value="{{ old('DataChegada') }}" />
+                                        @error('DataChegada')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
                             <hr>
                             <span style="color: red;">Dados Financeiros & Contabilísticos</span>
                             
@@ -451,7 +506,7 @@
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                <div class="form-group mt-4 col-md-4">
+                                <div class="form-group mt-4 col-md-3">
                                     <label for="codigo_banco">Código do Banco
                                     <span class="text-danger" title="Campo obrigatório">*</span>
                                     </label>
@@ -464,6 +519,20 @@
                                         @endforeach
                                     </select>
                                     @error('codigo_banco')
+                                        <div class="text-danger">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="form-group mt-4 col-md-3">
+                                    <label for="condicao_pagamento_id">Condição de Pagamento</label>
+                                    <select name="condicao_pagamento_id" id="condicao_pagamento_id" class="form-control" aria-label="Selecionar condição de pagamento">
+                                        <option value="" disabled selected>Selecione</option>
+                                        @foreach($condicoes_pagamento as $condicao)
+                                            <option value="{{ $condicao->id }}" {{ old('condicao_pagamento_id') == $condicao->id ? 'selected' : '' }}>
+                                                {{ $condicao->descricao }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('condicao_pagamento_id')
                                         <div class="text-danger">{{ $message }}</div>
                                     @enderror
                                 </div>

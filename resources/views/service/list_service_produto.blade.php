@@ -1,5 +1,11 @@
 <x-app-layout>
-    <div class="py-12">
+
+    <x-breadcrumb :items="[
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Serviços / Produtos', 'url' => route('produtos.index')]
+    ]" separator="/" />
+
+    <div class="" style="padding: 10px;">
 
         <div class="card">
             <div class="card-header">
@@ -94,14 +100,23 @@
                             @foreach($products as $product)
                             <tr id="productRow_{{ $product->id }}" >
                                 <td>
+                                    <!-- Verificar se o produto está associado a alguma fatura -->
+                                    @php
+                                        $isLinkedToInvoice = $product->salesLines()->exists();
+                                    @endphp
+                                    <!-- Botões de ação: Editar, Excluir, Ver Detalhes -->
+
                                     <a href="{{ route('produtos.edit', $product->id) }}" style='margin:5px;' title="Editar Produto">
                                             <i class="fas fa-edit"></i>
                                     </a>
-                                    <a onclick="deleteProduct({{ $product->id }})" data-id="{{ $product->id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
-                                        <i class="fas fa-trash" style="color: salmon;"></i>
-                                    </a>
-                                    <a href="">
-                                        <i class="fas fa-eye" style="color: lightseagreen;"></i>
+                                    <!-- Desabilitar o botão de exclusão se o produto estiver associado a uma fatura -->
+                                    @if(!$isLinkedToInvoice)
+                                        <a onclick="deleteProduct({{ $product->id }})" data-id="{{ $product->id }}" type="button" data-toggle="modal" data-target="#exampleModalCentered" title="Excluir Produto">
+                                            <i class="fas fa-trash" style="color: salmon;"></i>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('produtos.show', $product->id) }}" class="btn btn-sm btn-default" title="Ver Detalhes do Produto">
+                                        <i class="fas fa-info-circle"></i> Detalhes
                                     </a>
                                 </td>
                                 <td>{{ $product->ProductType }} | {{ $product->ProductCode }}</td>
@@ -110,6 +125,23 @@
                                 <td>{{ number_format(floatval($product->venda_sem_iva), 2, ',','.') }} Kz</td>
                                 <td>{{ number_format(floatval($product->imposto), 2, ',','.') }} %</td>
                                 <td>{{ number_format(floatval($product->venda), 2, ',','.') }} Kz</td>
+                                <td>
+                                    @if($product->status == 1) 
+                                        <!-- Produto Ativo: botão para desativar -->
+                                        <a href="{{ route('toggle.produto', $product->id) }}" 
+                                        class="btn btn-sm btn-danger" 
+                                        title="Desativar Produto">
+                                            <i class="fas fa-toggle-off"></i> Desativar
+                                        </a>
+                                    @else
+                                        <!-- Produto Inativo: botão para ativar -->
+                                        <a href="{{ route('toggle.produto', $product->id) }}" 
+                                        class="btn btn-sm btn-success" 
+                                        title="Ativar Produto">
+                                            <i class="fas fa-toggle-on"></i> Ativar
+                                        </a>
+                                    @endif
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>

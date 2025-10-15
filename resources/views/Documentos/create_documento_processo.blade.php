@@ -44,13 +44,15 @@
 
 <x-app-layout>
     <x-breadcrumb :items="[
-            ['name' => 'Dashboard', 'url' => route('dashboard')],
-            ['name' => 'Facturação', 'url' => route('documentos.index')],
-            ['name' => 'Emitir Documento Processo ', 'url' => '']
-        ]" separator="/" />
+        ['name' => 'Dashboard', 'url' => route('dashboard')],
+        ['name' => 'Processos', 'url' => route('processos.index')],
+        ['name' => 'Visualizar Processo', 'url' => route('processos.show', $processo->id)],
+        ['name' => 'Emitir Factura do Processo ', 'url' => route('documentos.create', ['processo_id' => $processo->id])]
+    ]" separator="/" />
+
     <form action="{{ route('documentos.store') }}" method="POST">
         @csrf
-        <input type="hidden" name="processo_id" value="{{ $licenciamento->id }}">
+        <input type="hidden" name="processo_id" value="{{ $processo->id }}">
         <div class="col-md-12">
             <div class="row hfluid">
                 <!-- Documentos -->
@@ -77,9 +79,9 @@
 
                                 <div class="flex float-right">
                                     <label for="customer_id">Cliente:</label>
-                                    <p>{{ $licenciamento->cliente->CustomerTaxID }}</p>
-                                    {{ $licenciamento->cliente->CompanyName }}
-                                    <input type="hidden" name="customer_id" id="cliente_choose" value="{{ $licenciamento->cliente->id }}" >
+                                    <p>{{ $processo->cliente->CustomerTaxID }}</p>
+                                    {{ $processo->cliente->CompanyName }}
+                                    <input type="hidden" name="customer_id" id="cliente_choose" value="{{ $processo->cliente->id }}" >
                                 </div>
                             </div>
                         </div>
@@ -310,7 +312,7 @@
 
                     <div class="form-group">
                         <label for="edit-product-name">Nome do Produto/Serviço</label>
-                        <input type="text" class="form-control" id="edit-product-name" name="edit-product-name" placeholder="Nome do produto/serviço" value="Licenciamento {{ $licenciamento->codigo_licenciamento }}" disabled>
+                        <input type="text" class="form-control" id="edit-product-name" name="edit-product-name" placeholder="Nome do produto/serviço" value="Processo {{ $processo->id }}" disabled>
                     </div>
 
                     <div class="form-group">
@@ -452,7 +454,7 @@
             $editProductModal.css('right', '0');
         }
 
-        openEditModal(); // Como carregar o licenciamento como parametro
+        openEditModal(); // Como carregar o processo como parametro
 
         // Função para fechar todos os modais
         function closeAllModals() {

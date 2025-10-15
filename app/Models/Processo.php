@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Models\Audit;
 
 class Processo extends Model implements Auditable
 {
@@ -68,6 +69,11 @@ class Processo extends Model implements Auditable
         'rsm_num',
         'certificado_origem',
         'guia_exportacao',
+        'vinheta',
+        'porto_desembarque_id',
+        'localizacao_mercadoria_id',
+        'condicao_pagamento_id',
+        'observacoes',
     ];
 
     protected $dates = [
@@ -78,7 +84,7 @@ class Processo extends Model implements Auditable
     ];
 
     /**
-     * Configurar a tabela dinamicamente.
+     * Configurar a tabela dinamicamente. 
      *
      * @param string $table
      * @return void
@@ -108,6 +114,34 @@ class Processo extends Model implements Auditable
             if ($processo->getTable() === 'processos') {
                 $processo->NrProcesso = self::generateNewProcesso($processo->empresa_id);
             }
+
+            // Evento executado após criar um novo registro
+            // Você pode usar este espaço para adicionar lógica adicional, como enviar notificações, etc.
+            // Exemplo: Notificar o administrador sobre a criação de um novo processo, Inserir na tabela de histórico, Autitar, etc.
+            
+            // Inserir na tabela de auditoria
+            Audit::create([
+                'user_type'      => Auth::user()->roles->pluck('name')->first() ?? 'sem-perfil',
+                'user_id'        => Auth::id(),
+                'event'          => 'novo_processo',
+                'new_values'     => ['message' => 'Usuário registrou um novo processo '. $processo->NrProcesso],
+                'url'            => request()->fullUrl(),
+                'ip_address'     => request()->ip(),
+                'user_agent'     => request()->header('User-Agent'),
+                'auditable_type' => get_class(Auth::user()),
+                'auditable_id'   => Auth::id(),
+            ]);
+
+            // Log do Laravel
+            Log::info('Novo processo criado', [
+                'NrProcesso' => $processo->NrProcesso,
+                'user_id'    => Auth::id(),
+                'empresa_id' => $processo->empresa_id,
+                'data'       => now(),
+            ]);
+
+            // (Opcional) Enviar email de notificação
+            // Mail::to(config('app.admin_email'))->send(new NovoProcessoCriadoMail($processo));
         });
 
         static::updating(function ($processo) {
@@ -124,6 +158,32 @@ class Processo extends Model implements Auditable
             if ($processo->Estado === 'concluido' && $processo->isDirty('Estado')) {
                 throw new \Exception('Não é permitido alterar o estado de um processo concluído.');
             }
+
+            // Capturar as alterações feitas no modelo
+            $alteracoes = $processo->getDirty(); // só os campos alterados
+            $originais  = $processo->getOriginal(); // valores antigos
+
+            // Montar os valores para guardar no audit
+            $detalhes = [];
+            foreach ($alteracoes as $campo => $valorNovo) {
+                $detalhes[$campo] = [
+                    'antes' => $originais[$campo] ?? null,
+                    'depois' => $valorNovo
+                ];
+            }
+
+            Audit::create([
+                'user_type'      => Auth::user()->roles->pluck('name')->first() ?? 'sem-perfil',
+                'user_id'        => Auth::id(),
+                'event'          => 'Actualização do Processo ' . $processo->NrProcesso,
+                'old_values'     => $originais, // opcional, podes guardar tudo
+                'new_values'     => $detalhes,  // só campos alterados
+                'url'            => request()->fullUrl(),
+                'ip_address'     => request()->ip(),
+                'user_agent'     => request()->header('User-Agent'),
+                'auditable_type' => get_class($processo),
+                'auditable_id'   => $processo->id,
+            ]);
 
         });
         
@@ -395,5 +455,37 @@ class Processo extends Model implements Auditable
             $this->honorario_iva ?? 0.00,
             $this->orgaos_ofiais ?? 0.00,
         ]);
+    }
+
+    public function portoDesembarque()
+    {
+        return $this->belongsTo(Porto::class, 'porto_desembarque_id', 'id');
+    }
+
+    /**
+     * Local de Armazenamento da Mercadoria
+     */
+    public function localizacaoMercadoria()
+    {
+        return $this->belongsTo(MercadoriaLocalizacao::class, 'localizacao_mercadoria_id');
+    }
+
+    /**
+     * Lista apenas os campos não preenchidos
+     *
+     * @param array $camposImportantes
+     * @return array
+     */
+    public function getCamposNaoPreenchidos(array $camposImportantes)
+    {
+        $naoPreenchidos = [];
+
+        foreach ($camposImportantes as $campo => $label) {
+            if (empty($this->$campo)) {
+                $naoPreenchidos[$campo] = $label;
+            }
+        }
+
+        return $naoPreenchidos;
     }
 }

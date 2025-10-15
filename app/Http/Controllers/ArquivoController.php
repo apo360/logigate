@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\DocumentoAduRequest;
 use App\Models\DocumentosAduaneiros;
+use App\Models\EmpresaUser;
 use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Illuminate\Support\Facades\Storage;
@@ -20,23 +21,29 @@ class ArquivoController extends Controller
     /**
      * Display a listing of the resource.
      */
+
+    protected $bucket = 'logigate-arquivos-aduaneiro';
+
+    protected $s3Client;
+
+    public function __construct()
+    {
+        // Inicializar o cliente S3
+        $this->s3Client = new S3Client([
+            'version' => 'latest',
+            'region'  => 'us-east-1', // A região do seu bucket S3
+        ]);
+    }
+
     public function index()
     {
         // Obter o nome do usuário autenticado
         $username = Auth::user()->empresas->first()->conta;
-        
-        // Inicializar o cliente S3
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1', // A região do seu bucket S3
-        ]);
-
-        $bucket = 'logigate-docs'; // Nome do bucket
 
         try {
             // Listar as pastas e sub-pastas dentro de 'Despachantes/{empresaId}'
-            $result = $s3Client->listObjectsV2([
-                'Bucket' => $bucket,
+            $result = $this->s3Client->listObjectsV2([
+                'Bucket' => $this->bucket,
                 'Prefix' => "Despachantes/$username/",
                 'Delimiter' => '/',
             ]);
@@ -64,8 +71,6 @@ class ArquivoController extends Controller
                 ];
             }, $files));
 
-            
-
             // Retornar a view com os itens
             return view('arquivos.index', compact('items'));
         } catch (\Exception $e) {
@@ -91,14 +96,6 @@ class ArquivoController extends Controller
             'files' => 'required',
             'pasta_raiz' => 'required'
         ]);
-
-        // Inicializar o cliente S3
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1',
-        ]);
-
-        $bucket = 'logigate-docs';
         
         $pastaRaiz = $request->input('pasta_raiz');
 
@@ -106,8 +103,8 @@ class ArquivoController extends Controller
             $filePath = 'Despachantes/' . $pastaRaiz . '/' . $file->getClientOriginalName();
 
             try {
-                $s3Client->putObject([
-                    'Bucket' => $bucket,
+                $this->s3Client->putObject([
+                    'Bucket' => $this->bucket,
                     'Key'    => $filePath,
                     'SourceFile' => $file->getPathname(),
                 ]);
@@ -198,18 +195,10 @@ class ArquivoController extends Controller
         // Obter o nome do usuário autenticado
         $username = Auth::user()->empresas->first()->conta;
 
-        // Inicializar o cliente S3
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1', // A região do seu bucket S3
-        ]);
-
-        $bucket = 'logigate-docs'; // Nome do bucket
-
         try {
             // Listar o conteúdo da pasta selecionada
-            $result = $s3Client->listObjectsV2([
-                'Bucket' => $bucket,
+            $result = $this->s3Client->listObjectsV2([
+                'Bucket' => $this->bucket,
                 'Prefix' => "Despachantes/$username/$arquivo/",
             ]);
 
@@ -221,6 +210,32 @@ class ArquivoController extends Controller
         }
     }
 
+    /**
+     * Criar a Pasta Principal do Cliente na Pasta Despachantes.
+     */
+    public function createMasterFolder($empresa_id)
+    {
+        // Obter a conta da empresa
+        $empresa = EmpresaUser::where('empresa_id', $empresa_id)->first();
+        $conta = $empresa->conta;
+
+        try {
+            $this->s3Client->putObject([
+                'Bucket' => $this->bucket,
+                'Key'    => "Despachantes/$conta/",
+                'Body'   => "", // Corpo vazio para simular uma pasta
+            ]);
+
+            return redirect()->back()->with('success', 'Pasta Raiz criada com sucesso.');
+        } catch (AwsException $e) {
+            return redirect()->back()->with('error', 'Erro ao criar a pasta Raiz: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show the form for creating a new folder.
+     */
+     
     public function PastaView($dir = null){
         return view('arquivos.criar_pasta', compact('dir'));
     }
@@ -235,21 +250,13 @@ class ArquivoController extends Controller
         $nomePasta = $request->input('nome_pasta');
         $pastaRaiz = $request->input('pasta_raiz');
 
-        // Inicializar o cliente S3
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1', // A região do seu bucket S3
-        ]);
-
-        $bucket = 'logigate-docs'; // Nome do bucket
-
         // Criar o caminho completo da pasta, incluindo a raiz e o nome da pasta
         $caminhoCompleto = 'Despachantes/' . rtrim($pastaRaiz, '/') . '/' . rtrim($nomePasta, '/') . '/';
 
         try {
             // Criando a "pasta" no S3
-            $result = $s3Client->putObject([
-                'Bucket' => $bucket,
+            $result = $this->s3Client->putObject([
+                'Bucket' => $this->bucket,
                 'Key'    => $caminhoCompleto, // Garante que termina com '/'
                 'Body'   => "", // Corpo vazio para simular uma pasta
             ]);
@@ -284,16 +291,10 @@ class ArquivoController extends Controller
      */
     public function destroy($arquivo)
     {
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1',
-        ]);
-    
-        $bucket = 'logigate-docs';
     
         try {
-            $s3Client->deleteObject([
-                'Bucket' => $bucket,
+            $this->s3Client->deleteObject([
+                'Bucket' => $this->bucket,
                 'Key'    => $arquivo,
             ]);
     
@@ -305,16 +306,9 @@ class ArquivoController extends Controller
 
     public function download($key)
     {
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1',
-        ]);
-
-        $bucket = 'logigate-docs';
-
         try {
-            $result = $s3Client->getObject([
-                'Bucket' => $bucket,
+            $result = $this->s3Client->getObject([
+                'Bucket' => $this->bucket,
                 'Key'    => $key,
             ]);
 
@@ -328,21 +322,15 @@ class ArquivoController extends Controller
 
     public function visualizar($key)
     {
-        $s3Client = new S3Client([
-            'version' => 'latest',
-            'region'  => 'us-east-1',
-        ]);
-
-        $bucket = 'logigate-docs';
 
         try {
             // Gerar URL assinada para o arquivo
-            $cmd = $s3Client->getCommand('GetObject', [
-                'Bucket' => $bucket,
+            $cmd = $this->s3Client->getCommand('GetObject', [
+                'Bucket' => $this->bucket,
                 'Key'    => $key,
             ]);
-            $request = $s3Client->createPresignedRequest($cmd, '+20 minutes'); // URL válida por 20 minutos
-    
+            $request = $this->s3Client->createPresignedRequest($cmd, '+20 minutes'); // URL válida por 20 minutos
+
             $presignedUrl = (string)$request->getUri();
 
         return redirect($presignedUrl);

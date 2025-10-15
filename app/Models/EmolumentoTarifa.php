@@ -13,6 +13,7 @@ class EmolumentoTarifa extends Model
     protected $table = 'emolumento_tarifas';
 
     protected $fillable = [
+        'processo_id',
         'direitos',
         'emolumentos',
         'porto',
@@ -41,7 +42,7 @@ class EmolumentoTarifa extends Model
      */
     public function processo()
     {
-        return $this->belongsTo(Processo::class);
+        return $this->belongsTo(Processo::class, 'processo_id');
     }
 
     /**

@@ -22,4 +22,13 @@ class SalesStatus extends Model
         'situacao',
         'documentoID',
     ];
+
+    /**
+     * Relacionamento com SalesInvoice
+     */
+    public function salesInvoice()
+    {
+        return $this->belongsTo(SalesInvoice::class, 'documentoID', 'id');
+    }
+
 }

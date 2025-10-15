@@ -12,7 +12,7 @@ class PautaAduaneira extends Model
     protected $table = 'pauta_aduaneira';
 
     protected $fillable = [
-        'codigo',
+        'codigo',  // O código na base dados está com pontos Ex: 0203.11.00
         'descricao',
         'uq',
         'rg',
@@ -31,9 +31,11 @@ class PautaAduaneira extends Model
         return $array;
     }
 
-    // Definir um Accessor para remover os pontos do código automaticamente
-    public function getCodigoSemPontosAttribute()
+    /**
+     * Relação Mercadorias com a Pauta Aduaneira
+     */
+    public function mercadorias()
     {
-        return str_replace('.', '', $this->codigo);
+        return $this->hasMany(Mercadoria::class, 'codigo_aduaneiro', 'codigo');
     }
 }

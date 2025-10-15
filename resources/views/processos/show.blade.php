@@ -337,7 +337,9 @@
                                                     <tbody>
                                                         @foreach($mercadoriasAgrupadas as $agrupamento)
                                                             <tr data-widget="expandable-table" aria-expanded="false">
-                                                                <td class="text-center fw-bold">{{ $agrupamento->codigo_aduaneiro }}</td>
+                                                                <td class="text-center fw-bold">{{ $agrupamento->codigo_aduaneiro }} <br>
+                                                                <span class="text-sm"> {{ $agrupamento->pautaAduaneira->descricao}}</span>
+                                                                </td>
                                                                 <td>{{ $agrupamento->quantidade_total }}</td>
                                                                 <td>{{ $agrupamento->peso_total }}</td>
                                                                 <td class="text-end text-warning fw-bold">{{ $agrupamento->preco_total }}</td>
@@ -446,67 +448,116 @@
             </div>
         </div>
         <div class="col-md-2">
-            <div class="card card-navy">
-                <div class="card-header">
-                    <div class="card-title">
-                        <i class="fas fa-filter"></i> <span>Comandos</span>
+            <div class="row">
+                <div class="card border-l-4 border-blue-500 shadow-lg rounded-md overflow-hidden">
+                    <div class="card-header bg-blue-500 text-white px-4 py-2 flex items-center">
+                        <div class="card-title">
+                            <i class="fas fa-filter"></i> <span>Comandos</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <ul aria-labelledby="btnGroupDrop1" class="list-unstyled mt-4">
+                            <li class="mb-2"> <a href="{{ route('mercadorias.create', ['processo_id' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                    <i class="fas fa-plus-circle"></i> {{__('Adicionar Mercadoria')}}
+                                </a> 
+                            </li>
+                            <li class="mb-2">
+                                <a class="dropdown-item btn btn-sm btn-warning" href="{{ route('processos.print', $processo->id) }}" target="_blank">
+                                    <i class="fas fa-print"></i> {{ __('Notas de Despesas') }}
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <!-- Botão para abrir o modal -->
+                                <a class="dropdown-item btn btn-sm btn-warning {{ $processo->Estado == 'finalizado' ? '' : 'disabled' }}" 
+                                href="#" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#cartaDiversaModal">
+                                    <i class="fas fa-print"></i> {{ __('Carta Diversa') }}
+                                </a>
+                            </li>
+                            <li class="mb-2"> 
+                                <a href="{{ route('processos.Extrato_mercadoria', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning" disable>
+                                    <i class="fas fa-file-download"></i> {{ __('Extrato Mercadorias') }}*
+                                </a> 
+                            </li>
+                            <li class="mb-2"> <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning" disable>
+                                    <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}*
+                                </a> 
+                            </li>
+                            <li class="mb-2"> <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                    <i class="fas fa-file-download"></i> {{ __('DU (xml)') }}
+                                </a> 
+                            </li>
+                            <li class="mb-2"> <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
+                                    <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}*
+                                </a> 
+                            </li>
+                            <hr>
+                            <li class="mb-2 border rounded" style="background-color: #A52A2A">
+                                <a href="" class="dropdown-item text-white"> <i class="fas fa-file-pdf"></i> Suspender Processo</a>
+                            </li>
+                        </ul>
+                        @if($processo->procLicenFaturas->isNotEmpty())
+                            @php
+                                $statusFatura = $processo->procLicenFaturas->last()->status_fatura;
+                            @endphp
+                            {{__('Documentos Relacionados') }}
+                            <hr>
+                            <span><a href="{{ route('documentos.show', $processo->procLicenFaturas->last()->fatura_id) }}">{{$processo->Nr_factura}}</a></span> 
+                            <!-- Encontar um formar de buscar e listar todas as facturas relacionadas com a factura original -->
+                        @else
+                            <span>Sem Fatura</span>
+                        @endif
                     </div>
                 </div>
-                <div class="card-body">
-                    <ul aria-labelledby="btnGroupDrop1" class="list-unstyled mt-4">
-                        <li class="mb-2"> <a href="{{ route('mercadorias.create', ['processo_id' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-plus-circle"></i> {{__('Adicionar Mercadoria')}}
-                            </a> 
-                        </li>
-                        <li class="mb-2">
-                            <a class="dropdown-item btn btn-sm btn-warning" href="{{ route('processos.print', $processo->id) }}" target="_blank">
-                                <i class="fas fa-print"></i> {{ __('Notas de Despesas') }}
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <!-- Botão para abrir o modal -->
-                            <a class="dropdown-item btn btn-sm btn-warning {{ $processo->Estado == 'finalizado' ? '' : 'disabled' }}" 
-                            href="#" 
-                            data-bs-toggle="modal" 
-                            data-bs-target="#cartaDiversaModal">
-                                <i class="fas fa-print"></i> {{ __('Carta Diversa') }}
-                            </a>
-                        </li>
-                        <li class="mb-2"> 
-                            <a href="{{ route('processos.Extrato_mercadoria', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning" disable>
-                                <i class="fas fa-file-download"></i> {{ __('Extrato Mercadorias') }}*
-                            </a> 
-                        </li>
-                        <li class="mb-2"> <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning" disable>
-                                <i class="fas fa-file-invoice"></i> {{ __('Emitir Factura') }}*
-                            </a> 
-                        </li>
-                        <li class="mb-2"> <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('DU (xml)') }}
-                            </a> 
-                        </li>
-                        <li class="mb-2"> <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="dropdown-item btn btn-sm btn-warning">
-                                <i class="fas fa-file-download"></i> {{ __('Licenciamento (txt)') }}*
-                            </a> 
-                        </li>
-                        <hr>
-                        <li class="mb-2 border rounded" style="background-color: #A52A2A">
-                            <a href="" class="dropdown-item text-white"> <i class="fas fa-file-pdf"></i> Suspender Processo</a>
-                        </li>
-                    </ul>
-                    @if($processo->procLicenFaturas->isNotEmpty())
-                        @php
-                            $statusFatura = $processo->procLicenFaturas->last()->status_fatura;
-                        @endphp
-                        {{__('Documentos Relacionados') }}
-                        <hr>
-                        <span><a href="{{ route('documentos.show', $processo->procLicenFaturas->last()->fatura_id) }}">{{$processo->Nr_factura}}</a></span> 
-                        <!-- Encontar um formar de buscar e listar todas as facturas relacionadas com a factura original -->
-                    @else
-                        <span>Sem Fatura</span>
-                    @endif
+
+                <div class="card border-l-4 border-red-500 shadow-lg rounded-md overflow-hidden">
+                    <!-- Header -->
+                    <div class="card-header bg-red-500 text-white px-4 py-2 flex items-center">
+                        <i class="fas fa-edit mr-2"></i> 
+                        <span class="font-bold">Campos para Preencher</span>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="card-body bg-white p-4">
+                        <h2 class="text-lg font-semibold mb-3">Campos Importantes do Processo</h2>
+
+                        <ul class="space-y-2">
+                            @php
+                                $preenchidos = 0;
+                                $total = count($camposImportantes);
+                            @endphp
+
+                            @foreach($camposImportantes as $campo => $label)
+                                @if(!empty($processo->$campo))
+                                    @php $preenchidos++; @endphp
+                                    <li class="flex items-center text-green-600">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        <span>{{ $label }}: <span class="text-gray-800">{{ $processo->$campo }}</span></span>
+                                    </li>
+                                @else
+                                    <li class="flex items-center text-red-600">
+                                        <i class="fas fa-times-circle mr-2"></i>
+                                        <span>{{ $label }}: <em class="text-gray-500">Não preenchido</em></span>
+                                    </li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="card-foot bg-gray-50 px-4 py-2 flex items-center justify-between text-sm text-gray-700">
+                        <span>Total de Campos: {{ $total }}</span>
+                        <span>Preenchidos: {{ $preenchidos }} / {{ $total }}</span>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="w-full bg-gray-200 h-2">
+                        <div class="bg-green-500 h-2" style="width: {{ ($preenchidos / $total) * 100 }}%"></div>
+                    </div>
                 </div>
             </div>
+            
         </div>
     </div>
     

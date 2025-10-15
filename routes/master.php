@@ -1,13 +1,4 @@
-<!-- // Arquivo de rotas do Administrador Master (routes/master.php):
-//
-// Este arquivo de rotas é protegido por um middleware de grupo chamado master.
-// O middleware de grupo master é definido no arquivo app/Http/Kernel.php.
-// O middleware de grupo master é um middleware personalizado chamado EnsureAdminMaster.
-// O middleware de grupo master verifica se o Administrador Master está autenticado.
-// Se o Administrador Master estiver autenticado, o middleware permite o acesso às rotas.
-// Se o Administrador Master não estiver autenticado, o middleware redireciona para a página de login.
-// O middleware de grupo master é aplicado a todas as rotas definidas neste arquivo.
-  -->
+
 <?php
 
 use App\Http\Controllers\Admin\AdminController;
@@ -15,17 +6,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\RateLimiter;
-
-// Arquivo de rotas do Administrador Master (routes/master.php):
-    //
-    // Este arquivo de rotas é protegido por um middleware de grupo chamado master.
-    // O middleware de grupo master é definido no arquivo app/Http/Kernel.php.
-    // O middleware de grupo master é um middleware personalizado chamado EnsureAdminMaster.
-    // O middleware de grupo master verifica se o Administrador Master está autenticado.
-    // Se o Administrador Master estiver autenticado, o middleware permite o acesso às rotas.
-    // Se o Administrador Master não estiver autenticado, o middleware redireciona para a página de login.
-    // O middleware de grupo master é aplicado a todas as rotas definidas neste arquivo.
-  
 
     Route::post('verify-pin', function (Request $request) {
         // Check rate limit

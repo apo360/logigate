@@ -1,8 +1,4 @@
 <x-app-layout>
-    <head>
-        <!-- Outros meta tags e links -->
-        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.css">
-    </head>
 
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],

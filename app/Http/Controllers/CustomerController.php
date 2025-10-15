@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Validators\ValidationException;
+
 
 class CustomerController extends Controller
 {
@@ -277,12 +279,38 @@ class CustomerController extends Controller
         return view('customer.conta_c', compact('cliente', 'transacoes', 'saldo'));
     }
 
-    public function import(Request $request)
+    public function CustomerImport(Request $request)
     {
-        $file = $request->file('file');
-        Excel::import(new CustomersImport, $file);
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
 
-        return back()->with('success', 'Customers Imported Successfully');
+        try {
+            $import = new CustomersImport();
+            Excel::import($import, $request->file('file'));
+
+            return response()->json([
+                'message' => 'Ficheiro importado com sucesso!',
+            ], 200);
+
+        } catch (ValidationException $e) {
+            $errors = [];
+            foreach ($e->failures() as $failure) {
+                $errors[] = "Linha {$failure->row()}: " . implode(', ', $failure->errors());
+            }
+
+            return response()->json([
+                'message' => 'Erro de validação durante a importação.',
+                'errors' => $errors,
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Erro no import: ' . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Erro ao importar o ficheiro.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function export()

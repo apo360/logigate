@@ -23,8 +23,7 @@ class MercadoriaAgrupada extends Model
     // Relacionamento com Pauta Aduaneira, removendo os pontos para comparação
     public function pautaAduaneira()
     {
-        return $this->belongsTo(PautaAduaneira::class, 'codigo_aduaneiro', 'codigo')
-                    ->whereRaw("REPLACE(codigo, '.', '') = ?", [$this->codigo_aduaneiro]);
+        return $this->belongsTo(PautaAduaneira::class, 'codigo_aduaneiro', 'codigo');
     }
 
     // Relacionamento com as mercadorias
@@ -145,6 +144,4 @@ class MercadoriaAgrupada extends Model
 
         return response()->json(['message' => 'Recalculo dos agrupamentos concluído com sucesso!']);
     }
-
-
 }

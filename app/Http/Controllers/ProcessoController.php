@@ -21,6 +21,9 @@ use App\Models\ProcessoDraft;
 use App\Models\views\ProcessosView;
 use App\Models\RegiaoAduaneira;
 use App\Models\TipoTransporte;
+use App\Models\CondicaoPagamento;
+use App\Models\MercadoriaLocalizacao;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -147,6 +150,8 @@ class ProcessoController extends Controller
         $ibans = IbanController::getBankDetails();
         $tipoTransp = TipoTransporte::all();
         $processos_drafts = ProcessoDraft::where('empresa_id', $empresa->id)->orderBy('DataAbertura', 'desc')->get();
+        $condicoes_pagamento = CondicaoPagamento::all();
+        $localizacoes = MercadoriaLocalizacao::all();
 
         // Retornar uma view com o formulário para criar um novo processo
         return view('processos.create', 
@@ -160,7 +165,9 @@ class ProcessoController extends Controller
             'portos',
             'ibans',
             'tipoTransp',
-            'processos_drafts'
+            'processos_drafts',
+            'condicoes_pagamento',
+            'localizacoes',
         ));
     }
 
@@ -187,8 +194,8 @@ class ProcessoController extends Controller
                 $rascunho = $request->input('id_rascunho');
 
                 // Verifica se o rascunho existe antes de tentar excluí-lo
-                if (ProcessoDraft::find($rascunho)) {
-                    ProcessoDraft::destroy($rascunho);
+                if (ProcessoDraft::find($rascunho)) { ProcessoDraft::destroy($rascunho); } else {
+                    Log::warning("Tentativa de excluir rascunho inexistente com ID: {$rascunho}");
                 }
             }
             /*$rascunho = $request->input('id_rascunho');
@@ -218,15 +225,27 @@ class ProcessoController extends Controller
         $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id',$processoID)->get();
 
         $pautaAduaneira = PautaAduaneira::all();
-
         $transacoes = ContaCorrente::where('cliente_id', $processo->cliente->id)->orderBy('data', 'desc')->get();
+
+        
 
         // Calcular o saldo baseado nas transações
         $saldo = $transacoes->sum(function ($transacao) {
             return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
         });
 
-        return view('processos.show', compact('processo', 'pautaAduaneira', 'mercadoriasAgrupadas', 'saldo'));
+        $camposImportantes = [
+            'estancia_id' => 'Estância Aduaneira',
+            'porto_desembarque_id' => 'Porto de Desembarque',
+            'localizacao_mercadoria_id' => 'Localização da Mercadoria',
+            'regime_aduaneiro' => 'Regime Aduaneiro',
+            'fob_total' => 'Valor FOB',
+            'Pais_origem' => 'País de Origem',
+        ];
+
+        $camposNaoPreenchidos = $processo->getCamposNaoPreenchidos($camposImportantes);
+
+        return view('processos.show', compact('processo', 'pautaAduaneira', 'mercadoriasAgrupadas', 'saldo', 'camposImportantes'));
     }
 
     /**
@@ -243,6 +262,7 @@ class ProcessoController extends Controller
         $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
         $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca os Clientes
         $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
+        $localizacoes = MercadoriaLocalizacao::all();
         
         $mercadorias = Mercadoria::where('Fk_Importacao', $processo->id)->get(); // Obtenha a relação 'mercadoria'
         $paises = Pais::all();
@@ -251,7 +271,7 @@ class ProcessoController extends Controller
             'portos',
             'ibans',
             'tipoTransp',
-            'emolumentoTarifa', 'clientes'));
+            'emolumentoTarifa', 'clientes', 'localizacoes'));
     }
 
     /**
@@ -422,8 +442,9 @@ class ProcessoController extends Controller
         }
         return redirect()->route('processos.index')->with('error', 'Processo não encontrado.');
     }
-
-    // -------------------------------   Blocos para ser eliminados ----------------------------------------
+    /**
+     * Função para calcular as tarifas e impostos
+     */
     public function tarifas()
     {
         // Lógica para calcular impostos com base nos dados do formulário
@@ -462,15 +483,7 @@ class ProcessoController extends Controller
 
         return view('processos.tarifas', compact('impostos'));
     }
-
-    public function rastreamento(){
-        return view('processos.rastreamento');
-    }
-
-    public function autorizacao(){
-
-        return view('processos.autorizacao_regulamentacao');
-    }
+    // -------------------------------   Blocos para ser eliminados ---------------------------------------- //
 
     public function atualizarCodigoAduaneiro(Request $request)
     {
@@ -492,8 +505,6 @@ class ProcessoController extends Controller
         return redirect()->back()->with('success', 'Códigos aduaneiros atualizados com sucesso!');
     }
 
-    // -------------------------------   */Blocos para ser eliminados/* ---------------------------------------- //
-
     public function getProcessesByIdAndStatus($ProcessoId, $status)
     {
         // Find processes with the specified customer ID and status
@@ -508,6 +519,8 @@ class ProcessoController extends Controller
         ]);
     }
 
+    // -------------------------------   */Blocos para ser eliminados/* ---------------------------------------- //
+
     /**
      * Metodo para imprimir Nota de Despesas do Processo
      */
@@ -520,6 +533,8 @@ class ProcessoController extends Controller
         $input = base_path('reports/nota_despesa.jrxml'); // Certifique-se de que este arquivo existe
         $output = base_path('reports');
 
+        $logoPath = public_path('logos/' . Auth::user()->empresas->first()->Logotipo);
+
         $params = [
             'Empresa' => Auth::user()->empresas->first()->Empresa,
             'Designacao' => 'Despachante Oficial',
@@ -528,7 +543,7 @@ class ProcessoController extends Controller
             'P_user' => Auth::user()->name,
             'Endereco_completo' => Auth::user()->empresas->first()->Endereco_completo  ?? '',
             'Provincia' => Auth::user()->empresas->first()->provincia->Nome  ?? '',
-            'logotipo' => Auth::user()->empresas->first()->Logotipo,
+            'logotipo' => $logoPath,
 
             // Cliente
             'Cliente' => $processo->cliente->CompanyName  ?? '',
@@ -686,7 +701,8 @@ class ProcessoController extends Controller
             'ProcessoID' => $processo->id,
             'saldo' => $saldoClienteAnterior,
             'saldoActual' => $saldoClienteActual,
-            'descricao' => $descricaoValorPagar
+            'descricao' => $descricaoValorPagar,
+            'logotipo' => Auth::user()->empresas->first()->Logotipo,
         ];
 
         $jasper = new PHPJasper();
@@ -777,14 +793,14 @@ class ProcessoController extends Controller
     public function gerarXML($ProcessoID)
     {
         // Obter informações do processo
-        $processo = Processo::where('id', $ProcessoID)->first();
+        $processo = Processo::with('exportador', 'mercadorias')->where('id', $ProcessoID)->first();
 
         if (!$processo) {
             return response()->json(['error' => 'Processo não encontrado'], 404);
         }
 
         // Criar o XML com cabeçalho UTF-8
-        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"  standalone="no"?><ASYCUDA></ASYCUDA>');
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8" standalone="no"?><ASYCUDA></ASYCUDA>');
 
         // Adicionar identificação
         $this->adicionarIdentificacaoXML($xml, $processo);
@@ -792,30 +808,30 @@ class ProcessoController extends Controller
         // Traders
         $trader = $xml->addChild('Traders');
 
-            // Exportador
-            $exporter = $trader->addChild('Exporter');
-            $exporter->addChild('Exporter_code', optional($processo->exportador)->ExportadorTaxID ?? '');
-            $exporter->addChild('Exporter_name', htmlspecialchars(optional($processo->exportador)->Exportador ?? 'N/D'));
+        // Exportador
+        $exporter = $trader->addChild('Exporter');
+        $exporter->addChild('Exporter_code', optional($processo->exportador)->ExportadorTaxID ?? '');
+        $exporter->addChild('Exporter_name', htmlspecialchars(optional($processo->exportador)->Exportador ?? 'N/D'));
 
-            // Consignee (Destinatário)
-            $consignee = $trader->addChild('Consignee');
-            $consignee->addChild('Consignee_code', optional($processo->cliente)->CustomerTaxID ?? 'N/D');
-            $consignee->addChild('Consignee_name', optional($processo->cliente)->CompanyName ?? 'N/D');
+        // Consignee (Destinatário)
+        $consignee = $trader->addChild('Consignee');
+        $consignee->addChild('Consignee_code', optional($processo->cliente)->CustomerTaxID ?? 'N/D');
+        $consignee->addChild('Consignee_name', optional($processo->cliente)->CompanyName ?? 'N/D');
 
-            // Financeiro
-            $financial = $trader->addChild('Financial');
-            $financial->addChild('Financial_code');
-            $financial->addChild('Financial_name');
+        // Financeiro
+        $financial = $trader->addChild('Financial');
+        $financial->addChild('Financial_code');
+        $financial->addChild('Financial_name');
 
         // Declarant
         $declarant = $xml->addChild('Declarant');
-            $empresa = Auth::user()->empresas->first();
-            $declarant->addChild('Declarant_code', $empresa->Cedula);
-            $declarant->addChild('Declarant_name', "{$empresa->Empresa} {$empresa->Endereco_completo}");
-            $declarant->addChild('Declarant_representative', $empresa->Empresa);
+        $empresa = Auth::user()->empresas->first();
+        $declarant->addChild('Declarant_code', $empresa->Cedula);
+        $declarant->addChild('Declarant_name', "{$empresa->Empresa} {$empresa->Endereco_completo}");
+        $declarant->addChild('Declarant_representative', $empresa->Empresa);
 
-            $reference = $declarant->addChild('Reference');
-            $reference->addChild('Number', 463);
+        $reference = $declarant->addChild('Reference');
+        $reference->addChild('Number', $processo->vinheta); // Número de referência do processo este campo deve ser unico e não nulo no XML do asyscuda
 
         // Adicionar outras seções do XML
         $this->adicionarInformacoesGeraisXML($xml, $processo);
@@ -825,7 +841,7 @@ class ProcessoController extends Controller
         // $this->adicionarContainerXML($xml, $processo);
 
         // Buscar Mercadorias Agrupadas
-        $mercadoriasAgrupadas = MercadoriaAgrupada::with('pautaAduaneira')->where('processo_id', $ProcessoID)->get();
+        $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id', $ProcessoID)->get();
 
         // Verifica se existem mercadorias antes de tentar adicionar
         if ($mercadoriasAgrupadas->isEmpty()) {
@@ -834,6 +850,7 @@ class ProcessoController extends Controller
 
         // Adicionar cada mercadoria como Item no XML
         foreach ($mercadoriasAgrupadas as $mercadoria) {
+            // dd($mercadoriasAgrupadas);
             $this->adicionarItemXML($xml, $mercadoria, $processo);
         }
 
@@ -841,7 +858,7 @@ class ProcessoController extends Controller
         $xml->addChild('Vehicle_List');
 
         // Caminho do Arquivo XML Gerado
-        $fileName = 'processo_' . $processo->id . '.xml';
+        $fileName = 'processo_'.$processo->NrProcesso.'_'.Carbon::now()->format('d_m_y_Hms'). '.xml';
         $filePath = storage_path("app/public/{$fileName}");
 
         // Salvar XML no Servidor
@@ -888,7 +905,7 @@ class ProcessoController extends Controller
         $receipt->addChild('Date');
     }
 
-    private function adicionarItemXML($xml, $mercadoria, $processo)
+    private function adicionarItemXML($xml, $mercadoriaP, $processo)
     {
         $item = $xml->addChild('Item');
 
@@ -896,49 +913,48 @@ class ProcessoController extends Controller
         $attachedDocs = $item->addChild('Attached_documents');
         $attachedDocs->addChild('Attached_document_code', '403');
         $attachedDocs->addChild('Attached_document_name', 'Factura (s) Comercial Definitiva / Declaração de Valores');
-        $attachedDocs->addChild('Attached_document_reference', $processo
-        ->documento_referencia);
+        $attachedDocs->addChild('Attached_document_reference', $processo->documento_referencia);
         $attachedDocs->addChild('Attached_document_from_rule', '1');
-        $attachedDocs->addChild('Attached_document_date', date('m/d/y', strtotime($mercadoria->data_documento)));
+        $attachedDocs->addChild('Attached_document_date', date('m/d/y', strtotime($processo->data_documento)));
 
         // Pacotes
         $packages = $item->addChild('Packages');
-        $packages->addChild('Number_of_packages', $mercadoria->numero_pacotes);
-        $packages->addChild('Marks1_of_packages', $mercadoria->Descricao);
-        $packages->addChild('Marks2_of_packages', $mercadoria->marcacao_pacotes_2);
+        $packages->addChild('Number_of_packages', count($mercadoriaP->mercadorias));
+        $packages->addChild('Marks1_of_packages', $mercadoriaP->Descricao);
+        //$packages->addChild('Marks2_of_packages', $mercadoria->marcacao_pacotes_2);
         $packages->addChild('Kind_of_packages_code', 'PK');
         $packages->addChild('Kind_of_packages_name', 'Volumes n.e.');
 
         // Incoterms
         $incoTerms = $item->addChild('IncoTerms');
         $incoTerms->addChild('Code', 'CIF');
-        $incoTerms->addChild('Place', $processo->cif);
+        $incoTerms->addChild('Place', $processo->Moeda.': '.$processo->cif);
 
         // Tarifação
         $tarification = $item->addChild('Tarification');
             $hscode = $tarification->addChild('HScode');
-            $hscode->addChild('Commodity_code', $mercadoria->codigo_aduaneiro);
+            $hscode->addChild('Commodity_code', $mercadoriaP->codigo_aduaneiro);
             $hscode->addChild('Precision_1', '00');
-        $tarification->addChild('Item_price', $mercadoria->preco_total);
-
-        $tarification->addChild('Extended_customs_procedure', '4100');
-        $tarification->addChild('National_customs_procedure', '000');
+            $tarification->addChild('Extended_customs_procedure', '4100');
+            $tarification->addChild('National_customs_procedure', '000');
+            $tarification->addChild('Item_price', $mercadoriaP->preco_total);
+            $tarification->addChild('Valuation_method_code');
+            $tarification->addChild('Value_item');
 
         // Descrição da Mercadoria
         $descricao = $item->addChild('Goods_description');
-        $descricao->addChild('Country_of_origin_code', $mercadoria->pais_origem);
-        $descricao->addChild('Description_of_goods', $mercadoria->Descricao);
-        $descricao->addChild('Commercial_Description', $mercadoria->Descricao);
+        $descricao->addChild('Country_of_origin_code', $processo->paisOrigem->codigo);
+        $descricao->addChild('Commercial_Description', $mercadoriaP->pautaAduaneira->descricao);
 
         // Licença
         $licenca = $item->addChild('Licence');
-        $licenca->addChild('Licence_number', $mercadoria->numero_licenca);
+        $licenca->addChild('Licence_number', $mercadoriaP->numero_licenca);
 
         // Peso e CIF
         $valuation = $item->addChild('Valuation_item');
-        $weight = $valuation->addChild('Weight_itm');
-        $weight->addChild('Gross_weight_itm', $mercadoria->peso_bruto);
-        $weight->addChild('Net_weight_itm', $mercadoria->peso_bruto);
+        $weight = $valuation->addChild('Weight_item');
+        $weight->addChild('Gross_weight_item', $mercadoriaP->peso_total);
+        $weight->addChild('Net_weight_item', $mercadoriaP->peso_total);
     }
 
     function adicionarInformacoesGeraisXML($xml, $processo)
@@ -958,8 +974,8 @@ class ProcessoController extends Controller
 
         // Destination
         $destination = $country->addChild('Destination');
-        $destination->addChild('Destination_country_code', $processo->paisDestino->codigo ?? 'AO');
-        $destination->addChild('Destination_country_name', $processo->paisDestino->pais ?? 'Angola');
+        $destination->addChild('Destination_country_code', 'AO');
+        $destination->addChild('Destination_country_name', 'Angola');
         $destination->addChild('Destination_country_region');
 
         $country->addChild('Country_of_origin_name', $processo->paisOrigem->pais ?? '');
@@ -983,12 +999,12 @@ class ProcessoController extends Controller
         // Departure/Arrival Information
         $departureArrival = $meansOfTransport->addChild('Departure_arrival_information');
         $departureArrival->addChild('Identity', $processo->registo_transporte ?? '');
-        $departureArrival->addChild('Nationality', $processo->nacionalidadeNavio->pais ?? '');
+        $departureArrival->addChild('Nationality', $processo->nacionalidadeNavio->codigo ?? '');
 
         // Border Information
         $borderInfo = $meansOfTransport->addChild('Border_information');
         $borderInfo->addChild('Identity', $processo->registo_transporte ?? '');
-        $borderInfo->addChild('Nationality', $processo->nacionalidadeNavio->pais ?? '');
+        $borderInfo->addChild('Nationality', $processo->nacionalidadeNavio->codigo ?? '');
         $borderInfo->addChild('Mode', $processo->TipoTransporte ?? '1');
 
         // Inland Mode of Transport
@@ -1003,19 +1019,19 @@ class ProcessoController extends Controller
         $deliveryTerms->addChild('Place', $processo->Moeda.': '.$processo->cif ?? '');
         $deliveryTerms->addChild('Situation');
 
-        // Border Office
+        // Border Office -> Posto de Fronteira
         $borderOffice = $transport->addChild('Border_office');
         $borderOffice->addChild('Code', $processo->estancia->cod_estancia ?? '');
         $borderOffice->addChild('Name', $processo->estancia->desc_estancia ?? '');
 
         // Place of Loading
-        $placeOfLoading = $transport->addChild('Place_of_loading');
-        $placeOfLoading->addChild('Code', $processo->paisDestino->codigo. $processo->PortoOrigem ?? 'AOLAD');
-        $placeOfLoading->addChild('Name', $processo->PortoOrigem ?? 'Luanda');
+        $placeOfLoading = $transport->addChild('Place_of_loading'); // Place of Loading -> Porto de Desembarque
+        $placeOfLoading->addChild('Code', $processo->portoDesembarque->pais->codigo ?? 'AO'.$processo->portoDesembarque->sigla  ?? 'LDA');
+        $placeOfLoading->addChild('Name', $processo->portoDesembarque->porto ?? 'Luanda');
         $placeOfLoading->addChild('Country');
 
-        // Location of Goods
-        $transport->addChild('Location_of_goods', '');
+        // Location of Goods -> Local de Armazenamento
+        $transport->addChild('Location_of_goods', $processo->localizacaoMercadoria->codigo);
     }
 
     function adicionarInformacoesFinanceirasXML($xml, $processo)

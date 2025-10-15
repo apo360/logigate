@@ -63,7 +63,7 @@
                     </div>
 
                     <div class="wizard-navigation flex justify-between mb-4">
-                        <a href="#cedula" class="step active" data-step="1">
+                        <a href="#step_cedula" class="step active" data-step="1">
                             <div class="icon-circle bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">
                                 <i class="fas fa-user"></i>
                             </div>
@@ -95,14 +95,22 @@
                         </a>
                     </div>
 
+                    <input type="hidden" name="plano_id" value="1">
+                    <input type="hidden" name="modalidade_pagamento" value="Mensal">
+
                     <div class="wizard-content">
-                        <div id="cedula" class="step-content active">
+                        <div id="step_cedula" class="step-content active">
                             <h5 class="text-lg font-semibold mb-4">Por favor, Valide o seu Nº de Cedula.</h5>
                             <div class="mb-4">
 								<div>
 									<label for="cedula" class="block text-sm font-medium text-gray-700">Nº Cedula <small>(required)</small></label>
 									<input type="text" name="cedula" id="cedula" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Introduza o numero da cedula do despachante">
-									<p id="cedula-error" class="text-sm text-red-500 hidden mt-2">Por favor, preencha o número da cédula.</p>
+									<p id="cedula-error" class="text-sm text-red-500 hidden mt-2"></p>
+                                    <div id="cedula-match-icon" class="mt-2 flex items-center hidden">
+                                        <i class="fas fa-check text-green-500 hidden"></i>
+                                        <i class="fas fa-times text-red-500 hidden"></i>
+                                    </div>
+                                    <p id="cedula-match-error" class="text-sm mt-2"></p>
 								</div>
 							</div>
                             <h5 class="text-lg font-semibold mb-4">Designação (Escolha apenas um)</h5>
@@ -127,10 +135,10 @@
                             <h5 class="text-lg font-semibold mb-4">Dados do despachante.</h5>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <div class="picture-container">
-                                        <div class="picture w-24 h-24 rounded-full overflow-hidden">
-                                            <img src="ly_login/img/default-avatar.jpg" class="w-full h-full object-cover" id="wizardPicturePreview">
-                                            <input type="file" id="wizard-picture" name="logotipo" class="hidden">
+                                    <div class="picture-container center" style="cursor: pointer;" id="wizardPictureContainer">
+                                        <div class="picture w-24 h-24 rounded-full overflow-hidden border border-gray-300" tabindex="0" aria-label="Escolher logotipo">
+                                            <img src="ly_login/img/default-avatar.jpg" class="w-full h-full object-cover" id="wizardPicturePreview" alt="Prévia do logotipo">
+                                            <input type="file" id="wizard-picture" name="logotipo" class="hidden" accept="image/*" aria-label="Selecionar logotipo">
                                         </div>
                                         <h6 class="text-sm text-center mt-2">Escolher logotipo</h6>
                                     </div>
@@ -236,11 +244,12 @@
 											<input type="checkbox" name="terms" id="terms" class="form-checkbox h-4 w-4 text-blue-600" required>
 											<span class="ml-2 text-sm text-gray-700">
 												{!! __('I agree to the :terms_of_service and :privacy_policy', [
-													'terms_of_service' => '<a target="_blank" href="'.route('terms.show').'" class="underline text-blue-600 hover:text-blue-800">'.__('Terms of Service').'</a>',
-													'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="underline text-blue-600 hover:text-blue-800">'.__('Privacy Policy').'</a>',
+													'terms_of_service' => '<a target="_blank" href="'.route('terms.show').'" class="underline text-blue-600 hover:text-blue-800">'.__('Termos de Serviço').'</a>',
+													'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="underline text-blue-600 hover:text-blue-800">'.__('Políticas de Privacidade').'</a>',
 												]) !!}
 											</span>
 										</label>
+                                        <p id="terms-error" class="error-feedback text-sm text-red-500 hidden mt-2" aria-live="polite">Você deve aceitar os termos para continuar.</p>11011
 									</div>
 								@endif
 							</div>
@@ -281,30 +290,173 @@
                 $('.step').eq(step - 1).addClass('active');
             }
 
+            function validateStep(step) {
+                let valid = true;
+
+                // Limpa feedbacks anteriores
+                $('.error-feedback').addClass('hidden');
+
+                if (step === 1) {
+                    // Verificar se "Despachante oficial" está selecionado
+                    const isDespachanteOficial = $('input[name="Designacao"]:checked').val() === 'Despachante Oficial';
+                    if (isDespachanteOficial) {
+                        // Cedula
+                        const cedula = $('#cedula').val().trim();
+                        if (!cedula) {
+                            $('#cedula-error').text('Por favor, preencha o número da cédula.').removeClass('hidden').attr('aria-live', 'polite');
+                            $('#cedula').addClass('border-red-500');
+                            valid = false;
+                        } else {
+                            $('#cedula-error').addClass('hidden').text('');
+                            $('#cedula').removeClass('border-red-500');
+                        }
+                    }
+                    // Designacao
+                    const isDesignacaoSelected = $('input[name="Designacao"]:checked').length > 0;
+                    if (!isDesignacaoSelected) {
+                        $('#designacao-error').removeClass('hidden').attr('aria-live', 'polite');
+                        $('input[name="Designacao"]').parent().addClass('border border-red-500 p-2 rounded-md');
+                        valid = false;
+                    } else {
+                        $('#designacao-error').addClass('hidden');
+                        $('input[name="Designacao"]').parent().removeClass('border border-red-500 p-2 rounded-md');
+                    }
+                }
+
+                if (step === 2) {
+                    // Empresa
+                    const empresa = $('input[name="empresa"]').val().trim();
+                    if (!empresa) {
+                        if ($('#empresa-error').length === 0) {
+                            $('input[name="empresa"]').after('<p id="empresa-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">Por favor, preencha o nome da empresa.</p>');
+                        }
+                        $('#empresa-error').removeClass('hidden');
+                        $('input[name="empresa"]').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#empresa-error').addClass('hidden');
+                        $('input[name="empresa"]').removeClass('border-red-500');
+                    }
+                    // NIF
+                    const nif = $('input[name="nif"]').val().trim();
+                    if (!nif) {
+                        if ($('#nif-error').length === 0) {
+                            $('input[name="nif"]').after('<p id="nif-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">Por favor, preencha o NIF.</p>');
+                        }
+                        $('#nif-error').removeClass('hidden');
+                        $('input[name="nif"]').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#nif-error').addClass('hidden');
+                        $('input[name="nif"]').removeClass('border-red-500');
+                    }
+                    // Endereço
+                    const endereco = $('input[name="endereco"]').val().trim();
+                    if (!endereco) {
+                        if ($('#endereco-error').length === 0) {
+                            $('input[name="endereco"]').after('<p id="endereco-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">Por favor, preencha o endereço.</p>');
+                        }
+                        $('#endereco-error').removeClass('hidden');
+                        $('input[name="endereco"]').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#endereco-error').addClass('hidden');
+                        $('input[name="endereco"]').removeClass('border-red-500');
+                    }
+                }
+
+                if (step === 3) {
+                    // Nome
+                    const nome = $('input[name="name"]').val().trim();
+                    if (!nome) {
+                        if ($('#name-error').length === 0) {
+                            $('input[name="name"]').after('<p id="name-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">Por favor, preencha o primeiro nome.</p>');
+                        }
+                        $('#name-error').removeClass('hidden');
+                        $('input[name="name"]').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#name-error').addClass('hidden');
+                        $('input[name="name"]').removeClass('border-red-500');
+                    }
+                    // Apelido
+                    const apelido = $('input[name="apelido"]').val().trim();
+                    if (!apelido) {
+                        if ($('#apelido-error').length === 0) {
+                            $('input[name="apelido"]').after('<p id="apelido-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">Por favor, preencha o apelido.</p>');
+                        }
+                        $('#apelido-error').removeClass('hidden');
+                        $('input[name="apelido"]').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#apelido-error').addClass('hidden');
+                        $('input[name="apelido"]').removeClass('border-red-500');
+                    }
+                }
+
+                if (step === 4) {
+                    // Email
+                    const email = $('#email').val().trim();
+                    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!email || !emailPattern.test(email)) {
+                        $('#email-error').removeClass('hidden').attr('aria-live', 'polite');
+                        $('#email').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#email-error').addClass('hidden');
+                        $('#email').removeClass('border-red-500');
+                    }
+                    // Password
+                    const password = $('#password').val();
+                    if (!password || password.length < 8) {
+                        if ($('#password-error').length === 0) {
+                            $('#password').after('<p id="password-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">A senha deve ter pelo menos 8 caracteres.</p>');
+                        }
+                        $('#password-error').removeClass('hidden');
+                        $('#password').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#password-error').addClass('hidden');
+                        $('#password').removeClass('border-red-500');
+                    }
+                    // Confirmação de senha
+                    const confirmPassword = $('#password_confirmation').val();
+                    if (password !== confirmPassword) {
+                        $('#password-match-error').removeClass('hidden').attr('aria-live', 'polite');
+                        $('#password_confirmation').addClass('border-red-500');
+                        valid = false;
+                    } else {
+                        $('#password-match-error').addClass('hidden');
+                        $('#password_confirmation').removeClass('border-red-500');
+                    }
+                }
+
+                if (step === 5) {
+                    // Termos
+                    if ($('#terms').length && !$('#terms').is(':checked')) {
+                        if ($('#terms-error').length === 0) {
+                            $('#terms').parent().after('<p id="terms-error" class="error-feedback text-sm text-red-500 mt-2" aria-live="polite">Você deve aceitar os termos para continuar.</p>');
+                        }
+                        $('#terms-error').removeClass('hidden');
+                        valid = false;
+                    } else {
+                        $('#terms-error').addClass('hidden');
+                    }
+                }
+
+                return valid;
+            }
+
             $('.btn-next').click(function() {
-				const isDesignacaoSelected = $('input[name="Designacao"]:checked').length > 0;
-				var selectedValue = $('input[name="Designacao"]:checked').val(); // Valor selecionado na designação
-				var cedulaValue = $('#cedula').val(); // Valor do campo Cedula
-
-				// Validação da Designação
-				if (!isDesignacaoSelected) {
-					$('#designacao-error').removeClass('hidden');
-					$('input[name="Designacao"]').parent().addClass('border border-red-500 p-2 rounded-md'); // Destaca os radio buttons
-					return false; // Impede o avanço
-				} else {
-					$('#designacao-error').addClass('hidden');
-					$('input[name="Designacao"]').parent().removeClass('border border-red-500 p-2 rounded-md'); // Remove o destaque
-				}
-
-				// Avança para a próxima etapa
-				if (currentStep < totalSteps) {
-					currentStep++;
-					showStep(currentStep);
-					updateProgress();
-				}
-
-				return false; // Evita o comportamento padrão do botão
-			});
+                if (validateStep(currentStep)) {
+                    if (currentStep < totalSteps) {
+                        currentStep++;
+                        showStep(currentStep);
+                        updateProgress();
+                    }
+                }
+                return false;
+            });
 
             $('.btn-previous').click(function() {
                 if (currentStep > 1) {
@@ -335,16 +487,6 @@
                 }
             });
 
-			$('#email').on('input', function() {
-				const email = $(this).val();
-				const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-				if (!emailPattern.test(email)) {
-					$('#email-error').removeClass('hidden');
-				} else {
-					$('#email-error').addClass('hidden');
-				}
-			});
-
 			$('#provincia').change(function() {
 				$('#loading-cidades').removeClass('hidden');
 				setTimeout(() => {
@@ -354,40 +496,87 @@
 				}, 1000);
 			});
 
-			$('#password').on('input', function() {
-				const password = $(this).val();
-				let strength = 0;
-				if (password.length >= 8) strength++;
-				if (password.match(/[A-Z]/)) strength++;
-				if (password.match(/[0-9]/)) strength++;
-				if (password.match(/[^A-Za-z0-9]/)) strength++;
+            // Preview da imagem do logotipo
+            $('#wizard-picture').change(function() {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#wizardPicturePreview').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(this.files[0]);
+            });
 
-				const strengthText = ['Muito fraca', 'Fraca', 'Média', 'Forte', 'Muito forte'][strength];
-				$('#password-strength').text(`Força da senha: ${strengthText}`).css('color', ['red', 'orange', 'yellow', 'green', 'darkgreen'][strength]);
-			});
+            // Força a seleção do input file ao clicar na imagem
+            $('.picture').on('click', function(e) {
+                // Evita disparar o evento se o clique for no input file
+                if (e.target.id !== 'wizard-picture') {
+                    $('#wizard-picture').click();
+                }
+            });
 
-			$('#password, #password_confirmation').on('input', function() {
-				const password = $('#password').val();
-				const confirmPassword = $('#password_confirmation').val();
+            // Validação de força da senha
+            $('#password').on('input', function() {
+                var password = $(this).val();
+                var strengthText = '';
+                var strengthColor = '';
 
-				if (confirmPassword === '') {
-					$('#password-match-icon .fa-times, #password-match-icon .fa-check').addClass('hidden');
-				} else if (password !== confirmPassword) {
-					$('#password-match-icon .fa-times').removeClass('hidden');
-					$('#password-match-icon .fa-check').addClass('hidden');
-					$('#password-match-error').removeClass('hidden');
-				} else {
-					$('#password-match-icon .fa-check').removeClass('hidden');
-					$('#password-match-icon .fa-times').addClass('hidden');
-					$('#password-match-error').addClass('hidden');
-				}
-			});
+                if (password.length < 6) {
+                    strengthText = 'Fraca';
+                    strengthColor = 'text-red-500';
+                } else if (password.length < 10) {
+                    strengthText = 'Média';
+                    strengthColor = 'text-yellow-500';
+                } else {
+                    strengthText = 'Forte';
+                    strengthColor = 'text-green-500';
+                }
 
-			if (password !== confirmPassword) {
-				e.preventDefault(); // Impede o envio do formulário
-				$('#password-match-error').removeClass('hidden').text('As senhas não coincidem. Corrija antes de enviar.');
-			}
-			
+                $('#password-strength').text('Força da senha: ' + strengthText).removeClass('text-red-500 text-yellow-500 text-green-500').addClass(strengthColor);
+            });
+
+            // Verificar cedula via AJAX dinâmicamente
+            $('#cedula').on('input', function() {
+                var cedula = $(this).val();
+
+                if (cedula.length === 0) {
+                    $('#cedula-match-icon i').addClass('hidden');
+                    $('#cedula-match-error').addClass('hidden');
+                } else {
+                    $.ajax({
+                        url: "{{ route('cedula.verificar') }}",
+                        method: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            cedula: cedula
+                        },
+                        success: function(response) {
+                            $('#cedula-match-icon').removeClass('hidden');
+                            $('#cedula-match-icon i.fa-times').addClass('hidden');
+                            $('#cedula-match-icon i.fa-check').removeClass('hidden');
+                            $('#cedula-match-error')
+                                .removeClass('text-red-500')
+                                .addClass('text-green-500')
+                                .text(response.message)
+                                .attr('aria-live', 'polite')
+                                .removeClass('hidden');
+                        },
+                        error: function(xhr) {
+                            $('#cedula-match-icon').removeClass('hidden');
+                            $('#cedula-match-icon i.fa-check').addClass('hidden');
+                            $('#cedula-match-icon i.fa-times').removeClass('hidden');
+                            let msg = 'O Nº da Cédula já existe.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            $('#cedula-match-error')
+                                .removeClass('text-green-500')
+                                .addClass('text-red-500')
+                                .text(msg)
+                                .attr('aria-live', 'polite')
+                                .removeClass('hidden');
+                        }
+                    });
+                }
+            });
         });
     </script>
 </body>

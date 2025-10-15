@@ -25,4 +25,12 @@ class SalesDocTotal extends Model
         'moeda',
 
     ];
+
+    /**
+     * Relacionamento com SalesInvoice
+     */
+    public function salesInvoice()
+    {
+        return $this->belongsTo(SalesInvoice::class, 'documentoID', 'id');
+    }
 }

@@ -264,8 +264,8 @@ class ProdutoController extends Controller
             $salesLines = SalesLine::where('productID', $produto->id)->exists();
 
             if ($salesLines) {
-                // Caso o produto esteja relacionado a faturas, impedir a exclusão
-                return redirect()->back()->with('error', 'Este produto/serviço não pode ser excluído, pois está associado a faturas.');
+                // Caso o produto esteja relacionado a facturas, impedir a exclusão
+                return redirect()->back()->with('error', 'Este produto/serviço não pode ser excluído, pois está associado a facturas.');
             }
 
             // Início de uma transação de banco de dados
@@ -405,26 +405,25 @@ class ProdutoController extends Controller
   }
   
   /**
- * visão rápida do produto, sem precisar carregar uma página inteira. Para dashboards
- */
-public function quickView($id)
-{
-    $produto = Produto::findOrFail($id);
-    return response()->json($produto);
-}
+     * visão rápida do produto, sem precisar carregar uma página inteira. Para dashboards
+     */
+    public function quickView($id)
+    {
+        $produto = Produto::findOrFail($id);
+        return response()->json($produto);
+    }
 
-/**
- * Permite alterar o status do produto, de "ativo" para "inativo" ou "em promoção".
- */
-public function updateStatus(Request $request, $id)
-{
-    $produto = Produto::findOrFail($id);
-    $produto->status = $request->input('status');
-    $produto->save();
+    /**
+     * Permite alterar o status do produto, de "activo" para "inactivo" ou "em promoção".
+     */
+    public function updateStatus($id)
+    {
+        $produto = Produto::findOrFail($id);
+        $produto->status = $produto->status == 1 ? 0 : 1; // Alterna entre 1 (activo) e 0 (inactivo)
+        $produto->save();
 
-    return redirect()->back()->with('status', 'Status do produto atualizado.');
-}
-
+        return redirect()->back()->with('status', 'Estado do produto actualizado.');
+    }
 }
 
 

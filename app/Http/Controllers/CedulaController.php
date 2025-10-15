@@ -7,6 +7,7 @@ use App\Services\CedulaService;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
+use App\Models\Empresa;
 
 class CedulaController extends Controller
 {
@@ -14,6 +15,7 @@ class CedulaController extends Controller
         return view('auth.verificar_cedula');
     }
 
+    // Validar a cédula usando a API externa
     public function validar(Request $request)
     {
         $client = new Client();
@@ -52,4 +54,39 @@ class CedulaController extends Controller
         }
     }
 
+    // Validar a cédula usando o serviço CedulaService
+    public function validarCedula(Request $request, CedulaService $cedulaService)
+    {
+        $request->validate([
+            'cedula' => 'required|string',
+        ]);
+
+        $cedula = $request->input('cedula');
+
+        // Chama o serviço para validar a cédula
+        $resultado = $cedulaService->validarCedula($cedula);
+
+        if ($resultado['status'] === 'success') {
+            return view('auth.register', ['dados' => $resultado['data']]);
+        }
+
+        return redirect()->back()->withErrors(['cedula' => $resultado['message']]);
+    }
+
+    // Validar a existencia da cédula na Base de Dados local
+    public function validarCedulaLocal(Request $request)
+    {
+        $request->validate([
+            'cedula' => 'required|string',
+        ]);
+
+        $cedula = $request->input('cedula');
+
+        // Verificar se existe alguma cedula na base de dados local já registada
+        $cedulaExistente = Empresa::where('Cedula', $cedula)->first();
+        if ($cedulaExistente) {
+            return response()->json(['valid' => false, 'message' => 'O Nº da Cédula já existe.'], 422);
+        }
+        return response()->json(['valid' => true, 'message' => 'Cédula válida e disponível para registo.']);
+    }
 }

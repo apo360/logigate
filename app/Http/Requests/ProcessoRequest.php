@@ -63,6 +63,12 @@ class ProcessoRequest extends FormRequest
             'rsm_num' => 'nullable|string|max:100',
             'certificado_origem' => 'nullable|string|max:100',
             'guia_exportacao' => 'nullable|string|max:100',
+            // Vinheta, valor unico e nao pode ser repetido
+            'vinheta' => ['nullable', 'string', 'max:100', Rule::unique('processos', 'vinheta')->ignore($this->processo)],
+            'observacoes' => 'nullable|string|max:1000',
+            'porto_desembarque_id' => ['nullable', 'exists:portos,id'],
+            'localizacao_mercadoria_id' => ['nullable', 'exists:mercadoria_localizacaos,id'],
+            'condicao_pagamento_id' => ['nullable', 'exists:condicao_pagamentos,id'],
         ];
 
         // Regras adicionais no caso de criação
@@ -90,7 +96,9 @@ class ProcessoRequest extends FormRequest
             'date' => 'O campo :attribute deve ser uma data válida.',
             'integer' => 'O campo :attribute deve ser um número inteiro.',
             'unique' => 'O campo :attribute de ser Único.',
-            'exists' => 'O campo :attribute selecionado não é válido.'
+            'exists' => 'O campo :attribute selecionado não é válido.',
+            'numeric' => 'O campo :attribute deve ser um número.',
+            'min' => 'O campo :attribute deve ser no mínimo :min.',
         ];
     }
 

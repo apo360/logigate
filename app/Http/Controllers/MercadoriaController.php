@@ -55,9 +55,10 @@ class MercadoriaController extends Controller
             // Calcular o somatório dos preco_total de todas as mercadorias associadas ao processo
             $somaPrecoTotal = Mercadoria::where('licenciamento_id',request()->get('licenciamento_id'))->sum('preco_total');
 
+            $porcentagem = $licenciamento->fob_total > 0 ? ($somaPrecoTotal / $licenciamento->fob_total) * 100 : 0;
+
             // Redireciona para o formulário de mercadorias com os dados apropriados
             return view('mercadorias.create_mercadoria', compact('licenciamento', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias','somaPrecoTotal', 'porcentagem'));
-    
         }
 
         // Verifica se o processo_id foi passado
@@ -73,7 +74,8 @@ class MercadoriaController extends Controller
             return view('mercadorias.create_mercadoria_proc', compact('processo', 'mercadoriasAgrupadas', 'pautaAduaneira', 'sub_categorias','somaPrecoTotal', 'porcentagem'));
         }
 
-        
+        // Se nenhum dos IDs foi passado, redireciona para uma página de erro ou lista
+        return redirect()->back()->with('error', 'Licenciamento ou Processo não especificado.');
     }
 
     /**
@@ -96,11 +98,9 @@ class MercadoriaController extends Controller
             // Atualização de licenciamento, caso o mesmo exista
             if ($request->has('licenciamento_id')) {
                 $licenciamento = Licenciamento::where('id', $validatedData['licenciamento_id'])->first();
-
                 // Atualizar valores agregados de FOB e peso
-                $licenciamento->fob_total += $mercadoria->preco_total;
-                $licenciamento->peso_bruto +=  $mercadoria->Peso;
-
+                // $licenciamento->fob_total += $mercadoria->preco_total;
+                // $licenciamento->peso_bruto +=  $mercadoria->Peso;
                 $licenciamento->save();
             }
 
@@ -122,6 +122,10 @@ class MercadoriaController extends Controller
             DB::rollBack();
 
             return DatabaseErrorHandler::handle($e, $request);
+        }
+        catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Erro ao criar mercadoria: ' . $e->getMessage());
         }
     }
 
@@ -148,6 +152,7 @@ class MercadoriaController extends Controller
      */
     public function update(Request  $request, Mercadoria $mercadoria)
     {
+        // Validating the request
         $request->validate([
             'Descricao' => 'required|string|max:255',
             'Quantidade' => 'nullable|integer|min:1',
@@ -158,16 +163,58 @@ class MercadoriaController extends Controller
             'preco_unitario' => 'nullable|numeric|min:0',
             'preco_total' => 'required|numeric|min:0',
         ]);
-    
-        $mercadoria->update($request->all());
+        // Updating the mercadoria entry
+        try {
+            DB::beginTransaction();
 
-        MercadoriaAgrupada::StoreAndUpdateAgrupamento($mercadoria);
+            // If the preco_total has changed, update the related licenciamento or processo
+            if ($request->preco_total != $mercadoria->preco_total) {
+                $diferenca = $request->preco_total - $mercadoria->preco_total;
 
-        // Returning success message or redirecting
-        return response()->json([
-            'message' => 'Mercadoria atualizada com sucesso!',
-            'mercadoria' => $mercadoria
-        ], 200);
+                if ($mercadoria->licenciamento_id) {
+                    $licenciamento = Licenciamento::find($mercadoria->licenciamento_id);
+                    if ($licenciamento) {
+                        $licenciamento->fob_total += $diferenca;
+                        $licenciamento->save();
+                    }
+                }
+
+                if ($mercadoria->processo_id) {
+                    $processo = Processo::find($mercadoria->processo_id);
+                    if ($processo) {
+                        $processo->fob_total += $diferenca;
+                        $processo->save();
+                    }
+                }
+            }
+
+            // If the Peso has changed, update the related licenciamento
+            if ($request->Peso != $mercadoria->Peso && $mercadoria->licenciamento_id) {
+                $diferencaPeso = $request->Peso - $mercadoria->Peso;
+                $licenciamento = Licenciamento::find($mercadoria->licenciamento_id);
+                if ($licenciamento) {
+                    $licenciamento->peso_bruto += $diferencaPeso;
+                    $licenciamento->save();
+                }
+            }
+
+            // Update the mercadoria with new data
+            $mercadoria->update($request->all());
+            // Atualizar agrupamento de mercadorias
+            MercadoriaAgrupada::StoreAndUpdateAgrupamento($mercadoria);
+
+            DB::commit();
+            // Returning success message or redirecting
+            // return redirect()->back()->with('success', 'Mercadoria atualizada com sucesso!');
+            return response()->json(['message' => 'Mercadoria atualizada com sucesso!','mercadoria' => $mercadoria], 200);
+        } catch (QueryException $e) {
+            DB::rollBack();
+            return DatabaseErrorHandler::handle($e, $request);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Erro ao atualizar mercadoria: ' . $e->getMessage());
+        }
+
     }
 
     /**
@@ -205,74 +252,6 @@ class MercadoriaController extends Controller
         }
     }
 
-    /*public function reagrupar($licenciamentoId)
-    {
-        $this->limparAgrupamentosInativos($licenciamentoId);
-
-        DB::beginTransaction();
-
-        try {
-            // Buscar todas as mercadorias do licenciamento
-            $mercadorias = Mercadoria::where('licenciamento_id', $licenciamentoId)->get();
-
-            foreach ($mercadorias as $mercadoria) {
-                // Verificar se a mercadoria já está agrupada corretamente
-                $agrupamento = MercadoriaAgrupada::where('codigo_aduaneiro', $mercadoria->codigo_aduaneiro)
-                ->where(function($query) use ($mercadoria) {
-                    $query->where('licenciamento_id', $mercadoria->licenciamento_id)
-                        ->orWhere('processo_id', $mercadoria->processo_id);
-                })->first();
-
-                if ($agrupamento) {
-                    // Atualizar agrupamento existente se necessário
-                    $mercadoriasIds = json_decode($agrupamento->mercadorias_ids, true) ?? [];
-                    
-                    if (!in_array($mercadoria->id, $mercadoriasIds)) {
-                        $agrupamento->quantidade_total += $mercadoria->Quantidade;
-                        $agrupamento->peso_total += $mercadoria->Peso;
-                        $agrupamento->preco_total += $mercadoria->preco_total;
-
-                        // Adicionar o ID da mercadoria ao JSON
-                        $mercadoriasIds[] = $mercadoria->id;
-                        $agrupamento->mercadorias_ids = json_encode($mercadoriasIds);
-
-                        $agrupamento->save();
-                    }
-                } else {
-                    // Criar um novo agrupamento para mercadorias não agrupadas
-                    MercadoriaAgrupada::create([
-                        'codigo_aduaneiro' => $mercadoria->codigo_aduaneiro,
-                        'licenciamento_id' => $licenciamentoId,
-                        'quantidade_total' => $mercadoria->Quantidade,
-                        'peso_total' => $mercadoria->Peso,
-                        'preco_total' => $mercadoria->preco_total,
-                        'mercadorias_ids' => json_encode([$mercadoria->id]),
-                    ]);
-                }
-            }
-
-            // Passo 3: Calcular o total de `preco_total` das mercadorias agrupadas
-            $fobTotal = MercadoriaAgrupada::where('licenciamento_id', $licenciamentoId)
-            ->sum('preco_total');
-
-            $pesoTotal = MercadoriaAgrupada::where('licenciamento_id', $licenciamentoId)
-            ->sum('peso_total');
-
-            // Passo 4: Atualizar o `fob_total` no licenciamento
-            $licenciamento = Licenciamento::findOrFail($licenciamentoId);
-            $licenciamento->fob_total = $fobTotal;
-            $licenciamento->peso_bruto = $pesoTotal;
-            $licenciamento->save();
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Reagrupamento concluído com sucesso!');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Erro ao reagrupar: ' . $e->getMessage());
-        }
-    }*/
-
     public function limparAgrupamentosInativos($licenciamentoId)
     {
         DB::beginTransaction();
@@ -296,11 +275,10 @@ class MercadoriaController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Agrupamentos inativos foram removidos com sucesso!');
+            return redirect()->back()->with('success', 'Agrupamentos inactivos foram removidos com sucesso!');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Erro ao limpar agrupamentos inativos: ' . $e->getMessage());
         }
     }
-
 }

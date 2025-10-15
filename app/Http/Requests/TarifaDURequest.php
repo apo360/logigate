@@ -22,7 +22,7 @@ class TarifaDURequest extends FormRequest
     public function rules()
     {
         return [
-            'processo_id' => 'int',
+            'processo_id' => 'int|exists:processos,id',
             'lmc' => 'nullable|numeric',
             'navegacao' => 'nullable|numeric',
             'terminal' => 'nullable|numeric',
@@ -44,6 +44,15 @@ class TarifaDURequest extends FormRequest
             'multas' => 'nullable|numeric',
             'orgaos_ofiais' => 'nullable|numeric',
             'guia_fiscal' => 'nullable|numeric',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'processo_id.int' => 'O ID do processo deve ser um número inteiro.',
+            'processo_id.exists' => 'O processo especificado não existe.',
+            'numeric' => 'O campo :attribute deve ser um número válido.',
         ];
     }
 }

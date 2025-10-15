@@ -1,6 +1,5 @@
 <x-app-layout>
 <!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
     .pagination {
         display: flex;
@@ -43,12 +42,13 @@
     }
 </style>
 
-<div class="py-12">
-    <x-breadcrumb :items="[
+<x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Clientes', 'url' => route('customers.index')],
         ['name' => 'Pesquisar Clientes' , 'url' => '']
     ]" separator="/" />
+
+<div class="container-fluid" style="margin-top: 20px;">
     
     <div class="card shadow-lg">
         <div class="card-header">
@@ -57,10 +57,10 @@
                     <a href="{{ route('customers.create') }}" class="btn btn-primary" style="color: black;">
                         <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
                     </a>
-                    <a type="button" href="{{ route('customers.create') }}" class="btn btn-success" style="color: black;">
-                        <i class="fas fa-download" style="color:rgb(130, 23, 69);"></i> Upload Clientes CSV
+                    <a href="#" id="importacaoBtn" class="btn btn-default"> 
+                        <i class="fas fa-download" style="color:rgb(130, 23, 69);"></i> Importação Clientes
                     </a>
-                    <a type="button" href="{{ route('customers.create') }}" class="btn btn-info" data-toggle="modal" data-target="#modal-lg" style="color: black;">
+                    <a type="button" href="#" class="btn btn-info" data-toggle="modal" data-target="#modal-lg" style="color: black;">
                         <i class="fas fa-upload" style="color: rgb(130, 23, 69);"></i> Exportar Clientes
                     </a>
                 </div>
@@ -104,7 +104,7 @@
                             <th>Endereço</th>
                             <th>Telemóvel</th>
                             <th>Status</th>
-                            <th class="text-end">Ações</th>
+                            <th class="text-end">Acções</th>
                         </tr>
                     </thead>
                     <tbody id="customerTableBody">
@@ -123,11 +123,11 @@
                             
                             <!-- Nome -->
                             <td>
-                            @php
-                                $overdueInvoices = $customer->invoices->filter(function ($invoice) {
-                                    return Carbon\Carbon::parse($invoice->invoice_date_end)->lt(Carbon\Carbon::now());
-                                });
-                            @endphp
+                                @php
+                                    $overdueInvoices = $customer->invoices->filter(function ($invoice) {
+                                        return Carbon\Carbon::parse($invoice->invoice_date_end)->lt(Carbon\Carbon::now());
+                                    });
+                                @endphp
                                 @if ($overdueInvoices->count() > 0)
                                     <i class = "fas fa-exclamation-triangle" style="color: red;"></i>
                                 @endif
@@ -154,6 +154,7 @@
                                         id="statusSwitch{{ $customer->id }}" 
                                         data-id="{{ $customer->id }}" 
                                         data-status="{{ $customer->is_active ? 0 : 1 }}"
+                                        title="Alterar Status do Cliente"
                                         {{ $customer->is_active ? 'checked' : '' }}>
                                     <span class="spinner-border spinner-border-sm text-primary d-none" id="spinner{{ $customer->id }}"></span>
                                 </div>
@@ -173,13 +174,25 @@
                                             <hr class="dropdown-divider">
                                         </li>
                                         <li>
-                                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
+                                            <!-- Verificar se o cliente tem factura associada -->
+                                            @php
+                                                $hasInvoices = $customer->invoices()->exists();
+                                            @endphp
+                                            @if($hasInvoices)
+                                                <a href="#" class="dropdown-item text-muted disabled" title="Não é possível apagar cliente com facturas associadas.">
                                                     <i class="fas fa-trash"></i> Apagar
-                                                </button>
-                                            </form>
+                                                </a>
+                                            @else
+                                                <!-- Formulário de exclusão -->
+                                                <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
+                                                        <i class="fas fa-trash"></i> Apagar
+                                                    </button>
+                                                </form>
+                                            @endif
+                                            
                                         </li>
                                     </ul>
                                 </div>
@@ -226,24 +239,40 @@
                     <div class="alert alert-info">
                         <h6>Campos necessários no ficheiro:</h6>
                         <ul>
-                            <li>...</li>
+                            <li> NIF <span class="text-sm">*</span></li>
+                            <li> Nome do Cliente <span class="text-sm">*</span></li>
+                            <li> Endereço</li>
+                            <li> Telefone</li>
+                            <li> Email</li>
+                            <li> Cidade</li>
+                            <li> País</li>
                         </ul>
+                        <p><span class="text-sm ">*</span> Campos obrigatórios</p>
                     </div>
 
                     <!-- Formulário de Upload -->
                     <form id="uploadForm" action="{{ route('customers.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        <div class="form-group">
-                            <label for="fileInput">Escolher Ficheiro</label>
-                            <input type="file" name="file" id="fileInput" class="form-control-file" accept=".csv, .xls, .xlsx" required>
+                        <div class="modal-header">
+                            <h5 class="modal-title">Importar Clientes</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">Importar</button>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <div class="modal-body">
+                            <div id="importErrors" class="alert alert-danger d-none"></div>
+                            <input type="file" name="file" class="form-control" required>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" id="importBtn" class="btn btn-primary">
+                                <span id="importBtnSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                                Importar
+                            </button>
                         </div>
                     </form>
+                    
                 </div>
             </div>
+           
         </div>
     </div>
 
@@ -311,7 +340,7 @@
                     // Exibir spinner
                     spinner.classList.remove('d-none');
 
-                    fetch(`customer/toggle-status/${customerId}`, {
+                    fetch(`customers/toggle-status/${customerId}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -340,6 +369,67 @@
             });
         });
 
+    </script>
+
+    <script>
+        // ...existing code...
+        // Script do modal de importação
+        $(document).ready(function() {
+            // Abrir o modal ao clicar no botão de Importação
+            $('#importacaoBtn').on('click', function(e) {
+                e.preventDefault();
+                $('#importacaoModal').modal('show');
+            });
+
+            // Validação e envio do formulário via AJAX (opcional, se não for necessário o envio tradicional)
+            // Submeter form via AJAX
+            $('#uploadForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = new FormData(this);
+                $('#importBtn').prop('disabled', true);
+                $('#importBtnSpinner').removeClass('d-none');
+                $('#importErrors').addClass('d-none').empty();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (response) {
+                        alert(response.message || 'Ficheiro importado com sucesso!');
+                        $('#importacaoModal').modal('hide');
+                    },
+                    error: function(xhr, status, error) {
+                        let message = 'Erro ao importar o ficheiro.';
+
+                        if (xhr.status === 422) {
+                            if (xhr.responseJSON && xhr.responseJSON.errors) {
+                                message = '';
+                                $.each(xhr.responseJSON.errors, function(key, value) {
+                                    if (Array.isArray(value)) {
+                                        message += value.join('<br>') + '<br>';
+                                    } else {
+                                        message += value + '<br>';
+                                    }
+                                });
+                            } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                                message = xhr.responseJSON.message;
+                            }
+                        } else {
+                            message = xhr.responseText; // fallback
+                        }
+
+                        $('#importErrors').html('<div class="alert alert-danger">' + message + '</div>');
+                    },
+                    complete: function () {
+                        $('#importBtn').prop('disabled', false);
+                        $('#importBtnSpinner').addClass('d-none');
+                    }
+                });
+            });
+        });
     </script>
 
 </x-app-layout>

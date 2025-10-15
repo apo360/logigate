@@ -19,6 +19,8 @@ return new class extends Migration
 	        $table->string('ProductDescription', 200);
 	        $table->string('ProductNumberCode', 100);
             $table->string('imagem_path', 200)->nullable();
+            //status : 0 - Activo, 1 - Inactivo, 2 - em promoção
+            $table->integer('status')->default(0);
             $table->unsignedBigInteger('empresa_id');
 
             $table->timestamps();

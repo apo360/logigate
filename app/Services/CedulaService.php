@@ -52,4 +52,10 @@ class CedulaService
             throw $e;
         }
     }
+
+    public function validarCedula($cedula)
+    {
+        $this->uri = 'despachante/' . urlencode($cedula);
+        return $this->consultarCedula();
+    }
 }

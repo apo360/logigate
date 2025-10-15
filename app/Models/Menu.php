@@ -10,7 +10,7 @@ class Menu extends Model
     use HasFactory;
 
     protected $fillable = [
-        'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'position', 'description'
+        'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'description'
     ];
 
     public function parent()
@@ -25,6 +25,6 @@ class Menu extends Model
 
     public function module()
     {
-        return $this->belongsTo(Module::class);
+        return $this->belongsTo(Module::class, 'module_id');
     }
 }

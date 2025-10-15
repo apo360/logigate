@@ -34,6 +34,7 @@ return new class extends Migration
             $table->char('imposto_retido', 3)->nullable();
             $table->string('motivo_retencao', 60)->nullable();
             $table->decimal('montante_retencao', 10, 2)->default(0.00);
+            $table->text('detalhes_factura')->nullable();
             $table->unsignedBigInteger('empresa_id');
             $table->timestamps();
 

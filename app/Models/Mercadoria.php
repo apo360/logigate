@@ -45,6 +45,15 @@ class Mercadoria extends Model
         return $this->belongsTo(PautaAduaneira::class, 'codigo_aduaneiro', 'codigo');
     }
 
+    public function getDescricaoAduaneiraAttribute()
+    {
+        if ($this->pautaAduaneira 
+            && $this->codigo_aduaneiro === $this->pautaAduaneira->codigo_sem_pontos) {
+            return $this->pautaAduaneira->descricao;
+        }
+        return 'N/D';
+    }
+
     public function categoria_mercadoria(){
 
         $categoria = [

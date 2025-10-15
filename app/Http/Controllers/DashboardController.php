@@ -75,11 +75,12 @@ class DashboardController extends Controller
 
     public function index(){
 
-        $licenciamento = Licenciamento::where('empresa_id', Auth::user()->empresas->first()->id)->get();
-        $processos = Processo::where('empresa_id', auth()->user()->empresas->first()->id)->get();
-        $clientes = Customer::where('empresa_id', auth()->user()->empresas->first()->id)->get();
-        $exportadores = Exportador::where('empresa_id', auth()->user()->empresas->first()->id)->get();
-        $totalFaturamento = SalesInvoice::with('salesdoctotal')
+        $empresaId = Auth::user()->empresas->first()->id;
+        $licenciamento = Licenciamento::where('empresa_id', $empresaId)->get();
+        $processos = Processo::where('empresa_id', $empresaId)->get();
+        $clientes = Customer::where('empresa_id', $empresaId)->get();
+        $exportadores = Exportador::where('empresa_id', $empresaId)->get();
+        $totalFaturamento = SalesInvoice::with('salesdoctotal')->where('empresa_id', $empresaId)
         ->get()
         ->sum(function ($invoice) {
             return $invoice->salesdoctotal->gross_total ?? 0;
@@ -106,7 +107,7 @@ class DashboardController extends Controller
         // $faturamentoAnoAnterior = SalesDoctotal::whereYear('created_at', now()->month - 1)->sum('gross_total');
         
         // Número de Faturas Emitidas
-        $numeroFaturas = SalesInvoice::where('empresa_id', auth()->user()->empresas->first()->id)->get();
+        $numeroFaturas = SalesInvoice::where('empresa_id', $empresaId)->get();
 
         // Calcule no controller e envie para a view:
         $ticketMedio = $totalFaturamento / max(count($numeroFaturas), 1);
@@ -118,7 +119,7 @@ class DashboardController extends Controller
         // $numeroTransacoes = SalesInvoice::sum('total_transactions'); // Exemplo de campo "total_transactions"
 
 
-        $processesByCountries = Processo::where('empresa_id', Auth::user()->empresas->first()->id)
+        $processesByCountries = Processo::where('empresa_id', $empresaId)
             ->join('importacao', 'importacao.processo_id', '=', 'processos.id')
             ->join('paises', 'importacao.Fk_pais_origem', '=', 'paises.id')
             ->select('paises.pais as paisss', DB::raw('count(processos.id) as total'))
@@ -127,7 +128,7 @@ class DashboardController extends Controller
             ->limit(7)
             ->get();
             
-        $topCountries = Processo::where('empresa_id', Auth::user()->empresas->first()->id)
+        $topCountries = Processo::where('empresa_id', $empresaId)
             ->join('importacao', 'processos.id', '=', 'importacao.processo_id')
             ->join('paises', 'importacao.Fk_pais_origem', '=', 'paises.id')
             ->select('paises.pais', DB::raw('count(processos.id) as total'))
@@ -136,7 +137,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $processesByCustomer = Customer::where('customers.empresa_id', Auth::user()->empresas->first()->id)
+        $processesByCustomer = Customer::where('customers.empresa_id', $empresaId)
             ->join('processos', 'processos.customer_id', '=', 'customers.id')
             ->select('customers.CompanyName', DB::raw('count(processos.id) as total'))
             ->groupBy('customers.CompanyName')
@@ -146,6 +147,7 @@ class DashboardController extends Controller
 
         // Exemplo: Buscar a quantidade de processos por estado
         $processosPorEstado = Processo::select('Estado', DB::raw('count(*) as total'))
+        ->where('empresa_id', $empresaId)
         ->groupBy('Estado')
         ->orderByDesc('total')
         ->get();
@@ -364,7 +366,7 @@ class DashboardController extends Controller
 
         // Total de faturamento
         $ano = request()->input('ano', Carbon::now()->year); // Pega o ano do request ou o ano atual
-        $empresaId = auth()->user()->empresas->first()->id; // Pega o ID da empresa do usuário autenticado
+        $empresaId = Auth::user()->empresas->first()->id; // Pega o ID da empresa do usuário autenticado
         
         $totalFaturamentos = SalesInvoice::with('salesdoctotal')
             ->where('empresa_id', $empresaId)
@@ -448,7 +450,7 @@ class DashboardController extends Controller
             : 0;
 
         // Dados para gráficos de faturamento por cliente
-        $faturamentoPorCliente = SalesInvoice::where('sales_invoice.empresa_id', auth()->user()->empresas->first()->id)
+        $faturamentoPorCliente = SalesInvoice::where('sales_invoice.empresa_id', $empresaId)
         ->join('customers', 'sales_invoice.customer_id', '=', 'customers.id')
         ->join('sales_document_totals', 'sales_invoice.id', '=', 'sales_document_totals.documentoID')
         ->select('customers.CompanyName', DB::raw('SUM(sales_document_totals.gross_total) as total'))
@@ -458,7 +460,7 @@ class DashboardController extends Controller
         ->get();
 
         // Dados para gráficos de faturamento por produto
-        $faturamentoPorProduto = SalesInvoice::where('sales_invoice.empresa_id', auth()->user()->empresas->first()->id)
+        $faturamentoPorProduto = SalesInvoice::where('sales_invoice.empresa_id', $empresaId)
         ->join('sales_line', 'sales_invoice.id', '=', 'sales_line.documentoID')
         ->join('produtos', 'sales_line.productID', '=', 'produtos.id')
         ->join('sales_document_totals', 'sales_invoice.id', '=', 'sales_document_totals.documentoID')
@@ -479,7 +481,7 @@ class DashboardController extends Controller
         $previsaoProximoAno = $faturamentoUltimos3Anos / 3;
 
         // Tempo Médio Entre Compras por cliente
-        $tempos = SalesInvoice::where('empresa_id', auth()->user()->empresas->first()->id)
+        $tempos = SalesInvoice::where('empresa_id', $empresaId)
             ->orderBy('customer_id')->orderBy('created_at')
             ->get()
             ->groupBy('customer_id')

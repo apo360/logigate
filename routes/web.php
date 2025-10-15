@@ -27,6 +27,7 @@ use App\Http\Controllers\ProcessoController;
 use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ContabilidadeController;
 use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\PasswordController;
@@ -57,12 +58,15 @@ use Illuminate\Support\Facades\DB;
         return view('WebSite.marketplace', compact('produtos'));
     })->name('marketplace');
 
+    // Exibir o formulário de consulta da Pauta Aduaneira
+    Route::get('/consultar-pauta-aduaneira', [PautaAduaneiraController::class, 'consultarPauta'])->name('consultar.pauta');
+
     // Processar a pesquisa do código
     Route::post('/consultar-licenciamento', [RastreamentoController::class, 'resultadoConsulta'])->name('resultado.consulta');
 
     Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
     Route::get('Registo', function(){ return view('auth.register_manual'); })->name('verificar.manual');
-    Route::post('Verificar-Cedula', [CedulaController::class, 'validar'])->name('cedula.verificar');
+    Route::post('Verificar-Cedula', [CedulaController::class, 'validarCedulaLocal'])->name('cedula.verificar');
 
     Route::get('/verify-otp', [OtpController::class, 'showVerifyOtpForm'])->middleware('auth');
     Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('confirmaOtp')->middleware('auth');
@@ -118,7 +122,7 @@ use Illuminate\Support\Facades\DB;
             Route::post('/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);
             Route::get('/export-csv', [CustomerController::class, 'exportCsv'])->name('customers.exportCsv');
             Route::get('/export-excel', [CustomerController::class, 'exportExcel'])->name('customers.exportExcel');
-            Route::post('/import', [CustomerController::class, 'import'])->name('customers.import');
+            Route::post('/import', [CustomerController::class, 'CustomerImport'])->name('customers.import');
             Route::get('/Ficha/{id}Imprimir', [CustomerController::class, 'ImprimirFicha'])->name('customers.ficha_imprimir');
             Route::prefix('/conta_corrente')->group(function () {
                 Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
@@ -150,10 +154,20 @@ use Illuminate\Support\Facades\DB;
 
         // Rota o Rascunho do Licenciamento
         Route::post('licenciamento/rascunho', [LicenciamentoController::class, 'storeDraft'])->name('licenciamento.rascunho.store');
+        Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
+        Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
+        Route::get('licenciamento/export-excel', [LicenciamentoController::class, 'exportExcel'])->name('licenciamentos.exportExcel');
+        Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
+        Route::get('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
+        Route::get('licenciamentos/duplicar/{idLicenciamento}', [LicenciamentoController::class, 'DuplicarLicenciamento'])->name('licenciamentos.duplicar');
+        Route::get('licenciamentos/listas/pice', [LicenciamentoController::class, 'pice'])->name('licenciamentos.pice');
 
 
         // Rota para Inserir Grupo/Categoria de Produtos
         Route::post('/produto/grupo/insert', [ProdutoController::class, 'InsertGrupo'])->name('insert.grupo.produto');
+        // toggle.produto
+        Route::get('/produto/toggle/{id}', [ProdutoController::class, 'updateStatus'])->name('toggle.produto'); //updateStatus
+
 
         // Rotas específicas de usuários e funções
         Route::prefix('users/{user}')->group(function () {
@@ -180,10 +194,6 @@ use Illuminate\Support\Facades\DB;
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
-        Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
-        Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
-        Route::get('licenciamento/export-excel', [LicenciamentoController::class, 'exportExcel'])->name('licenciamentos.exportExcel');
-        Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
         Route::post('/processo/finalizar/{processoID}', [ProcessoController::class, 'processoFinalizar'])->name('processo.finalizar');
         Route::get('/processo/nao-finalizados', [ProcessoController::class, 'processosNaoFinalizados']);
 
@@ -192,8 +202,7 @@ use Illuminate\Support\Facades\DB;
         Route::get('processos/report/{ProcessoID}/Extrato-Mercadoria', [ProcessoController::class, 'printExtratoMercadoria'])->name('processos.Extrato_mercadoria');
 
 
-        Route::get('processo/imprimir/{IdProcesso}/requisicao')->name('processo.print.requisicao');
-        Route::get('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
+        Route::get('processo/imprimir/{IdProcesso}/requisicao', [ProcessoController::class, 'printCartaDiversa'])->name('processo.print.requisicao');
         Route::post('licenciamento/mercadorias/reagrupar/{licenciamentoId}', [MercadoriaController::class, 'reagrupar'])->name('mercadorias.reagrupar');
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
@@ -205,6 +214,20 @@ use Illuminate\Support\Facades\DB;
         Route::post('empresa/importar/exportadores', [MigracaoController::class, 'importExportadores'])->name('import.exportadores');
         Route::post('empresa/importar/processos', [MigracaoController::class, 'importProcessos'])->name('import.processos');
         Route::post('empresa/logotipo/inserir', [EmpresaController::class, 'storeLogo'])->name('empresa.logotipo');
+
+        // Pauta Aduaneira
+        Route::get('pauta-aduaneira', [PautaAduaneiraController::class, 'index'])->name('pauta.index');
+        Route::get('pauta-aduaneira/importar', [PautaAduaneiraController::class, 'import'])->name('pauta.import_view');
+        Route::get('pauta-aduaneira/consultar', [PautaAduaneiraController::class, 'consultar'])->name('pauta.consultar');
+
+        // Contabilidade Aduaneira
+        Route::get('contabilidade/contas', [ContabilidadeController::class, 'contas'])->name('contabilidade.contas');
+        Route::get('contabilidade/lancamentos', [ContabilidadeController::class, 'lancamentos'])->name('contabilidade.lancamentos');
+        Route::get('contabilidade/relatorios', [ContabilidadeController::class, 'relatorios'])->name('contabilidade.relatorios');
+        Route::get('contabilidade/configuracoes', [ContabilidadeController::class, 'configuracoes'])->name('contabilidade.configuracoes');
+        Route::get('contabilidade/plano-contas', [ContabilidadeController::class, 'planoContas'])->name('contabilidade.plano_contas');
+        Route::get('contabilidade/mapa', [ContabilidadeController::class, 'mapa'])->name('contabilidade.mapa');
+        Route::get('contabilidade/balanco', [ContabilidadeController::class, 'balanco'])->name('contabilidade.balancete');
 
         // Documentos
         Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
@@ -236,5 +259,5 @@ use Illuminate\Support\Facades\DB;
     });
 
     #call class master from routes.master.php
-    require_once __DIR__ . '/master.php';
+    // require_once __DIR__ . '/master.php';
     

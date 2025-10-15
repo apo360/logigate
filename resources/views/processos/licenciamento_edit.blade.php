@@ -350,6 +350,25 @@
                             </div>
                         </div>
 
+                        <div class="row mt-2">
+                            <div class="col-md-3">
+                                <label for="seguro">FOB</label>
+                                <input type="text" id="fob_total" name="fob_total" class="form-control" value="{{ $licenciamento->fob_total }}">
+                                @error('fob_total')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-3">
+                                <label for="seguro">CIF</label>
+                                <input type="text" id="cif" name="cif" class="form-control" value="{{ $licenciamento->cif }}">
+                                @error('cif')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        .
+
                     </div>
                     <div class="card-footer">
                         <!-- Botões -->

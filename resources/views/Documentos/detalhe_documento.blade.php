@@ -164,9 +164,12 @@
                                     <i class="fas fa-credit-card"></i> Efectuar Pagamento
                                 </a>
                             @endif
-                            <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger">
-                                <i class="fas fa-times-circle"></i> Anular Factura
-                            </a>
+                            <!-- Factura Vencida não pode ser anulada -->
+                            @if (!($documento->is_overdue))
+                                <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger mb-2">
+                                    <i class="fas fa-times-circle"></i> Anular Factura
+                                </a>
+                            @endif
                         @endif
                     </div>
                 </div>

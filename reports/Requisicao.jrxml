@@ -43,6 +43,7 @@ WHERE
 	<parameter name="saldo" class="java.lang.Float"/>
 	<parameter name="saldoActual" class="java.lang.Float"/>
 	<parameter name="descricao" class="java.lang.String">
+	<parameter name="Logotipo" class="java.lang.String">
 		<parameterDescription><![CDATA[Descrição do Valor a Pagar]]></parameterDescription>
 	</parameter>
 	<queryString>
@@ -242,7 +243,7 @@ WHERE
 			</textField>
 			<image>
 				<reportElement x="0" y="16" width="80" height="64" uuid="85968805-566a-46ab-8b24-95dbee934f4f"/>
-				<imageExpression><![CDATA[$F{Logotipo}]]></imageExpression>
+				<imageExpression><![CDATA[$P{Logotipo}]]></imageExpression>
 			</image>
 		</band>
 	</title>

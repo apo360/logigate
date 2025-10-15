@@ -58,7 +58,6 @@ class CustomerRequest extends FormRequest
             'doc_num' => 'nullable|string|max:255',
             'validade_date_doc' => 'nullable|date|after_or_equal:today',
             'metodo_pagamento' => 'nullable|string',
-
             'tipo_cliente' => 'nullable|in:importador,exportador,ambos',
             'tipo_mercadoria' => 'nullable|string',
             'frequencia' => 'nullable|in:ocasional,mensal,anual',

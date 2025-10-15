@@ -6,21 +6,33 @@
         ['name' => 'Editar Cliente', 'url' => route('customers.edit', $customer->id)]
     ]" separator="/" />
     <div class="py-4">
-        <!-- Cabeçalho -->
+        <!-- Card do Cliente -->
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>👤 {{ $customer->CompanyName }}</h4>
-                <div>
+                <h4 class="mb-0">👤 {{ $customer->CompanyName }}</h4>
+                <div class="btn-group">
                     <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit"></i> Editar Cliente
+                        <i class="fas fa-edit"></i> Editar
                     </a>
                     <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="fas fa-cogs"></i> Opções
                     </button>
-                    <ul class="dropdown-menu">
-                        <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item"><i class="fas fa-eye"></i> Liquidar Facturas</a></li>
-                        <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item"><i class="fas fa-wallet"></i> Conta Corrente</a></li>
-                        <li><a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item"><i class="fas fa-briefcase"></i> Avença</a></li>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item">
+                                <i class="fas fa-eye"></i> Liquidar Facturas
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item">
+                                <i class="fas fa-wallet"></i> Conta Corrente
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item">
+                                <i class="fas fa-briefcase"></i> Avença
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" class="d-inline">
@@ -33,27 +45,32 @@
                     </ul>
                 </div>
             </div>
-        </div>
 
-        <!-- Dados do Cliente -->
-        <div class="card shadow-sm mt-3">
+            <!-- Corpo com dados -->
             <div class="card-body">
                 <h5 class="mb-3">📌 Informações do Cliente</h5>
                 <div class="row">
                     <div class="col-md-6">
-                        <p><span class="text-muted">Nome:</span> <b>{{ $customer->CompanyName }}</b></p>
-                        <p><span class="text-muted">Gestor de Conta:</span> <b>{{ auth()->user()->name }}</b></p>
-                        <p><span class="text-muted">Referência Externa:</span> <b>---</b></p>
+                        <p><span class="fw-bold text-muted">Nome:</span> {{ $customer->CompanyName }}</p>
+                        <p><span class="fw-bold text-muted">Gestor de Conta:</span> {{ auth()->user()->name }}</p>
+                        <p><span class="fw-bold text-muted">Referência Externa:</span> ---</p>
                     </div>
                     <div class="col-md-6">
-                        <p><span class="text-muted">NIF:</span> <b>{{ $customer->CustomerTaxID }}</b></p>
-                        <p><span class="text-muted">País:</span> <b>Angola [AO]</b></p>
-                        <p><span class="text-muted">Modo Pagamento:</span> <b>---</b></p>
+                        <p><span class="fw-bold text-muted">NIF:</span> {{ $customer->CustomerTaxID }}</p>
+                        <p><span class="fw-bold text-muted">País:</span> Angola [AO]</p>
+                        <p><span class="fw-bold text-muted">Modo Pagamento:</span> ---</p>
                     </div>
                 </div>
-                <p class="mt-3"><span class="text-muted">Morada Completa:</span> <b>Rua Exemplo, 123, Bairro Exemplo</b></p>
-                <p><span class="text-muted">Telefone:</span> <b>{{ $customer->Telephone }}</b></p>
-                <p><span class="text-muted">Email:</span> <b>{{ $customer->Email }}</b></p>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><span class="fw-bold text-muted">Morada:</span> Rua Exemplo, 123, Bairro Exemplo</p>
+                        <p><span class="fw-bold text-muted">Telefone:</span> {{ $customer->Telephone }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><span class="fw-bold text-muted">Email:</span> {{ $customer->Email }}</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -96,6 +113,67 @@
             </div>
         </div>
 
+        <!-- Documentos -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <h5 class="mb-3">🗂️ Documentos Relacionados</h5>
+                <p>Nº de Documentos: <b>{{ count($customer->invoices) }}</b></p>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Nº Documento</th>
+                                <th>Estado</th>
+                                <th>Data de Emissão</th>
+                                <th>Valor Total</th>
+                                <th>Valor Pago</th>
+                                <th>Valor em Dívida</th>
+                                <th>Acções</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($customer->invoices as $invoice)
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-success mt-1">
+                                            <a href="{{ route('documentos.show', $invoice->id) }}">
+                                                {{ $invoice->invoice_no }}
+                                            </a>
+                                        </span>
+                                        @if($invoice->is_cancelled)
+                                            <span class="badge text-danger mt-1">(Anulada)</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ $invoice->payment_status['class'] }}">
+                                            <i class="fas {{ $invoice->payment_status['icon'] }}"></i>
+                                            {{ $invoice->payment_status['label'] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $invoice->invoice_date }}</td>
+                                    <td>{{ number_format($invoice->gross_total, 2, ',', '.') }} AKZ</td>
+                                    <td class="text-success">{{ number_format($invoice->paid_amount, 2, ',', '.') }} AKZ</td>
+                                    <td class="text-danger">{{ number_format($invoice->due_amount, 2, ',', '.') }} AKZ</td>
+                                    <td><a href="{{ route('documentos.show', $invoice->id) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i> Ver</a></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="7" class="text-center text-muted">Nenhum documento encontrado.</td></tr>
+                            @endforelse
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="3" class="text-end">Totais:</th>
+                                <th>{{ number_format($customer->invoices->sum('gross_total'), 2, ',', '.') }} AKZ</th>
+                                <th>{{ number_format($customer->invoices->sum('paid_amount'), 2, ',', '.') }} AKZ</th>
+                                <th>{{ number_format($customer->invoices->sum('due_amount'), 2, ',', '.') }} AKZ</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Estatísticas -->
         <div class="card shadow-sm mt-3">
             <div class="card-body">
@@ -113,60 +191,8 @@
                 </div>
             </div>
             <div class="card-footer">
-                <span class="card-title">📄 Facturas do Cliente</span>
-                <div class="table-responsive">
-                <table class="table table-hover table-sm">
-    <thead class="table-dark">
-        <tr>
-            <th>Nº Factura</th>
-            <th>Valor</th>
-            <th>Status</th>
-            <th>Data</th>
-            <th>Ações</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse($customer->invoices as $invoice)
-            <tr>
-                <td>{{ $invoice->invoice_no }}</td>
-                <td>{{ number_format($invoice->salesdoctotal->gross_total ?? '0.00', 2, ',', '.') }} Kz</td>
-                <td>
-                    @php
-                        // Verifica se salesstatus é uma coleção e obtém o primeiro item
-                        $salesStatus = is_iterable($invoice->salesstatus) ? $invoice->salesstatus->first() : null;
-                        // Verifica se invoice_status é uma coleção e obtém o primeiro item
-                        $status = optional(is_iterable($salesStatus->invoice_status ?? null) ? $salesStatus->invoice_status->first() : null)->status;
-                    @endphp
-
-                    @if($status === 'A')
-                        <span class="text-danger">Factura Anulada</span>
-                    @else
-                        @if ($invoice->invoice_date_end >= now())
-                            <span class="badge bg-warning text-dark">Por Pagar</span>
-                        @else
-                            <span class="badge bg-danger">Factura Vencida</span>
-                        @endif
-                    @endif
-                </td>
-                <td>{{ $invoice->created_at->format('d/m/Y') }}</td>
-                <td>
-                    <a href="{{ route('documentos.show', $invoice->id) }}" class="btn btn-sm btn-info">
-                        <i class="fas fa-eye"></i> Ver
-                    </a>
-                    <a href="{{ route('documento.download', $invoice->id) }}" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-download"></i> Baixar
-                    </a>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="5" class="text-center text-muted">Nenhuma Factura encontrada.</td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
-
-                </div>
+                
+                <small class="text-muted">Última Actualização: ---</small>
             </div>
         </div>
     </div>

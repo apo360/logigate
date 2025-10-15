@@ -54,14 +54,14 @@
 	<parameter name="ProcessoID" class="java.lang.Integer"/>
 	<queryString>
 		<![CDATA[SELECT `Descricao`,
-	`NCM_HS`,
-	`NCM_HS_Numero`,
-	`Quantidade`,
-	`Qualificacao`,
-	`Peso`
-FROM logigatedb.mercadorias
-WHERE 
-	`Fk_Importacao` =  $P!{ProcessoID}]]>
+		`NCM_HS`,
+		`NCM_HS_Numero`,
+		`Quantidade`,
+		`Qualificacao`,
+		`Peso`
+	FROM logigatedb.mercadorias
+	WHERE 
+		`Fk_Importacao` =  $P!{ProcessoID}]]>
 	</queryString>
 	<field name="Descricao" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="Descricao"/>
