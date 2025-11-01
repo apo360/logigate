@@ -74,7 +74,7 @@ use Illuminate\Support\Facades\DB;
 
     Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change')->middleware('check.password.changed');
     Route::post('re/password/change', [PasswordController::class, 'changePassword'])->name('password.change.store')->middleware('check.password.changed');
-    
+
     Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(function () {
 
         Route::post('/logout', function (Request $request) {
@@ -257,7 +257,4 @@ use Illuminate\Support\Facades\DB;
         });
         // ------------- /.Rotas do Agente de Carga ------------ //
     });
-
-    #call class master from routes.master.php
-    // require_once __DIR__ . '/master.php';
     

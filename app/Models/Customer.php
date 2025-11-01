@@ -38,7 +38,6 @@ class Customer extends Model
         'is_active',
         'foto',
         'user_id',
-        'empresa_id',
         'nacionality',
         'doc_type',
         'doc_num',
@@ -67,11 +66,6 @@ class Customer extends Model
 
             if (Auth::check()) {
                 $customer->user_id = Auth::user()->id;
-            }
-
-            // Definir automaticamente o empresa_id se ainda não estiver definido
-            if (!$customer->empresa_id) {
-                $customer->empresa_id = Auth::user()->empresas->first()->id /* Defina aqui o ID da empresa que deseja associar */;
             }
 
             $customer->CustomerID = 'cli'.Auth::user()->empresas->first()->id.$customer->CustomerTaxID.'/'. Carbon::now()->format('y');
@@ -131,8 +125,14 @@ class Customer extends Model
         return $this->hasMany(Processo::class, 'customer_id');
     }
 
-    public function empresa(){
-        return $this->hasMany(Empresa::class, 'empresa_id');
+    /**
+     * Retorna apenas a primeira empresa associada ao cliente.
+     */
+    public function empresas()
+    {
+        return $this->belongsToMany(Empresa::class, 'customers_empresas')
+                    ->withPivot(['codigo_cliente', 'status'])
+                    ->withTimestamps();
     }
 
     public function contaCorrente(){
@@ -151,6 +151,8 @@ class Customer extends Model
         return $this->hasMany(CustomerAvenca::class);
     }
 
-
+    public function user(){
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
 

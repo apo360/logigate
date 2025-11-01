@@ -22,7 +22,6 @@ class Exportador extends Model
         'Pais',
         'Website',
         'user_id',
-        'empresa_id',
     ];
 
 
@@ -61,5 +60,16 @@ class Exportador extends Model
         $empresaId = Auth::user()->empresas->first()->id;
         $taxIdPart = $this->ExportadorTaxID ? $this->ExportadorTaxID : random_int(5, 1000);
         return 'exp' . $empresaId . $taxIdPart . Carbon::now()->format('y');
+    }
+
+    /**
+     * Relação N:N com Empresas via tabela pivô exportador_empresas
+     */
+    public function empresas()
+    {
+        return $this->belongsToMany(Empresa::class, 'exportador_empresas')
+                    ->withPivot(['codigo_exportador', 'additional_info', 'status', 'data_associacao'])
+                    ->withTimestamps();
+                    //->using(ExportadorEmpresa::class);
     }
 }

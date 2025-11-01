@@ -27,12 +27,22 @@ use Maatwebsite\Excel\Validators\ValidationException;
 
 class CustomerController extends Controller
 {
+    protected $empresa;
+    // constructor with auth middleware
+    public function __construct()
+    {
+        // Middleware de autenticação
+        $this->middleware('auth');
+
+        $this->authorizeResource(Customer::class, 'customer');
+    }
+    
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $customers = Customer::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        $customers = $this->empresa->customers()->get();
         return view('customer.customer_pesquisar', compact('customers'));
     }
 
@@ -51,62 +61,76 @@ class CustomerController extends Controller
      */
     public function store(CustomerRequest $request)
     {
-        // Determine the form type based on the request data
         $formType = $request->get('formType'); 
 
         try {
-            // Inicia uma transação para garantir a integridade dos dados
             DB::beginTransaction();
 
             $custValidate = $request->validated();
-            
-            // Cria um novo registro de cliente na tabela 'customers' com os dados fornecidos
-            $newCustomer = Customer::create($custValidate);
 
-            // Confirma a transação, salvando as alterações no banco de dados
+            // Verificar se o cliente já existe
+            $existingCustomer = Customer::where('CustomerTaxID', $custValidate['CustomerTaxID'])->first();
+
+            if (!$existingCustomer) {
+                // Cria novo cliente
+                $customer = Customer::create($custValidate);
+            } else {
+                $customer = $existingCustomer;
+            }
+
+            // Verificar se já está associado à empresa
+            $empresa = Auth::user()->empresas->first();
+            $jaAssociado = $customer->empresas()->where('empresa_id', $empresa->id)->exists();
+
+            if (!$jaAssociado) {
+                DB::table('customers_empresas')->insert([
+                    'customer_id' => $customer->id,
+                    'empresa_id' => $empresa->id,
+                    'codigo_cliente' => null,
+                    'status' => 'ativo',
+                    'data_associacao' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             DB::commit();
 
-            // Prepare success response based on form type
+            // ✅ Resposta para formulários do tipo "modal"
             if ($formType === 'modal') {
-                // Return success data for modal forms
                 return response()->json([
-                    'message' => 'Cliente adicionado com Sucesso',
-                    'cliente_id' => $newCustomer->id,
-                    'codCli' => $newCustomer->CustomerTaxID,
+                    'message' => 'Cliente adicionado com sucesso!',
+                    'cliente_id' => $customer->id,
+                    'codCli' => $customer->CustomerTaxID,
                 ], 200);
-            } else {
-
-                // Chama o método store do EnderecoController para criar o endereço
-                $enderecoController = new EnderecoController();
-
-                $enderecoData = $request->only([
-                    'BuildingNumber',
-                    'StreetName',
-                    'AddressDetail',
-                    'AddressType' => 'Facturamento',
-                    'Province',
-                    'City',
-                    'PostalCode',
-                    'Country'
-                ]);
-                $enderecoData['customer_id'] = $newCustomer->id;
-            
-                // Chama o método store do EnderecoController para criar o endereço
-                $enderecoController = new EnderecoController();
-                $enderecoRequest = new Request($enderecoData);
-                $enderecoController->store($enderecoRequest);
-                
-                // Redirect to 'form.edit' for the main form
-                return redirect()->route('customers.edit', $newCustomer->id)->with('success', 'Cliente Inserido com sucesso');
             }
-            
-        } catch (QueryException $e) { 
+
+            // ✅ Criação de endereço (apenas quando não é modal)
+            $enderecoData = $request->only([
+                'BuildingNumber',
+                'StreetName',
+                'AddressDetail',
+                'Province',
+                'City',
+                'PostalCode',
+                'Country',
+            ]);
+
+            $enderecoData['AddressType'] = 'Facturamento';
+            $enderecoData['customer_id'] = $customer->id;
+
+            $enderecoController = new EnderecoController();
+            $enderecoController->store(new Request($enderecoData));
+
+            return redirect()->route('customers.edit', $customer->id)
+                ->with('success', 'Cliente inserido com sucesso!');
+
+        } catch (QueryException $e) {
             DB::rollBack();
-
             return DatabaseErrorHandler::handle($e, $request);
-        } 
-
+        }
     }
+
 
     /**
      * Display the specified resource.
@@ -134,42 +158,99 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      */
+    /**
+     * Update the specified resource in storage.
+     */
     public function update(CustomerRequest $request, Customer $customer)
     {
-        
+
         try {
             DB::beginTransaction();
-            
-            // Atualize os atributos do cliente com base nos dados recebidos no $request
-            Customer::where('id',$customer->id)->update($request->validated());
 
-            // Chama o método update do EnderecoController para atualizar o endereço
-            $endereco = $customer->endereco ?? Endereco::create(['customer_id' => $customer->id]);
+            $user = Auth::user();
+            $empresa = $user->empresas->first();
+            $dadosValidados = $request->validated();
+            $escopo = $request->get('escopo', 'local'); // padrão: local
 
-            $enderecoController = new EnderecoController();
+            // Verifica se o cliente está associado à empresa
+            $associacao = $customer->empresas()->where('empresa_id', $empresa->id)->first();
 
-            $enderecoRequest = new Request($request->only([
-                'BuildingNumber',
-                'StreetName',
-                'AddressDetail',
-                'Province',
-                'City',
-                'PostalCode',
-                'Country',
-            ]));
+            if ($escopo === 'global') {
+                // Atualização global (dados centrais do cliente)
+                if ($user->hasRole('admin') || $user->can('update-global-customer')) {
+                    $customer->update($dadosValidados);
+                } else {
+                    throw new \Exception('Sem permissão para atualização global.');
+                }
+            } else {
+                // Atualização local (dados da associação)
+                if ($associacao) {
+                    $customer->empresas()->updateExistingPivot($empresa->id, [
+                        'codigo_cliente'   => $dadosValidados['codigo_cliente'] ?? $associacao->pivot->codigo_cliente,
+                        'additional_info'  => $dadosValidados['additional_info'] ?? $associacao->pivot->additional_info,
+                        'status'           => $dadosValidados['status'] ?? $associacao->pivot->status,
+                        'data_associacao'  => $associacao->pivot->data_associacao ?? now(),
+                    ]);
+                } else {
+                    // Cria associação se não existir
+                    $customer->empresas()->attach($empresa->id, [
+                        'codigo_cliente'   => $dadosValidados['codigo_cliente'] ?? null,
+                        'additional_info'  => $dadosValidados['additional_info'] ?? null,
+                        'status'           => $dadosValidados['status'] ?? 'ATIVO',
+                        'data_associacao'  => now(),
+                    ]);
+                }
+            }
 
-            $enderecoController->update($enderecoRequest, $endereco);
+            // Atualiza ou cria endereço (somente se for global)
+            if ($escopo === 'global') {
+                $endereco = $customer->endereco ?? Endereco::create(['customer_id' => $customer->id]);
+                $enderecoController = new EnderecoController();
+
+                $enderecoRequest = new Request($request->only([
+                    'BuildingNumber',
+                    'StreetName',
+                    'AddressDetail',
+                    'Province',
+                    'City',
+                    'PostalCode',
+                    'Country',
+                ]));
+
+                $enderecoController->update($enderecoRequest, $endereco);
+            }
 
             DB::commit();
 
-            // Redirecione para a página de listagem de clientes
-            return redirect()->route('customers.edit', $customer->id)->with('success', 'Cliente atualizado com sucesso!');;
-        } catch (QueryException $e) {
+            // Se for AJAX
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $escopo === 'global'
+                        ? 'Cliente atualizado globalmente com sucesso!'
+                        : 'Cliente atualizado localmente com sucesso!',
+                ]);
+            }
+
+            // Redirecionamento normal
+            return redirect()
+                ->route('customers.edit', $customer->id)
+                ->with('success', $escopo === 'global'
+                    ? 'Cliente atualizado globalmente com sucesso!'
+                    : 'Cliente atualizado localmente com sucesso!');
+
+        } catch (\Exception $e) {
             DB::rollBack();
 
-            return DatabaseErrorHandler::handle($e, $request);
-        } 
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro: ' . $e->getMessage(),
+                ], 500);
+            }
 
+            return back()->withErrors('Erro: ' . $e->getMessage());
+        }
     }
 
     /**

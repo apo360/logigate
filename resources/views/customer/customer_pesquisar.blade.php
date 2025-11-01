@@ -168,7 +168,14 @@
                                     </button>
                                     <ul class="dropdown-menu">
                                         <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item"><i class="fas fa-eye"></i> Detalhes</a></li>
-                                        <li><a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item"><i class="fas fa-edit"></i> Editar</a></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+                                        <li>
+                                            @can('update', $customer)
+                                                <a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item"><i class="fas fa-edit"></i> Editar</a>
+                                            @endcan
+                                        </li>
                                         <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item"><i class="fas fa-wallet"></i> Conta Corrente</a></li>
                                         <li>
                                             <hr class="dropdown-divider">
@@ -184,13 +191,15 @@
                                                 </a>
                                             @else
                                                 <!-- Formulário de exclusão -->
-                                                <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
-                                                        <i class="fas fa-trash"></i> Apagar
-                                                    </button>
-                                                </form>
+                                                 @can('delete', $customer)
+                                                    <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
+                                                            <i class="fas fa-trash"></i> Apagar
+                                                        </button>
+                                                    </form>
+                                                @endcan
                                             @endif
                                             
                                         </li>

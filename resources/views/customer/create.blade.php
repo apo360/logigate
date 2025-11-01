@@ -1,7 +1,4 @@
 <x-app-layout>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <div class="py-12">
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Clientes', 'url' => route('customers.index')],

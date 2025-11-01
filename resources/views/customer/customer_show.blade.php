@@ -10,10 +10,31 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="mb-0">👤 {{ $customer->CompanyName }}</h4>
-                <div class="btn-group">
-                    <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-edit"></i> Editar
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">
+                        {{ $customer->CompanyName }}
+                        @cannot('update', $customer)
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-lock"></i> Somente Leitura
+                            </span>
+                        @else
+                            <span class="badge bg-success">
+                                <i class="fas fa-unlock"></i> Edição Ativa
+                            </span>
+                        @endcannot
+                    </h4>
+
+                    <a href="{{ route('customers.index') }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Voltar
                     </a>
+                </div>
+
+                <div class="btn-group">
+                    @can('update', $customer)
+                        <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit"></i> Editar
+                        </a>
+                    @endcan
                     <button class="btn btn-outline-dark dropdown-toggle" data-bs-toggle="dropdown">
                         <i class="fas fa-cogs"></i> Opções
                     </button>
@@ -35,12 +56,15 @@
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" class="d-inline">
-                                @csrf @method('DELETE')
-                                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                                    <i class="fas fa-trash"></i> Apagar Cliente
-                                </button>
-                            </form>
+                            @can('delete', $customer)
+                                <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
+                                        <i class="fas fa-trash"></i> Apagar Cliente
+                                    </button>
+                                </form>
+                            @endcan
                         </li>
                     </ul>
                 </div>

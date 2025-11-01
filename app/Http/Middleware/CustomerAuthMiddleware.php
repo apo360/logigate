@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureAdminMaster
+class CustomerAuthMiddleware
 {
     /**
      * Handle an incoming request.
@@ -15,12 +15,9 @@ class EnsureAdminMaster
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if the user is authenticated as an admin master
-        if (!session(config('admin.session_key'))) {
-            // Redirect to login or show an error
-            return redirect()->route('login')->with('error', 'Acesso negado. Você não é um Administrador Master.');
+        if (!session()->has('customer_logged_in') || !$request->session()->get('customer_logged_in')) {
+            return redirect()->route('customer.verify-nif')->with('error', 'Acesso restrito. Insira o NIF corretamente.');
         }
-
         return $next($request);
     }
 }

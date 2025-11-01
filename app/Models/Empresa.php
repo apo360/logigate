@@ -40,6 +40,22 @@ class Empresa extends Model implements Auditable
         'Sigla',
     ];
 
+     /**
+     * Relação N:N com clientes via tabela pivô customers_empresas
+     */
+    public function customers()
+    {
+        return $this->belongsToMany(Customer::class, 'customers_empresas')
+                    ->withPivot(['codigo_cliente', 'additional_info'])->withTimestamps();
+    }
+    /**
+     * Relação N:N com Exportadors via tabela pivô exportador_empresas
+     */
+    public function exportadors()
+    {
+        return $this->belongsToMany(Exportador::class, 'exportador_empresas')
+                    ->withPivot(['codigo_exportador', 'additional_info', 'status', 'data_associacao'])->withTimestamps();
+    }
     /**
      * Relação 1:N — Uma empresa pode ter vários representantes
      */

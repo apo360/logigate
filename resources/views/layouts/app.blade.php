@@ -69,10 +69,10 @@
             "@context": "https://schema.org",
             "@type": "Organization",
             "name": "Logigate",
-            "url": "https://logigate.com",
-            "logo": "https://logigate.com/logo.png",
-            "Acesso" : "https://logigate.com/login",
-            "Registro" : "https://logigate.com/register",
+            "url": "https://aduaneiro.hongayetu.com",
+            "logo": "https://aduaneiro.hongayetu.com/logo.png",
+            "Acesso" : "https://aduaneiro.hongayetu.com/login",
+            "Registro" : "https://aduaneiro.hongayetu.com/register",
             "sameAs": [
                 "https://facebook.com/logigate",
                 "https://instagram.com/logigate"

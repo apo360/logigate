@@ -35,8 +35,10 @@ class Handler extends ExceptionHandler
         if ($exception instanceof AuthorizationException) {
             // Log the authorization exception
             Log::error('Authorization Error: ' . $exception->getMessage());
+            return redirect()->back()->with('error', 'Não tens permissão para executar esta ação.');
         }
 
         return parent::render($request, $exception);
     }
+
 }

@@ -5,9 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
         <title>Logigate | Login</title>
         <!-- Canonical SEO -->
-        <link rel="canonical" href="https://www.logigate.ao"/>
+        <link rel="canonical" href="https://aduaneiro.hongayetu.com"/>
 
         <!-- Meta Tags -->
         <meta name="keywords" content="logigate, sistema de gestão aduaneira, gestão financeira, gestão contabilística, automação aduaneira, hongayetu lda, software aduaneiro, controle logístico, contabilidade aduaneira, despacho aduaneiro, gestão de operações, Angola, África">
@@ -16,7 +17,7 @@
         <!-- Schema.org markup -->
         <meta itemprop="name" content="Logigate - Gestão Aduaneira, Financeira e Contabilística">
         <meta itemprop="description" content="Logigate oferece uma solução robusta e integrada para automação e controle de processos aduaneiros, financeiros e contabilísticos, garantindo eficiência e precisão.">
-        <meta itemprop="image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
+        <meta itemprop="image" content="https://aduaneiro.hongayetu.com/images/logigate-thumbnail.jpg">
         <meta itemprop="datePublished" content="2023-10-01">
         <meta itemprop="ratingValue" content="4.9">
         <meta itemprop="reviewCount" content="150">
@@ -27,14 +28,14 @@
         <meta name="twitter:title" content="Logigate - Sistema de Gestão Aduaneira, Financeira e Contabilística">
         <meta name="twitter:description" content="Aumente a eficiência dos seus processos com o Logigate, desenvolvido pela Hongayetu Lda. Automatize despachos e gestão financeira com uma plataforma avançada. #Logística #Angola">
         <meta name="twitter:creator" content="@hongayetu">
-        <meta name="twitter:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
+        <meta name="twitter:image" content="https://aduaneiro.hongayetu.com/images/logigate-thumbnail.jpg">
         <meta name="twitter:image:alt" content="Logigate - Sistema de Gestão Aduaneira">
 
         <!-- Open Graph data -->
         <meta property="og:title" content="Logigate | Sistema de Gestão Aduaneira e Financeira" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.logigate.ao" />
-        <meta property="og:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg" />
+        <meta property="og:url" content="https://aduaneiro.hongayetu.com" />
+        <meta property="og:image" content="https://aduaneiro.hongayetu.com/images/logigate-thumbnail.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="628" />
         <meta property="og:description" content="Logigate é uma solução desenvolvida pela Hongayetu Lda para gestão aduaneira, financeira e contabilística, garantindo automação e eficiência nos processos de despacho e controle financeiro." />
@@ -73,7 +74,7 @@
                         </div>
                         <div class="border-2 border-blue-500 p-4 rounded-lg">
                             <div class="flex items-center">
-                                <input id="despachante" type="radio" name="user_type" value="despachante" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" checked>
+                                <input id="despachante" type="radio" name="user_type" value="despachante" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" checked autofocus>
                                 <label for="despachante" class="ml-3 block text-sm font-medium text-gray-700">Despachante</label>
                             </div>
                             <p class="text-sm text-gray-500 ml-7">Acesso para despachantes que gerenciam processos aduaneiros.</p>
@@ -92,7 +93,7 @@
                         <!-- Campo de Email -->
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input id="email" type="email" name="email" :value="old('email')" required autofocus
+                            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
 
@@ -106,33 +107,11 @@
 
                     <!-- Acesso para Clientes -->
                     <div id="lg_usuarioIAM" class="hidden space-y-4">
-                        <!-- Etapa 1: Inserir NIF -->
                         <div id="etapa1">
-                            <div>
-                                <label for="nif" class="block text-sm font-medium text-gray-700">NIF</label>
-                                <input id="nif" type="text" name="nif" :value="old('nif')" required autofocus
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </div>
-
-                            <!-- Número de Telefone Mascarado -->
-                            <div id="telefoneContainer" class="hidden">
-                                <p class="text-sm text-gray-600 mt-4">Confirme o número de telefone: <span id="telefoneMascarado" class="font-semibold"></span></p>
-                                <button type="button" id="confirmarTelefone" class="mt-4 w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                    Confirmar e Enviar Código
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Etapa 2: Inserir Código de Verificação -->
-                        <div id="etapa2" class="hidden">
-                            <div>
-                                <label for="codigo" class="block text-sm font-medium text-gray-700">Código de Verificação</label>
-                                <input id="codigo" type="text" name="codigo" required
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </div>
-
-                            <button type="submit" class="mt-4 w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                Verificar Código e Acessar
+                            <label for="nif" class="block text-sm font-medium text-gray-700">NIF</label>
+                            <input id="nif" type="text" name="nif" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <button type="button" id="confirmarTelefone" class="mt-4 w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                Acessar
                             </button>
                         </div>
                     </div>
@@ -141,21 +120,21 @@
                     <div id="admin_qr" class="hidden space-y-4">
                         <div class="text-center">
                             <p class="text-sm text-gray-600">Introduza o PIN para acessar como administrador.</p>
-                            <input type="text" id="pin" name="pin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border-red-500">
+                            <input type="text" id="pin" name="pin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('pin') border-red-500 @enderror">
                             <button id="verify-pin" type="button" class="mt-4 w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                Verificar PIN
+                                Acessar
                             </button>
                         </div>
-                        <div class="text-center">
+                        <!-- <div class="text-center">
                             <p class="text-sm text-gray-900 text-bold">Ou</p>
                         </div>
                         <div class="text-center">
                             <p class="text-sm text-gray-600">Escaneie o QR Code abaixo para acessar como administrador.</p>
-                            <!-- Placeholder para o QR Code -->
+                            Placeholder para o QR Code
                             <div id="qr_code_placeholder" class="mt-4 p-4 bg-gray-100 rounded-lg">
                                 <img src="https://via.placeholder.com/150" alt="QR Code" class="mx-auto">
                             </div>
-                        </div>
+                        </div> -->
                     </div>
 
                     <!-- Lembrar-me e Esqueci a Senha -->
@@ -181,11 +160,11 @@
                 <!-- Mensagens de Erro -->
                 <x-validation-errors class="mb-4" />
 
-                @session('status')
+                @if (session('status'))
                     <div class="mb-4 font-medium text-sm text-green-600">
-                        {{ $value }}
+                        {{ session('status') }}
                     </div>
-                @endsession
+                @endif
             </div>
 
             <!-- Coluna Direita: Imagem ou Logotipo Animado -->
@@ -203,154 +182,91 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script>
             $(document).ready(function() {
-                // Variável para armazenar o NIF e o telefone
-                var nif, telefone;
+                // Configuração global do token CSRF (para manter boas práticas)
+                $.ajaxSetup({
+                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+                });
 
-                // Mostrar/ocultar campos com base no tipo de usuário selecionado
+                // Alternar entre tipos de usuário
                 $('input[name="user_type"]').change(function() {
-                    const selectedValue = $(this).val();
+                    const tipo = $(this).val();
 
-                    // Oculta todos os blocos de campos
+                    // Esconde todos os blocos
                     $('#lg_despachante, #lg_usuarioIAM, #admin_qr, #btt_sub').addClass('hidden');
+                    $('#email, #password, #nif, #pin').removeAttr('required');
 
-                    // Remove o atributo 'required' dos campos ocultos
-                    $('#email, #password, #nif, #codigo').removeAttr('required');
-
-                    // Mostra o bloco de campos correspondente e adiciona 'required' aos campos visíveis
-                    if (selectedValue === 'despachante') {
+                    if (tipo === 'despachante') {
                         $('#btt_sub').removeClass('hidden');
                         $('#lg_despachante').removeClass('hidden');
                         $('#email, #password').attr('required', true);
-                    } else if (selectedValue === 'cliente') {
+                    } 
+                    else if (tipo === 'cliente') {
                         $('#lg_usuarioIAM').removeClass('hidden');
-                        $('#etapa1').removeClass('hidden');
-                        $('#etapa2').addClass('hidden');
                         $('#nif').attr('required', true);
-                    } else if (selectedValue === 'admin') {
+                        $('#etapa1').removeClass('hidden');
+                        $('#etapa2, #telefoneContainer').addClass('hidden');
+                    } 
+                    else if (tipo === 'admin') {
                         $('#admin_qr').removeClass('hidden');
                     }
                 });
 
-                // Etapa 1: Verificar NIF e exibir telefone
-                $('#nif').on('input', function() {
-                    nif = $(this).val();
-
-                    // Verifica se o NIF tem 9 dígitos (exemplo)
-                    if (nif.length >= 9) {
-                        // Faz uma chamada AJAX para verificar o NIF
-                        $.ajax({
-                            url: '/customers/verificar-nif', // Rota no backend
-                            method: 'GET',
-                            data: { nif: nif }, // Envia o NIF como parâmetro
-                            success: function(response) {
-                                if (response.success) {
-                                    // Atualiza o telefone e exibe o campo de confirmação
-                                    telefone = response.telefone;
-                                    const telefoneMascarado = '*******' + telefone.slice(-3);
-                                    $('#telefoneMascarado').text(telefoneMascarado);
-                                    $('#telefoneContainer').removeClass('hidden');
-                                } else {
-                                    // Oculta o campo de confirmação se o NIF não for válido
-                                    $('#telefoneContainer').addClass('hidden');
-                                    alert('NIF não encontrado. Verifique e tente novamente.');
-                                }
-                            },
-                            error: function() {
-                                alert('Erro ao verificar o NIF. Tente novamente mais tarde.');
-                            }
-                        });
-                    } else {
-                        // Oculta o campo de confirmação se o NIF não tiver 9 dígitos
-                        $('#telefoneContainer').addClass('hidden');
-                    }
-                });
-
-                // Etapa 1: Confirmar telefone e enviar código
+                // Cliente: apenas NIF → redireciona
                 $('#confirmarTelefone').click(function() {
-                    // Faz uma chamada AJAX para enviar o código por SMS
-                    $.ajax({
-                        url: '/cliente/enviar-codigo', // Rota no backend
-                        method: 'POST',
-                        data: { telefone: telefone }, // Envia o telefone como parâmetro
-                        success: function(response) {
-                            if (response.success) {
-                                // Mostra a Etapa 2 (inserir código de verificação)
-                                $('#etapa1').addClass('hidden');
-                                $('#etapa2').removeClass('hidden');
-                            } else {
-                                alert('Erro ao enviar o código. Tente novamente.');
-                            }
-                        },
-                        error: function() {
-                            alert('Erro ao enviar o código. Tente novamente mais tarde.');
-                        }
-                    });
-                });
+                    const nif = $('#nif').val().trim();
 
-                // Etapa 2: Verificar código e acessar
-                $('#lg_usuarioIAM').on('submit', function(e) {
-                    e.preventDefault();
-                    const codigoInserido = $('#codigo').val();
-
-                    // Faz uma chamada AJAX para verificar o código
-                    $.ajax({
-                        url: '/cliente/verificar-codigo', // Rota no backend
-                        method: 'POST',
-                        data: { telefone: telefone, codigo: codigoInserido }, // Envia o telefone e o código
-                        success: function(response) {
-                            if (response.success) {
-                                // Redireciona para a área do cliente
-                                window.location.href = '/cliente/dashboard';
-                            } else {
-                                alert('Código incorreto. Tente novamente.');
-                            }
-                        },
-                        error: function() {
-                            alert('Erro ao verificar o código. Tente novamente mais tarde.');
-                        }
-                    });
-                });
-            });
-
-            $('#verify-pin').click(function() {
-                const pin = $('#pin').val().trim();
-
-                // Validate the PIN input
-                if (!pin) {
-                    alert('Por favor, insira um PIN.');
-                    return;
-                }
-
-                // Obtém o token CSRF da meta tag
-                const token = $('meta[name="csrf-token"]').attr('content');
-
-                $.ajax({
-                    url: 'verify-pin', // URL da rota
-                    method: 'POST',
-                    data: {
-                        pin: pin,
-                        _token: token, // Inclui o token CSRF
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            // Redireciona para o dashboard
-                            window.location.href = response.redirect_url;
-                        } else {
-                            // Exibe uma mensagem de erro
-                            alert(response.message || 'PIN inválido.');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        // Log the error for debugging
-                        console.error('Erro na requisição:', status, error);
-
-                        // Exibe uma mensagem de erro amigável
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            alert('Erro: ' + xhr.responseJSON.message);
-                        } else {
-                            alert('Erro ao verificar o PIN. Tente novamente.');
-                        }
+                    if (!nif) {
+                        alert('Por favor, insira o NIF.');
+                        return;
                     }
+
+                    // Simula login do cliente
+                    $.ajax({
+                        url: 'verify-nif',
+                        method: 'POST',
+                        data: { nif: nif },
+                        success: function(response) {
+                            if (response.success) {
+                                window.location.href = response.redirect_url;
+                            } else {
+                                alert('NIF não encontrado. Tente novamente.');
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON;
+                            alert(response.message || 'Erro ao processar acesso do cliente.');
+                        }
+                    });
+                });
+
+                // Admin: apenas PIN → redireciona
+                $('#verify-pin').click(function() {
+                    const pin = $('#pin').val().trim();
+
+                    if (!pin) {
+                        alert('Por favor, insira o PIN.');
+                        return;
+                    }
+
+                    $.ajax({
+                        url: 'verify-pin',
+                        method: 'POST',
+                        data: {
+                            pin: pin,
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                window.location.href = response.redirect_url;
+                            } 
+                            else {
+                                alert(response.message || 'PIN inválido. Tente novamente.');
+                            }
+                        },
+                        error: function(xhr) { // Pegar o erro geral e inseri no alert
+                            const response = xhr.responseJSON;
+                            alert(response.message || 'Erro ao verificar o PIN. Tente novamente.');
+                        }
+                    });
                 });
             });
         </script>

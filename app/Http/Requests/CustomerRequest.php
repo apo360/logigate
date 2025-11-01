@@ -23,7 +23,6 @@ class CustomerRequest extends FormRequest
     public function rules()
     {
         $id = $this->route('customer'); // Obtém o ID do cliente se estiver na atualização
-        $empresaId = Auth::user()->empresas->first()->id;
         $customer = Customer::where('id', $id)->first(); 
 
         // Verifica se o cliente possui faturas ou processos fechados
@@ -33,19 +32,12 @@ class CustomerRequest extends FormRequest
         );
 
         return [
-            'CustomerTaxID' => [
+                'CustomerTaxID' => [
                 'required',
                 'string',
                 'min:6',
                 'max:14',
-                Rule::unique('customers')->where(function ($query) use ($empresaId) {
-                    return $query->where('empresa_id', $empresaId);
-                })->ignore($id, 'id'),
-                function ($attribute, $value, $fail) use ($customer, $possuiFaturasOuProcessosFechados) {
-                    if ($customer && $possuiFaturasOuProcessosFechados && $customer->CustomerTaxID !== $value) {
-                        $fail('O NIF não pode ser alterado porque o cliente possui faturas ou processos fechados.');
-                    }
-                }
+                Rule::unique('customers', 'CustomerTaxID')->ignore($this->customer->id),
             ],
             'AccountID' => ['nullable', 'string', 'max:30'],
             'CompanyName' => ['required', 'string', 'max:100'],

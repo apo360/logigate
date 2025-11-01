@@ -18,8 +18,7 @@ class ExportadorController extends Controller
      */
     public function index()
     {
-        $empresa = Auth::user()->empresas->first();
-        $exportadors = Exportador::where('empresa_id', $empresa->id)->get();
+        $exportadors = $this->empresa->exportadors()->get();
 
         return view('exportadors.index', compact('exportadors'));
     }
@@ -38,43 +37,61 @@ class ExportadorController extends Controller
      */
     public function store(ExportadorRequest $request)
     {
-        // Determine the form type based on the request data
         $formType = $request->get('formType'); 
 
         try {
-            // Inicia uma transação para garantir a integridade dos dados
             DB::beginTransaction();
 
             $user = Auth::user();
+            $empresa = $user->empresas->first();
 
-            $exportValidate = $request->validated();
+            $dadosValidados = $request->validated();
 
-            // Cria um novo registro de cliente na tabela 'customers' com os dados fornecidos
-            $newExportador = Exportador::create($exportValidate);
+            // Verifica se o exportador já existe globalmente
+            $exportador = Exportador::where('ExportadorTaxID', $dadosValidados['ExportadorTaxID'])
+                ->where('Exportador', $dadosValidados['Exportador'])
+                ->first();
 
-            // Confirma a transação, salvando as alterações no banco de dados
+            // Se não existir, cria um novo
+            if (!$exportador) {
+                $exportador = Exportador::create($dadosValidados);
+            }
+
+            // Verifica se já está associado à empresa
+            $jaAssociado = $exportador->empresas()
+                ->where('empresa_id', $empresa->id)
+                ->exists();
+
+            if (!$jaAssociado) {
+                $exportador->empresas()->attach($empresa->id, [
+                    'codigo_exportador' => $dadosValidados['codigo_exportador'] ?? null,
+                    'additional_info' => $dadosValidados['additional_info'] ?? null,
+                    'status' => $dadosValidados['status'] ?? 'ATIVO',
+                    'data_associacao' => now(),
+                ]);
+            }
+
             DB::commit();
 
-            // Prepare success response based on form type
+            // Retorno diferenciado por tipo de formulário
             if ($formType === 'modal') {
-                // Return success data for modal forms
                 return response()->json([
-                    'message' => 'Exportador adicionado com Sucesso',
-                    'exportador_id' => $newExportador->id,
-                    'codCli' => $newExportador->ExportadorTaxID,
+                    'message' => 'Exportador adicionado com sucesso!',
+                    'exportador_id' => $exportador->id,
+                    'codCli' => $exportador->ExportadorTaxID,
                 ], 200);
-            } else {
-                // Redirect to 'form.edit' for the main form
-                return redirect()->route('exportadors.edit', $newExportador->id)->with('success', 'Cliente Inserido com sucesso');
             }
-            
+
+            return redirect()
+                ->route('exportadors.edit', $exportador->id)
+                ->with('success', 'Exportador adicionado com sucesso!');
+
         } catch (QueryException $e) { 
             DB::rollBack();
-
             return DatabaseErrorHandler::handle($e, $request);
         } 
-
     }
+
 
     /**
      * Display the specified resource.
@@ -103,10 +120,95 @@ class ExportadorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Exportador $exportador)
-    {
-        //
+    public function update(ExportadorRequest $request, $id)
+{
+    try {
+        DB::beginTransaction();
+
+        $user = Auth::user();
+        $empresa = $user->empresas->first();
+        $dadosValidados = $request->validated();
+        $escopo = $request->get('escopo', 'local'); // valor padrão: local
+
+        // Encontra o exportador
+        $exportador = Exportador::findOrFail($id);
+
+        // Verifica se está associado à empresa
+        $associacao = $exportador->empresas()
+            ->where('empresa_id', $empresa->id)
+            ->first();
+
+        // --- ESCOPOS DE ATUALIZAÇÃO ---
+        if ($escopo === 'global') {
+            /**
+             * Atualização Global
+             * Só permitida para administradores ou utilizadores com permissão
+             * global. Aqui alteramos os dados centrais do exportador.
+             */
+            if ($user->hasRole('admin') || $user->can('update-global-exportador')) {
+                $exportador->update($dadosValidados);
+            } else {
+                throw new \Exception('Sem permissão para atualização global.');
+            }
+
+        } else {
+            /**
+             * Atualização Local
+             * Apenas altera os dados da associação (pivot) e não os dados centrais
+             * da tabela "exportadors".
+             */
+            if ($associacao) {
+                $exportador->empresas()->updateExistingPivot($empresa->id, [
+                    'codigo_exportador' => $dadosValidados['codigo_exportador'] ?? $associacao->pivot->codigo_exportador,
+                    'additional_info'   => $dadosValidados['additional_info'] ?? $associacao->pivot->additional_info,
+                    'status'            => $dadosValidados['status'] ?? $associacao->pivot->status,
+                    'data_associacao'   => $associacao->pivot->data_associacao ?? now(),
+                ]);
+            } else {
+                // Cria associação se não existir
+                $exportador->empresas()->attach($empresa->id, [
+                    'codigo_exportador' => $dadosValidados['codigo_exportador'] ?? null,
+                    'additional_info'   => $dadosValidados['additional_info'] ?? null,
+                    'status'            => $dadosValidados['status'] ?? 'ATIVO',
+                    'data_associacao'   => now(),
+                ]);
+            }
+        }
+
+        DB::commit();
+
+        // Resposta AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $escopo === 'global'
+                    ? 'Exportador atualizado globalmente com sucesso!'
+                    : 'Exportador atualizado localmente com sucesso!',
+                'exportador_id' => $exportador->id,
+            ]);
+        }
+
+        // Resposta padrão (redirect)
+        return redirect()
+            ->route('exportadors.edit', $exportador->id)
+            ->with('success', $escopo === 'global'
+                ? 'Exportador atualizado globalmente com sucesso!'
+                : 'Exportador atualizado localmente com sucesso!');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        return back()->withErrors('Erro: ' . $e->getMessage());
     }
+}
+
 
     /**
      * Remove the specified resource from storage.

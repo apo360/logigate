@@ -36,6 +36,12 @@ use SimpleXMLElement;
 
 class ProcessoController extends Controller
 {
+    protected $empresa;
+    // constructor with auth middleware
+    public function __construct()
+    {
+        $this->empresa = Auth::user()->empresas->first();
+    }
     
     function numeroParaExtenso($numero) {
         $unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
@@ -139,9 +145,8 @@ class ProcessoController extends Controller
      */
     public function create()
     {
-        $empresa = Auth::user()->empresas->first();
-        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca os Clientes
-        $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
+        $clientes = $this->empresa->customers()->get(); // Busca os Clientes
+        $exportador = $this->empresa->exportadors()->get();
         $paises = Pais::all();
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
@@ -149,7 +154,7 @@ class ProcessoController extends Controller
         $portos = Porto::all();
         $ibans = IbanController::getBankDetails();
         $tipoTransp = TipoTransporte::all();
-        $processos_drafts = ProcessoDraft::where('empresa_id', $empresa->id)->orderBy('DataAbertura', 'desc')->get();
+        $processos_drafts = ProcessoDraft::where('empresa_id', $this->empresa->id)->orderBy('DataAbertura', 'desc')->get();
         $condicoes_pagamento = CondicaoPagamento::all();
         $localizacoes = MercadoriaLocalizacao::all();
 

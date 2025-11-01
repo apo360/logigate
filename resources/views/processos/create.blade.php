@@ -798,6 +798,11 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
     <!-- Script para tratar de adição de clientes não registados a tabela -->
     <script>
         // Selecione o formulário
@@ -824,16 +829,21 @@
                     const data = await response.json();
 
                     // Exibir a mensagem de retorno usando Toastr
+                    $('#customer_id').val(data.cliente_id);
                     toastr.success(data.message); // Exibir mensagem de sucesso
                     $("#formNovoCliente")[0].reset();  // Reset form
-                    $('#newClientModal').modal('hide');  // Hide modal
-                    $('#CustomerID').val(data.cliente_id);
+                    // Hide modal
+                    const modalEl = document.getElementById('newClientModal');
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        await new Promise(resolve => setTimeout(resolve, 500)); // meio segundo
+                        modal.hide();
+                    }
                 } else {
                     // Se a resposta não for bem-sucedida, exibir uma mensagem de erro genérica
                     toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
                 }
             } catch (error) {
-                console.error('Erro ao enviar formulário:', error);
                 // Em caso de erro, exibir uma mensagem de erro genérica
                 toastr.error('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente mais tarde.');
             }

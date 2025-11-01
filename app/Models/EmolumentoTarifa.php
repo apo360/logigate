@@ -48,53 +48,35 @@ class EmolumentoTarifa extends Model
     /**
      * Boot the model.
      */
-    protected static function boot()
+    protected static function booted()
     {
-        parent::boot();
-
-        // Evento antes de criar ou atualizar
-        static::saving(function ($tarifa) {
-            self::calcularValores($tarifa);
-            $tarifa->guia_fiscal = $tarifa->calcularGuiaFiscal();
-        });
-
-        // Evento antes de excluir
-        static::deleting(function ($tarifa) {
-            if ($tarifa->honorario > 10000) {
-                throw new \Exception('Não é permitido excluir tarifas com honorários acima de 10.000.');
-            }
-        });
+        static::saving(fn($tarifa) => $tarifa->atualizarValores());
+        static::deleting(fn($tarifa) => $tarifa->verificarExclusao());
     }
 
-    /**
-     * Calcula os valores dependentes do ValorAduaneiro e Honorário.
-     *
-     * @param EmolumentoTarifa $emolumentoTarifa
-     */
-    private static function calcularValores($emolumentoTarifa)
+    public function atualizarValores()
     {
-        $processo = $emolumentoTarifa->processo()->first(); // Obtém o processo relacionado
+        $processo = $this->processo()->first();
 
         if ($processo && $processo->ValorAduaneiro) {
             $valorAduaneiro = $processo->ValorAduaneiro;
 
-            $emolumentoTarifa->iva_aduaneiro = $valorAduaneiro * 0.14;
-            $emolumentoTarifa->impostoEstatistico = $valorAduaneiro * 0.10;
-            $emolumentoTarifa->emolumentos = $valorAduaneiro * 0.02;
+            $this->iva_aduaneiro = $valorAduaneiro * 0.14;
+            $this->impostoEstatistico = $valorAduaneiro * 0.10;
+            $this->emolumentos = $valorAduaneiro * 0.02;
         }
 
-        if ($emolumentoTarifa->honorario) {
-            $emolumentoTarifa->honorario_iva = $emolumentoTarifa->honorario * 0.14;
+        if ($this->honorario) {
+            $this->honorario_iva = $this->honorario * 0.14;
         }
+
+        $this->guia_fiscal = $this->calcularGuiaFiscal();
     }
 
-    // Método para calcular o total de guia_fiscal
-    public function calcularGuiaFiscal()
+    public function verificarExclusao()
     {
-        return collect($this->attributes)
-            ->except(['processo_id', 'guia_fiscal', 'created_at', 'updated_at', 'deleted_at'])
-            ->map(fn($value) => (float) ($value ?? 0))
-            ->sum();
+        if ($this->honorario > 10000) {
+            throw new \Exception('Não é permitido excluir tarifas com honorários acima de 10.000.');
+        }
     }
-
 }

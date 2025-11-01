@@ -249,7 +249,7 @@
 												]) !!}
 											</span>
 										</label>
-                                        <p id="terms-error" class="error-feedback text-sm text-red-500 hidden mt-2" aria-live="polite">Você deve aceitar os termos para continuar.</p>11011
+                                        <p id="terms-error" class="error-feedback text-sm text-red-500 hidden mt-2" aria-live="polite">Você deve aceitar os termos para continuar.</p>
 									</div>
 								@endif
 							</div>
@@ -277,6 +277,11 @@
         $(document).ready(function() {
             var currentStep = 1;
             var totalSteps = $('.step-content').length;
+            var btnNext = $('.btn-next');
+            var btnPrev = $('.btn-prev');
+            var btnFinish = $('.btn-finish');
+
+            showStep(currentStep);
 
             function updateProgress() {
                 var progress = (currentStep / totalSteps) * 100;
@@ -284,10 +289,31 @@
             }
 
             function showStep(step) {
+                // Esconde todas as etapas
                 $('.step-content').addClass('hidden');
                 $('.step-content').eq(step - 1).removeClass('hidden');
+
+                // Atualiza a navegação
                 $('.step').removeClass('active');
                 $('.step').eq(step - 1).addClass('active');
+
+                // Controla visibilidade dos botões
+                if (step === 1) {
+                    btnPrev.addClass('hidden');
+                    btnNext.removeClass('hidden');
+                    btnFinish.addClass('hidden');
+                } else if (step < totalSteps) {
+                    btnPrev.removeClass('hidden');
+                    btnNext.removeClass('hidden');
+                    btnFinish.addClass('hidden');
+                } else {
+                    // Última etapa
+                    btnPrev.removeClass('hidden');
+                    btnNext.addClass('hidden');
+                    btnFinish.removeClass('hidden');
+                }
+
+                
             }
 
             function validateStep(step) {
@@ -533,13 +559,31 @@
                 $('#password-strength').text('Força da senha: ' + strengthText).removeClass('text-red-500 text-yellow-500 text-green-500').addClass(strengthColor);
             });
 
+            // Verificação de correspondência de senha
+            $('#password_confirmation').on('input', function() {
+                var password = $('#password').val();
+                var confirmPassword = $(this).val();
+
+                if (confirmPassword !== password) {
+                    $('#password-match-icon i').addClass('hidden');
+                    $('#password-match-error').removeClass('hidden');
+                    $('.btn-next').prop('disabled', true);
+                } else {
+                    $('#password-match-icon i').removeClass('hidden');
+                    $('#password-match-error').addClass('hidden');
+                    $('.btn-next').prop('disabled', false);
+                }
+            });
+
             // Verificar cedula via AJAX dinâmicamente
             $('#cedula').on('input', function() {
                 var cedula = $(this).val();
+                $('.btn-finish').prop('disabled', true); // bloqueia temporariamente
 
                 if (cedula.length === 0) {
                     $('#cedula-match-icon i').addClass('hidden');
                     $('#cedula-match-error').addClass('hidden');
+                    $('.btn-next').prop('disabled', false);
                 } else {
                     $.ajax({
                         url: "{{ route('cedula.verificar') }}",
@@ -549,34 +593,34 @@
                             cedula: cedula
                         },
                         success: function(response) {
-                            $('#cedula-match-icon').removeClass('hidden');
-                            $('#cedula-match-icon i.fa-times').addClass('hidden');
+                            // ✅ válida
                             $('#cedula-match-icon i.fa-check').removeClass('hidden');
-                            $('#cedula-match-error')
-                                .removeClass('text-red-500')
-                                .addClass('text-green-500')
-                                .text(response.message)
-                                .attr('aria-live', 'polite')
-                                .removeClass('hidden');
+                            $('#cedula-match-icon i.fa-times').addClass('hidden');
+                            $('#cedula-match-error').removeClass('text-red-500').addClass('text-green-500').text(response.message);
+                            $('.btn-next').prop('disabled', false);
                         },
                         error: function(xhr) {
-                            $('#cedula-match-icon').removeClass('hidden');
+                            // ❌ inválida
                             $('#cedula-match-icon i.fa-check').addClass('hidden');
                             $('#cedula-match-icon i.fa-times').removeClass('hidden');
-                            let msg = 'O Nº da Cédula já existe.';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                msg = xhr.responseJSON.message;
-                            }
-                            $('#cedula-match-error')
-                                .removeClass('text-green-500')
-                                .addClass('text-red-500')
-                                .text(msg)
-                                .attr('aria-live', 'polite')
-                                .removeClass('hidden');
+                            $('#cedula-match-error').removeClass('text-green-500').addClass('text-red-500').text('Cédula inválida ou já existente.');
+                            $('.btn-next').prop('disabled', true);
                         }
                     });
                 }
             });
+
+
+            // Verificar Telefone
+            if ($('#telefone').val().trim() && !/^\+?244\d{9}$/.test($('#telefone').val())) {
+                if (!$('#telefone-error').length) {
+                    $('#telefone').after('<p id="telefone-error" class="error-feedback text-sm text-red-500 mt-2">Número inválido (+244 9xx xxx xxx).</p>');
+                }
+                $('#telefone-error').removeClass('hidden');
+                valid = false;
+            } else {
+                $('#telefone-error').addClass('hidden');
+            }
         });
     </script>
 </body>
