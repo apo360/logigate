@@ -28,7 +28,7 @@ class ModuleSubscriptionController extends Controller
         return view('empresa.subscricao', compact('empresa', 'modulos', 'metodosPagamento'));
     }
 
-    public function pay(Request $request)
+    /*public function pay(Request $request)
     {
         $selectedModulos = $request->input('selected_modulos', []);
         $totalPrice = $request->input('total_price', 0);
@@ -61,5 +61,5 @@ class ModuleSubscriptionController extends Controller
         ]);
 
         return redirect()->route('modules.index')->with('success', 'Módulo subscrito com sucesso!');
-    }
+    }*/
 }

@@ -172,7 +172,6 @@ class CreateNewUser implements CreatesNewUsers
                     // Registar a subscrição com o plano subscrito
                     Subscricao::create([
                         'empresa_id' => $empresa->id,
-                        'modulo_id' => 0,
                         'plano_id' => $input['plano_id'],
                         'data_subscricao' => Carbon::now(),
                         'data_expiracao' => Carbon::now()->addMonths($duracao),

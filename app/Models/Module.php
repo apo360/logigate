@@ -26,11 +26,6 @@ class Module extends Model
         return $this->hasMany(Menu::class, 'module_id', 'id');
     }
 
-    public function subscricoes()
-    {
-        return $this->hasMany(Subscricao::class, 'modulo_id', 'id');
-    }
-
     public function activatedModules()
     {
         return $this->hasMany(ActivatedModule::class);

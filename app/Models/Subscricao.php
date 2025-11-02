@@ -14,7 +14,6 @@ class Subscricao extends Model
 
     protected $fillable = [
         'empresa_id', 
-        'modulo_id', 
         'data_subscricao', 
         'data_expiracao', 
         'status', '
@@ -27,11 +26,6 @@ class Subscricao extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class, 'empresa_id');
-    }
-
-    public function modulo()
-    {
-        return $this->belongsTo(Module::class, 'modulo_id');
     }
 
     public function plano()
