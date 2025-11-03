@@ -6,349 +6,295 @@
         ['name' => 'Editar Cliente', 'url' => route('customers.edit', $customer->id)]
     ]" separator="/" />
 
-    <div class="card" style="border-color: black solid 1px;">
-        <div class="card-header d-flex justify-content-between">
-            <div class="btn-group float-right">
-                <a class="btn btn-outline-secondary" href="{{ route('customers.index') }}">
-                    <i class="fas fa-search"></i> {{ __('Pesquisar') }}
+    <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex space-x-2">
+                <a href="{{ route('customers.index') }}" class="btn flex items-center space-x-2 px-3 py-1.5 border rounded-md hover:bg-gray-100">
+                    <i class="fas fa-search text-gray-500"></i>
+                    <span>Pesquisar</span>
                 </a>
-                <a class="btn btn-outline-primary" href=" {{ route('customers.create') }} " class="btn btn-outline-secondary">
-                    <i class="fas fa-plus-o"></i> {{ __('Novo Cliente') }}
+                <a href="{{ route('customers.create') }}" class="btn flex items-center space-x-2 px-3 py-1.5 border border-blue-500 rounded-md hover:bg-blue-50 text-blue-600">
+                    <i class="fas fa-plus"></i>
+                    <span>Novo Cliente</span>
                 </a>
-                <div class="btn-group" role="group">
-                    <button id="btnGroupDrop1" type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-filter"></i> {{ __('Opções') }}
+
+                <!-- Dropdown -->
+                <div class="relative">
+                    <button type="button" class="flex items-center px-3 py-1.5 border rounded-md hover:bg-gray-100" id="dropdownButton">
+                        <i class="fas fa-filter mr-2"></i> Opções
+                        <i class="fas fa-chevron-down ml-2 text-sm"></i>
                     </button>
-                    <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-                        <li>
-                            <a href=" {{ route('customers.ficha_imprimir', ['id' => $customer->id]) }}" class="dropdown-item">
-                                <i class="fas fa-file-pdf"></i> {{ __('Imprimir') }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('customers.show', $customer->id) }}" class="button dropdown-item">
-                                <i class="fas fa-eye"></i> {{ __('Visualizar') }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href=" {{ route('customers.create') }} " class="button dropdown-item">
-                                <i class="fas fa-file"></i> {{ __('Abrir Processo') }}
-                            </a>
-                        </li>
-                        <li>
-                            <a href=" {{ route('customers.create') }} " class="button dropdown-item">
-                                <i class="fas fa-plus-o"></i> {{ __('Iniciar Licenciamento') }}
-                            </a>
-                        </li>
-                    </ul>
+                    <div class="absolute hidden bg-white border border-gray-200 rounded-md shadow-lg mt-1 w-48 z-10" id="dropdownMenu">
+                        <a href="{{ route('customers.ficha_imprimir', ['id' => $customer->id]) }}" class="block px-4 py-2 hover:bg-gray-100">
+                            <i class="fas fa-file-pdf mr-2 text-red-500"></i> Imprimir
+                        </a>
+                        <a href="{{ route('customers.show', $customer->id) }}" class="block px-4 py-2 hover:bg-gray-100">
+                            <i class="fas fa-eye mr-2 text-blue-500"></i> Visualizar
+                        </a>
+                        <a href="{{ route('customers.create') }}" class="block px-4 py-2 hover:bg-gray-100">
+                            <i class="fas fa-folder-open mr-2 text-gray-500"></i> Abrir Processo
+                        </a>
+                        <a href="{{ route('customers.create') }}" class="block px-4 py-2 hover:bg-gray-100">
+                            <i class="fas fa-cogs mr-2 text-green-500"></i> Iniciar Licenciamento
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card-body">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
-                
-                        <div class="">
-                            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active button" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true"> <i class="fas fa-info"></i> Info</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="contabilidade-tab" data-bs-toggle="tab" data-bs-target="#contabilidade" type="button" role="tab" aria-controls="contabilidade" aria-selected="false">Contabilidade</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="documento-tab" data-bs-toggle="tab" data-bs-target="#documento" type="button" role="tab" aria-controls="documento" aria-selected="false">Documentos</button>
-                                </li>
-                            </ul>
+        <!-- Tabs -->
+        <div>
+            <ul class="flex border-b text-sm font-medium" id="mainTabs">
+                <li><button class="px-4 py-2 border-b-2 border-blue-500 text-blue-600" data-tab="info">Info</button></li>
+                <li><button class="px-4 py-2 hover:border-b-2 hover:border-blue-400" data-tab="contabilidade">Contabilidade</button></li>
+                <li><button class="px-4 py-2 hover:border-b-2 hover:border-blue-400" data-tab="documentos">Documentos</button></li>
+            </ul>
 
-                            <!-- Tab panes -->
-                            <div class="tab-content" id="myTabContent">
-                                <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
-                                    <form method="POST" action="{{ route('customers.update', $customer->id) }}">
-                                        @csrf
-                                        @method('PUT')
-                                        <div class="mt-4">
-                                            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                                                <li class="nav-item" role="presentation">
-                                                    <button class="nav-link active button" id="endereco-tab" data-bs-toggle="tab" data-bs-target="#endereco" type="button" role="tab" aria-controls="endereco" aria-selected="true">Endereço</button>
-                                                </li>
-                                                <li class="nav-item" role="presentation">
-                                                    <button class="nav-link" id="aduaneiro-tab" data-bs-toggle="tab" data-bs-target="#aduaneiro" type="button" role="tab" aria-controls="aduaneiro" aria-selected="true">Info Aduaneira</button>
-                                                </li>
-                                            </ul>
-                                            <div class="tab-content" id="myTabContent">
-                                                <div class="tab-pane fade show active" id="endereco" role="tabpanel" aria-labelledby="endereco-tab">
-                                                    <div class="row">
-                                                        <div class="col-md-3">
-                                                            <div class="mt-2">
-                                                                <x-label for="CustomerTaxID" value="{{ __('NIF Cliente') }}" />
-                                                                <x-input id="CustomerTaxID" class="block mt-1 w-full" type="text" name="CustomerTaxID" value="{{ old('CustomerTaxID', $customer->CustomerTaxID) }}" />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="mt-2">
-                                                                <x-label for="CompanyName" value="{{ __('Cliente') }}" />
-                                                                <x-input id="CompanyName" class="block mt-1 w-full" type="text" name="CompanyName" value="{{ old('CompanyName', $customer->CompanyName) }}" readonly />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4 mt-2">
-                                                            <x-label for="Email" value="{{ __('Email') }}" />
-                                                            <x-input id="Email" class="block mt-1 w-full" type="email" name="Email" autocomplete="email" value="{{ old('Email', $customer->Email ?? '') }}" />
-                                                        </div>
-                                                    </div> 
+            <div id="tabContent" class="mt-4">
+                <!-- TAB: INFO -->
+                <div id="info" class="tab-pane block">
+                    <form method="POST" action="{{ route('customers.update', $customer->id) }}">
+                        @csrf
+                        @method('PUT')
 
-                                                    <div class="row">
-                                                        <div class="col-md-4 mt-3">
-                                                            <x-label for="Telephone" value="{{ __('Telefone') }}" />
-                                                            <x-input id="Telephone" class="block mt-1 w-full" type="text" name="Telephone" required autocomplete="Telephone" value="{{ old('Telephone', $customer->Telephone ?? '') }}" />
-                                                        </div>
+                        <!-- Sub-tabs -->
+                        <ul class="flex border-b text-sm font-medium mt-2" id="infoSubTabs">
+                            <li><button class="px-4 py-2 border-b-2 border-blue-500 text-blue-600" data-subtab="endereco">Endereço</button></li>
+                            <li><button class="px-4 py-2 hover:border-b-2 hover:border-blue-400" data-subtab="aduaneiro">Info Aduaneira</button></li>
+                        </ul>
 
-                                                        <div class="col-md-4 mt-3">
-                                                            <x-label for="PostalCode" value="{{ __('Código Postal') }}" />
-                                                            <x-input id="PostalCode" class="form-control" type="text" name="PostalCode" value="{{ old('PostalCode', $customer->endereco->PostalCode ?? '00000') }}" />
-                                                        </div>
-                                                        <div class="col-md-4 mt-3">
-                                                            <x-label for="SelfBillingIndicator" value="{{ __('Indicador de Autofaturação') }}" />
-                                                            <select id="SelfBillingIndicator" class="form-control" name="SelfBillingIndicator">
-                                                                <option value="0" {{ 0 == $customer->SelfBillingIndicator ? 'selected' : '' }}>Não</option>
-                                                                <option value="1" {{ 1 == $customer->SelfBillingIndicator ? 'selected' : '' }}>Sim</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="row mt-3">
-                                                        <div class="col-md-3 mt-3">
-                                                            <x-label for="country" value="{{ __('País') }}" />
-                                                            <select name="nacionality" id="nacionality" class="form-control">
-                                                                @foreach($paises as $pais)
-                                                                    <option value="{{ $pais->id }}" {{ $pais->id == $customer->nacionality ? 'selected' : '' }}> {{ $pais->pais}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-3 mt-3">
-                                                            <label for="doc_type">Tipo de Documento</label>
-                                                            <select name="doc_type" id="doc_type" class="form-control">
-                                                                <option value="">Selecionar</option>
-                                                                <option value="BI" {{ $customer->doc_type == 'BI' ? 'selected' : '' }}>Bilhete de Identidade</option>
-                                                                <option value="PASS" {{ $customer->doc_type == 'PASS' ? 'selected' : '' }}>Passaporte</option>
-                                                                <option value="CC" {{ $customer->doc_type == 'CC' ? 'selected' : '' }}>Carta de Condução</option>
-                                                                <option value="CR" {{ $customer->doc_type == 'CR' ? 'selected' : '' }}>Cartão de Residência</option>
-                                                                <option value="">Outro</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-md-3 mt-3">
-                                                            <label for="doc_num">Nº do Documento</label>
-                                                            <x-input type="text" name="doc_num" id="doc_num" class="form-control" value="{{ old('doc_num', $customer->doc_num ?? '') }}" />
-                                                        </div>
-                                                        <div class="col-md-3 mt-3">
-                                                            <label for="validade_date_doc">Data de Validade</label>
-                                                            <x-input type="date" name="validade_date_doc" id="validade_date_doc" class="form-control" value="{{ old('validade_date_doc', $customer->validade_date_doc ?? '') }}" />
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Campos de endereço -->
-                                                    <hr class="mt-2">
-                                                    <div class="form-group">
-                                                        <x-label for="AddressDetail" value="{{ __('Morada Completa') }}" />
-                                                        <x-input id="AddressDetail" class="form-input" type="text" name="AddressDetail" :value="old('AddressDetail', $customer->endereco->AddressDetail ?? 'Desconhecido')" />
-                                                    </div>
-                                                    <div class="row mt-4">
-                                                        <div class="col-md-3">
-                                                            <div class="form-group">
-                                                                <x-label for="Province" value="{{ __('Província') }}" />
-                                                                <select name="Province" id="Province" class="form-control">
-                                                                    <option value="" disabled {{ empty($customer->endereco->Province ?? null) ? 'selected' : '' }}>
-                                                                        {{ __('Selecione uma Província') }}
-                                                                    </option>
-                                                                    @foreach ($provincias as $provincia)
-                                                                        <option 
-                                                                            value="{{ $provincia->Nome }}" 
-                                                                            @selected($provincia->Nome === ($customer->endereco->Province ?? ''))>
-                                                                            {{ __($provincia->Nome) }}
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <div class="form-group">
-                                                                <x-label for="municipality" value="{{ __('Município') }}" />
-                                                                <x-input id="municipality" type="text" class="form-input" list="municipalityList" name="municipality" value="{{ old('municipality', $customer->endereco->municipality ?? '') }}" />
-                                                                <datalist id="municipalityList">
-                                                                    
-                                                                </datalist>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <div class="form-group">
-                                                                <x-label for="City" value="{{ __('Distrito') }}" />
-                                                                <x-input id="City" class="form-input" type="text" name="City" value="{{ old('City', $customer->endereco->City ?? '') }}" />
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-3">
-                                                            <div class="form-group">
-                                                                <x-label for="BuildingNumber" value="{{ __('Rua, Andar, Apartamento') }}" />
-                                                                <x-input id="BuildingNumber" class="form-input" type="text" name="BuildingNumber" value="{{ old('BuildingNumber',$customer->endereco->BuildingNumber ?? '') }}" required />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- Fim dos campos de endereço -->
-                                                </div>
-                                                <div class="tab-pane fade show" id="aduaneiro" role="tabpanel" aria-labelledby="aduaneiro-tab">
-                                                    <!-- Informações Aduaneiras -->
-                                                    <div class="mt-4">
-                                                        <div class="row">
-                                                            
-                                                            <!-- Tipo de Cliente -->
-                                                            <div class="col-md-6 form-group">
-                                                                <label for="tipo_cliente" class="block font-medium text-gray-700">Tipo de Cliente *</label>
-                                                                <select id="tipo_cliente" name="tipo_cliente" class="form-control">
-                                                                    <option value="" disabled {{ old('tipo_cliente') === null ? 'selected' : '' }}>Selecione</option>
-                                                                    <option value="importador" {{ old('tipo_cliente', $customer->tipo_cliente) == 'importador' ? 'selected' : '' }}>Importador</option>
-                                                                    <option value="exportador" {{ old('tipo_cliente', $customer->tipo_cliente) == 'exportador' ? 'selected' : '' }}>Exportador</option>
-                                                                    <option value="ambos" {{ old('tipo_cliente', $customer->tipo_cliente) == 'ambos' ? 'selected' : '' }}>Ambos</option>
-                                                                </select>
-                                                                <p id="tipo_cliente_desc" class="text-sm text-gray-500">Escolha o tipo de cliente.</p>
-                                                            </div>
-
-                                                            <!-- Tipo de Mercadoria -->
-                                                            <div class="col-md-6 form-group">
-                                                                <label for="tipo_mercadoria" class="block font-medium text-gray-700">Tipo de Mercadoria *</label>
-                                                                <select id="tipo_mercadoria" name="tipo_mercadoria" aria-describedby="mercadoria_desc"
-                                                                    class="form-control">
-                                                                    <option value="" disabled {{ old('tipo_mercadoria') === null ? 'selected' : '' }}>Selecione</option>
-                                                                    <option value="diversas" {{ old('tipo_mercadoria', $customer->tipo_mercadoria) === 'diversas' ? 'selected' : '' }}>Mercadorias Diversas</option>
-                                                                    <option value="petroleo" {{ old('tipo_mercadoria', $customer->tipo_mercadoria) === 'petroleo' ? 'selected' : '' }}>Petroleo</option> <!-- Substituí "CRUD" por algo mais provável -->
-                                                                    <option value="escritório" {{ old('tipo_mercadoria', $customer->tipo_mercadoria) === 'escritório' ? 'selected' : '' }}>Material de Escritórios</option>
-                                                                    <option value="informáticos" {{ old('tipo_mercadoria', $customer->tipo_mercadoria) === 'informáticos' ? 'selected' : '' }}>Material Informático</option>
-                                                                    <option value="electronicos" {{ old('tipo_mercadoria', $customer->tipo_mercadoria) === 'electronicos' ? 'selected' : '' }}>Electrónicos</option>
-                                                                    <option value="outros" {{ old('tipo_mercadoria', $customer->tipo_mercadoria) === 'outros' ? 'selected' : '' }}>Outros</option>
-                                                                </select>
-                                                                <p id="mercadoria_desc" class="text-sm text-gray-500">Selecione o tipo de mercadoria.</p>
-                                                            </div>
-
-                                                            <!-- Frequência de Operações -->
-                                                            <div class="col-md-3 form-group">
-                                                                <label for="frequencia" class="block font-medium text-gray-700">Frequência de Operações</label>
-                                                                <select id="frequencia" name="frequencia" class="form-control">
-                                                                    <option value="" disabled {{ old('frequencia', $customer->frequencia) === null ? 'selected' : '' }}>Selecione</option>
-                                                                    <option value="ocasional" {{ old('frequencia', $customer->frequencia) == 'ocasional' ? 'selected' : '' }}>Ocasional</option>
-                                                                    <option value="mensal" {{ old('frequencia', $customer->frequencia) == 'mensal' ? 'selected' : '' }}>Mensal</option>
-                                                                    <option value="anual" {{ old('frequencia', $customer->frequencia) == 'anual' ? 'selected' : '' }}>Anual</option>
-                                                                </select>
-                                                                <p id="frequencia_desc" class="text-sm text-gray-500">Escolha a frequência de operações aduaneiras.</p>
-                                                            </div>
-
-                                                            <div class="col-md-3 form-group">
-                                                                <label for="moeda_operacao">Moeda de trasanção (Preferencial)</label>
-                                                                <select id="moeda_operacao" name="moeda_operacao" class="form-control">sss
-                                                                    <option value="" disabled {{ old('moeda_operacao') === null ? 'selected' : '' }}>Selecione</option>
-                                                                    <option value="USD" {{ old('moeda_operacao', $customer->moeda_operacao) == 'USD' ? 'selected' : '' }}>USD</option>
-                                                                    <option value="EUR" {{ old('moeda_operacao', $customer->moeda_operacao) == 'EUR' ? 'selected' : '' }}>EUR</option>
-                                                                    <option value="AOA" {{ old('moeda_operacao', $customer->moeda_operacao) == 'AOA' ? 'selected' : '' }}>AOA</option>
-                                                                </select>
-                                                            </div>
-                                                            <br>
-                                                            <div class="row">
-                                                                <div class="col-md-4">
-                                                                    <label for="num_licenca">Nº de Licença</label>
-                                                                    <input type="text" class="form-control" name="num_licenca" id="" value="{{ old('num_licenca',$customer->num_licenca ?? '')}}">
-                                                                </div>
-                                                                <div class="col-md-4">
-                                                                    <label for="validade_licenca">Validade da Licença</label>
-                                                                    <input type="date" class="form-control" name="validade_licenca" id="validade_licenca" value="{{ old('validade_licenca', $customer->validade_licenca ?? '')}}">
-                                                                </div>
-                                                            </div>
-                                                            <!-- Observações -->
-                                                            <div>
-                                                                <label for="observacoes" class="block font-medium text-gray-700">Observações</label>
-                                                                <textarea id="observacoes" name="observacoes" rows="4" aria-describedby="observacoes_desc"
-                                                                    class="form-control"></textarea>
-                                                                <p id="observacoes_desc" class="text-sm text-gray-500">Adicione informações adicionais, se necessário.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <button type="submit" class="btn btn-info">Actualizar</button>
-                                            </div>
-                                        </div>
-                                    </form>
+                        <div id="subTabContent" class="mt-4">
+                            <!-- Subtab: Endereço -->
+                            <div id="endereco" class="subtab-pane block space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <x-label for="CustomerTaxID" value="NIF Cliente" />
+                                        <x-input id="CustomerTaxID" name="CustomerTaxID" type="text" value="{{ old('CustomerTaxID', $customer->CustomerTaxID) }}" />
+                                    </div>
+                                    <div>
+                                        <x-label for="CompanyName" value="Cliente" />
+                                        <x-input id="CompanyName" name="CompanyName" type="text" value="{{ old('CompanyName', $customer->CompanyName) }}" readonly />
+                                    </div>
+                                    <div>
+                                        <x-label for="Email" value="Email" />
+                                        <x-input id="Email" name="Email" type="email" value="{{ old('Email', $customer->Email ?? '') }}" />
+                                    </div>
                                 </div>
-                                <div class="tab-pane fade show" id="contabilidade" role="tabpanel" aria-labelledby="contabilidade-tab">
-                                    Contabilidade <br>
-                                    Avença
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <x-label for="Telephone" value="Telefone" />
+                                        <x-input id="Telephone" name="Telephone" type="text" value="{{ old('Telephone', $customer->Telephone ?? '') }}" required />
+                                    </div>
+                                    <div>
+                                        <x-label for="PostalCode" value="Código Postal" />
+                                        <x-input id="PostalCode" name="PostalCode" type="text" value="{{ old('PostalCode', $customer->endereco->PostalCode ?? '00000') }}" />
+                                    </div>
+                                    <div>
+                                        <x-label for="SelfBillingIndicator" value="Autofaturação" />
+                                        <select id="SelfBillingIndicator" name="SelfBillingIndicator" class="form-select w-full border-gray-300 rounded-md">
+                                            <option value="0" @selected($customer->SelfBillingIndicator == 0)>Não</option>
+                                            <option value="1" @selected($customer->SelfBillingIndicator == 1)>Sim</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="tab-pane fade show" id="documento" role="tabpanel" aria-labelledby="documento-tab">
-                                    <fieldset class="mb-4">
-                                        
-                                        <div class="row g-3 mt-2">
 
-                                            <!-- Tipo de Documento -->
-                                            <div class="col-md-4">
-                                                <label for="tipo_documento" class="form-label fw-medium">Tipo de Documento *</label>
-                                                <select id="tipo_documento" name="tipo_documento" class="form-select" required>
-                                                    <option value="" disabled {{ old('tipo_documento') === null ? 'selected' : '' }}>Selecione</option>
-                                                    <option value="bi" {{ old('tipo_documento') == 'bi' ? 'selected' : '' }}>Bilhete de Identidade</option>
-                                                    <option value="passaporte" {{ old('tipo_documento') == 'passaporte' ? 'selected' : '' }}>Passaporte</option>
-                                                    <option value="nif" {{ old('tipo_documento') == 'nif' ? 'selected' : '' }}>NIF</option>
-                                                    <option value="alvara" {{ old('tipo_documento') == 'alvara' ? 'selected' : '' }}>Alvará Comercial</option>
-                                                    <option value="licenca" {{ old('tipo_documento') == 'licenca' ? 'selected' : '' }}>Licença de Importação/Exportação</option>
-                                                </select>
-                                            </div>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <div>
+                                        <x-label for="nacionality" value="País" />
+                                        <select name="nacionality" id="nacionality" class="form-select w-full border-gray-300 rounded-md">
+                                            @foreach($paises as $pais)
+                                                <option value="{{ $pais->id }}" @selected($pais->id == $customer->nacionality)>{{ $pais->pais }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-label for="doc_type" value="Tipo de Documento" />
+                                        <select name="doc_type" id="doc_type" class="form-select w-full border-gray-300 rounded-md">
+                                            <option value="">Selecionar</option>
+                                            <option value="BI" @selected($customer->doc_type == 'BI')>Bilhete de Identidade</option>
+                                            <option value="PASS" @selected($customer->doc_type == 'PASS')>Passaporte</option>
+                                            <option value="CC" @selected($customer->doc_type == 'CC')>Carta de Condução</option>
+                                            <option value="CR" @selected($customer->doc_type == 'CR')>Cartão de Residência</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-label for="doc_num" value="Nº Documento" />
+                                        <x-input id="doc_num" name="doc_num" type="text" value="{{ old('doc_num', $customer->doc_num ?? '') }}" />
+                                    </div>
+                                    <div>
+                                        <x-label for="validade_date_doc" value="Validade" />
+                                        <x-input id="validade_date_doc" name="validade_date_doc" type="date" value="{{ old('validade_date_doc', $customer->validade_date_doc ?? '') }}" />
+                                    </div>
+                                </div>
 
-                                            <!-- Número do Documento -->
-                                            <div class="col-md-4">
-                                                <label for="numero_documento" class="form-label fw-medium">Número do Documento *</label>
-                                                <input type="text" id="numero_documento" name="numero_documento" value="{{ old('numero_documento') }}" class="form-control">
-                                            </div>
+                                <div class="mt-4">
+                                    <x-label for="AddressDetail" value="Morada Completa" />
+                                    <x-input id="AddressDetail" name="AddressDetail" type="text" value="{{ old('AddressDetail', $customer->endereco->AddressDetail ?? '') }}" />
+                                </div>
 
-                                            <!-- Validade do Documento -->
-                                            <div class="col-md-4">
-                                                <label for="validade_documento" class="form-label fw-medium">Data de Validade</label>
-                                                <input type="date" id="validade_documento" name="validade_documento" value="{{ old('validade_documento') }}" class="form-control">
-                                            </div>
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                                    <div>
+                                        <x-label for="Province" value="Província" />
+                                        <select id="Province" name="Province" class="form-select w-full border-gray-300 rounded-md">
+                                            @foreach ($provincias as $provincia)
+                                                <option value="{{ $provincia->Nome }}" @selected($provincia->Nome === ($customer->endereco->Province ?? ''))>{{ $provincia->Nome }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-label for="municipality" value="Município" />
+                                        <x-input id="municipality" name="municipality" type="text" value="{{ old('municipality', $customer->endereco->municipality ?? '') }}" />
+                                    </div>
+                                    <div>
+                                        <x-label for="City" value="Distrito" />
+                                        <x-input id="City" name="City" type="text" value="{{ old('City', $customer->endereco->City ?? '') }}" />
+                                    </div>
+                                    <div>
+                                        <x-label for="BuildingNumber" value="Rua, Andar, Apartamento" />
+                                        <x-input id="BuildingNumber" name="BuildingNumber" type="text" value="{{ old('BuildingNumber',$customer->endereco->BuildingNumber ?? '') }}" />
+                                    </div>
+                                </div>
+                            </div>
 
-                                            <!-- Upload do Documento -->
-                                            <div class="col-md-6">
-                                                <label for="upload_documento" class="form-label fw-medium">Anexar Documento (PDF ou Imagem) *</label>
-                                                <input type="file" id="upload_documento" name="upload_documento" accept=".pdf, .jpg, .jpeg, .png" required 
-                                                    class="form-control">
-                                            </div>
+                            <!-- Subtab: Info Aduaneira -->
+                            <div id="aduaneiro" class="subtab-pane hidden space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <x-label for="tipo_cliente" value="Tipo de Cliente" />
+                                        <select id="tipo_cliente" name="tipo_cliente" class="form-select w-full border-gray-300 rounded-md">
+                                            <option value="importador" @selected($customer->tipo_cliente == 'importador')>Importador</option>
+                                            <option value="exportador" @selected($customer->tipo_cliente == 'exportador')>Exportador</option>
+                                            <option value="ambos" @selected($customer->tipo_cliente == 'ambos')>Ambos</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-label for="tipo_mercadoria" value="Tipo de Mercadoria" />
+                                        <select id="tipo_mercadoria" name="tipo_mercadoria" class="form-select w-full border-gray-300 rounded-md">
+                                            <option value="diversas" @selected($customer->tipo_mercadoria == 'diversas')>Mercadorias Diversas</option>
+                                            <option value="petroleo" @selected($customer->tipo_mercadoria == 'petroleo')>Petróleo</option>
+                                            <option value="informáticos" @selected($customer->tipo_mercadoria == 'informáticos')>Material Informático</option>
+                                            <option value="electronicos" @selected($customer->tipo_mercadoria == 'electronicos')>Electrónicos</option>
+                                            <option value="outros" @selected($customer->tipo_mercadoria == 'outros')>Outros</option>
+                                        </select>
+                                    </div>
+                                </div>
 
-                                            <!-- Observações -->
-                                            <div class="col-6">
-                                                <label for="observacoes_documento" class="form-label fw-medium">Observações</label>
-                                                <textarea id="observacoes_documento" name="observacoes_documento" rows="3" class="form-control">{{ old('observacoes_documento') }}</textarea>
-                                            </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <x-label for="frequencia" value="Frequência" />
+                                        <select id="frequencia" name="frequencia" class="form-select w-full border-gray-300 rounded-md">
+                                            <option value="ocasional" @selected($customer->frequencia == 'ocasional')>Ocasional</option>
+                                            <option value="mensal" @selected($customer->frequencia == 'mensal')>Mensal</option>
+                                            <option value="anual" @selected($customer->frequencia == 'anual')>Anual</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-label for="moeda_operacao" value="Moeda Preferencial" />
+                                        <select id="moeda_operacao" name="moeda_operacao" class="form-select w-full border-gray-300 rounded-md">
+                                            <option value="USD" @selected($customer->moeda_operacao == 'USD')>USD</option>
+                                            <option value="EUR" @selected($customer->moeda_operacao == 'EUR')>EUR</option>
+                                            <option value="AOA" @selected($customer->moeda_operacao == 'AOA')>AOA</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <x-label for="num_licenca" value="Nº de Licença" />
+                                        <x-input id="num_licenca" name="num_licenca" type="text" value="{{ old('num_licenca',$customer->num_licenca ?? '') }}" />
+                                    </div>
+                                </div>
 
-                                        </div>
-                                    </fieldset>
-                                    <div class="card">
-                                        <div class="card-header">
-                                            <span class="card-title">Lista de Documentos</span>
-                                        </div>
-                                        <div class="card-body">
-                                            <table class="table table-sm">
-                                                <thead>
-                                                    <th>Documento</th>
-                                                    <th>Tipo</th>
-                                                    <th>Validade</th>
-                                                </thead>
-                                                <tbody>
-
-                                                </tbody>
-                                                <tfoot>
-
-                                                </tfoot>
-                                            </table>
-                                        </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <x-label for="validade_licenca" value="Validade da Licença" />
+                                        <x-input id="validade_licenca" name="validade_licenca" type="date" value="{{ old('validade_licenca',$customer->validade_licenca ?? '') }}" />
+                                    </div>
+                                    <div>
+                                        <x-label for="observacoes" value="Observações" />
+                                        <textarea id="observacoes" name="observacoes" rows="3" class="form-textarea w-full border-gray-300 rounded-md">{{ old('observacoes',$customer->observacoes ?? '') }}</textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        <div class="mt-6">
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Atualizar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- TAB: CONTABILIDADE -->
+                <div id="contabilidade" class="tab-pane hidden">
+                    <p class="text-gray-700 mt-2">Módulo de Contabilidade e Avença em desenvolvimento...</p>
+                </div>
+
+                <!-- TAB: DOCUMENTOS -->
+                <div id="documentos" class="tab-pane hidden">
+                    <form method="POST" action="{{ route('customers.documents.store', $customer->id) }}" enctype="multipart/form-data">
+                        @csrf
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <x-label for="tipo_documento" value="Tipo de Documento" />
+                                <select id="tipo_documento" name="tipo_documento" class="form-select w-full border-gray-300 rounded-md" required>
+                                    <option value="bi">Bilhete de Identidade</option>
+                                    <option value="passaporte">Passaporte</option>
+                                    <option value="nif">NIF</option>
+                                    <option value="alvara">Alvará Comercial</option>
+                                    <option value="licenca">Licença de Importação/Exportação</option>
+                                </select>
+                            </div>
+                            <div>
+                                <x-label for="numero_documento" value="Número do Documento" />
+                                <x-input id="numero_documento" name="numero_documento" type="text" required />
+                            </div>
+                            <div>
+                                <x-label for="validade_documento" value="Validade" />
+                                <x-input id="validade_documento" name="validade_documento" type="date" />
+                            </div>
+                            <div>
+                                <x-label for="upload_documento" value="Anexar Documento (PDF ou Imagem)" />
+                                <input id="upload_documento" name="upload_documento" type="file" accept=".pdf,.jpg,.jpeg,.png" class="w-full border-gray-300 rounded-md" required />
+                            </div>
+                            <div class="col-span-2">
+                                <x-label for="observacoes_documento" value="Observações" />
+                                <textarea id="observacoes_documento" name="observacoes_documento" rows="3" class="form-textarea w-full border-gray-300 rounded-md"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Anexar Documento</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Simple JS for Tabs -->
+    <script>
+        // Main Tabs
+        document.querySelectorAll('#mainTabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+                document.getElementById(btn.dataset.tab).classList.remove('hidden');
+                document.querySelectorAll('#mainTabs button').forEach(b => b.classList.remove('border-b-2', 'border-blue-500', 'text-blue-600'));
+                btn.classList.add('border-b-2', 'border-blue-500', 'text-blue-600');
+            });
+        });
+
+        // Sub Tabs (Info)
+        document.querySelectorAll('#infoSubTabs button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.subtab-pane').forEach(p => p.classList.add('hidden'));
+                document.getElementById(btn.dataset.subtab).classList.remove('hidden');
+                document.querySelectorAll('#infoSubTabs button').forEach(b => b.classList.remove('border-b-2', 'border-blue-500', 'text-blue-600'));
+                btn.classList.add('border-b-2', 'border-blue-500', 'text-blue-600');
+            });
+        });
+
+        // Dropdown Menu
+        const dropdownButton = document.getElementById('dropdownButton');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        dropdownButton.addEventListener('click', () => dropdownMenu.classList.toggle('hidden'));
+    </script>
 </x-app-layout>
+<!-- --- a/file:///www/wwwroot/aduaneiro.hongayetu.com/resources/views/customer/customer_edit.blade.php -->

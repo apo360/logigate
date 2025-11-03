@@ -124,4 +124,28 @@ class Empresa extends Model implements Auditable
             ->where('status', 'ATIVA')
             ->latest();
     }
+
+    /**
+     * Relação 1:N — Uma empresa pode ter vários processos
+     */
+    public function processos()
+    {
+        return $this->hasMany(Processo::class, 'empresa_id');
+    }
+
+    /**
+     * Relação 1:N - Uma empresa pode ter vários processos rascunhos
+     */
+    public function processosRascunhos()
+    {
+        return $this->hasMany(ProcessoDraft::class, 'empresa_id')->where('status', 'RASCUNHO');
+    }
+
+    /**
+     * Relação 1:N — Uma empresa pode ter vários licenciaments
+     */
+    public function licenciaments()
+    {
+        return $this->hasMany(Licenciamento::class, 'empresa_id');
+    }
 }

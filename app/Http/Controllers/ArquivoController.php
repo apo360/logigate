@@ -31,7 +31,11 @@ class ArquivoController extends Controller
         // Inicializar o cliente S3
         $this->s3Client = new S3Client([
             'version' => 'latest',
-            'region'  => 'us-east-1', // A região do seu bucket S3
+            'region' => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key'    => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
         ]);
     }
 

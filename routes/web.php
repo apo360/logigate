@@ -120,6 +120,7 @@ use Illuminate\Support\Facades\DB;
 
         Route::prefix('customers')->group(function () {
             Route::post('/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);
+            Route::post('/{id}/documents', [CustomerController::class, 'documentosStore'])->name('customers.documents.store');
             Route::get('/export-csv', [CustomerController::class, 'exportCsv'])->name('customers.exportCsv');
             Route::get('/export-excel', [CustomerController::class, 'exportExcel'])->name('customers.exportExcel');
             Route::post('/import', [CustomerController::class, 'CustomerImport'])->name('customers.import');

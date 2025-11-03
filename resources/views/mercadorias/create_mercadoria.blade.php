@@ -382,17 +382,13 @@
                 if (cod_pauta) {
                     // Faz a requisição AJAX para buscar os códigos aduaneiros com base no código da subcategoria
                     $.ajax({
-                        url: "{{ route('pauta.get', ['cod_pauta' => ':cod_pauta']) }}".replace(':cod_pauta', cod_pauta),
+                        url: `${window.location.origin}/get-codigo-aduaneiro/${cod_pauta}`,
                         method: 'GET',
                         success: function(data) {
-                            // Limpa o datalist existente
                             $('#pauta_list').empty();
-
-                            // Preenche o datalist com os códigos retornados
                             $.each(data, function(index, pauta) {
-                                // Remove os pontos do pauta.codigo
-                                var codigoFormatado = pauta.codigo.replace(/\./g, '');
-                                $('#pauta_list').append('<option value="' + codigoFormatado + '">'+ codigoFormatado +' - '+ pauta.descricao + '</option>');
+                                var codigoFormatado = pauta.codigo;
+                                $('#pauta_list').append('<option value="' + codigoFormatado + '">' + codigoFormatado + ' - ' + pauta.descricao + '</option>');
                             });
                         },
                         error: function() {

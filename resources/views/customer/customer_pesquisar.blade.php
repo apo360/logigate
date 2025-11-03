@@ -1,46 +1,4 @@
 <x-app-layout>
-<!-- Bootstrap CSS -->
-<style>
-    .pagination {
-        display: flex;
-        justify-content: center;
-        padding-left: 0;
-        list-style: none;
-        border-radius: .25rem;
-    }
-
-    .pagination li {
-        margin: 0 2px;
-    }
-
-    .pagination li a {
-        color: #007bff;
-        text-decoration: none;
-        padding: .5rem .75rem;
-        border: 1px solid #dee2e6;
-        border-radius: .25rem;
-        cursor: pointer;
-    }
-
-    .pagination li.active a {
-        background-color: #007bff;
-        color: white;
-        border: 1px solid #007bff;
-    }
-
-    #importacaoModal .modal-body {
-        padding: 20px;
-    }
-    #importacaoModal .modal-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    #importacaoModal .modal-footer {
-        background-color: #f8f9fa;
-        border-top: 1px solid #dee2e6;
-    }
-</style>
 
 <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
@@ -52,31 +10,20 @@
     
     <div class="card shadow-lg">
         <div class="card-header">
+            <div class="float-left">
+                <input type="text" id="search" placeholder="Pesquisar por Nome, NIF, Telefone ou Cidade" class="form-control">
+            </div>
             <div class="float-right">
                 <div class="btn-group">
-                    <a href="{{ route('customers.create') }}" class="btn btn-primary" style="color: black;">
-                        <i class="fas fa-user-plus" style="color: black;"></i> Novo Cliente
+                    <a href="{{ route('customers.create') }}" class="btn btn-sm btn-primary" style="color: black;">
+                        <i class="fas fa-user-plus" style="color: black;"></i> Novo
                     </a>
-                    <a href="#" id="importacaoBtn" class="btn btn-default"> 
-                        <i class="fas fa-download" style="color:rgb(130, 23, 69);"></i> Importação Clientes
+                    <a href="#" id="importacaoBtn" class="btn btn-sm btn-default"> 
+                        <i class="fas fa-download" style="color:rgb(130, 23, 69);"></i> Importação
                     </a>
-                    <a type="button" href="#" class="btn btn-info" data-toggle="modal" data-target="#modal-lg" style="color: black;">
-                        <i class="fas fa-upload" style="color: rgb(130, 23, 69);"></i> Exportar Clientes
+                    <a type="button" href="#" class="btn btn-sm btn-info" data-toggle="modal" data-target="#modal-lg" style="color: black;">
+                        <i class="fas fa-upload" style="color: rgba(195, 69, 124, 1);"></i> Exportar
                     </a>
-                </div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <input type="text" id="search" placeholder="Pesquisar por Nome, NIF, Telefone ou Cidade" class="form-control">
-                </div>
-                <div class="col-md-4 text-end">
-                    <select id="filterStatus" class="form-select">
-                        <option value="">Todos</option>
-                        <option value="1">Activos</option>
-                        <option value="0">Inativos</option>
-                    </select>
                 </div>
             </div>
         </div>
@@ -94,138 +41,135 @@
         </div>
         <div class="card-body">
             <!-- Tabela de Clientes -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle" id="customerTable">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Foto</th>
-                            <th>Nome</th>
-                            <th>NIF</th>
-                            <th>Endereço</th>
-                            <th>Telemóvel</th>
-                            <th>Status</th>
-                            <th class="text-end">Acções</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customerTableBody">
-                        @forelse($customers as $customer)
-                        <tr>
-                            <!-- Foto ou Iniciais -->
-                            <td>
-                                @if($customer->foto)
-                                    <img src="{{ asset($customer->foto) }}" alt="{{ $customer->CompanyName }}" class="rounded-circle" width="50" height="50">
-                                @else
-                                    <div class="rounded-circle bg-secondary text-white text-center" style="width: 50px; height: 50px; line-height: 50px;">
-                                        {{ strtoupper(substr($customer->CompanyName, 0, 2)) }}
-                                    </div>
-                                @endif
-                            </td>
-                            
-                            <!-- Nome -->
-                            <td>
-                                @php
-                                    $overdueInvoices = $customer->invoices->filter(function ($invoice) {
-                                        return Carbon\Carbon::parse($invoice->invoice_date_end)->lt(Carbon\Carbon::now());
-                                    });
-                                @endphp
-                                @if ($overdueInvoices->count() > 0)
-                                    <i class = "fas fa-exclamation-triangle" style="color: red;"></i>
-                                @endif
-                                <a href="{{ route('customers.show', $customer->id) }}" class="text-decoration-none">
-                                    {{ $customer->CompanyName }}
-                                </a>
-                            </td>
-                            
-                            <!-- NIF -->
-                            <td>{{ $customer->CustomerTaxID }}</td>
-                            
-                            <!-- Endereço -->
-                            <td>{{ $customer->AddressDetail ?? 'N/A' }}</td>
-                            
-                            <!-- Telemóvel -->
-                            <td>{{ $customer->Telephone ?? 'N/A' }}</td>
-                            
-                            <!-- Status -->
-                            <td>
-                                <div class="form-check form-switch">
-                                    <input 
-                                        class="form-check-input toggle-status" 
-                                        type="checkbox" 
-                                        id="statusSwitch{{ $customer->id }}" 
-                                        data-id="{{ $customer->id }}" 
-                                        data-status="{{ $customer->is_active ? 0 : 1 }}"
-                                        title="Alterar Status do Cliente"
-                                        {{ $customer->is_active ? 'checked' : '' }}>
-                                    <span class="spinner-border spinner-border-sm text-primary d-none" id="spinner{{ $customer->id }}"></span>
+            <table class="table table-hover align-middle" id="customerTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nome</th>
+                        <th>NIF</th>
+                        <th>Endereço</th>
+                        <th>Telemóvel</th>
+                        <th>Status</th>
+                        <th class="text-end">Acções</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    @forelse($customers as $customer)
+                    <tr>
+                        <!-- Foto ou Iniciais -->
+                        <td>
+                            @if($customer->foto)
+                                <img src="{{ asset($customer->foto) }}" alt="{{ $customer->CompanyName }}" class="rounded-circle" width="50" height="50">
+                            @else
+                                <div class="rounded-circle bg-secondary text-white text-center" style="width: 50px; height: 50px; line-height: 50px;">
+                                    {{ strtoupper(substr($customer->CompanyName, 0, 2)) }}
                                 </div>
-                            </td>
-                            
-                            <!-- Ações -->
-                            <td class="text-end">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item"><i class="fas fa-eye"></i> Detalhes</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li>
-                                            @can('update', $customer)
-                                                <a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item"><i class="fas fa-edit"></i> Editar</a>
+                            @endif
+                        </td>
+                        
+                        <!-- Nome -->
+                        <td>
+                            @php
+                                $overdueInvoices = $customer->invoices->filter(function ($invoice) {
+                                    return Carbon\Carbon::parse($invoice->invoice_date_end)->lt(Carbon\Carbon::now());
+                                });
+                            @endphp
+                            @if ($overdueInvoices->count() > 0)
+                                <i class = "fas fa-exclamation-triangle" style="color: red;"></i>
+                            @endif
+                            <a href="{{ route('customers.show', $customer->id) }}" class="text-decoration-none">
+                                {{ $customer->CompanyName }}
+                            </a>
+                        </td>
+                        
+                        <!-- NIF -->
+                        <td>{{ $customer->CustomerTaxID }}</td>
+                        
+                        <!-- Endereço -->
+                        <td>{{ $customer->AddressDetail ?? 'N/A' }}</td>
+                        
+                        <!-- Telemóvel -->
+                        <td>{{ $customer->Telephone ?? 'N/A' }}</td>
+                        
+                        <!-- Status -->
+                        <td>
+                            <div class="form-check form-switch">
+                                <input 
+                                    class="form-check-input toggle-status" 
+                                    type="checkbox" 
+                                    id="statusSwitch{{ $customer->id }}" 
+                                    data-id="{{ $customer->id }}" 
+                                    data-status="{{ $customer->is_active ? 0 : 1 }}"
+                                    title="Alterar Status do Cliente"
+                                    {{ $customer->is_active ? 'checked' : '' }}>
+                                <span class="spinner-border spinner-border-sm text-primary d-none" id="spinner{{ $customer->id }}"></span>
+                            </div>
+                        </td>
+                        
+                        <!-- Ações -->
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a href="{{ route('customers.show', $customer->id) }}" class="dropdown-item"><i class="fas fa-eye"></i> Detalhes</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        @can('update', $customer)
+                                            <a href="{{ route('customers.edit', $customer->id) }}" class="dropdown-item"><i class="fas fa-edit"></i> Editar</a>
+                                        @endcan
+                                    </li>
+                                    <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item"><i class="fas fa-wallet"></i> Conta Corrente</a></li>
+                                    <li>
+                                        <a href="{{ route('customers.create') }}" class="block px-4 py-2 hover:bg-gray-100">
+                                            <i class="fas fa-folder-open mr-2 text-gray-500"></i> Abrir Processo
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('customers.create') }}" class="block px-4 py-2 hover:bg-gray-100">
+                                            <i class="fas fa-cogs mr-2 text-green-500"></i> Iniciar Licenciamento
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <!-- Verificar se o cliente tem factura associada -->
+                                        @php
+                                            $hasInvoices = $customer->invoices()->exists();
+                                        @endphp
+                                        @if($hasInvoices)
+                                            <a href="#" class="dropdown-item text-muted disabled" title="Não é possível apagar cliente com facturas associadas.">
+                                                <i class="fas fa-trash"></i> Apagar
+                                            </a>
+                                        @else
+                                            <!-- Formulário de exclusão -->
+                                                @can('delete', $customer)
+                                                <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
+                                                        <i class="fas fa-trash"></i> Apagar
+                                                    </button>
+                                                </form>
                                             @endcan
-                                        </li>
-                                        <li><a href="{{ route('cliente.cc', ['id' => $customer->id]) }}" class="dropdown-item"><i class="fas fa-wallet"></i> Conta Corrente</a></li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li>
-                                            <!-- Verificar se o cliente tem factura associada -->
-                                            @php
-                                                $hasInvoices = $customer->invoices()->exists();
-                                            @endphp
-                                            @if($hasInvoices)
-                                                <a href="#" class="dropdown-item text-muted disabled" title="Não é possível apagar cliente com facturas associadas.">
-                                                    <i class="fas fa-trash"></i> Apagar
-                                                </a>
-                                            @else
-                                                <!-- Formulário de exclusão -->
-                                                 @can('delete', $customer)
-                                                    <form action="{{ route('customers.destroy', $customer->id) }}" method="POST">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Deseja realmente excluir este cliente?');">
-                                                            <i class="fas fa-trash"></i> Apagar
-                                                        </button>
-                                                    </form>
-                                                @endcan
-                                            @endif
-                                            
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">Nenhum cliente encontrado.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-        </div>
-        <div class="card-footer">
-            <!-- Elementos de Paginação -->
-            <div class="d-flex justify-content-center">
-                <nav>
-                    <ul class="pagination" id="pagination">
-                        <!-- Paginação gerada por JavaScript -->
-                    </ul>
-                </nav>
-            </div>
+                                        @endif
+                                        
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Nenhum cliente encontrado.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -440,5 +384,4 @@
             });
         });
     </script>
-
 </x-app-layout>

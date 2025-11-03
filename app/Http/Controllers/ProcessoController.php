@@ -36,13 +36,7 @@ use SimpleXMLElement;
 
 class ProcessoController extends Controller
 {
-    protected $empresa;
-    // constructor with auth middleware
-    public function __construct()
-    {
-        $this->empresa = Auth::user()->empresas->first();
-    }
-    
+
     function numeroParaExtenso($numero) {
         $unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
         $dezenas = ['', 'dez', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
@@ -121,14 +115,7 @@ class ProcessoController extends Controller
      */
     public function index(Request $request)
     {
-        $empresa = Auth::user()->empresas->first();
-        
-        if (!$empresa) {
-            return redirect()->back()->with('error', 'Nenhuma empresa associada.');
-        }
-
-        $processos = Processo::query()
-            ->where('empresa_id', $empresa->id)
+        $processos = $this->empresa->processos()
             ->when($request->input('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('NrProcesso', 'like', "%{$search}%")
@@ -265,8 +252,8 @@ class ProcessoController extends Controller
         $ibans = IbanController::getBankDetails();
         $tipoTransp = TipoTransporte::all();
         $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
-        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca os Clientes
-        $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
+        $clientes = $this->empresa->customers()->get(); // Busca os Clientes
+        $exportador = $this->empresa->exportadors()->get();
         $localizacoes = MercadoriaLocalizacao::all();
         
         $mercadorias = Mercadoria::where('Fk_Importacao', $processo->id)->get(); // Obtenha a relação 'mercadoria'
@@ -476,7 +463,7 @@ class ProcessoController extends Controller
             $totalTributos = $valorImportacao + $valorIva + $valorIeq;
 
             return [
-                'codigo' => $pauta->getCodigoSemPontosAttribute(),
+                'codigo' => $pauta->codigo,
                 'descricao' => $mercadoria->Descricao,
                 'taxa_importacao' => $taxaImportacao,
                 'iva' => $iva,

@@ -37,7 +37,7 @@ class CustomerRequest extends FormRequest
                 'string',
                 'min:6',
                 'max:14',
-                Rule::unique('customers', 'CustomerTaxID')->ignore($this->customer->id),
+                Rule::unique('customers', 'CustomerTaxID')->ignore($id),
             ],
             'AccountID' => ['nullable', 'string', 'max:30'],
             'CompanyName' => ['required', 'string', 'max:100'],

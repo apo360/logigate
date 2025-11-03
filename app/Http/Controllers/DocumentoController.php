@@ -115,7 +115,7 @@ class DocumentoController extends Controller
      */
     public function create(Request $request)
     {
-        $tipoDocumentos = DB::table('InvoiceType')->get();
+        $tipoDocumentos = InvoiceType::all();
         
         // Verifica se o parâmetro 'id' está presente no request
         if ($request->has('licenciamento_id')) {
@@ -207,7 +207,7 @@ class DocumentoController extends Controller
         // Inicializar as variaveis
         $SumTax = $SumNetTotal = $SumGrossTotal = 0;
 
-        $invoiceTypeID = (new InvoiceType())->getID($request->input('document_type'));
+        $invoiceTypeID = InvoiceType::where('Code', $request->input('document_type'))->value('Id');
         $saldoCliente = $request->input('saldo');
 
         try {
@@ -216,7 +216,7 @@ class DocumentoController extends Controller
             $result = DB::select("CALL GenerateInvoiceNo(?,?)", [$invoiceTypeID, Auth::user()->empresas->first()->id]);
 
             // Para uma FT
-            if($request->input('document_type') == 'FT') {
+            /*if($request->input('document_type') == 'FT') {
                 if($saldoCliente > 0) {
                     return redirect()->back()->with('error', 'O cliente possui um saldo positivo. Não é possível emitir uma factura normal.');
                 }elseif($saldoCliente == 0) {
@@ -231,7 +231,7 @@ class DocumentoController extends Controller
             }
             if($saldoCliente < 0 && $request->input('document_type') == 'FT'){
                 return redirect()->back()->with('error', 'O cliente possui um saldo negativo. Não é possível emitir uma factura normal.');
-            }
+            }*/
             $salesInvoice = SalesInvoice::create([
                 'invoice_no' => $result[0]->InvoiceNo,
                 'hash' => '0',

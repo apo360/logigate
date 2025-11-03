@@ -27,13 +27,10 @@ use Maatwebsite\Excel\Validators\ValidationException;
 
 class CustomerController extends Controller
 {
-    protected $empresa;
     // constructor with auth middleware
     public function __construct()
     {
-        // Middleware de autenticação
-        $this->middleware('auth');
-
+        parent::__construct(); // Chama o construtor pai para aplicar o middleware global
         $this->authorizeResource(Customer::class, 'customer');
     }
     
@@ -436,4 +433,24 @@ class CustomerController extends Controller
         return '';
     }
 
+    /**
+     * Documentos Store do Cliente para o S3
+     */
+    public function documentosStore(Request $request, $id)
+    {
+        // Validação do arquivo
+        $request->validate([
+            'documento' => 'required|file|max:5120', // Máximo 5MB
+        ]);
+
+        $customer = Customer::findOrFail($id);
+
+        // Armazenar o arquivo no S3
+        $path = $request->file('documento')->store('customer_documents/' . $customer->id, 's3');
+
+        // Salvar o caminho do arquivo no banco de dados (se necessário)
+        // Exemplo: $customer->document_path = $path; $customer->save();
+
+        return response()->json(['message' => 'Documento armazenado com sucesso!', 'path' => $path]);
+    }
 }

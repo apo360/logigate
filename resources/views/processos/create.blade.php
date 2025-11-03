@@ -21,9 +21,9 @@
         ['name' => 'Novo Processo', 'url' => route('processos.create')]
     ]" separator="/" />
 
-    <div class="" style="padding: 10px;">
-        <div class="row">
-            <div class="col-9">
+    <div class="py-8"> 
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8"> 
+            <div class="bg-white shadow-lg rounded-lg p-8">
             
                 <form method="POST" action="{{ route('processos.store') }}" id="processoIn">
                     @csrf
@@ -679,8 +679,9 @@
                 </div>
             </div>
         </div>
-
-    <!-- Modal para adicionar novo cliente -->
+    </div>
+    
+        <!-- Modal para adicionar novo cliente -->
     <div class="modal fade" id="newClientModal" tabindex="-1" role="dialog" aria-labelledby="newClientModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-aside" role="document">
             <div class="modal-content">

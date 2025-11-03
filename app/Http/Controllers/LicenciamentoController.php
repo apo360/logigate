@@ -59,15 +59,15 @@ class LicenciamentoController extends Controller
      */
     public function create()
     {
-        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id)->get();
-        $exportador = Exportador::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        $clientes = $this->empresa->customers()->get();
+        $exportador = $this->empresa->exportadors()->get();
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
         $paises = Pais::all();
         $portos = Porto::all();
         $ibans = IbanController::getBankDetails();
         $pautaAduaneira = PautaAduaneira::all();
-        $empresa = EmpresaUser::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        $empresa = EmpresaUser::where('empresa_id', $this->empresa->id)->get();
 
         // chamar a stored procedure
         return view('processos.licenciamento', 

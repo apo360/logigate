@@ -15,15 +15,12 @@ abstract class Controller extends BaseController
 
     public function __construct()
     {
-        // Middleware global para todos os controladores
+        $this->middleware('auth');
+
+        // Middleware global: define $this->empresa para todos os controladores
         $this->middleware(function ($request, $next) {
-            $this->empresa = Auth::check() ? Auth::user()->empresas->first() : null;
+            $this->empresa = Auth::user()->empresas->first();
             return $next($request);
         });
     }
-}
-
-class HomeController extends Controller
-{
-    //
 }
