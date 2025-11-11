@@ -48,7 +48,7 @@ class DocumentoController extends Controller
         file_put_contents($filePath, $messageToSign);
 
         // Caminho da chave privada
-        $privateKeyPath = '/var/www/logi/ocean_system/sea/weave/fechadura_rest.pem';
+        $privateKeyPath = '/www/wwwroot/aduaneiro.hongayetu.com/ocean_system/sea/weave/fechadura_rest.pem';
 
         if (!file_exists($privateKeyPath)) {
             throw new Exception("Private key file not found.");
@@ -81,13 +81,10 @@ class DocumentoController extends Controller
     public function index(){
 
         //$invoices = SalesInvoice::all();
-        $invoices = SalesInvoice::with(['Customer', 'InvoiceType', 'salesdoctotal', 'salesstatus.salesInvoice']) 
-                    ->where('empresa_id', Auth::user()->empresas->first()->id) 
-                    ->orderBy('invoice_date', 'desc')
-                    ->get();
+        $invoices = $this->empresa->Facturas()->with(['Customer', 'InvoiceType', 'salesdoctotal', 'salesstatus.salesInvoice']) 
+                    ->orderBy('invoice_date', 'desc')->get();
 
-
-        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        $clientes = $this->empresa->customers()->get();
 
         $faturasPagas = SalesDocTotal::whereNotNull('data_pagamento')->count();
         $faturasPorPagar = SalesDocTotal::whereNull('data_pagamento')->count();
@@ -116,86 +113,51 @@ class DocumentoController extends Controller
     public function create(Request $request)
     {
         $tipoDocumentos = InvoiceType::all();
+        $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->where('status', 0)->get();
+        
         
         // Verifica se o parâmetro 'id' está presente no request
         if ($request->has('licenciamento_id')) {
             $id = $request->input('licenciamento_id');
             $licenciamento = Licenciamento::Find($id);
 
-            // 
-            $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->where('status', 0)->get();
-
             $transacoes = ContaCorrente::where('cliente_id', $licenciamento->cliente->id)->orderBy('data', 'desc')->get();
-
             // Calcular o saldo baseado nas transações
-            $saldo = $transacoes->sum(function ($transacao) {
-                return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
-            });
+        $saldo = $transacoes->sum(function ($transacao) {
+            return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
+        });
             
             // Retorna a view associada quando o 'id' existe
             return view('Documentos.create_documento', compact('licenciamento', 'produtos', 'tipoDocumentos', 'transacoes', 'saldo'));
         } elseif ($request->has('processo_id')) {
             
             $id = $request->input('processo_id');
-            $processo = Processo::Find($id);
 
-            // 
-            $produtos = Produto::where('ProductType', 'S')->where('ProductGroup', 1)->where('status', 0)->get();
-            
             // Busca o processo ou dado relacionado ao id
             $processo = Processo::findOrFail($id); // Encontrar o processo pelo ID
+
+            $transacoes = ContaCorrente::where('cliente_id', $processo->cliente->id)->orderBy('data', 'desc')->get();
+            // Calcular o saldo baseado nas transações
+        $saldo = $transacoes->sum(function ($transacao) {
+            return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
+        });
             
             // Retorna a view associada quando o 'id' existe
-            return view('Documentos.create_documento_processo', compact('processo', 'produtos', 'tipoDocumentos'));
+            return view('Documentos.create_documento_processo', compact('processo', 'produtos', 'tipoDocumentos', 'transacoes', 'saldo'));
         } else {
             $empresaId = Auth::user()->empresas->first()->id;
             // Obtém todos os produtos do banco de dados 
             $produtos = Produto::with(['prices', 'grupo'])
             ->where('status', 0) // Apenas produtos ativos
             ->where(function ($query) use ($empresaId) {
-                $query->where('empresa_id', $empresaId)
-                    ->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
-            })
-            ->get();
+                $query->where('empresa_id', $empresaId)->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
+            })->get();
 
             // Retorna a view padrão de criação quando não há 'id'
-            $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get();
+            $clientes = $this->empresa->customers()->get();
 
             return view('Documentos.create_documento_2', compact('clientes', 'tipoDocumentos', 'produtos'));
         }
-    }
-
-    // Metodo para criar o documento com parametros
-    public function createParams($licenciamento_id = null, $processo_id = null){
-
-        // Inicializa variáveis para controle
-        $licenciamento = null; $processo = null; $cliente = null;
-        $produtos = Produto::where('ProductType', 'S')
-            ->where('ProductGroup', 1)
-            ->where('status', 0) // Apenas produtos ativos
-            ->where(function ($query) {
-                $query->where('empresa_id', Auth::user()->empresas->first()->id)
-                    ->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
-            })
-            ->get();
-
-        // Verifica se o licenciamento_id foi passado
-        if ($licenciamento_id) 
-        { 
-            $licenciamento = Licenciamento::find($licenciamento_id);
-            $detalhe = "Licenciamento cod." . $licenciamento->codigo_licenciamento;
-            $cliente = $licenciamento->cliente;
-        }
-
-        // Verifica se o processo_id foi passado
-        if ($processo_id) { 
-            $processo = Processo::find($processo_id);
-            $detalhe = "Processo cod." . $processo->id;
-            $cliente = $processo->cliente;
-        }
-        
-        return view('Documentos.create_documento', compact('produtos', '$cliente'));
-
     }
 
 
@@ -204,16 +166,18 @@ class DocumentoController extends Controller
      */
     public function store(Request $request)
     {
-        // Inicializar as variaveis
-        $SumTax = $SumNetTotal = $SumGrossTotal = 0;
-
-        $invoiceTypeID = InvoiceType::where('Code', $request->input('document_type'))->value('Id');
-        $saldoCliente = $request->input('saldo');
+        DB::beginTransaction();
 
         try {
 
+            // Inicializar as variaveis
+            $SumTax = $SumNetTotal = $SumGrossTotal = 0;
+
+            $invoiceTypeID = InvoiceType::where('Code', $request->input('document_type'))->value('Id');
+            
+            $saldoCliente = $request->input('saldo');
             // Executar o procedimento armazenado para obter o próximo número de fatura
-            $result = DB::select("CALL GenerateInvoiceNo(?,?)", [$invoiceTypeID, Auth::user()->empresas->first()->id]);
+            $result = DB::select("CALL GenerateInvoiceNo(?,?)", [$invoiceTypeID, $this->empresa->id]);
 
             // Para uma FT
             /*if($request->input('document_type') == 'FT') {
@@ -238,7 +202,7 @@ class DocumentoController extends Controller
                 'hash_control' => '0',
                 'period' => 1,
                 'invoice_date' => $request->input('invoice_date'),
-                'invoice_date_end' => $request->input('data_vencimento'),
+                'invoice_date_end' => $request->input('data_vencimento') ?? Carbon::now()->addMonths(1)->toDateTimeString(),
                 'self_billing_indicator' => 0,
                 'cash_vat_scheme_indicator' => 0,
                 'third_parties_billing_indicator' => 0,
@@ -406,13 +370,15 @@ class DocumentoController extends Controller
             // Assinar o campo Hash
             $this->signAndSaveHash($salesInvoice->id);
 
+            DB::commit();
+
             return redirect()->route('documentos.show',$salesInvoice)->with('success', 'Fatura criada com sucesso');
 
-        } catch (QueryException $e) { 
-
-            return DatabaseErrorHandler::handle($e, $request);
-        } 
-        
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Erro ao criar fatura da Empresa: '.$empresa->Empresa.' - '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->back()->with('error', 'Erro ao criar fatura: '.$e->getMessage());
+        }
     }
 
     /**

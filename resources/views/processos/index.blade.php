@@ -203,7 +203,7 @@
                                                         <li><a href="{{ route('processos.show', $processo->id) }}" class="dropdown-item btn btn-sm btn-primary"> <i class="fas fa-eye"></i> Visualizar</a></li>
                                                         <li><a href="{{ route('processos.edit', $processo->id) }}" class="dropdown-item btn btn-sm btn-warning"> <i class="fas fa-edit"></i> Editar</a></li>
                                                         <li><a href="" class="dropdown-item">  <i class="fas fa-file-xml"></i> DU Electronico</a></li>
-                                                        <li><a href="{{ route('documentos.create', ['id' => $processo->id] )}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Factura</a></li>
+                                                        <li><a href="{{ route('documentos.create', ['processo_id' => $processo->id])}}" class="dropdown-item"> <i class="fas fa-file-pdf"></i> Factura</a></li>
                                                         <li>
                                                             <form action="{{ route('processos.destroy', $processo->id) }}" method="POST" style="display: inline-block;">
                                                                 @csrf

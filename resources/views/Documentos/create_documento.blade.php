@@ -41,7 +41,7 @@
     }
 
 </style>
-
+<!-- Um form que serve para emitir faturas tanto de Licenciamentos -->
 <x-app-layout>
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
@@ -307,7 +307,7 @@
                     <div>
                     <label for="edit-product-code" class="block text-sm font-medium text-gray-700">Código do Produto</label>
                     <input type="text" id="edit-product-code" name="edit-product-code"
-                            value="S001"
+                            value="LIC001"
                             disabled
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-gray-500 bg-gray-100 sm:text-sm">
                     </div>

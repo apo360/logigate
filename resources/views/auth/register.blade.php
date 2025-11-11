@@ -7,7 +7,7 @@
     <title>Logigate | Cadastro</title>
 
 	<!-- Canonical SEO -->
-    <link rel="canonical" href="https://www.logigate.ao"/>
+    <link rel="canonical" href="https://aduaneiro.hongayetu.com"/>
 
     <!-- Meta Tags -->
     <meta name="keywords" content="logigate, sistema de gestão aduaneira, gestão financeira, gestão contabilística, automação aduaneira, hongayetu lda, software aduaneiro, controle logístico, contabilidade aduaneira, despacho aduaneiro, gestão de operações, Angola, África">
@@ -33,8 +33,8 @@
     <!-- Open Graph data -->
     <meta property="og:title" content="Logigate | Sistema de Gestão Aduaneira e Financeira" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://www.logigate.ao" />
-    <meta property="og:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg" />
+    <meta property="og:url" content="https://aduaneiro.hongayetu.com" />
+    <meta property="og:image" content="https://aduaneiro.hongayetu.com/images/logigate-thumbnail.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="628" />
     <meta property="og:description" content="Logigate é uma solução desenvolvida pela Hongayetu Lda para gestão aduaneira, financeira e contabilística, garantindo automação e eficiência nos processos de despacho e controle financeiro." />
@@ -576,7 +576,7 @@
             });
 
             // Verificar cedula via AJAX dinâmicamente
-            $('#cedula').on('input', function() {
+            /* $('#cedula').on('input', function() {
                 var cedula = $(this).val();
                 $('.btn-finish').prop('disabled', true); // bloqueia temporariamente
 
@@ -608,7 +608,7 @@
                         }
                     });
                 }
-            });
+            }); */
 
 
             // Verificar Telefone

@@ -148,4 +148,12 @@ class Empresa extends Model implements Auditable
     {
         return $this->hasMany(Licenciamento::class, 'empresa_id');
     }
+
+    /**
+     * Relação 1:N — Uma empresa pode ter vários documentos de Vendas
+     */
+    public function Facturas()
+    {
+        return $this->hasMany(SalesInvoice::class, 'empresa_id');
+    }
 }
