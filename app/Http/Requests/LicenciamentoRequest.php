@@ -45,7 +45,7 @@ class LicenciamentoRequest extends FormRequest
             'frete' => 'nullable|numeric|min:0',
             'seguro' => 'nullable|numeric|min:0',
             'cif' => 'nullable|numeric|min:0',
-            'porto_origem' => 'required|string',
+            'porto_origem' => 'required|exists:portos,sigla',
             'pais_origem' => 'nullable|string'
         ];
     

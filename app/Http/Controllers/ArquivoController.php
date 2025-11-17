@@ -42,13 +42,13 @@ class ArquivoController extends Controller
     public function index()
     {
         // Obter o nome do usuário autenticado
-        $username = Auth::user()->empresas->first()->conta;
+        $empresa = EmpresaUser::where('empresa_id', auth()->user()->empresas()->first()->id)->first();
 
         try {
             // Listar as pastas e sub-pastas dentro de 'Despachantes/{empresaId}'
             $result = $this->s3Client->listObjectsV2([
                 'Bucket' => $this->bucket,
-                'Prefix' => "Despachantes/$username/",
+                'Prefix' => "Despachantes/$empresa->conta/",
                 'Delimiter' => '/',
             ]);
 
@@ -241,7 +241,9 @@ class ArquivoController extends Controller
      */
      
     public function PastaView($dir = null){
-        return view('arquivos.criar_pasta', compact('dir'));
+        $empresa = EmpresaUser::where('empresa_id', auth()->user()->empresas()->first()->id)->first();
+        $conta = $empresa->conta;
+        return view('arquivos.criar_pasta', compact('dir', 'conta'));
     }
 
     public function criarPasta(Request $request)

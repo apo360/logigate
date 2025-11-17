@@ -225,20 +225,20 @@ class MercadoriaController extends Controller
     {
         try {
             DB::beginTransaction();
-            $licenciamento = Licenciamento::find($mercadoria->licenciamento_id);
+            /* $licenciamento = Licenciamento::find($mercadoria->licenciamento_id);
             if ($licenciamento) {
                 $licenciamento->fob_total -= $mercadoria->preco_total;
                 $licenciamento->peso_bruto -= $mercadoria->Peso;
                 $licenciamento->save();
-            }
+            } */
 
             $mercadoria->delete();
             MercadoriaAgrupada::RemoveAgrupamento($mercadoria);
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Mercadoria excluída com sucesso!', 'mercadoria' => $mercadoria], 200);
+            return redirect()->back()->withErrors(['success' => 'Mercadoria excluída com sucesso!']);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => true, 'message' => 'Erro ao excluir a mercadoria. Tente novamente.'], 500);
+            return redirect()->back()->withErrors(['error' => 'Erro ao excluir a mercadoria. Tente novamente.: ' . $e->getMessage()]);
         }
     }
 

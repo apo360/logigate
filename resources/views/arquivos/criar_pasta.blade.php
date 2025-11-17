@@ -9,7 +9,7 @@
 
         <form action="{{ route('arquivos.criarPasta') }}" method="POST">
             @csrf
-            <input type="text" name="pasta_raiz" value="{{ request()->get('dir') ?? auth()->user()->empresas()->first()->conta }}">
+            <input type="hidden" name="pasta_raiz" value="{{ $conta }}">
             <div class="form-group">
                 <label for="folder_name">Nome da Pasta</label>
                 <input type="text" id="folder_name" name="nome_pasta" class="form-control" required>

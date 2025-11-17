@@ -1,4 +1,4 @@
-<x-app-layout>
+    <x-app-layout>
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Facturação', 'url' => route('documentos.index')]
@@ -205,12 +205,12 @@
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 @forelse ($invoices as $fatura)
                                     @php $status = $fatura->payment_status; @endphp
-                                    <tr class="hover:bg-gray-50 cursor-pointer"
+                                    <tr class="hover:bg-indigo-50 transition cursor-pointer"
                                         onclick="window.location='{{ route('documentos.show', $fatura->id) }}'">
-                                        <td class="px-4 py-2">
-                                            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-gray-500 text-white font-bold">
+                                        <td class="px-4 py-2 font-semibold text-center">
+                                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 text-white">
                                                 {{ $fatura->invoiceType->Code }}
-                                            </div>
+                                            </span>
                                         </td>
                                         <td class="px-4 py-2">{{ $fatura->invoice_no }}</td>
                                         <td class="px-4 py-2">{{ $fatura->customer->CompanyName ?? '---' }}</td>
@@ -222,18 +222,18 @@
                                             </span>
                                         </td>
                                         <td class="px-4 py-2">{{ $fatura->referencia_no ?? '-' }}</td>
-                                        <td class="px-4 py-2 space-x-1">
-                                            <a href="{{ route('documentos.show', $fatura->id) }}" 
-                                            class="px-2 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50 text-xs">
+                                        <td class="px-4 py-2 space-x-1" onclick="event.stopPropagation()">
+                                            <a href="{{ route('documentos.show', $fatura->id) }}" title="Ver Detalhes"
+                                                class="px-2 py-1 border border-blue-500 text-blue-500 rounded hover:bg-blue-50 text-xs">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('documento.print', $fatura->id) }}" 
-                                            class="px-2 py-1 border border-gray-700 text-gray-700 rounded hover:bg-gray-50 text-xs">
+                                            <a href="{{ route('documento.print', $fatura->id) }}" title="Imprimir Documento"
+                                                class="px-2 py-1 border border-gray-700 text-gray-700 rounded hover:bg-gray-50 text-xs">
                                                 <i class="fas fa-print"></i>
                                             </a>
                                             @if($status['label'] == 'Em Dívida')
-                                                <a href="{{ route('documento.ViewPagamento', ['id' => $fatura->id]) }}"
-                                                    class="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700">
+                                                <a href="{{ route('documento.ViewPagamento', ['id' => $fatura->id]) }}" title="Efetuar Pagamento"
+                                                    class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
                                                     <i class="fas fa-cash-register"></i>
                                                 </a>
                                             @endif
@@ -249,7 +249,7 @@
                             </tbody>
                             
                             <!-- Rodapé Totais -->
-                            <tfoot class="bg-gray-100 font-semibold">
+                            <tfoot class="bg-gray-100 font-semibold text-sm">
                                 @php 
                                     $totalFaturado = $invoices->sum(fn($inv) => $inv->gross_total); 
                                     $totalPago = $invoices->sum(fn($inv) => $inv->paid_amount); 
@@ -257,17 +257,16 @@
                                     $percPago = $totalFaturado > 0 ? ($totalPago / $totalFaturado) * 100 : 0; 
                                     $percDivida = $totalFaturado > 0 ? ($totalDivida / $totalFaturado) * 100 : 0; 
                                 @endphp
-                                
                                 <tr>
                                     <td colspan="3" class="px-4 py-2 text-right">Totais:</td>
                                     <td class="px-4 py-2">{{ number_format($totalFaturado, 2, ',', '.') }} AKZ</td>
-                                    <td class="px-4 py-2">
+                                    <td class="px-4 py-2 text-green-600">
                                         {{ number_format($totalPago, 2, ',', '.') }} AKZ
-                                        <small class="text-green-600">({{ number_format($percPago, 1, ',', '.') }}%)</small>
+                                        <small>({{ number_format($percPago, 1, ',', '.') }}%)</small>
                                     </td>
-                                    <td colspan="2" class="px-4 py-2">
+                                    <td colspan="2" class="px-4 py-2 text-red-600">
                                         {{ number_format($totalDivida, 2, ',', '.') }} AKZ
-                                        <small class="text-red-600">({{ number_format($percDivida, 1, ',', '.') }}%)</small>
+                                        <small>({{ number_format($percDivida, 1, ',', '.') }}%)</small>
                                     </td>
                                 </tr>
                             </tfoot>
@@ -351,5 +350,63 @@
             maxOut.textContent = `${parseInt(maxInput.value).toLocaleString()} AKZ`;
         });
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const tipoFiltro = document.getElementById('tipoFiltro');
+            const estadoFiltro = document.getElementById('estadoFiltro');
+            const spinner = document.getElementById('loadingSpinner');
+            const table = document.getElementById('ProcessoTable').querySelector('tbody');
+
+            let debounceTimer;
+
+            function filtrar() {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    spinner.classList.remove('hidden');
+
+                    $.ajax({
+                        url: "{{ route('faturas.filtrar') }}",
+                        method: "GET",
+                        data: {
+                            search: searchInput.value,
+                            tipo: tipoFiltro.value,
+                            estado: estadoFiltro.value
+                        },
+                        success: function (response) {
+                            spinner.classList.add('hidden');
+                            table.innerHTML = response.html;
+                        },
+                        error: function () {
+                            spinner.classList.add('hidden');
+                            alert("Erro ao filtrar documentos.");
+                        }
+                    });
+                }, 500);
+            }
+
+            searchInput.addEventListener('input', filtrar);
+            tipoFiltro.addEventListener('change', filtrar);
+            estadoFiltro.addEventListener('change', filtrar);
+        });
+    </script>
+
+    <!-- SPINNER DE CARREGAMENTO -->
+    <div id="loadingSpinner" class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-16 w-16"></div>
+    </div>
+
+    <style>
+        .loader {
+            border-top-color: #3498db;
+            animation: spin 1s infinite linear;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 
 </x-app-layout>

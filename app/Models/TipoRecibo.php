@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class TipoRecibo extends Model
 {
     //
-    protected $table = 'PaymentType';
+    protected $table = 'tipo_recibos';
     protected $fillable = ['Code', 'Descriptions'];
 
     public function recibos()

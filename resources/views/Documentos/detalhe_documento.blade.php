@@ -1,247 +1,191 @@
 <x-app-layout>
-    <!-- Adicione o CSS do Bootstrap -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Seu CSS adicional, se necessário -->
-    <style>
-        .card {
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        }
+    <div class="p-4 space-y-6" x-data="{ open:false }">
 
-        .invoice-details,
-        .document-actions,
-        .related-documents {
-            margin-bottom: 20px;
-        }
+        <!-- CARD PRINCIPAL -->
+        <div class="bg-white shadow rounded-xl p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        .action-buttons .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 10px;
-            width: 100%;
-        }
+                <!-- COLUNA ESQUERDA (2/3) -->
+                <div class="md:col-span-2 space-y-6">
 
-        .action-buttons .btn i {
-            margin-right: 5px;
-        }
+                    <!-- HEADER -->
+                    <div>
+                        <h2 class="text-xl font-semibold">{{$documento->invoice_no}}</h2>
 
-        .table th, .table td {
-            vertical-align: middle;
-            text-align: center;
-        }
+                        @php $status = $documento->payment_status; @endphp
 
-        textarea {
-            width: 100%;
-            padding: 10px;
-            resize: vertical;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+                        <span class="mt-2 inline-flex items-center px-2 py-1 rounded text-xs font-semibold {{ $status['class'] }}">
+                            <i class="fas {{ $status['icon'] }} mr-1"></i> {{ $status['label'] }}
+                        </span>
 
-        .btn-outline-secondary {
-            border-color: #6c757d;
-            color: #6c757d;
-            background-color: #fff;
-        }
+                        <hr class="my-4">
 
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
-            color: #fff;
-        }
-
-    </style>
-
-    <div style="padding: 10px;">
-
-        <div class="card">
-            <div class="row">
-                <div class="col-md-8">
-                    <header class="mb-4">
-                        <h4>{{$documento->invoice_no}}</h4>
-                        <div class="div">
-                            @if($status->invoice_status == 'A')
-                                <span>Factura anulada</span>
-                            @else
-                                @if ($documento->invoice_date_end >= Carbon\Carbon::now())
-                                    <h4 style = "color: darkgoldenrod;"> <i class = "fas fa-exclamation-triangle"></i> Por Pagar</h4>
-                                @else
-                                    <h4 style = "color: darkred;"> <i class = "fas fa-exclamation-triangle"></i> Factura Vencida</h4>
-                                @endif
-                            @endif
-                        </div>
-                        
-                        
-                        <hr>
-                        <p class="mb-2">
+                        <div class="text-sm text-gray-700 leading-5">
                             <strong>Tax ID: {{$documento->customer->CustomerTaxID}}</strong><br>
                             {{$documento->customer->CompanyName}}<br>
-                            <i class="fas fa-phone"></i> {{$documento->customer->Telephone}}<br>
-                            <i class="fas fa-envelope"></i> {{$documento->customer->Email}}<br>
-                            <i class="fas fa-map-marker-alt"></i> {{$documento->customer->endereco ? $documento->customer->endereco->AddressDetail : 'Sem endereço'}}
-                        </p>
-                    </header>
-
-                    <section class="invoice-details mb-4">
-                        <h5>Documento</h5>
-                        <table class="table table-sm table-bordered">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th>Data</th>
-                                    <th>Documento</th>
-                                    <th>Facturação</th>
-                                    <th>Pago</th>
-                                    <th>Data de Pagamento</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{$documento->invoice_date}}</td>
-                                    <td>{{$documento->invoice_no}}</td>
-                                    <td>{{$documento->salesdoctotal->gross_total ?? '0.00'}} Kz</td>
-                                    <td>{{$documento->salesdoctotal->montante_pagamento ?? '0.00'}} Kz</td>
-                                    <td>{{$documento->salesdoctotal->data_pagamento ?? ''}}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <section class="document-actions mb-4">
-                        <h5>Detalhes</h5>
-                        <div class="d-flex justify-content-between">
-                            <a href="#" id="add-new-client-button" data-toggle="modal" data-target="#ListItemModal" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-box-open"></i> Itens
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-receipt"></i> Impostos
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-percentage"></i> Montante Retidos
-                            </a>
-                            <span class="text-muted"><i class="fas fa-user"></i> Operador: {{$documento->user->name}}</span>
+                            <i class="fas fa-phone mr-1"></i> {{$documento->customer->Telephone}}<br>
+                            <i class="fas fa-envelope mr-1"></i> {{$documento->customer->Email}}<br>
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            {{$documento->customer->endereco->AddressDetail ?? 'Sem endereço'}}
                         </div>
-                    </section>
+                    </div>
 
-                    <section class="related-documents mb-4">
-                        <h5>Documentos Relacionados</h5>
-                        <table class="table table-sm table-bordered">
-                            <thead class="thead-light">
-                                <th>Data</th>
-                                <th>Documento</th>
-                                <th>Estado</th>
-                            </thead>
-                            <tbody>
+                    <!-- TABELA DO DOCUMENTO -->
+                    <div>
+                        <h3 class="font-semibold mb-2">Documento</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-100 text-left">
+                                    <tr>
+                                        <th class="p-2">Data</th>
+                                        <th class="p-2">Documento</th>
+                                        <th class="p-2">Facturação</th>
+                                        <th class="p-2">Pago</th>
+                                        <th class="p-2">Data de Pagamento</th>
+                                        <th class="p-2">Ref.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-t">
+                                        <td class="p-2">{{$documento->invoice_date}}</td>
+                                        <td class="p-2">{{$documento->invoice_no}}</td>
+                                        <td class="p-2">{{$documento->salesdoctotal->gross_total}} Kz</td>
+                                        <td class="p-2">{{$documento->salesdoctotal->montante_pagamento}} Kz</td>
+                                        <td class="p-2">{{$documento->salesdoctotal->data_pagamento ?? '-'}}</td>
+                                        <td class="p-2"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-                            </tbody>
-                        </table>
-                    </section>
+                    <!-- AÇÕES -->
+                    <div>
+                        <h3 class="font-semibold mb-2">Detalhes</h3>
 
-                    <section class="related-documents mb-4">
-                        <textarea class="form-control" cols="30" rows="4" placeholder="Observações"></textarea>
-                    </section>
+                        <div class="flex flex-wrap gap-3">
+                            <button @click="open = false" class="px-3 py-1 bg-gray-200 rounded-md text-sm flex items-center">
+                                <i class="fas fa-box-open mr-1"></i> Itens
+                            </button>
+
+                            <button class="px-3 py-1 bg-gray-100 rounded-md text-sm flex items-center">
+                                <i class="fas fa-receipt mr-1"></i> Impostos
+                            </button>
+
+                            <button class="px-3 py-1 bg-gray-100 rounded-md text-sm flex items-center">
+                                <i class="fas fa-percentage mr-1"></i> Retenções
+                            </button>
+
+                            <span class="text-gray-600 text-sm ml-auto">
+                                <i class="fas fa-user mr-1"></i> Operador: {{$documento->user->name}}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- OBSERVAÇÕES -->
+                    <textarea
+                        class="w-full rounded-lg border-gray-300 focus:ring focus:ring-blue-200"
+                        rows="4"
+                        placeholder="Observações"></textarea>
+
                 </div>
-                <div class="col-md-4">
-                    <div class="btn-group-vertical w-100 action-buttons">
-                        <a href="{{ route('documento.print', ['invoiceNo' => $documento->id]) }}" class="btn btn-sm btn-primary mb-2">
-                            <i class="fas fa-print"></i> Imprimir
+
+                <!-- COLUNA DIREITA (1/3) -->
+                <div class="space-y-3">
+
+                    <a href="{{ route('documento.print', ['invoiceNo' => $documento->id]) }}"
+                       class="block w-full text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-print"></i> Imprimir
+                    </a>
+
+                    <a href="#" class="block w-full text-center bg-gray-600 text-white py-2 rounded-lg">
+                        <i class="fas fa-envelope"></i> Enviar por Email
+                    </a>
+
+                    <a href="#" class="block w-full text-center bg-gray-600 text-white py-2 rounded-lg">
+                        <i class="fas fa-bell"></i> Notificar na App
+                    </a>
+
+                    @if($status['label'] == 'Em Dívida')
+                        <a href="{{ route('documento.ViewPagamento', ['id' => $documento->id]) }}"
+                           class="block w-full text-center bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-credit-card"></i> Efectuar Pagamento
                         </a>
-                        <button type="button" class="btn btn-sm btn-secondary mb-2">
-                            <i class="fas fa-envelope"></i> Enviar por Email
-                        </button>
-                        <a href="{{ route('documento.download', ['invoiceNo' => $documento->id]) }}" class="btn btn-sm btn-primary mb-2">
-                            <i class="fas fa-download"></i> Download
-                        </a>
-                        <button type="button" class="btn btn-sm btn-secondary mb-2">
-                            <i class="fas fa-bell"></i> Notificar na App
-                        </button>
-                        @if($status->invoice_status == 'N')
-                            @if($documento->invoiceType->Code == 'FT' || $documento->invoiceType->Code == 'FG')
-                                <a href="{{ route('documento.ViewPagamento', ['id' => $documento->id]) }}" class="btn btn-sm btn-success mb-2">
-                                    <i class="fas fa-credit-card"></i> Efectuar Pagamento
-                                </a>
-                            @endif
-                            <!-- Factura Vencida não pode ser anulada -->
-                            @if (!($documento->is_overdue))
-                                <a href="{{ route('documentos.edit', $documento) }}" class="btn btn-sm btn-danger mb-2">
-                                    <i class="fas fa-times-circle"></i> Anular Factura
-                                </a>
-                            @endif
+
+                        @if (!($documento->is_overdue))
+                            <a href="{{ route('documentos.edit', $documento) }}"
+                               class="block w-full text-center bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">
+                                <i class="fas fa-times-circle"></i> Anular Factura
+                            </a>
                         @endif
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>
 
-    </div>
 
-    <!-- Modal para adicionar novo cliente -->
-    <div class="modal fade" id="ListItemModal" tabindex="-1" role="dialog" aria-labelledby="ListItemModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-md" role="document"> <!-- Use modal-md para tamanho médio -->
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="newClientModalLabel">Lista de Itens</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mt-4">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Cod</th>
-                                            <th>Item</th>
-                                            <th>Quantidade</th>
-                                            <th>Preço Unit (kz)</th>
-                                            <th>Total (kz)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php
-                                            $totalProdutos = 0; // Inicialize o total
-                                        @endphp
+        <!-- MODAL (Tailwind + Alpine.js) -->
+        <div x-show="open" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div x-show="open"
+                 class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+                 x-transition>
 
-                                        @foreach($documento->salesitem as $Item)
-                                            <tr>
-                                                <td>{{$Item->produto->ProductCode}}</td>
-                                                <td>{{$Item->produto->ProductDescription}}</td>
-                                                <td>{{$Item->quantity}}</td>
-                                                <td>{{$Item->unit_price}}</td>
-                                                <td>{{$Item->credit_amount}}</td>
-                                                
-                                                @php
-                                                    $totalProdutos += $Item->credit_amount; // Adicione o valor ao total
-                                                @endphp
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <td colspan="4">Total de Produtos:</td>
-                                            <td>{{$totalProdutos}}</td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
+                <div class="bg-white w-full max-w-lg rounded-xl shadow-lg p-6"
+                     @click.outside="open=false">
+
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Itens da Factura</h3>
+                        <button @click="open=false" class="text-gray-500">&times;</button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-2">Cod</th>
+                                    <th class="p-2">Item</th>
+                                    <th class="p-2">Qtd</th>
+                                    <th class="p-2">Preço Unit</th>
+                                    <th class="p-2">Total</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @php $totalProdutos = 0; @endphp
+
+                                @foreach($documento->salesitem as $Item)
+                                    <tr class="border-b">
+                                        <td class="p-2">{{$Item->produto->ProductCode}}</td>
+                                        <td class="p-2">{{$Item->produto->ProductDescription}}</td>
+                                        <td class="p-2">{{$Item->quantity}}</td>
+                                        <td class="p-2">{{$Item->unit_price}}</td>
+                                        <td class="p-2">{{$Item->credit_amount}}</td>
+
+                                        @php $totalProdutos += $Item->credit_amount; @endphp
+                                    </tr>
+                                @endforeach
+                            </tbody>
+
+                            <tfoot>
+                                <tr class="font-semibold bg-gray-50">
+                                    <td colspan="4" class="p-2 text-right">Total:</td>
+                                    <td class="p-2">{{$totalProdutos}}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 text-right">
+                        <button @click="open=false"
+                                class="px-4 py-2 bg-gray-600 text-white rounded-lg">
+                            Fechar
+                        </button>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                </div>
+
             </div>
         </div>
+
     </div>
-
-     <!-- Inclua o jQuery (já incluído) -->
-     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <!-- Inclua o JS do Bootstrap -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 </x-app-layout>

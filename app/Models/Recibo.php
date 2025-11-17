@@ -29,7 +29,8 @@ class Recibo extends Model
         'meio_pagamento', 
         'montante_pagamento', 
         'data_pagamento', 
-        'customer_id', 
+        'customer_id',
+        'empresa_id',
         'tipo_imposto_retido', 
         'motivo_retencao', 
         'montante_retencao'

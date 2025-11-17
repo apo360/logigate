@@ -99,12 +99,48 @@ class DocumentoController extends Controller
 
     public function filtrar(Request $request)
     {
-        $dataInicial = $request->input('dataInicial');
-        $dataFinal = $request->input('dataFinal');
+        $query = SalesInvoice::with(['InvoiceType', 'Customer']);
 
-        $faturas = SalesDocTotal::whereBetween('invoice_date', [$dataInicial, $dataFinal])->get();
+        // 🔍 Filtro de pesquisa (Cliente ou Nº fatura)
+        if ($search = $request->input('search')) {
+            $query->whereHas('Customer', function($q) use ($search) {
+                $q->where('CompanyName', 'like', "%{$search}%");
+            })->orWhere('invoice_no', 'like', "%{$search}%");
+        }
 
-        return view('Documentos.index', compact('faturas'));
+        // 📄 Filtro de tipo de documento
+        if ($tipo = $request->input('tipo')) {
+            $query->whereHas('InvoiceType', function($q) use ($tipo) {
+                $q->where('Code', $tipo);
+            });
+        }
+
+        // 💰 Filtro de estado (pago, em dívida, vencida, anulada)
+        if ($estado = $request->input('estado')) {
+            switch (strtolower($estado)) {
+                case 'pago':
+                    $query->whereColumn('paid_amount', '>=', 'gross_total');
+                    break;
+                case 'em dívida':
+                    $query->where('due_amount', '>', 0)
+                        ->whereColumn('due_amount', '<', 'gross_total');
+                    break;
+                case 'vencida':
+                    $query->where('due_amount', '>', 0)
+                        ->whereDate('due_date', '<', now());
+                    break;
+                case 'anulada':
+                    $query->where('status', 'anulada');
+                    break;
+            }
+        }
+
+        $invoices = $query->orderByDesc('created_at')->take(100)->get();
+
+        // Renderiza apenas o corpo da tabela (tbody)
+        $html = view('partials.tabela_documentos', compact('invoices'))->render();
+
+        return response()->json(['html' => $html]);
     }
 
     /**
@@ -147,8 +183,7 @@ class DocumentoController extends Controller
         } else {
             $empresaId = Auth::user()->empresas->first()->id;
             // Obtém todos os produtos do banco de dados 
-            $produtos = Produto::with(['prices', 'grupo'])
-            ->where('status', 0) // Apenas produtos ativos
+            $produtos = Produto::with(['prices', 'grupo'])->where('status', 0) // Apenas produtos ativos
             ->where(function ($query) use ($empresaId) {
                 $query->where('empresa_id', $empresaId)->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
             })->get();
@@ -240,9 +275,11 @@ class DocumentoController extends Controller
                 ]);
             }
 
+
+
             SalesStatus::create([
                 'documentoID' => $salesInvoice->id,
-                'invoice_status' => 'N',
+                'invoice_status' => 'A', // Dependendo do tipo de Factura deve alterar este valor para o campo
                 'invoice_status_date' => $request->input('invoice_date'),
                 'source_id' => Auth::user()->id,
                 'source_billing' => 'P',
@@ -310,7 +347,7 @@ class DocumentoController extends Controller
                     'net_total' => $SumNetTotal, // total de preços sem taxa
                     'gross_total' => $SumGrossTotal, // total de preços com taxa
                     'documentoID' => $salesInvoice->id,
-                    'moeda' => 'Kz',
+                    'moeda' => 'AOA',
                     'montante_pagamento' => $request->input('invoice_date'),
                     'data_pagamento' => Carbon::now()->toDateTimeString(), // ou 'nullable|date_format:Y-m-d H:i:s',
                 ]);
@@ -446,23 +483,5 @@ class DocumentoController extends Controller
     public function destroy(SalesInvoice $documento)
     {
         //
-    }
-
-    public function ViewPagamento($id){
-
-        // Verificar se o usuario que está em sessão pertence a empresa em sessão
-        $salesInvoice = SalesInvoice::with('Customer', 'InvoiceType', 'salesdoctotal', 'salesstatus.salesInvoice')
-        ->where('empresa_id', Auth::user()->empresas->first()->id)
-        ->findOrFail($id);
-
-        // Buscar outras faturas em aberto do mesmo cliente (excluindo a atual)
-        $outrasFaturas = SalesInvoice::with('salesdoctotal')
-            ->where('customer_id', $salesInvoice->customer_id)
-            ->where('id', '!=', $salesInvoice->id)
-            ->get();
-
-        $meios = MetodoPagamento::all();
-
-        return view('Documentos.pagamento', compact('salesInvoice', 'outrasFaturas', 'meios'));
     }
 }

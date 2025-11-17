@@ -203,7 +203,7 @@
                         <p class="text-center fw-bold" id="progress-message"></p>
 
                         <!-- Alerta caso o valor exceda 100% -->
-                        @if($porcentagem >= 100)
+                        @if($porcentagem > 100)
                             <div class="alert alert-danger text-center fw-bold">
                                 <i class="fas fa-exclamation-triangle"></i> Atenção! O total das mercadorias excede o valor FOB do processo.
                             </div>
@@ -221,7 +221,7 @@
                         var progressMessage = document.getElementById('progress-message');
 
                         // Definição de cores e mensagens baseadas na porcentagem
-                        if (porcentagem >= 100) {
+                        if (porcentagem > 100) {
                             progressBar.classList.add('bg-danger');
                             cardHeader.classList.add('bg-danger');
                             statusBadge.classList.add('bg-danger', 'text-white');

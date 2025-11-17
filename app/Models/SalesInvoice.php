@@ -196,7 +196,7 @@ class SalesInvoice extends Model implements Auditable
         }
 
         if ($this->is_overdue) {
-            return ['label' => 'Vencida', 'class' => 'bg-dark', 'icon' => 'fa-exclamation-triangle'];
+            return ['label' => 'Expirada', 'class' => 'bg-dark', 'icon' => 'fa-exclamation-triangle'];
         }
 
         if ($this->due_amount < $this->gross_total) {

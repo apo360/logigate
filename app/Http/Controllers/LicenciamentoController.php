@@ -99,6 +99,14 @@ class LicenciamentoController extends Controller
             $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
             $licenciamento_request['adicoes'] = 0;
 
+            // Pegar o ID do país a partir da Sigla porto de origem
+            $porto = Porto::where('sigla', $licenciamento_request['porto_origem'])->first();
+            if ($porto) {
+                $licenciamento_request['pais_origem'] = $porto->pais_id;
+            } else {
+                $licenciamento_request['pais_origem'] = null;
+            }
+
             // Criar licenciamento (código será gerado automaticamente pelo Model)
             $licenciamento = Licenciamento::create($licenciamento_request);
 
@@ -172,10 +180,6 @@ class LicenciamentoController extends Controller
     {
 
         $user = Auth::user();
-        // Verifica se o licenciamento pode ser editado
-        if (!$licenciamento->podeSerEditado()) {
-            return redirect()->route('licenciamento.index')->with('error', 'Este licenciamento não pode ser atualizado.');
-        }
 
         try {
             DB::beginTransaction();
@@ -183,6 +187,14 @@ class LicenciamentoController extends Controller
             $licenciamento_request = $request->validated();
 
             $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
+            
+            // Pegar o ID do país a partir da Sigla porto de origem
+            $porto = Porto::where('sigla', $licenciamento_request['porto_origem'])->first();
+            if ($porto) {
+                $licenciamento_request['pais_origem'] = $porto->pais_id;
+            } else {
+                $licenciamento_request['pais_origem'] = null;
+            }
 
             // Atualizar o licenciamento
             $licenciamento->update($licenciamento_request);
@@ -240,13 +252,9 @@ class LicenciamentoController extends Controller
                 return redirect()->back()->withErrors(['error' => 'Nenhuma mercadoria agrupada encontrada para este licenciamento.']);
             }
     
-            $porto = DB::table('portos')
-                ->join('paises', 'portos.pais_id', '=', 'paises.id')
-                ->where('portos.porto', $licenciamento->porto_origem)
-                ->select('portos.sigla', 'paises.codigo as codigo_pais')
-                ->first();
-    
-            if (!$porto) {
+            $porto = Porto::where('sigla', $licenciamento->porto_origem)->first();
+            $pais_ = Pais::findOrFail($porto->pais_id);
+            if (!$porto || !$porto->pais) {
                 return redirect()->back()->withErrors(['error' => 'Porto de origem não encontrado ou sem país associado.']);
             }
     
@@ -258,7 +266,7 @@ class LicenciamentoController extends Controller
             $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
     
             // Linha 1 - Informações do exportador e transporte
-            $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$porto->codigo_pais}{$porto->sigla}||{$porto->codigo_pais}|AO||||";
+            $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$pais_->codigo}{$porto->sigla}||{$pais_->codigo}|AO||||";
     
             // Linha 2 - Adições de mercadorias
             $adicoes = [];
@@ -289,7 +297,7 @@ class LicenciamentoController extends Controller
                     $ordem,
                     $adicao->codigo_aduaneiro ?? 'N/A',
                     $adicao->quantidade_total ?? 0,
-                    $porto->codigo_pais ?? 'N/A',
+                    $pais_->codigo ?? 'N/A',
                     $peso ?? '0.00',
                     $licenciamento->moeda ?? 'N/A',
                     $adicao->preco_total ?? '0.00',
@@ -356,7 +364,6 @@ class LicenciamentoController extends Controller
                 'ValorTotal' => $licenca->cif,
                 'cif' => $licenca->cif,
                 'ValorAduaneiro' => $licenca->cif + $licenca->frete + $licenca->seguro, // Ajuste se necessário
-            
             ]);
 
             // Marca o licenciamento como utilizado

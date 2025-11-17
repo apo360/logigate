@@ -1,30 +1,57 @@
 <x-app-layout>
 
-<div class="py-12">
+<div class="py-8">
     <x-breadcrumb :items="[
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Arquivos', 'url' => route('arquivos.index')],
         ['name' => 'Pesquisar' , 'url' => '']
     ]" separator="/" />
 
-    <h1>Arquivos</h1>
+    {{-- BREADCRUMB REAL --}}
+    @php
+        $path = request('dir') ? explode('/', request('dir')) : [];
+        $breadcrumbLinks = [];
+        $partial = '';
+        foreach ($path as $segment) {
+            $partial .= ($partial === '' ? '' : '/') . $segment;
+            $breadcrumbLinks[] = [
+                'name' => $segment,
+                'url' => route('PastaAbrir', ['dir' => $partial])
+            ];
+        }
+    @endphp
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @elseif(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
-    <h3>Pastas e Ficheiros</h3>
+    <x-breadcrumb :items="array_merge([ ['name' => 'Arquivos', 'url' => route('arquivos.index')] ], $breadcrumbLinks)" separator="/" />
 
     <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <input type="text" id="search" placeholder="Pesquisar..." class="form-control mb-3">
-                <button id="delete-btn" class="btn btn-danger" disabled>Excluir</button>
-                <button id="download-btn" class="btn btn-primary" disabled>Download</button>
-                <a href="{{ route('PastaAbrir', ['dir' => auth()->user()->empresas()->first()->conta]) }}" class="btn btn-success">Criar Pasta</a>
-                <a href="{{ route('arquivos.create')}}" class="btn btn-warning">Carregar</a>
+        <div class="card-header d-flex justify-content-between">
+            <input type="text" id="search" placeholder="Pesquisar..." class="form-control w-50">
+            <div class="d-flex gap-2">
+
+                {{-- UPLOAD NA PASTA ACTUAL --}}
+                <a href="{{ route('arquivos.create', ['dir' => request('dir')]) }}" class="btn btn-warning">
+                    Upload
+                </a>
+
+                {{-- CRIAR PASTA --}}
+                <a href="{{ route('PastaAbrir', ['dir' => auth()->user()->empresas()->first()->conta]) }}" class="btn btn-success">
+                    Criar Pasta
+                </a>
+
+                {{-- DOWNLOAD ZIP --}}
+                <button id="download-zip-btn" class="btn btn-primary" disabled>
+                    Download ZIP
+                </button>
+
+                {{-- APAGAR --}}
+                <form action="" method="POST" id="delete-form">
+                    @csrf
+                    <input type="hidden" name="paths" id="delete-paths">
+                    <button type="submit" class="btn btn-danger" disabled id="delete-btn">
+                        Excluir
+                    </button>
+                </form>
+
             </div>
         </div>
         <div class="card-body">
@@ -36,35 +63,41 @@
                         <th>Tipo</th>
                         <th>Tamanho</th>
                         <th>Última Modificação</th>
-                        <th>Permissões</th>
+                        <th>Acções</th>
                     </tr>
                 </thead>
                 <tbody id="folder-list">
                     @foreach($items as $item)
                         <tr>
                             <td><input type="checkbox" class="folder-checkbox"></td>
-                            <td> 
-                                <a href="{{ route('arquivos.show', ['arquivo' => $item['name']]) }}">
-                                    {{ $item['name'] }}/
-                                </a>
+                            <td>
+                                @if($item['type'] === 'folder')
+                                    <a href="{{ route('arquivos.show', ['arquivo' => $item['name']]) }}">
+                                        📁 {{ $item['name'] }}
+                                    </a>
+                                @else
+                                    <a href="{{ route('arquivos.show', ['arquivo' => $item['name']]) }}">
+                                        📄 {{ $item['name'] }}
+                                    </a>
+                                @endif
                             </td>
                             <td>{{ $item['type'] }}</td>
                             <td>{{ $item['type'] == 'file' ? $item['size'] . ' bytes' : '-' }}</td>
                             <td>{{ $item['type'] == 'file' ? $item['last_modified'] : '-' }}</td>
-                            <td>Permitir</td>
+                            <td>
+                                {{-- RENOMEAR --}}
+                                <button class="btn btn-sm btn-info rename-btn"
+                                        data-current="{{ $item['name'] }}"
+                                        data-path="{{ $item['path'] }}">
+                                    Renomear
+                                </button>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
     </div>
-
-    <h3>Excluir Arquivo</h3>
-    <form action="" method="POST" id="delete-form">
-        @csrf
-        @method('DELETE')
-        <button type="submit" class="btn btn-danger" disabled id="delete-btn">Excluir Arquivo</button>
-    </form>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

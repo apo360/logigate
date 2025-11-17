@@ -42,6 +42,7 @@ use App\Http\Controllers\Transitario\DashboardController as TransitarioDashboard
 use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\AsycudaController;
+use App\Http\Controllers\PagamentoController;
 use Illuminate\Support\Facades\DB;
 
     /** Rotas WEB */
@@ -234,8 +235,8 @@ use Illuminate\Support\Facades\DB;
         Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
         Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');
         Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
-        Route::get('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
-        Route::post('documentos/efetuar-pagamento/{id}', [DocumentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
+        Route::get('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
+        Route::post('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
         Route::get('documentos/filtrar', [DocumentoController::class, 'filtrar'])->name('faturas.filtrar');
         
         // API
