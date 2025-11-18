@@ -98,9 +98,6 @@ class MercadoriaController extends Controller
             // Atualização de licenciamento, caso o mesmo exista
             if ($request->has('licenciamento_id')) {
                 $licenciamento = Licenciamento::where('id', $validatedData['licenciamento_id'])->first();
-                // Atualizar valores agregados de FOB e peso
-                // $licenciamento->fob_total += $mercadoria->preco_total;
-                // $licenciamento->peso_bruto +=  $mercadoria->Peso;
                 $licenciamento->save();
             }
 
@@ -110,7 +107,6 @@ class MercadoriaController extends Controller
                 $processo->fob_total += $mercadoria->preco_total;
 
                 $processo->save();
-                // 
             }
 
             DB::commit();

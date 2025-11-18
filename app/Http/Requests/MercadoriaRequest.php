@@ -26,7 +26,7 @@ class MercadoriaRequest extends FormRequest
             'Descricao' => 'required|string|max:255',
             'NCM_HS' => 'nullable|string|max:50',
             'NCM_HS_Numero' => 'nullable|string|max:50',
-            'Quantidade' => 'required|numeric|min:1',
+            'Quantidade' => 'required|numeric|min:0',
             'Qualificacao' => 'nullable|string|max:255',
             'Unidade' => 'nullable|string|max:50',
             'Peso' => 'nullable|numeric|min:0',

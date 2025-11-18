@@ -63,11 +63,10 @@
 
                             <div class="col-md-4 mb-3">
                                 <label for="Quantidade" class="form-label">Quantidade</label>
-                                <input type="number" class="form-control" id="Quantidade" name="Quantidade" min="1" placeholder="Ex.: 10" required>
+                                <input type="number" class="form-control" id="Quantidade" name="Quantidade" step="0.01" placeholder="Ex.: 10.01" required>
                             </div>
                             
                         </div>
-
                         
                         <!-- Detalhes da Mercadoria -->
                         <div class="row">
@@ -95,7 +94,7 @@
                         </div>
 
                         <!-- Informações Adicionais por Categoria -->
-                        <div class="info_veiculos" id="info_veiculos" style="display: none;">
+                        <div class="info_veiculos hidden" id="info_veiculos" >
                             <div class = "row">
                                 <div class="col-md-4 mb-3">
                                     <label for="marca" class="form-label">Marca do Veículo</label>
@@ -122,7 +121,7 @@
                             </div>
                         </div>
 
-                        <div class="info_maquina" id="info_maquina" style="display: none;">
+                        <div class="info_maquina hidden" id="info_maquina">
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label for="marca" class="form-label">Marca da Máquina</label>
@@ -138,7 +137,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-            <div class="card shadow-lg border-0">
+                <div class="card shadow-lg border-0">
                     <div class="card-header text-white fw-bold d-flex justify-content-between align-items-center" id="card-header">
                         <h4 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Detalhes do Licenciamento</h4>
                         <span class="badge" id="status-badge">Analisando...</span>
