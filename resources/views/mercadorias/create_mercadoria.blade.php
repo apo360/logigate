@@ -384,10 +384,37 @@
                         url: `${window.location.origin}/get-codigo-aduaneiro/${cod_pauta}`,
                         method: 'GET',
                         success: function(data) {
+                            // Limpa o datalist existente
                             $('#pauta_list').empty();
+
+                            // Preenche o datalist com os códigos retornados
                             $.each(data, function(index, pauta) {
                                 var codigoFormatado = pauta.codigo;
                                 $('#pauta_list').append('<option value="' + codigoFormatado + '">' + codigoFormatado + ' - ' + pauta.descricao + '</option>');
+                    
+                                // Activação das seções adicionais com base na categoria selecionada
+                                // Usar o 87 e 88 para activar as seções de veículos.
+                                if (cod_pauta === 87 || cod_pauta === 88) {
+                                    // Será activado a seção de veículos nos codigoFormatado -> 8701 à 8707, 8709, 8711 à 8713
+                                    if (codigoFormatado.startsWith('8701') ||
+                                        codigoFormatado.startsWith('8702') ||
+                                        codigoFormatado.startsWith('8703') ||
+                                        codigoFormatado.startsWith('8704') ||
+                                        codigoFormatado.startsWith('8705') ||
+                                        codigoFormatado.startsWith('8706') ||
+                                        codigoFormatado.startsWith('8707') || 
+                                        codigoFormatado.startsWith('8709') || 
+                                        codigoFormatado.startsWith('8711') || 
+                                        codigoFormatado.startsWith('8712') || 
+                                        codigoFormatado.startsWith('8713')) 
+                                        {
+                                        $('#info_veiculos').removeClass('hidden');
+                                    }
+                                } else if (cod_pauta === 84) {
+                                    $('#info_maquina').removeClass('hidden'); // Mostra a seção de máquinas
+                                } else {
+                                    $('#info_veiculos, #info_maquina').addClass('hidden'); // Esconde todas as seções
+                                }
                             });
                         },
                         error: function() {
@@ -395,6 +422,7 @@
                         }
                     });
                 }
+                $('#codigo_aduaneiro').focus().css('border', '2px solid #007bff');
             });
         });
 
@@ -422,8 +450,7 @@
 
                 // Exibir erro se o valor não estiver na lista
                 if (!isValid || isIncomplete) {
-                    $('.erro_pauta').text(isIncomplete ? 'Código incompleto! Digite o código completo.' : 'Código inválido! Selecione um da lista.')
-                        .css('color', 'red');
+                    $('.erro_pauta').text(isIncomplete ? 'Código incompleto! Digite o código completo.' : 'Código inválido! Selecione um da lista.').css('color', 'red');
                     $(this).addClass('is-invalid');
                 } else {
                     $('.erro_pauta').text('');

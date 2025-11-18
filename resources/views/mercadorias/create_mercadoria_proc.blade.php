@@ -76,7 +76,7 @@
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label for="Quantidade" class="form-label">Quantidade</label>
-                                <input type="number" class="form-control" id="Quantidade" name="Quantidade" min="1" placeholder="Ex.: 10" required>
+                                <input type="number" class="form-control" id="Quantidade" name="Quantidade" step="0.01" placeholder="Ex.: 10.10" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="Unidade" class="form-label">Unidade de Medida</label>
@@ -392,8 +392,7 @@
     </div>
 
     <!-- FONT AWESOME PARA OS ÍCONES -->
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -419,9 +418,32 @@
 
                             // Preenche o datalist com os códigos retornados
                             $.each(data, function(index, pauta) {
-                                // Remove os pontos do pauta.codigo
-                                var codigoFormatado = pauta.codigo.replace(/\./g, '');
-                                $('#pauta_list').append('<option value="' + codigoFormatado + '">'+ codigoFormatado +' - '+ pauta.descricao + '</option>');
+                                var codigoFormatado = pauta.codigo;
+                                $('#pauta_list').append('<option value="' + codigoFormatado + '">' + codigoFormatado + ' - ' + pauta.descricao + '</option>');
+                    
+                                // Activação das seções adicionais com base na categoria selecionada
+                                // Usar o 87 e 88 para activar as seções de veículos.
+                                if (cod_pauta === 87 || cod_pauta === 88) {
+                                    // Será activado a seção de veículos nos codigoFormatado -> 8701 à 8707, 8709, 8711 à 8713
+                                    if (codigoFormatado.startsWith('8701') ||
+                                        codigoFormatado.startsWith('8702') ||
+                                        codigoFormatado.startsWith('8703') ||
+                                        codigoFormatado.startsWith('8704') ||
+                                        codigoFormatado.startsWith('8705') ||
+                                        codigoFormatado.startsWith('8706') ||
+                                        codigoFormatado.startsWith('8707') || 
+                                        codigoFormatado.startsWith('8709') || 
+                                        codigoFormatado.startsWith('8711') || 
+                                        codigoFormatado.startsWith('8712') || 
+                                        codigoFormatado.startsWith('8713')) 
+                                        {
+                                        $('#info_veiculos').removeClass('hidden');
+                                    }
+                                } else if (cod_pauta === 84) {
+                                    $('#info_maquina').removeClass('hidden'); // Mostra a seção de máquinas
+                                } else {
+                                    $('#info_veiculos, #info_maquina').addClass('hidden'); // Esconde todas as seções
+                                }
                             });
                         },
                         error: function() {
