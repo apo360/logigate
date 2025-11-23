@@ -33,4 +33,27 @@ class SalesDocTotal extends Model
     {
         return $this->belongsTo(SalesInvoice::class, 'documentoID', 'id');
     }
+
+    /**
+     * Relacionamento com PaymentMechanism
+     */
+    public function paymentMechanism()
+    {
+        return $this->belongsTo(MetodoPagamento::class, 'payment_mechanism_id', 'id');
+    }
+
+    public function gross()
+    {
+        return $this->gross_total ?? 0;
+    }
+
+    public function net()
+    {
+        return $this->net_total ?? 0;
+    }
+
+    public function tax()
+    {
+        return $this->tax_payable ?? 0;
+    }
 }

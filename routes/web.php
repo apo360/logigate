@@ -43,6 +43,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\AsycudaController;
 use App\Http\Controllers\PagamentoController;
+use App\Http\Controllers\SAFtController;
 use Illuminate\Support\Facades\DB;
 
     /** Rotas WEB */
@@ -244,6 +245,9 @@ use Illuminate\Support\Facades\DB;
         Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']); 
         Route::get('API/Services/GpsTraker/', [GpsTrakerController::class, 'index'])->name('gps.index');
         // /. API
+
+        // Teste SAF-T
+        Route::get('/saft/{year}/{start}/{end}/build', [SAFtController::class, 'buildSAFT'])->name('saft.build');
 
         // ------------- /.Rotas para os despachantes ------------ //
 

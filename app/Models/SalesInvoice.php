@@ -102,7 +102,7 @@ class SalesInvoice extends Model implements Auditable
 
     public function salesitem()
     {
-        return $this->hasMany(SalesLine::class, 'documentoID');
+        return $this->hasMany(SalesLine::class, 'documentoID', 'id');
     }
 
     /**
@@ -205,4 +205,63 @@ class SalesInvoice extends Model implements Auditable
 
         return ['label' => 'Em Dívida', 'class' => 'bg-danger', 'icon' => 'fa-times-circle'];
     }
+
+    /**
+     * Determina se esta fatura é de crédito (NC) ou débito (FT, FS, ND, etc.)
+     */
+    public function isDebit()
+    {
+        return in_array($this->invoiceType->Code, ['FT','FS','FR','ND']);
+    }
+
+    public function isCredit()
+    {
+        return in_array($this->invoiceType->Code, ['NC']);
+    }
+
+    /**
+     * Valor total desta fatura (fallback 0 se não existir)
+     */
+    public function total()
+    {
+        return optional($this->salesdoctotal)->gross_total ?? 0;
+    }
+
+    /**
+     * Soma global: TotalDebit em uma coleção de invoices
+     */
+    public static function sumDebit($collection)
+    {
+        return $collection->filter->isDebit()
+            ->sum(fn($inv) => $inv->total());
+    }
+
+    /**
+     * Soma global: TotalCredit em uma coleção de invoices
+     */
+    public static function sumCredit($collection)
+    {
+        return $collection->filter->isCredit()
+            ->sum(fn($inv) => $inv->total());
+    }
+
+    /**
+     * Formatar qualquer data em 'Y-m-d\TH:i:s' ou retornar data padrão
+     */
+    public static function formatDateTime($dateTime, $default = '2024-01-01T00:00:00')
+    {
+        if ($dateTime instanceof Carbon) {
+            return $dateTime->format('Y-m-d\TH:i:s');
+            //return $dateTime->toDateTimeString();
+        } elseif (is_string($dateTime)) {
+            try {
+                return Carbon::parse($dateTime)->format('Y-m-d\TH:i:s');
+            } catch (\Exception $e) {
+                return $default;
+            }
+        }
+        return $default;
+        //return Carbon::now()->format('Y-m-d\TH:i:s');
+    }
+
 }

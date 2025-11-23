@@ -25,4 +25,12 @@ class TaxTable extends Model
 
     // Se você não quiser usar timestamps automáticos
     public $timestamps = true;
+
+    /**
+     * Relacionamento com ProductPrice
+     */
+    public function productPrices()
+    {
+        return $this->hasMany(ProductPrice::class, 'taxID', 'id');
+    }
 }

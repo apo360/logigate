@@ -22,6 +22,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DocumentoController extends Controller
 {
@@ -246,6 +247,7 @@ class DocumentoController extends Controller
                 'transaction_id' => 1,
                 'customer_id' => $request->input('customer_id'),
                 'source_id' => Auth::user()->id,
+                'movement_start_time' => Carbon::now()->format('Y-m-d\TH:i:s'),
                 'empresa_id' => Auth::user()->empresas->first()->id,
                 'detalhes_factura' => $request->input('detalhes_fatura'),
             ]);
@@ -279,11 +281,11 @@ class DocumentoController extends Controller
 
             SalesStatus::create([
                 'documentoID' => $salesInvoice->id,
-                'invoice_status' => 'A', // Dependendo do tipo de Factura deve alterar este valor para o campo
-                'invoice_status_date' => $request->input('invoice_date'),
+                'invoice_status' => 'N', // Dependendo do tipo de Factura deve alterar este valor para o campo
+                'invoice_status_date' => date('Y-m-d\TH:i:s'),
                 'source_id' => Auth::user()->id,
                 'source_billing' => 'P',
-                'invoice_available_date' => $request->input('invoice_date'),
+                'invoice_available_date' => date('Y-m-d\TH:i:s'),
             ]);
 
             // Obter dados da tabela

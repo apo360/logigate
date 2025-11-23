@@ -83,9 +83,9 @@ class Produto extends Model
     /**
      * Relacionamento com ProductPrice (Preços do Produto)
      */
-    public function prices()
+    public function price()
     {
-        return $this->hasMany(ProductPrice::class, 'fk_product');
+        return $this->hasOne(ProductPrice::class, 'fk_product');
     }
 
     /**

@@ -38,4 +38,10 @@ class ProductPrice extends Model
     {
         return $this->belongsTo(ProductExemptionReason::class, 'reasonID', 'id');
     }
+    
+    // Relacionamento com a taxa de imposto
+    public function taxa()
+    {
+        return $this->belongsTo(TaxTable::class, 'taxID', 'id');
+    }
 }

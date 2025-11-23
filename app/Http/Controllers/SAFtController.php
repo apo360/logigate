@@ -1,21 +1,35 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Models\SalesInvoice;
 use illuminate\Http\Request;
-use App\Services\SAFtParser;
-use App\Services\OpenAIService;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Saft\Header;
+use App\Models\Saft\MasterFiles\Cliente;
+use App\Models\Saft\MasterFiles\Impostos;
+use App\Models\Saft\MasterFiles\Produtos_Servicos;
+use App\Models\Saft\SourceDocuments\SalesInvoices;
+use SimpleXMLElement;
 
 class SAFtController extends Controller
 {
+    
+    /**
+     * Metodos auxiliares para construir secções específicas do SAF-T
+     * @param SimpleXMLElement $xml
+     * @param array $data
+     * @return SimpleXMLElement
+     * @method buildAddress
+     * @method buildCustomers
+     * @method buildProducts
+     * @method buildTaxTables
+     * @method buildHeader
+     * @method buildSourceDocuments
+    */
+
     protected $safTParser;
     protected $openAIService;
-
-    public function __construct(SAFtParser $safTParser, OpenAIService $openAIService)
-    {
-        $this->safTParser = $safTParser;
-        $this->openAIService = $openAIService;
-    }
 
     public function index()
     {
@@ -24,48 +38,43 @@ class SAFtController extends Controller
 
     public function parseSAFT(Request $request)
     {
+        // Validação usando rules do Laravel
+        $request->validate([
+            'safTFile' => 'required|file|mimes:xml|max:5120', // 5MB
+        ]);
+
         $file = $request->file('safTFile');
         if (!$file || !$file->isValid()) {
             return response()->json(['error' => 'Invalid file'], 400);
         }
 
-        // Store the file temporarily
         $path = $file->store('saft_files');
         if (!$path) {
             return response()->json(['error' => 'Failed to store file'], 500);
         }
-        // Ensure the file is a valid SAFT file (you can add more validation here)
-        if ($file->getClientOriginalExtension() !== 'xml') {
-            Storage::delete($path); // Clean up the temporary file
-            return response()->json(['error' => 'Invalid file type. Only XML files are allowed.'], 400);
-        }
-        // Ensure the file size is within limits (optional)
-        if ($file->getSize() > 5000000) { // 5MB limit
-            Storage::delete($path); // Clean up the temporary file
-            return response()->json(['error' => 'File size exceeds the limit of 5MB.'], 400);
-        }
 
-        // Parse the SAFT file
         try {
             $data = $this->safTParser->parse(storage_path("app/{$path}"));
-            Storage::delete($path); // Clean up the temporary file
-            return response()->json($data);
+
+            // Usar o serviço injetado em vez de instanciar diretamente
+            if ($this->openAIService) {
+                $aiResponse = $this->openAIService->analyze('Process the SAFT data: ' . json_encode($data));
+            } else {
+                $aiResponse = null;
+            }
+
+            Storage::delete($path); // limpeza
+
+            return response()->json([
+                'data' => $data,
+                'ai' => $aiResponse,
+            ]);
         } catch (\Exception $e) {
-            Storage::delete($path); // Clean up on error
+            Storage::delete($path);
             return response()->json(['error' => 'Failed to parse SAFT file: ' . $e->getMessage()], 500);
         }
-
-        // Open AI Service Interaction (optional)
-        $openAIService = new OpenAIService();
-        $response = $openAIService->analyze('Process the SAFT data: ' . json_encode($data));
-        
-        // Return the response from OpenAI
-        if (!$response) {
-            return response()->json(['error' => 'Failed to get response from OpenAI'], 500);
-        }
-        // Return the response from OpenAI
-        return response()->json(['response' => $response]);
     }
+
     public function showForm()
     {
         return view('safT.form');
@@ -84,33 +93,6 @@ class SAFtController extends Controller
         // ...
 
         return redirect()->back()->with('success', 'Form submitted successfully!');
-    }
-    public function downloadSAFT(Request $request)
-    {
-        // Logic to download the SAFT file
-        $filePath = storage_path('app/saft_files/sample.saft'); // Adjust the path as needed
-        if (!file_exists($filePath)) {
-            return response()->json(['error' => 'File not found'], 404);
-        }
-
-        return response()->download($filePath, 'sample.saft');
-    }
-    public function uploadSAFT(Request $request)
-    {
-        // Logic to handle SAFT file upload
-        $file = $request->file('safTFile');
-        if (!$file || !$file->isValid()) {
-            return response()->json(['error' => 'Invalid file'], 400);
-        }
-
-        // Store the file temporarily
-        $path = $file->store('saft_files');
-        if (!$path) {
-            return response()->json(['error' => 'Failed to store file'], 500);
-        }
-
-        // Return success response
-        return response()->json(['message' => 'File uploaded successfully', 'path' => $path]);
     }
     public function downloadFile($fileName)
     {
@@ -146,4 +128,85 @@ class SAFtController extends Controller
 
         return response()->json(['files' => $fileList]);
     }
+
+    // Métodos para construir o SAF-T em XML para download e submissão.
+    public function buildSAFT($fiscalYear, $startDate, $endDate)
+    {
+        // Lógica para construir o ficheiro SAF-T em XML
+        $Audit = new \SimpleXMLElement(
+        '<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:AO_1.01_01" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AuditFile>');
+        
+        // Adicionar secção Header - Criar HeaderModel com dados
+        $headerData = new Header([
+            'taxAccountingBasis' => 'F',
+            'fiscalYear' => $fiscalYear,
+            'startDate'  => $startDate,
+            'endDate'    => $endDate,
+        ]);
+        
+        // Construir XML Header
+        $headerData->buildHeader($Audit);
+
+        $SalesInvoices = SalesInvoice::whereBetween('invoice_date', [$startDate, $endDate])->where('empresa_id', $this->empresa->id)->get();
+        /*|---------------Master Files -------------------------|*/
+        $masterFiles = $Audit->addChild('MasterFiles');
+        /*
+        |--------------------------------------------------------------------------
+        | 1. CLIENTES – sem duplicações
+        |--------------------------------------------------------------------------
+        */
+        $clientesBuilder = new Cliente();
+        $distinctCustomers = $SalesInvoices->map(fn ($invoice) => $invoice->customer)->unique('CustomerID');
+        foreach ($distinctCustomers as $customer) {
+            if ($customer) { 
+                $clientesBuilder->Clientebuild($masterFiles, $customer);
+            }
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | 2. PRODUTOS – sem duplicações
+        |--------------------------------------------------------------------------
+        */
+        $productsBuilder = new Produtos_Servicos();
+        $distinctProducts = $SalesInvoices->flatMap(fn ($inv) => $inv->salesitem)   // obter todas as linhas
+        ->map(fn ($item) => $item->produto)  // obter produto da linha
+        ->filter()                           // remover null
+        ->unique('ProductCode');             // produtos distintos por código
+
+        foreach ($distinctProducts as $product) {
+            $productsBuilder->ProdutosServicosbuild($masterFiles, $product);
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | 3. Impostos – sem duplicações
+        |--------------------------------------------------------------------------
+        */
+        $taxTableBuilder = new Impostos();
+        $distinctTaxes = $SalesInvoices->flatMap(fn ($inv) => $inv->salesitem)// linhas do documento
+            ->map(fn ($item) => $item->produto?->price?->taxa)         // taxa associada ao preço
+            ->filter()                                                 // remover null
+            ->unique('id');                                            // taxas distintas
+
+        $TaxTable = $masterFiles->addChild('TaxTable');
+        foreach ($distinctTaxes as $tax) {
+            $taxTableBuilder->Impostosbuild($TaxTable, $tax);
+        }
+        /*|----------------------------------- Finalização dos Master Files ---------------------------------------|*/
+
+        /*|----------------------------------- Source Documents ---------------------------------------|*/
+        $sourceDocuments = $Audit->addChild('SourceDocuments');
+        
+        $invoiceSourceBuilder = new SalesInvoices();
+        $invoiceSourceBuilder->SalesInvoicesbuild($sourceDocuments, $SalesInvoices);
+
+
+        /*|----------------------------------- Finalização dos Source Documents ---------------------------------------|*/
+
+        // Converter para XML string
+        $xmlString = $Audit->asXML();
+
+        // Return as a downloadable file
+        return response($xmlString, 200)->header('Content-Type', 'application/xml')->header('Content-Disposition', 'attachment; filename="saf-t.xml"');
+    }
+
 }
