@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,7 +29,8 @@ class Produto extends Model
 
     protected $dates = [
         'created_at',
-        'updated_at'
+        'updated_at',
+        'discontinued_at',
     ];
 
     // Function boot
@@ -37,6 +39,10 @@ class Produto extends Model
         parent::boot();
 
         static::creating(function ($model) {
+
+            // Empresa ID
+            $model->empresa_id = Auth::user()->empresas->first()->id;
+
             // Set the created_at timestamp to the current date and time
             $model->created_at = Carbon::now()->toDateTimeString();
         });
@@ -44,15 +50,6 @@ class Produto extends Model
         static::updating(function ($model) {
             // Set the updated_at timestamp to the current date and time
             $model->updated_at = Carbon::now()->toDateTimeString();
-        });
-
-        static::deleting(function ($model) {
-            // Aqui você pode adicionar lógica antes de um produto ser deletado, se necessário
-
-            // Se o produto estiver associado á uma venda não pode ser apagado
-            if ($model->salesLines()->count() > 0) {
-                throw new \Exception("Não é possível apagar o produto porque ele está associado a uma Factura.");
-            }
         });
     }
 
@@ -85,7 +82,7 @@ class Produto extends Model
      */
     public function price()
     {
-        return $this->hasOne(ProductPrice::class, 'fk_product');
+        return $this->hasOne(ProductPrice::class, 'fk_product')->latest();
     }
 
     /**

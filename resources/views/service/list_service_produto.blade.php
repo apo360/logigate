@@ -122,9 +122,9 @@
                                 <td>{{ $product->ProductType }} | {{ $product->ProductCode }}</td>
                                 <td>{{ $product->ProductDescription }}</td>
                                 <td>{{ $product->grupo->descricao ?? 'Sem Categoria' }}</td>
-                                <td>{{ number_format(floatval($product->venda_sem_iva), 2, ',','.') }} Kz</td>
-                                <td>{{ number_format(floatval($product->imposto), 2, ',','.') }} %</td>
-                                <td>{{ number_format(floatval($product->venda), 2, ',','.') }} Kz</td>
+                                <td>{{ number_format(floatval($product->price->venda_sem_iva ?? 0.00), 2, ',','.') }} Kz</td>
+                                <td>{{ number_format(floatval($product->price->imposto ?? 0.00), 2, ',','.') }} %</td>
+                                <td>{{ number_format(floatval($product->price->venda ?? 0.00), 2, ',','.') }} Kz</td>
                                 <td>
                                     @if($product->status == 1) 
                                         <!-- Produto Ativo: botão para desativar -->

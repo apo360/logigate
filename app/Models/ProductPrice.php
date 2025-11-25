@@ -23,6 +23,12 @@ class ProductPrice extends Model
         'reasonID',
         'taxAmount',
         'dedutivel_iva',
+        'validade_inicio',
+        'validade_fim',
+        'ativo',
+        'motivo_alteracao',
+        'alterado_por',
+        'origem',
     ];
 
     /**
@@ -30,7 +36,7 @@ class ProductPrice extends Model
      */
     public function produto()
     {
-        return $this->belongsTo(Produto::class, 'fk_product');
+        return $this->belongsTo(Produto::class, 'fk_product', 'id');
     }
 
     // Relacionamento com a isenção de imposto
@@ -43,5 +49,11 @@ class ProductPrice extends Model
     public function taxa()
     {
         return $this->belongsTo(TaxTable::class, 'taxID', 'id');
+    }
+
+    // Log de alterações de preço (Histórico)
+    public function priceHistory()
+    {
+        return $this->hasMany(ProductPriceLogs::class, 'fk_product_price', 'id');
     }
 }

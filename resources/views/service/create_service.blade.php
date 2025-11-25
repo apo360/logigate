@@ -4,11 +4,6 @@
         ['name' => 'Serviços/Produtos', 'url' => route('produtos.index')],
         ['name' => 'Novo Serviço/Produto' , 'url' => '']
     ]" separator="/" />
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Novo Serviço/Produto') }}
-        </h2>
-    </x-slot>
 
     <div class="container">
         <x-validation-errors class="mb-4" />

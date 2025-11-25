@@ -277,8 +277,6 @@ class DocumentoController extends Controller
                 ]);
             }
 
-
-
             SalesStatus::create([
                 'documentoID' => $salesInvoice->id,
                 'invoice_status' => 'N', // Dependendo do tipo de Factura deve alterar este valor para o campo
