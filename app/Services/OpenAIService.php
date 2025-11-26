@@ -21,7 +21,7 @@ class OpenAIService
         $prompt .= json_encode($parsedData['customers']);
 
         $response = Http::withToken(env('OPENAI_API_KEY'))->post('https://api.openai.com/v1/chat/completions', [
-            'model' => 'gpt-4',
+            'model' => 'gpt-5.1',
             'messages' => [
                 ['role' => 'system', 'content' => 'Você é um auditor fiscal especializado em XML SAF-T.'],
                 ['role' => 'user', 'content' => $prompt],

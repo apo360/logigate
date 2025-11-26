@@ -170,7 +170,10 @@ use Illuminate\Support\Facades\DB;
         Route::post('/produto/grupo/insert', [ProdutoController::class, 'InsertGrupo'])->name('insert.grupo.produto');
         // toggle.produto
         Route::get('/produto/toggle/{id}', [ProdutoController::class, 'updateStatus'])->name('toggle.produto'); //updateStatus
-
+        // Rota para Atualizar Preço do Produto
+        Route::post('/produto/{produto}/actualizar-preço', [ProdutoController::class, 'updatePrice'])->name('produtos.updatePrice');
+        // Rota para pegar a view de atualização de preço
+        Route::get('/produto/{produto}/actualizar-preço', [ProdutoController::class, 'showUpdatePriceForm'])->name('produtos.showUpdatePriceForm');
 
         // Rotas específicas de usuários e funções
         Route::prefix('users/{user}')->group(function () {

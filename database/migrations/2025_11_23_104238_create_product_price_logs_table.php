@@ -13,19 +13,15 @@ return new class extends Migration
     {
         Schema::create('product_price_logs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('product_price_id');
-            $table->decimal('old_price', 15, 4)->nullable();
-            $table->decimal('new_price', 15, 4)->nullable();
-            $table->decimal('old_tax', 10, 2)->nullable();
-            $table->decimal('new_tax', 10, 2)->nullable();
-            $table->unsignedBigInteger('changed_by')->nullable();
-            $table->string('change_reason')->nullable();
-            $table->string('change_origin', 20)->default('Manual');
+            $table->foreignId('produto_id')->constrained('produtos')->onDelete('cascade');
+            $table->decimal('old_price', 10, 2);
+            $table->decimal('new_price', 10, 2);
+            $table->decimal('variacao', 10, 2)->comment('Variação percentual');
+            $table->string('motivo', 255);
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('ia_impacto', 50)->nullable()->comment('Classificação de impacto econômico pela IA');
+            $table->timestamp('ia_reavaliacao')->nullable()->comment('Data agendada para reavaliação pela IA');
             $table->timestamps();
-
-            // Foreign key constraints
-            $table->foreign('product_price_id')->references('id')->on('product_prices')->onDelete('cascade');
-            $table->foreign('changed_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 

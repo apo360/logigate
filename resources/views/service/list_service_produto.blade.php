@@ -118,6 +118,10 @@
                                     <a href="{{ route('produtos.show', $product->id) }}" class="btn btn-sm btn-default" title="Ver Detalhes do Produto">
                                         <i class="fas fa-info-circle"></i> Detalhes
                                     </a>
+                                    <!-- Link para actualizar o preço -->
+                                    <a href="{{ route('produtos.showUpdatePriceForm', $product->id) }}" class="btn btn-sm btn-default" title="Actualizar Preço do Produto">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </a>
                                 </td>
                                 <td>{{ $product->ProductType }} | {{ $product->ProductCode }}</td>
                                 <td>{{ $product->ProductDescription }}</td>

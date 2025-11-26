@@ -16,29 +16,28 @@ class ProductPriceLogs extends Model implements \OwenIt\Auditing\Contracts\Audit
 
     // Define fillable attributes
     protected $fillable = [
-        'product_price_id',
+        'produto_id',
         'old_price',
         'new_price',
-        'old_tax',
-        'new_tax',
-        'changed_by',
-        'change_reason',
-        'change_origin',
+        'variacao',
+        'motivo',
+        'user_id',
+        'ia_impacto',
+        'ia_reavaliacao',
     ];
 
-    /* -------------- Relationships ----------------------- */
-    
-    // Relacionamento com ProductPrice
-    public function productPrice()
+    protected $casts = [
+        'ia_reavaliacao' => 'datetime',
+    ];
+
+    // -- Define relationships --
+    public function produto()
     {
-        return $this->belongsTo(ProductPrice::class, 'product_price_id');
+        return $this->belongsTo(ProductPrice::class, 'produto_id', 'id');
     }
 
-    // Relacionamento com o usuário que fez a alteração
-    public function changer()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        return $this->belongsTo(User::class);
     }
-
-    // Timestamps are enabled by default
 }

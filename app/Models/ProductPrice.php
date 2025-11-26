@@ -54,6 +54,6 @@ class ProductPrice extends Model
     // Log de alterações de preço (Histórico)
     public function priceHistory()
     {
-        return $this->hasMany(ProductPriceLogs::class, 'fk_product_price', 'id');
+        return $this->hasMany(ProductPriceLogs::class, 'produto_id', 'id');
     }
 }

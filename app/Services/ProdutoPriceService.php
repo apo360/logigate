@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\ProductPrice;
+use App\Models\ProductPriceLogs;
 use App\Models\Produto;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProdutoPriceService
@@ -13,35 +15,101 @@ class ProdutoPriceService
      */
     public function getCurrentPrice($productId)
     {
-        return ProductPrice::where('product_id', $productId)
+        return ProductPrice::where('fk_product', $productId)
             ->latest('created_at')
             ->first();
     }
 
     /**
-     * Atualiza o preço mantendo histórico
+     * Atualiza o preço mantendo histórico e registrando log
      */
     public function updateProductPrice(Produto $product, array $data, string $reason = 'update')
     {
         return DB::transaction(function () use ($product, $data, $reason) {
 
-            // Novos preços submetidos
-            $newPrice = $data['venda'] ?? $data['preco_venda'] ?? null;
+            // 1. Obter o preço atual
+            $currentPriceModel = $this->getCurrentPrice($product->id);
+            $oldPrice = $currentPriceModel ? $currentPriceModel->venda : 0.00;
+
+            // 2. Novos preços submetidos
+            $newPrice = $data['new_price'] ?? $data['preco_venda'] ?? null;
+            $motivo = $data['motivo'] ?? $reason;
+            $notificar = $data['notificar'] ?? false;
 
             if (!$newPrice) {
                 throw new \Exception("O preço de venda é obrigatório para atualizar o preço.");
             }
 
-            // Preço validado com cálculos automáticos
+            // 3. Preço validado com cálculos automáticos
             $validatedPrice = $this->applyAutomaticPriceRules($newPrice, $product);
 
-            return ProductPrice::create([
-                'product_id' => $product->id,
-                'price'      => $validatedPrice,
-                'currency'   => $data['currency'] ?? 'AOA',
-                'type'       => $reason, // update, promotion, admin-change, etc.
-            ]);
+            // Novo valor sem taxa de acordo com a taxa atual (exemplo de 14%)
+            $PriceWithoutTax = $validatedPrice / $this->getTaxMultiplier($product->price->imposto ?? null);
+
+            // 4. Actualizar o novo registro de preço
+            $newPriceModel = ProductPrice::where('fk_product', $product->id)
+                ->update(
+                    [
+                        'venda' => $validatedPrice,
+                        'venda_sem_iva' => $PriceWithoutTax,
+                        'updated_at' => now(),
+                    ]
+                );
+
+            // 5. Registrar o log detalhado
+            $this->logPriceChange(
+                $product,
+                $oldPrice,
+                $validatedPrice,
+                $motivo,
+                $notificar
+            );
+
+            return $newPriceModel;
         });
+    }
+
+    /**
+     * Registra a alteração de preço no log detalhado.
+     */
+    private function logPriceChange(Produto $product, float $oldPrice, float $newPrice, string $motivo, bool $notificar)
+    {
+        $variacao = $oldPrice > 0 ? (($newPrice - $oldPrice) / $oldPrice) * 100 : 0.00;
+        $userId = Auth::id();
+
+        // 1. Classificação de Impacto Econômico (IA) e Agendamento de Reavaliação
+        $iaData = $this->classifyAndScheduleIA($variacao);
+
+        // 2. Criação do Log
+        $log = ProductPriceLogs::create([
+            'produto_id' => $product->id,
+            'old_price' => $oldPrice,
+            'new_price' => $newPrice,
+            'variacao' => $variacao,
+            'motivo' => $motivo,
+            'user_id' => $userId,
+            'ia_impacto' => $iaData['impacto'],
+            'ia_reavaliacao' => $iaData['reavaliacao'],
+        ]);
+
+        // 3. Notificação Opcional
+        if ($notificar) {
+            // A lógica de notificação será implementada na Fase 7
+            $this->notifyManager($log);
+        }
+    }
+
+    /**
+     * Classifica o impacto econômico e agenda a reavaliação (Lógica de IA).
+     * Esta função será implementada na Fase 6.
+     */
+    private function classifyAndScheduleIA(float $variacao): array
+    {
+        // Lógica de IA (a ser implementada na Fase 6)
+        return [
+            'impacto' => 'Sem mudança', // Valor temporário
+            'reavaliacao' => now()->addDays(30), // Valor temporário
+        ];
     }
 
     /**
@@ -78,8 +146,7 @@ class ProdutoPriceService
         $originalPrice = $price;
 
         /**
-         * 🧮 REGRA 1 — Preço mínimo permitido
-         * Ex: Nenhum preço pode ser menor que 100 AOA
+         * 🧮 REGRA 1 — Preço mínimo absoluto
          */
         $minPrice = 100;
         if ($price < $minPrice) {
@@ -87,11 +154,12 @@ class ProdutoPriceService
         }
 
         /**
-         * 🧮 REGRA 2 — Se o produto tem custo, aplicar markup mínimo
-         * Ex: lucro mínimo de 10%
+         * 🧮 REGRA 2 — Markup mínimo baseado no custo real (custo)
          */
-        if ($product && $product->cost_price > 0) {
-            $minAllowed = $product->cost_price * 1.10; // 10% acima do custo
+        if ($product && $product->custo > 0) {
+
+            // lucro mínimo de 10%
+            $minAllowed = $product->custo * 1.10;
 
             if ($price < $minAllowed) {
                 $price = $minAllowed;
@@ -99,15 +167,14 @@ class ProdutoPriceService
         }
 
         /**
-         * 🧮 REGRA 3 — Evitar alteração brusca
-         * Ex: não deixar alterar mais de ±40% num único update
+         * 🧮 REGRA 3 — Evitar alteração brusca (>40% para cima ou baixo)
          */
         if ($product) {
             $current = $this->getCurrentPrice($product->id);
 
             if ($current) {
-                $maxIncrease = $current->price * 1.40;
-                $maxDecrease = $current->price * 0.60;
+                $maxIncrease = $current->venda * 1.40;   // campo correto
+                $maxDecrease = $current->venda * 0.60;
 
                 if ($price > $maxIncrease) $price = $maxIncrease;
                 if ($price < $maxDecrease) $price = $maxDecrease;
@@ -115,14 +182,33 @@ class ProdutoPriceService
         }
 
         /**
-         * 🧮 REGRA 4 — Preço sugerido automático
-         *    Se o preço inserido é 0, gerar preço automático
+         * 🧮 REGRA 4 — Preço automático se preço inserido for 0
          */
-        if ($originalPrice == 0 && $product) {
-            // Ex: custo + markup 20%
-            $price = $product->cost_price * 1.20;
+        if ($originalPrice == 0 && $product && $product->custo > 0) {
+            // custo + 20% lucro
+            $price = $product->custo * 1.20;
         }
 
         return round($price, 2);
+    }
+
+
+    // Implementação da logica de notificação
+    private function notifyManager($log)
+    {
+        // Lógica de notificação (a ser implementada na Fase 7)
+    }
+
+    /**
+     * Obtém o multiplicador de taxa baseado no imposto
+     */
+    private function getTaxMultiplier($imposto)
+    {
+        // Exemplo simples: 14% de IVA
+        if ($imposto) {
+            return 1 + ($imposto / 100);
+            // return 1 + (14 / 100);
+        }
+        return 1.0;
     }
 }

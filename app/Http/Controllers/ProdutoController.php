@@ -8,12 +8,15 @@ use App\Models\Produto;
 use App\Models\ProductGroup;
 use App\Models\ProductType;
 use App\Models\ProductExemptionReason;
+use App\Models\ProductPriceLogs;
 use App\Models\TaxTable;
 use App\Services\ProdutoService;
 use App\Services\ProdutoPriceService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class ProdutoController extends Controller
 {
@@ -95,7 +98,8 @@ class ProdutoController extends Controller
             'productTypes' => ProductType::all(),
             'productExemptionReasons' => ProductExemptionReason::all(),
             'categories' => ProductGroup::all(),
-            'taxas' => TaxTable::orderBy('TaxPercentage', 'desc')->get()
+            'taxas' => TaxTable::orderBy('TaxPercentage', 'desc')->get(),
+            'LogsPrices' => ProductPriceLogs::where('produto_id', $id)->get(),
         ]);
     }
 
@@ -179,4 +183,56 @@ class ProdutoController extends Controller
 
         return redirect()->back()->with('status', 'Estado alterado.');
     }
+
+    /**
+     * Atualizar preço (formulário)
+     */
+    public function showUpdatePriceForm(Produto $produto)
+    {
+        return view('service.update_price', [
+            'produto' => $produto,
+            'taxas' => TaxTable::orderBy('TaxPercentage', 'desc')->get(),
+            'temUsoFiscal' => false, // Ajuste conforme necessário
+        ]);
+        //return redirect()->back()->with('status', 'Estado alterado.');
+    }
+
+    /**
+     * Atualizar preço (lógica)
+     */    
+    public function updatePrice(Request $request, Produto $produto)
+    {
+        // Validação
+        $request->validate([
+            'new_price' => 'required|numeric|min:0.01',
+            'motivo'     => 'nullable|string|max:500',
+            'notificar'  => 'nullable|in:0,1',
+            'observacoes'=> 'nullable|string|max:1000',
+        ]);
+
+        // Normaliza o array estruturado para o service
+        $data = $request->only(['new_price','motivo','notificar','observacoes']);
+
+        try {
+            // Fluxo completo de atualização de preço
+            $resultado = $this->priceService->updateProductPrice($produto, $data);
+
+        } catch (\Exception $e) {
+
+            // Log de erro
+            Log::error('Erro ao atualizar preço do produto', [
+                'produto_id' => $produto->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Ocorreu um erro ao atualizar o preço do produto.');
+        }
+
+        return redirect()
+            ->route('produtos.show', $produto->id)
+            ->with('status', 'Preço atualizado com sucesso.');
+    }
+
 }
