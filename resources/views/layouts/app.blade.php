@@ -1,167 +1,387 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="layoutState()" x-bind:class="{ 'dark': isDarkMode }" class="h-full bg-gray-100 dark:bg-gray-900">
 
-        <!-- SEO -->
-        <title>{{ config('app.name', 'Logigate') }}</title>
-        <meta name="description" content="{{ $page_description ?? 'Sistema de Gestão de Processos Aduaneiros' }}">
-        <meta name="keywords" content="{{ $page_keywords ?? 'Sistema, Gestão, Logistica', 'Aduaneira', 'Despachantes', 'Processos' }}">
-        <meta name="robots" content="index, follow">
-        <link rel="canonical" href="{{ url()->current() }}">
-        <link rel="icon" type="image/x-icon" href="{{ asset('dist/img/LOGIGATE.png') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    {{-- Dynamic Page Title --}}
+    <title>@yield('title', config('app.name', 'Logigate Aduaneiro'))</title>
 
-        <!-- Font-Awesome -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-        <!-- Ionicons -->
-        <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-        <!-- Bootstrap -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <!-- Toastr -->
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
-        <!-- DataTables -->
-        <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
-        <!-- SweetAlert2 -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4/bootstrap-4.min.css">
-        <!-- Theme style -->
-        <link rel="stylesheet" href="{{ asset('dist/css/adminlte.min.css') }}">
-        <!-- Tempusdominus Bootstrap 4 -->
-        <link rel="stylesheet" href="{{ asset('plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css') }}">
-        <!-- iCheck -->
-        <link rel="stylesheet" href="{{ asset('plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-        <!-- JQVMap -->
-        <link rel="stylesheet" href="{{ asset('plugins/jqvmap/jqvmap.min.css') }}">
-        <!-- overlayScrollbars -->
-        <link rel="stylesheet" href="{{ asset('plugins/overlayScrollbars/css/OverlayScrollbars.min.css') }}">
-        <!-- Daterange picker -->
-        <link rel="stylesheet" href="{{ asset('plugins/daterangepicker/daterangepicker.css') }}">
-        <!-- Flag Icons -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css">
+    <meta name="description" content="{{ $page_description ?? 'Sistema de Gestão de Processos Aduaneiros' }}">
+    <meta name="keywords" content="{{ $page_keywords ?? 'Sistema, Gestão, Logistica, Aduaneira, Despachantes, Processos' }}" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ asset('dist/img/LOGIGATE.png') }}">
 
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
-        <script src="//unpkg.com/alpinejs" defer></script>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-        <!-- Select2 -->
-        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-        <!-- Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-X"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'UA-XXXXX-X');
-        </script>
+    <!-- Font Awesome (leve e necessária) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512" crossorigin="anonymous" />
 
-        <!-- Rich Snippets -->
-        <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            "name": "Logigate",
-            "url": "https://aduaneiro.hongayetu.com",
-            "logo": "https://aduaneiro.hongayetu.com/logo.png",
-            "Acesso" : "https://aduaneiro.hongayetu.com/login",
-            "Registro" : "https://aduaneiro.hongayetu.com/register",
-            "sameAs": [
-                "https://facebook.com/logigate",
-                "https://instagram.com/logigate"
-            ]
+    @livewireStyles
+
+    {{-- Custom components CSS (usar quando necessário) --}}
+    @stack('styles')
+
+    <!-- PALETA LOGIGATE -->
+    <style>
+        :root {
+            --logigate-primary:   #0057D9;
+            --logigate-secondary: #008CFF;
+            --logigate-tertiary:  #15C9E8;
+            --logigate-dark:      #002F6C;
         }
-        </script>
 
-        <!-- Mobile Optimization -->
-        <meta name="theme-color" content="#ffffff">
-    </head>
+        .bg-logigate-primary    { background-color: var(--logigate-primary); }
+        .bg-logigate-secondary  { background-color: var(--logigate-secondary); }
+        .bg-logigate-tertiary   { background-color: var(--logigate-tertiary); }
+        .bg-logigate-dark       { background-color: var(--logigate-dark); }
 
-    <body class="hold-transition sidebar-mini layout-fixed">
+        .text-logigate-primary   { color: var(--logigate-primary); }
+        .text-logigate-secondary { color: var(--logigate-secondary); }
+        .text-logigate-tertiary  { color: var(--logigate-tertiary); }
+        .text-logigate-dark      { color: var(--logigate-dark); }
 
-        <div class="wrapper">
-            <!-- Menu Header (Navbar) -->
-            @livewire('navigation-menu')
-            <!-- /.Menu Header (Navbar) -->
-            
-            <!-- Menu Aside -->
-            <x-menu-aside />
+        .border-logigate-primary { border-color: var(--logigate-primary); }
+    </style>
 
-            <main class="content-wrapper pt-16">
-                <!-- Page Heading -->
-                @if (isset($header))
-                    <header class="bg-dark shadow">
-                        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                            {{ $header }}
-                        </div>
-                    </header>
-                @endif
-                
-                <div style="padding: 10px;">
-                    <!-- Incluir componentes de validação -->
-                    @include('components.validation-errors')
-                    @include('components.validation-success')
+</head>
 
-                    {{ $slot }}
+<body class="h-full font-sans antialiased">
+
+    <!-- Mobile Background Overlay -->
+    <div x-show="sidebarOpen"
+         x-transition.opacity
+         class="fixed inset-0 z-20 bg-black bg-opacity-40 lg:hidden"
+         @click="sidebarOpen = false">
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+
+        {{-- ======================== SIDEBAR ======================== --}}
+        <aside
+            class="fixed inset-y-0 left-0 z-30 w-64 bg-logigate-dark text-white shadow-xl
+                   transform transition-transform duration-300 lg:translate-x-0 lg:static"
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+
+            <!-- LOGO -->
+            <div class="h-16 flex items-center px-5 border-b border-white/10">
+                <img src="{{ asset('dist/img/LOGIGATE.png') }}"
+                     class="h-9 mr-3 rounded">
+                <span class="text-lg font-semibold tracking-wide">Logigate</span>
+            </div>
+
+            <!-- MENU DINÂMICO -->
+            <div class="px-3 py-4 space-y-1">
+                <livewire:menu-dinamico />
+            </div>
+        </aside>
+
+        {{-- ======================== MAIN PANEL ======================== --}}
+        <div class="flex-1 flex flex-col overflow-hidden">
+
+            {{-- ======================== TOPBAR ======================== --}}
+            <header class="h-16 bg-white dark:bg-gray-800 shadow flex items-center justify-between px-4">
+
+                {{-- Hamburger (mobile) --}}
+                <button class="lg:hidden text-gray-700 dark:text-gray-300"
+                        @click="sidebarOpen = true">
+                    <i class="fa fa-bars text-2xl"></i>
+                </button>
+
+                {{-- Page Title / Custom Header --}}
+                <div class="font-semibold text-logigate-dark dark:text-gray-200">
+                    {{ $header ?? 'Painel Administrativo' }}
                 </div>
-                
-            </main>
+
+                {{-- RIGHT MENU --}}
+                <div class="flex items-center space-x-5">
+
+                    {{-- 🔍 SEARCH BAR --}}
+                    <div x-data="{ open: false, query: '' }" class="relative">
+                        <button @click="open = !open"
+                                class="p-2 rounded-full bg-logigate-primary/10 text-logigate-primary hover:bg-logigate-primary/20">
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <div x-show="open" x-transition
+                            @click.away="open = false"
+                            class="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-3 z-40">
+
+                            <input type="text" x-model="query"
+                                placeholder="Pesquisar..."
+                                class="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700
+                                        focus:ring-logigate-primary focus:border-logigate-primary
+                                        dark:bg-gray-900 dark:text-white">
+
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                                Pressione <span class="font-bold">Enter</span> para pesquisar
+                            </div>
+
+                        </div>
+                    </div>
+
+
+                    {{-- 🟢 SUBSCRIÇÃO --}}
+                    @php
+                        use Carbon\Carbon;
+                        use Illuminate\Support\Str;
+
+                        $empresa = auth()->user()->empresas->first();
+                        $sub = $empresa?->subscricoes()->latest('data_expiracao')->first();
+
+                        $start = $sub?->data_inicio ? Carbon::parse($sub->data_inicio) : now();
+                        $end   = $sub?->data_expiracao ? Carbon::parse($sub->data_expiracao) : now();
+                        $curr  = now();
+
+                        $totalDays = max($start->diffInDays($end), 1);
+                        $daysLeft  = $curr->diffInDays($end, false);
+
+                        // percentagem de uso
+                        $usedPercent = min(100, max(0, (($totalDays - max($daysLeft, 0)) / $totalDays) * 100));
+                    @endphp
+
+
+                    {{-- PIE SUBSCRIPTION CARD --}}
+<div class="flex items-center bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md"
+     x-data="{ 
+         percent: {{ 100 - intval($usedPercent) }} 
+     }">
+
+    <div class="relative w-12 h-12">
+        <!-- CÍRCULO -->
+        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+            
+            <!-- trilho cinzento -->
+            <path
+                class="text-gray-300 dark:text-gray-700"
+                stroke-width="3" stroke="currentColor" fill="none"
+                d="M18 2.0845
+                   a 15.9155 15.9155 0 0 1 0 31.831
+                   a 15.9155 15.9155 0 0 1 0 -31.831"
+            ></path>
+
+            <!-- progresso -->
+            <path :class="percent > 50 ? 'text-green-500' : percent > 20 ? 'text-yellow-500' : 'text-red-500'"
+                class="transition-all duration-700 ease-out"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke="currentColor"
+                fill="none"
+                :stroke-dasharray="percent + ', 100'"
+                d="M18 2.0845
+                   a 15.9155 15.9155 0 0 1 0 31.831
+                   a 15.9155 15.9155 0 0 1 0 -31.831"
+            ></path>
+        </svg>
+
+        <!-- TEXTO NO CENTRO DO PIE -->
+        <div class="absolute inset-0 flex items-center justify-center">
+            @if ($daysLeft >= 0)
+                <span class="text-sm font-bold text-gray-700 dark:text-gray-200">
+                    {{ $daysLeft }}d
+                </span>
+            @else
+                <span class="text-sm font-bold text-red-600">
+                    Exp
+                </span>
+            @endif
+        </div>
+    </div>
+
+    <!-- INFO -->
+    <div class="ml-4">
+        <div class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+            Tempo de Subscrição
         </div>
 
-        <footer class="main-footer foot-dark">
-            <strong>Copyright &copy; 2023 <a href="https://adminlte.io"><b style="color: green;">Honga</b>Yetu</a>.</strong>
-            Todos os Direitos Reservados. <div class="float-right d-none d-sm-inline-block"><b>Version</b> 1.2.0</div>
-        </footer>
-        <!-- Control Sidebar -->
-        <aside class="control-sidebar control-sidebar-navy">
-            <!-- Control sidebar content goes here -->
-        </aside>
-        <!-- /.control-sidebar -->
+        @if ($daysLeft >= 0)
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+                expira {{ $end->format('d/m/Y') }}
+            </div>
+        @else
+            <div class="text-xs text-red-500">
+                Expirada há {{ abs($daysLeft) }} dias
+            </div>
+        @endif
+    </div>
 
-        @stack('modals')
+</div>
 
-        @livewireScripts
-        <!-- jQuery -->
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <!-- Bootstrap Bundle (includes Popper) -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Toastr -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-        <!-- DataTables  & Plugins -->
-        <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.bootstrap4.min.js') }}"></script>
-        <script src="{{ asset('plugins/jszip/jszip.min.js') }}"></script>
-        <script src="{{ asset('plugins/pdfmake/pdfmake.min.js') }}"></script>
-        <script src="{{ asset('plugins/pdfmake/vfs_fonts.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
-        <!-- Select2 -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
-        <!-- SweetAlert2 -->
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-        <!-- Moment.js -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-        <!-- Axios -->
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <!-- Alpine.js -->
-        <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
-        <!-- AdminLTE App -->
-        <script src="{{ asset('dist/js/adminlte.min.js') }}"></script>
-        <!-- AdminLTE for demo purposes -->
-        <script src="{{ asset('dist/js/demo.js') }}"></script>
-        <!-- bs-custom-file-input -->
-        <script src="{{ asset('plugins/bs-custom-file-input/bs-custom-file-input.min.js') }}"></script>
-    </body>
+
+
+                    {{-- 🔔 NOTIFICAÇÕES --}}
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open"
+                                class="relative p-2 rounded-full bg-logigate-primary/10 text-logigate-primary hover:bg-logigate-primary/20">
+                            <i class="fa fa-bell"></i>
+
+                            {{-- Badge --}}
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px]
+                                        rounded-full flex items-center justify-center">
+                                3
+                            </span>
+                        </button>
+
+                        <div x-show="open" x-transition
+                            @click.away="open = false"
+                            class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800
+                                    shadow-xl rounded-xl py-2 z-40">
+
+                            <h4 class="px-4 py-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
+                                Notificações
+                            </h4>
+
+                            <div class="max-h-64 overflow-y-auto">
+
+                                {{-- Placeholder — substitui por Livewire futuramente --}}
+                                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                    <div class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                        Fatura expira em breve
+                                    </div>
+                                    <div class="text-xs text-gray-400">há 2 horas</div>
+                                </div>
+
+                                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                    <div class="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                        Novo utilizador registado
+                                    </div>
+                                    <div class="text-xs text-gray-400">há 1 dia</div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {{-- 🌙 DARK MODE --}}
+                    <button @click="toggleDarkMode"
+                            class="p-2 rounded-full bg-logigate-secondary/10 text-logigate-secondary
+                                hover:bg-logigate-secondary/20">
+                        <i class="fa" :class="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+                    </button>
+
+
+                    {{-- 👤 USER DROPDOWN --}}
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open"
+                                class="flex items-center space-x-2 group">
+
+                            <img src="{{ Auth::user()->profile_photo_url }}"
+                                class="h-9 w-9 rounded-full border border-gray-300 dark:border-gray-700 group-hover:border-logigate-primary transition">
+
+                            <span class="text-gray-700 dark:text-gray-200 font-medium group-hover:text-logigate-primary">
+                                {{ Auth::user()->name }}
+                            </span>
+                        </button>
+
+                        <div x-show="open" @click.away="open = false" x-transition
+                            class="absolute right-0 mt-3 w-60 bg-white dark:bg-gray-900 shadow-xl rounded-xl z-40 overflow-hidden">
+
+                            {{-- PROFILE --}}
+                            <a href="{{ route('profile.show') }}"
+                            class="block px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fa fa-user mr-2 text-logigate-primary"></i>
+                                Perfil
+                            </a>
+
+                            {{-- EMPRESAS --}}
+                            @foreach(auth()->user()->empresas as $empresa)
+                                <div class="px-4 py-1 text-[10px] text-gray-400 uppercase">
+                                    {{ $empresa->Empresa }}
+                                </div>
+
+                                <a href="{{ route('empresas.edit', $empresa->id) }}"
+                                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                                    Perfil da Empresa
+                                </a>
+
+                                <a href="{{ route('subscribe.view', $empresa->id) }}"
+                                class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                                    Subscrição
+                                </a>
+                            @endforeach
+
+                            {{-- GESTÃO --}}
+                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+
+                            <a href="{{ route('usuarios.index') }}"
+                            class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                            Usuários
+                            </a>
+
+                            <a href="{{ route('roles.index') }}"
+                            class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                            Regras
+                            </a>
+
+                            <a href="{{ route('permissions.index') }}"
+                            class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                            Permissões
+                            </a>
+
+                            <a href="{{ route('empresa.migracao') }}"
+                            class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                            Migração
+                            </a>
+
+                            {{-- LOGOUT --}}
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button class="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 dark:hover:bg-gray-700">
+                                    <i class="fa fa-power-off mr-2"></i> Sair
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
+
+                </div>
+
+            </header>
+
+            {{-- ======================== PAGE CONTENT ======================== --}}
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-logigate-dark/90">
+
+                @include('components.validation-errors')
+                @include('components.validation-success')
+
+                {{ $slot }}
+
+            </main>
+
+            {{-- ======================== FOOTER ======================== --}}
+            <footer class="p-4 bg-white dark:bg-logigate-dark border-t border-logigate-primary/20
+                           text-center text-sm text-logigate-dark dark:text-white">
+                © {{ date('Y') }} LOGIGATE — Todos os direitos reservados.
+            </footer>
+
+        </div>
+    </div>
+
+    @livewireScripts
+
+    @stack('scripts')
+
+    <script>
+        function layoutState() {
+            return {
+                sidebarOpen: false,
+
+                // DARK MODE
+                isDarkMode: localStorage.getItem('darkMode') === 'true',
+
+                toggleDarkMode() {
+                    this.isDarkMode = !this.isDarkMode;
+                    localStorage.setItem('darkMode', this.isDarkMode);
+                }
+            }
+        }
+    </script>
+
+</body>
 </html>

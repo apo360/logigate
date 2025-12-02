@@ -39,6 +39,7 @@ class UserRoleSeeder extends Seeder
         'configure system',
         'manage permissions',
         'view activity log',
+        'manage menus',
     ];
 
     foreach ($permissions as $permission) {

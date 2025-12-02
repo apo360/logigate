@@ -1,6 +1,6 @@
 <aside class="main-sidebar inset-y-0 left-0 w-64 bg-gray-800 text-white shadow-lg elevation-4">
     <!-- Brand Logo -->
-    <a href="https://logigate.ao" class="brand-link">
+    <a href="https://aduaneiro.hongayetu.com" class="brand-link">
         <img src="{{ asset('dist/img/LOGIGATE.png') }}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         <span class="brand-text font-weight-light">Logi<strong>Gate</strong></span>
     </a>
@@ -10,6 +10,13 @@
         <!-- Sidebar Menu -->
         <nav>
             <ul class="space-y-2">
+                <!-- Menu Tarefas -->
+                <li>
+                    <a href="{{ route('leander.dashboard') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200">
+                        <i class="fas fa-tasks text-gray-400"></i>
+                        <span class="ml-3">{{ __('Tasks') }}</span>
+                    </a>
+                </li>
                 <!-- Dashboard -->
                 <li>
                     <a href="{{ route('dashboard') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200">

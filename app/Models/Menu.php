@@ -4,14 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class Menu extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'description'
+        'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'description', 'permission'
     ];
+
+    public static function clearMenuCacheForUser($userId = null)
+    {
+        $userId = $userId ?: Auth::id();
+        Cache::forget('menus_user_' . $userId);
+    }
 
     public function parent()
     {

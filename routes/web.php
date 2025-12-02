@@ -40,11 +40,10 @@ use App\Http\Controllers\PortoController;
 use App\Http\Controllers\ProcessoDraftController;
 use App\Http\Controllers\Transitario\DashboardController as TransitarioDashboardController;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\AsycudaController;
 use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\SAFtController;
-use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\ScheduledTaskController;
 
     /** Rotas WEB */
     Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
@@ -136,6 +135,23 @@ use Illuminate\Support\Facades\DB;
                 Route::get('/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
             });
         });
+
+        // =========================
+        // Routes example (routes/api.php)
+        // =========================
+        Route::prefix('scheduled-tasks')->group(function() {
+            Route::get('/', [ScheduledTaskController::class, 'index']);
+            Route::post('/', [ScheduledTaskController::class, 'store']);
+            Route::get('/{id}', [ScheduledTaskController::class, 'show']);
+            Route::put('/{id}', [ScheduledTaskController::class, 'update']);
+            Route::post('/{id}/approve', [ScheduledTaskController::class, 'approve']);
+            Route::post('/{id}/run-now', [ScheduledTaskController::class, 'runNow']);
+        });
+
+        /**
+         *  - 
+         */
+        Route::get('/Tarefas', [ScheduledTaskController::class, 'index'])->name('leander.dashboard');
 
         // Arquivos no S3
         Route::get('/arquivo/download/{key}', [ArquivoController::class, 'download'])->name('arquivos.dowload');
