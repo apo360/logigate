@@ -135,7 +135,39 @@ class CustomerController extends Controller
     public function show(Customer $customer)
     {
         $customer = Customer::findOrFail($customer->id);
-        return view('customer.customer_show', compact('customer'));
+
+        $processosMes = $customer->processos()
+            ->selectRaw('MONTH(created_at) as mes, COUNT(*) total')
+            ->groupBy('mes')
+            ->pluck('total', 'mes');
+
+        $licenciamentosMes = $customer->licenciamento()
+            ->selectRaw('MONTH(created_at) as mes, COUNT(*) total')
+            ->groupBy('mes')
+            ->pluck('total', 'mes');
+
+        // Meses fixos (1–12)
+        $meses = collect(range(1, 12));
+
+        // Dataset
+        $atividadeMes = [
+            'processos' => $meses->map(fn ($m) => $processosMes[$m] ?? 0)->values(),
+            'licenciamentos' => $meses->map(fn ($m) => $licenciamentosMes[$m] ?? 0)->values(),
+        ];
+
+        // Labels corretos
+        $mapMeses = [
+            1 => 'Jan', 2 => 'Fev', 3 => 'Mar', 4 => 'Abr',
+            5 => 'Mai', 6 => 'Jun', 7 => 'Jul', 8 => 'Ago',
+            9 => 'Set', 10 => 'Out', 11 => 'Nov', 12 => 'Dez'
+        ];
+
+        $labels = $meses->map(fn ($m) => $mapMeses[$m])->values();
+
+        return view(
+            'customer.customer_show',
+            compact('customer', 'atividadeMes', 'labels')
+        );
     }
 
     /**

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="layoutState()" x-bind:class="{ 'dark': isDarkMode }" class="h-full bg-gray-100 dark:bg-gray-900">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-100 dark:bg-gray-900">
 
 <head>
     <meta charset="utf-8">
@@ -13,17 +13,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('dist/img/LOGIGATE.png') }}">
 
-    <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Alpine.js -->
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <!-- Font Awesome (leve e necessária) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512" crossorigin="anonymous" />
 
-    @livewireStyles
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    @livewireStyles
+    
     {{-- Custom components CSS (usar quando necessário) --}}
     @stack('styles')
 
@@ -47,6 +43,14 @@
         .text-logigate-dark      { color: var(--logigate-dark); }
 
         .border-logigate-primary { border-color: var(--logigate-primary); }
+
+        /* // Animação de pulso para alerta crítico */
+        @keyframes pulse-glow {
+            0%   { box-shadow: 0 0 0px rgba(255, 0, 0, 0.0); }
+            50%  { box-shadow: 0 0 12px rgba(255, 0, 0, 0.5); }
+            100% { box-shadow: 0 0 0px rgba(255, 0, 0, 0.0); }
+        }
+
     </style>
 
 </head>
@@ -54,11 +58,7 @@
 <body class="h-full font-sans antialiased">
 
     <!-- Mobile Background Overlay -->
-    <div x-show="sidebarOpen"
-         x-transition.opacity
-         class="fixed inset-0 z-20 bg-black bg-opacity-40 lg:hidden"
-         @click="sidebarOpen = false">
-    </div>
+    <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-20 bg-black bg-opacity-40 lg:hidden" @click="sidebarOpen = false"> </div>
 
     <div class="flex h-screen overflow-hidden">
 
@@ -85,7 +85,7 @@
         <div class="flex-1 flex flex-col overflow-hidden">
 
             {{-- ======================== TOPBAR ======================== --}}
-            <header class="h-16 bg-white dark:bg-gray-800 shadow flex items-center justify-between px-4">
+            <header class="h-16 bg-white dark:bg-gray-700 shadow flex items-center justify-between px-4">
 
                 {{-- Hamburger (mobile) --}}
                 <button class="lg:hidden text-gray-700 dark:text-gray-300"
@@ -141,96 +141,125 @@
                         $totalDays = max($start->diffInDays($end), 1);
                         $daysLeft  = $curr->diffInDays($end, false);
 
-                        // percentagem de uso
                         $usedPercent = min(100, max(0, (($totalDays - max($daysLeft, 0)) / $totalDays) * 100));
+                        $remainingPercent = 100 - intval($usedPercent);
+
                     @endphp
 
+                    {{-- PIE DESIGN PRO --}}
+                    <div 
+                        class="flex items-center gap-4 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800"
+                        x-data="{ percent: 0, hover:false }"
+                        x-init="setTimeout(() => percent = {{ $remainingPercent }}, 300)"
+                    >
 
-                    {{-- PIE SUBSCRIPTION CARD --}}
-<div class="flex items-center bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-md"
-     x-data="{ 
-         percent: {{ 100 - intval($usedPercent) }} 
-     }">
+                        <!-- PIE CONTAINER -->
+                        <div class="relative"
+                            :class="{
+                                'w-16 h-16': true,     /* tamanho médio */
+                                'animate-[pulse-glow_3s_ease-in-out_infinite]': percent < 20,  /* pulsar se crítico */
+                            }">
 
-    <div class="relative w-12 h-12">
-        <!-- CÍRCULO -->
-        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-            
-            <!-- trilho cinzento -->
-            <path
-                class="text-gray-300 dark:text-gray-700"
-                stroke-width="3" stroke="currentColor" fill="none"
-                d="M18 2.0845
-                   a 15.9155 15.9155 0 0 1 0 31.831
-                   a 15.9155 15.9155 0 0 1 0 -31.831"
-            ></path>
+                            <!-- SVG PIE -->
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
 
-            <!-- progresso -->
-            <path :class="percent > 50 ? 'text-green-500' : percent > 20 ? 'text-yellow-500' : 'text-red-500'"
-                class="transition-all duration-700 ease-out"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke="currentColor"
-                fill="none"
-                :stroke-dasharray="percent + ', 100'"
-                d="M18 2.0845
-                   a 15.9155 15.9155 0 0 1 0 31.831
-                   a 15.9155 15.9155 0 0 1 0 -31.831"
-            ></path>
-        </svg>
+                                <!-- trilho -->
+                                <path
+                                    class="text-gray-300 dark:text-gray-700"
+                                    stroke-width="3"
+                                    stroke="currentColor"
+                                    fill="none"
+                                    d="
+                                        M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831
+                                    "
+                                ></path>
 
-        <!-- TEXTO NO CENTRO DO PIE -->
-        <div class="absolute inset-0 flex items-center justify-center">
-            @if ($daysLeft >= 0)
-                <span class="text-sm font-bold text-gray-700 dark:text-gray-200">
-                    {{ $daysLeft }}d
-                </span>
-            @else
-                <span class="text-sm font-bold text-red-600">
-                    Exp
-                </span>
-            @endif
-        </div>
-    </div>
+                                <!-- gradiente -->
+                                <defs>
+                                    <linearGradient id="pieGradient" x1="1" y1="0" x2="0" y2="1">
+                                        <stop offset="0%"   stop-color="#2fe6a7"/>
+                                        <stop offset="50%"  stop-color="#16b0f8"/>
+                                        <stop offset="100%" stop-color="#8752ff"/>
+                                    </linearGradient>
+                                </defs>
 
-    <!-- INFO -->
-    <div class="ml-4">
-        <div class="text-xs font-semibold text-gray-600 dark:text-gray-300">
-            Tempo de Subscrição
-        </div>
+                                <!-- progresso -->
+                                <path
+                                    stroke-width="3"
+                                    stroke-linecap="round"
+                                    fill="none"
+                                    :stroke-dasharray="percent + ', 100'"
+                                    stroke="url(#pieGradient)"
+                                    class="transition-all duration-[1200ms] ease-out"
+                                    d="
+                                        M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831
+                                    "
+                                ></path>
+                            </svg>
 
-        @if ($daysLeft >= 0)
-            <div class="text-xs text-gray-500 dark:text-gray-400">
-                expira {{ $end->format('d/m/Y') }}
-            </div>
-        @else
-            <div class="text-xs text-red-500">
-                Expirada há {{ abs($daysLeft) }} dias
-            </div>
-        @endif
-    </div>
+                            <!-- TEXTO NO CENTRO -->
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
 
-</div>
+                                @if($daysLeft >= 0)
+                                    <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
+                                        {{ $daysLeft }}d
+                                    </span>
 
+                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">
+                                        left
+                                    </span>
 
+                                @else
+                                    <span class="text-base font-extrabold text-red-600 animate-pulse">
+                                        Exp
+                                    </span>
+                                @endif
+
+                            </div>
+
+                        </div>
+
+                        <!-- INFO -->
+                        <div class="flex flex-col justify-center">
+
+                            <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                                Subscrição
+                            </div>
+
+                            @if ($daysLeft >= 0)
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    expira {{ $end->format('d/m/Y') }}
+                                </div>
+                            @else
+                                <div class="text-xs text-red-500">
+                                    Expirada há {{ abs($daysLeft) }} dias
+                                </div>
+                            @endif
+
+                            <!-- Tooltip -->
+                            <div class="text-[11px] mt-1 text-gray-400 dark:text-gray-500">
+                                {{ $remainingPercent }}% restante
+                            </div>
+                        </div>
+                    </div>
+                    {{-- FIM PIE DESIGN PRO --}}
 
                     {{-- 🔔 NOTIFICAÇÕES --}}
                     <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open"
-                                class="relative p-2 rounded-full bg-logigate-primary/10 text-logigate-primary hover:bg-logigate-primary/20">
+                        <button @click="open = !open" class="relative p-2 rounded-full bg-logigate-primary/10 text-logigate-primary hover:bg-logigate-primary/20">
                             <i class="fa fa-bell"></i>
 
                             {{-- Badge --}}
-                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px]
-                                        rounded-full flex items-center justify-center">
+                            <span class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
                                 3
                             </span>
                         </button>
 
-                        <div x-show="open" x-transition
-                            @click.away="open = false"
-                            class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800
-                                    shadow-xl rounded-xl py-2 z-40">
+                        <div x-show="open" x-transition @click.away="open = false" class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 shadow-xl rounded-xl py-2 z-40">
 
                             <h4 class="px-4 py-2 font-semibold text-gray-700 dark:text-gray-200 text-sm">
                                 Notificações
@@ -260,8 +289,8 @@
 
                     {{-- 🌙 DARK MODE --}}
                     <button @click="toggleDarkMode"
-                            class="p-2 rounded-full bg-logigate-secondary/10 text-logigate-secondary
-                                hover:bg-logigate-secondary/20">
+                            class="p-2 bg-logigate-secondary/10 text-logigate-secondary
+                                hover:bg-logigate-secondary/40">
                         <i class="fa" :class="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
                     </button>
 
@@ -345,7 +374,7 @@
             </header>
 
             {{-- ======================== PAGE CONTENT ======================== --}}
-            <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-logigate-dark/90">
+            <main class="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-logigate-tertiary/90">
 
                 @include('components.validation-errors')
                 @include('components.validation-success')
@@ -355,7 +384,7 @@
             </main>
 
             {{-- ======================== FOOTER ======================== --}}
-            <footer class="p-4 bg-white dark:bg-logigate-dark border-t border-logigate-primary/20
+            <footer class="p-4 bg-white dark:bg-logigate-tertiary border-t border-logigate-primary/20
                            text-center text-sm text-logigate-dark dark:text-white">
                 © {{ date('Y') }} LOGIGATE — Todos os direitos reservados.
             </footer>
@@ -365,7 +394,33 @@
 
     @livewireScripts
 
+    {{-- Modal global para Quick Create --}}
+    <livewire:modals.quick-create-modal />
+
     @stack('scripts')
+
+    <x-ui.toast />
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('toast', ({ type, message }) => {
+                window.dispatchEvent(new CustomEvent('toast-show', {
+                    detail: { type, message }
+                }));
+            });
+
+            // Debug: ver todos os eventos LiveWire
+            Livewire.hook('message.processed', (message, component) => {
+                if (message.updateQueue) {
+                    message.updateQueue.forEach(update => {
+                        if (update.type === 'fireEvent') {
+                            console.log('LiveWire Event:', update.payload);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 
     <script>
         function layoutState() {

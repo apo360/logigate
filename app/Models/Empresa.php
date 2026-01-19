@@ -38,7 +38,17 @@ class Empresa extends Model implements Auditable
         'Contacto_movel',
         'Contacto_fixo',
         'Sigla',
+        'ativo'
     ];
+
+    /**
+     * Scopes
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('ativo', 1);
+    }
+
 
      /**
      * Relação N:N com clientes via tabela pivô customers_empresas
@@ -138,7 +148,7 @@ class Empresa extends Model implements Auditable
      */
     public function processosRascunhos()
     {
-        return $this->hasMany(ProcessoDraft::class, 'empresa_id')->where('status', 'RASCUNHO');
+        return $this->hasMany(ProcessosDraft::class, 'empresa_id')->where('status', 'RASCUNHO');
     }
 
     /**

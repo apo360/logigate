@@ -1,43 +1,59 @@
-@props(['id', 'maxWidth'])
+@props([
+    'title' => null,
+    'maxWidth' => 'md', // sm, md, lg, xl
+])
 
 @php
-$id = $id ?? md5($attributes->wire('model'));
-
-$maxWidth = [
-    'sm' => 'sm:max-w-sm',
-    'md' => 'sm:max-w-md',
-    'lg' => 'sm:max-w-lg',
-    'xl' => 'sm:max-w-xl',
-    '2xl' => 'sm:max-w-2xl',
-][$maxWidth ?? '2xl'];
+    $sizes = [
+        'sm' => 'max-w-sm',
+        'md' => 'max-w-md',
+        'lg' => 'max-w-2xl',
+        'xl' => 'max-w-4xl',
+    ];
 @endphp
 
 <div
-    x-data="{ show: @entangle($attributes->wire('modal')) }"
-    x-on:close.stop="show = false"
-    x-on:keydown.escape.window="show = false"
-    x-show="show"
-    id="{{ $id }}"
-    class="jetstream-modal fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
-    style="display: none;"
+    x-data="{ open: false }"
+    x-on:open-modal.window="if($event.detail === $el.id) open = true"
+    x-on:keydown.escape.window="open = false"
+    x-cloak
+    {{ $attributes->merge(['class' => '']) }}
 >
-    <div x-show="show" class="fixed inset-0 transform transition-all" x-on:click="show = false" x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0">
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
+    {{-- Trigger opcional via slot "trigger" --}}
+    @if (isset($trigger))
+        <div x-on:click="open = true">
+            {{ $trigger }}
+        </div>
+    @endif
 
-    <div x-show="show" class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full {{ $maxWidth }} sm:mx-auto"
-                    x-trap.inert.noscroll="show"
-                    x-transition:enter="ease-out duration-300"
-                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave="ease-in duration-200"
-                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-        {{ $slot }}
+    <div
+        x-show="open"
+        x-transition.opacity
+        class="fixed inset-0 z-[50] flex items-center justify-center px-4 py-6 bg-black/70 backdrop-blur-sm"
+    >
+        <div
+            x-show="open"
+            x-transition
+            class="w-full {{ $sizes[$maxWidth] }} bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl shadow-black/50"
+        >
+            <div class="flex items-center justify-between px-5 py-3 border-b border-slate-800">
+                <h3 class="text-sm font-semibold text-slate-50">
+                    {{ $title }}
+                </h3>
+                <button type="button" class="text-slate-500 hover:text-slate-300" x-on:click="open = false">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <div class="px-5 py-4 text-sm text-slate-100">
+                {{ $slot }}
+            </div>
+
+            @if (isset($footer))
+                <div class="px-5 py-3 border-t border-slate-800 bg-slate-950/80 flex justify-end gap-2">
+                    {{ $footer }}
+                </div>
+            @endif
+        </div>
     </div>
 </div>

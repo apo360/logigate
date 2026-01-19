@@ -1,47 +1,56 @@
-@props(['align' => 'right', 'width' => '48', 'contentClasses' => 'py-1 bg-white', 'dropdownClasses' => ''])
+@props([
+    'id',
+    'align' => 'right',
+    'width' => '48'
+])
 
 @php
-switch ($align) {
-    case 'left':
-        $alignmentClasses = 'ltr:origin-top-left rtl:origin-top-right start-0';
-        break;
-    case 'top':
-        $alignmentClasses = 'origin-top';
-        break;
-    case 'none':
-    case 'false':
-        $alignmentClasses = '';
-        break;
-    case 'right':
-    default:
-        $alignmentClasses = 'ltr:origin-top-right rtl:origin-top-left end-0';
-        break;
-}
+$alignment = $align === 'left'
+    ? 'origin-top-left left-0'
+    : 'origin-top-right right-0';
 
-switch ($width) {
-    case '48':
-        $width = 'w-48';
-        break;
-}
+$widthClass = match ($width) {
+    '48' => 'w-48',
+    '56' => 'w-56',
+    '64' => 'w-64',
+    default => 'w-48',
+};
 @endphp
 
-<div class="relative" x-data="{ open: false }" @click.away="open = false" @close.stop="open = false">
-    <div @click="open = ! open">
-        {{ $trigger }}
-    </div>
+<div
+    x-data="{
+        open: false,
+        init() {
+            window.addEventListener('open-dropdown', e => {
+                if (e.detail.id === '{{ $id }}') {
+                    this.open = true
+                } else {
+                    this.open = false
+                }
+            })
+        }
+    }"
+    class="relative inline-block text-left"
+>
+    {{-- BACKDROP INVISÍVEL PARA FECHAR --}}
+    <div
+        x-show="open"
+        @click="open = false"
+        class="fixed inset-0 z-40"
+        style="display: none;"
+    ></div>
 
-    <div x-show="open"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="transform opacity-0 scale-95"
-            x-transition:enter-end="transform opacity-100 scale-100"
-            x-transition:leave="transition ease-in duration-75"
-            x-transition:leave-start="transform opacity-100 scale-100"
-            x-transition:leave-end="transform opacity-0 scale-95"
-            class="absolute z-50 mt-2 {{ $width }} rounded-md shadow-lg {{ $alignmentClasses }} {{ $dropdownClasses }}"
-            style="display: none;"
-            @click="open = false">
-        <div class="rounded-md ring-1 ring-black ring-opacity-5 {{ $contentClasses }}">
-            {{ $content }}
+    {{-- DROPDOWN --}}
+    <div
+        x-show="open"
+        x-transition
+        class="absolute z-50 mt-2 {{ $alignment }} {{ $widthClass }}
+               rounded-xl shadow-xl border border-gray-200 dark:border-gray-700
+               bg-white dark:bg-gray-900 overflow-hidden"
+        style="display: none;"
+    >
+        <div class="py-1">
+            {{ $slot }}
         </div>
     </div>
 </div>

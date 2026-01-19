@@ -54,27 +54,9 @@ class Mercadoria extends Model
         return 'N/D';
     }
 
-    public function categoria_mercadoria(){
-
-        $categoria = [
-            'num' => 1, 'desc' => 'Animais Vivos e Produtos do Reino Animal',
-            'num' => 2, 'desc' => 'Produtos do Reino Vegetal',
-            'num' => 3, 'desc' => 'Gorduras e Óleos Animais, Vegetais ou de Origem Microbiana...',
-            'num' => 4, 'desc' => 'Produtos das Indústrias Alimentares; Bebidas, Líquidos...',
-            'num' => 5, 'desc' => 'Produtos Minerais',
-            'num' => 6, 'desc' => 'Produtos das Indústrias Químicas ou das Indústrias Conexas',
-        ];
-    }
-
-    public function mercadoria_seccao(){
-
-        $seccao = [
-            'num' => 01, 'desc' => 'Animais Vivos', 'categoria' => '1',
-            'num' => 02, 'desc' => 'Carnes e miudezas, comestíveis', 'categoria' => '1',
-            'num' => 03, 'desc' => 'Peixes e crustáceos, moluscos e outros invertebrados aquáticos', 'categoria' => '1',
-            'num' => 04, 'desc' => 'Leite e laticínios; ovos de aves; mel natural; produtos comestíveis de origem animal', 'categoria' => '1',
-            'num' => 05, 'desc' => 'Outros produtos de origem animal, não especificados nem compreendidos noutros Caítulos', 'categoria' => '1',
-        ];
+    public function subcategoria()
+    {
+        return $this->belongsTo(Subcategoria::class, 'subcategoria_id');
     }
 
     /**

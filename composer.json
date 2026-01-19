@@ -15,11 +15,10 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "league/flysystem-aws-s3-v3": "^3.30",
-        "livewire/livewire": "^3.5",
+        "livewire/livewire": "*",
         "livewire/volt": "^1.6",
         "maatwebsite/excel": "^3.1",
         "owen-it/laravel-auditing": "^13.6",
-        "rappasoft/laravel-livewire-tables": "^3.2",
         "robsontenorio/mary": "^1.32",
         "spatie/laravel-permission": "^6.7",
         "symfony/dom-crawler": "*"
@@ -37,7 +36,12 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/TableHelper.php",
+            "app/Helpers/FileHelper.php",
+            "app/Helpers/PdfHelper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

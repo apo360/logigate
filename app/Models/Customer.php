@@ -15,22 +15,17 @@ class Customer extends Model
     use HasFactory, SoftDeletes;
     
     use SharedFieldsTrait;
+
+    protected $table = 'customers';
+
+    protected $primaryKey = 'id';
     
     protected $fillable = [
         'CustomerID',
         'AccountID',
         'CustomerTaxID',
         'CompanyName',
-        'Contact',
-        'BillingAddress_StreetName',
-        'BillingAddress_BuildingNumber',
-        'BillingAddress_AddressDetail',
-        'City',
-        'PostalCode',
-        'Province',
-        'Country',
         'Telephone',
-        'Fax',
         'Email',
         'Website',
         'SelfBillingIndicator',
@@ -53,8 +48,11 @@ class Customer extends Model
     ];
 
     protected $dates = [
+        'validade_licenca',
+        'validade_date_doc',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'deleted_at'
     ];
 
     protected static function boot()
@@ -71,15 +69,6 @@ class Customer extends Model
             $customer->CustomerID = 'cli'.Auth::user()->empresas->first()->id.$customer->CustomerTaxID.'/'. Carbon::now()->format('y');
             $customer->is_active = 1; 
             $customer->AccountID = 0;
-        });
-
-        // Evento(s) que executam antes de actualizar
-        static::updating(function ($customer){
-
-        });
-
-        static::deleting( function ($customer){
-
         });
     }
 
@@ -125,13 +114,19 @@ class Customer extends Model
         return $this->hasMany(Processo::class, 'customer_id');
     }
 
+    // Licenciamentos do cliente
+    public function licenciamento()
+    {
+        return $this->hasMany(Licenciamento::class, 'cliente_id', 'customer_id');
+    }
+
     /**
      * Retorna apenas a primeira empresa associada ao cliente.
      */
     public function empresas()
     {
         return $this->belongsToMany(Empresa::class, 'customers_empresas')
-                    ->withPivot(['codigo_cliente', 'status'])
+                    ->withPivot(['codigo_cliente', 'status', 'customer_id', 'empresa_id', 'created_at', 'updated_at'])
                     ->withTimestamps();
     }
 
@@ -154,5 +149,23 @@ class Customer extends Model
     public function user(){
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    // Scope para clientes ativos
+    public function scopeAtivos($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
+    // No Model Customer
+    public function isAssociatedWithEmpresa($empresaId)
+    {
+        return $this->empresas()->where('empresa_id', $empresaId)->exists();
+    }
+
+    public function getAssociationsAttribute()
+    {
+        return $this->empresas()->withPivot('created_at', 'created_by')->get();
+    }
 }
+
 

@@ -19,4 +19,16 @@ class Pais extends Model
     {
         return $this->hasMany(Porto::class, 'pais_id', 'id');
     }
+
+    // Função para obter o valor de um campo específico
+    public static function getByField($field, $value, $output = null)
+    {
+        $result = self::where($field, $value)->first();
+        return $output ? $result->{$output} : $result;
+    }
+
+    public static function getAllCountries()
+    {
+        return self::orderBy('pais')->get();
+    }
 }

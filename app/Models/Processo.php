@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\IbanController;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Models\Audit;
 
@@ -105,11 +105,6 @@ class Processo extends Model implements Auditable
                 $processo->user_id = Auth::user()->id;
             }
 
-            // Definir automaticamente o empresa_id se ainda não estiver definido
-            if (!$processo->empresa_id) {
-                $processo->empresa_id = Auth::user()->empresas->first()->id/* Defina aqui o ID da empresa que deseja associar */;
-            }
-
             // Gerar automaticamente o NrProcesso apenas se a tabela for 'processos'
             if ($processo->getTable() === 'processos') {
                 $processo->NrProcesso = self::generateNewProcesso($processo->empresa_id);
@@ -118,13 +113,13 @@ class Processo extends Model implements Auditable
             // Evento executado após criar um novo registro
             // Você pode usar este espaço para adicionar lógica adicional, como enviar notificações, etc.
             // Exemplo: Notificar o administrador sobre a criação de um novo processo, Inserir na tabela de histórico, Autitar, etc.
-            
+
             // Inserir na tabela de auditoria
             Audit::create([
                 'user_type'      => Auth::user()->roles->pluck('name')->first() ?? 'sem-perfil',
                 'user_id'        => Auth::id(),
                 'event'          => 'novo_processo',
-                'new_values'     => ['message' => 'Usuário registrou um novo processo '. $processo->NrProcesso],
+                'new_values'     => ['message' => 'Usuário registrou um novo processo ' . $processo->NrProcesso],
                 'url'            => request()->fullUrl(),
                 'ip_address'     => request()->ip(),
                 'user_agent'     => request()->header('User-Agent'),
@@ -184,14 +179,13 @@ class Processo extends Model implements Auditable
                 'auditable_type' => get_class($processo),
                 'auditable_id'   => $processo->id,
             ]);
-
         });
-        
+
 
         // Evento executado antes de excluir um registro
         static::deleting(function ($processo) {
             // Exemplo: impedir exclusão se o processo estiver em um estado específico
-            if ($processo->Estado === ['Retido','Finalizado']) {
+            if ($processo->Estado === ['Retido', 'Finalizado']) {
                 throw new \Exception('Processos concluídos não podem ser excluídos.');
             }
 
@@ -219,7 +213,7 @@ class Processo extends Model implements Auditable
         return null;
     }
 
-    public function tipoTransporte()
+    public function transporte()
     {
         return $this->belongsTo(TipoTransporte::class, 'TipoTransporte');
     }
@@ -245,7 +239,7 @@ class Processo extends Model implements Auditable
         return $this->belongsTo(Estancia::class, 'estancia_id');
     }
 
-    public function tipoProcesso()
+    public function tipoDeclaracao()
     {
         return $this->belongsTo(RegiaoAduaneira::class, 'TipoProcesso');
     }
@@ -296,10 +290,10 @@ class Processo extends Model implements Auditable
      * Relacionamento com as Tarifas e Emolumentos
      */
 
-     public function emolumentoTarifa()
-     {
+    public function emolumentoTarifa()
+    {
         return $this->belongsTo(EmolumentoTarifa::class, 'id', 'processo_id');
-     }
+    }
 
     /**
      * Gera um novo código de processo sequencial a cada ano.
@@ -325,10 +319,12 @@ class Processo extends Model implements Auditable
         // Obtenha o nome da empresa e gere as iniciais
         $empresa = Empresa::findOrFail($empresaId);
 
-        if($empresa->CodProcesso == ''){
+        if ($empresa->CodProcesso == '') {
             // Função para obter as iniciais do nome da empresa
-            $iniciais = implode('', array_map(function($word) { return strtoupper($word[0]); }, explode(' ', $empresa->nome)));
-        }else{
+            $iniciais = implode('', array_map(function ($word) {
+                return strtoupper($word[0]);
+            }, explode(' ', $empresa->nome)));
+        } else {
             $iniciais = $empresa->CodProcesso;
         }
         // Gera o código com as iniciais, ID da empresa e o código do processo
@@ -419,7 +415,7 @@ class Processo extends Model implements Auditable
     {
         return $this->hasMany(MercadoriaAgrupada::class, 'processo_id')->onDelete('cascade');
     }
-    
+
     public function procLicenFaturas()
     {
         return $this->hasMany(ProcLicenFactura::class, 'processo_id');

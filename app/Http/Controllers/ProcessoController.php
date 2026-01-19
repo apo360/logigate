@@ -17,7 +17,7 @@ use App\Models\Porto;
 use App\Models\Processo;
 use App\Models\EmolumentoTarifa;
 use App\Models\MercadoriaAgrupada;
-use App\Models\ProcessoDraft;
+use App\Models\ProcessosDraft;
 use App\Models\views\ProcessosView;
 use App\Models\RegiaoAduaneira;
 use App\Models\TipoTransporte;
@@ -115,16 +115,7 @@ class ProcessoController extends Controller
      */
     public function index(Request $request)
     {
-        $processos = $this->empresa->processos()
-            ->when($request->input('search'), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('NrProcesso', 'like', "%{$search}%")
-                    ->orWhere('CompanyName', 'like', "%{$search}%")
-                    ->orWhere('DataAbertura', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('DataAbertura', 'desc')->get(); // Paginação correta
-        return view('processos.index', compact('processos'));
+        return view('processos.index');
     }
 
     /**
@@ -132,81 +123,52 @@ class ProcessoController extends Controller
      */
     public function create()
     {
-        $clientes = $this->empresa->customers()->get(); // Busca os Clientes
-        $exportador = $this->empresa->exportadors()->get();
-        $paises = Pais::all();
-        $estancias = Estancia::all();
-        $regioes = RegiaoAduaneira::all();
-        $paises_porto = Porto::select('pais', 'pais_id')->distinct()->whereNotNull('pais')->orderBy('pais')->get();
-        $portos = Porto::all();
-        $ibans = IbanController::getBankDetails();
-        $tipoTransp = TipoTransporte::all();
-        $processos_drafts = ProcessoDraft::where('empresa_id', $this->empresa->id)->orderBy('DataAbertura', 'desc')->get();
-        $condicoes_pagamento = CondicaoPagamento::all();
-        $localizacoes = MercadoriaLocalizacao::all();
 
         // Retornar uma view com o formulário para criar um novo processo
-        return view('processos.create', 
-        compact(
-            'clientes', 
-            'exportador',
-            'paises', 
-            'estancias',
-            'regioes',
-            'paises_porto',
-            'portos',
-            'ibans',
-            'tipoTransp',
-            'processos_drafts',
-            'condicoes_pagamento',
-            'localizacoes',
-        ));
+        return view('processos.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(ProcessoRequest $request)
-    {
+    // public function store(ProcessoRequest $request)
+    // {
         
-        try {
+    //     try {
 
-            // Dados validados do request
-            $processo_request = $request->validated();
+    //         // Dados validados do request
+    //         $processo_request = $request->validated();
 
-            DB::beginTransaction();
+    //         DB::beginTransaction();
 
-            // Cria o processo e obtém a instância completa
-            $novoProcesso = Processo::create($processo_request);
+    //         // Cria o processo e obtém a instância completa
+    //         $novoProcesso = Processo::create($processo_request);
 
-            // Após cria o processos definitivo, deve apagar o rascunho
+    //         // Após cria o processos definitivo, deve apagar o rascunho
 
-            // Verifica se há um rascunho para excluir
-            if ($request->filled('id_rascunho')) {
-                $rascunho = $request->input('id_rascunho');
+    //         // Verifica se há um rascunho para excluir
+    //         if ($request->filled('id_rascunho')) {
+    //             $rascunho = $request->input('id_rascunho');
 
-                // Verifica se o rascunho existe antes de tentar excluí-lo
-                if (ProcessoDraft::find($rascunho)) { ProcessoDraft::destroy($rascunho); } else {
-                    Log::warning("Tentativa de excluir rascunho inexistente com ID: {$rascunho}");
-                }
-            }
-            /*$rascunho = $request->input('id_rascunho');
-            $draft = new ProcessoDraftController();
-            $draft->destroy($rascunho);*/
+    //             // Verifica se o rascunho existe antes de tentar excluí-lo
+    //             if (ProcessosDraft::find($rascunho)) { ProcessosDraft::destroy($rascunho); } else {
+    //                 Log::warning("Tentativa de excluir rascunho inexistente com ID: {$rascunho}");
+    //             }
+    //         }
 
-            DB::commit();
+    //         DB::commit();
 
-            // Redirecione para a página de edição de processos com uma mensagem de sucesso
-            return redirect()->route('processos.edit', $novoProcesso->id)->with('success', 'Processo inserido com sucesso!');
+    //         // Redirecione para a página de edição de processos com uma mensagem de sucesso
+    //         return redirect()->route('processos.edit', $novoProcesso->id)->with('success', 'Processo inserido com sucesso!');
 
-        } catch (QueryException $e) {
-            DB::rollBack();
-            return DatabaseErrorHandler::handle($e, $request);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Erro inesperado: ' . $e->getMessage(),], 500);
-        }
-    }
+    //     } catch (QueryException $e) {
+    //         DB::rollBack();
+    //         return DatabaseErrorHandler::handle($e, $request);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         return response()->json(['message' => 'Erro inesperado: ' . $e->getMessage(),], 500);
+    //     }
+    // }
 
     /**
      * Display the specified resource.
@@ -269,37 +231,37 @@ class ProcessoController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(ProcessoRequest $request, $processoID)
-    {
-        // Dados validados do request
-        $processo_requestUP = $request->validated();
+    // public function update(ProcessoRequest $request, $processoID)
+    // {
+    //     // Dados validados do request
+    //     $processo_requestUP = $request->validated();
 
-        try {
-            // Inicia uma transação para garantir a integridade dos dados
-            DB::beginTransaction();
+    //     try {
+    //         // Inicia uma transação para garantir a integridade dos dados
+    //         DB::beginTransaction();
 
-            // Verifica se o processo existe
-            $processo = Processo::find($processoID);
-            if (!$processo) {
-                return redirect()->back()->with('error', 'Processo não encontrado');
-            }
+    //         // Verifica se o processo existe
+    //         $processo = Processo::find($processoID);
+    //         if (!$processo) {
+    //             return redirect()->back()->with('error', 'Processo não encontrado');
+    //         }
 
-            // Atualiza os campos do processo
-            $processo->update($processo_requestUP);
+    //         // Atualiza os campos do processo
+    //         $processo->update($processo_requestUP);
 
-            DB::commit();
+    //         DB::commit();
 
-            return redirect()->back()->with('success', 'Dados atualizados com sucesso');
+    //         return redirect()->back()->with('success', 'Dados atualizados com sucesso');
 
-        } catch (QueryException $e) {
-            DB::rollBack();
+    //     } catch (QueryException $e) {
+    //         DB::rollBack();
 
-            // Registro do erro
-            Log::error('Erro ao atualizar o processo', ['error' => $e->getMessage()]);
+    //         // Registro do erro
+    //         Log::error('Erro ao atualizar o processo', ['error' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'Erro ao atualizar os dados. Por favor, tente novamente.');
-        }
-    }
+    //         return redirect()->back()->with('error', 'Erro ao atualizar os dados. Por favor, tente novamente.');
+    //     }
+    // }
 
     /**
      * Função para finalizar o processo

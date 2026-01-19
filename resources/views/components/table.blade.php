@@ -1,55 +1,61 @@
-{{-- table-component.blade.php --}}
+@props([
+    'data' => [],
+    'columns' => [], // ['label'=>'Nome','key'=>'cliente.nome']
+    'hoverable' => true,
+    'striped' => true,
+])
 
-@props(['tableData'])
+<div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 
+            rounded-2xl shadow-sm overflow-hidden">
 
-@once
-    @section('table-styles')
-        <!-- DataTables -->
-        <link rel="stylesheet" href="{{ asset('plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
-    @endsection
+    {{-- HEADER --}}
+    <div class="flex justify-between items-center px-4 py-3 border-b 
+                border-gray-200 dark:border-gray-700">
 
-    @section('table-scripts')
-        <!-- DataTables -->
-        <script src="{{ asset('plugins/datatables/jquery.dataTables.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.bootstrap4.min.js') }}"></script>
-        <script src="{{ asset('plugins/jszip/jszip.min.js') }}"></script>
-        <script src="{{ asset('plugins/pdfmake/pdfmake.min.js') }}"></script>
-        <script src="{{ asset('plugins/pdfmake/vfs_fonts.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
-        <script src="{{ asset('plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
+        <div>
+            <h3 class="font-semibold text-gray-700 dark:text-gray-200">
+                {{ $title ?? 'Lista' }}
+            </h3>
+            @if(isset($subtitle))
+                <p class="text-xs text-gray-400 dark:text-gray-500">
+                    {{ $subtitle }}
+                </p>
+            @endif
+        </div>
 
-        <!-- DataTables Initialization -->
-        <script>
-            $(function () {
-                $("#example1").DataTable({
-                    "responsive": true, "lengthChange": false, "autoWidth": true
-                }).buttons().container().appendTo('#example1_wrapper .col-md-6:eq(0)');
-            });
-        </script>
-    @endsection
-@endonce
+        <div class="flex gap-2">
+            {{ $actions ?? '' }}
+        </div>
+    </div>
 
-<table id="example1" class="table table-sm table-hover">
-    <thead>
-        @foreach ($tableData['headers'] as $header)
-            <th scope = "col" class="px-6 py-6 text-left text-xs font-medium uppercase tracking-wider">{{ $header }}</th>
-        @endforeach
-    </thead>
-    <tbody>
-        @foreach ($tableData['rows'] as $row)
-            <tr>
-                @foreach ($row as $cell)
-                    <td scope = "col" class="px-6 py-6 bg-gray-50 text-left text-s font-medium text-gray-500 uppercase tracking-wider">{!! $cell !!}</td>
-                @endforeach
-            </tr>
-        @endforeach
-    </tbody>
-</table>
+    {{-- TABLE --}}
+    <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-gray-700 dark:text-gray-300"
+               wire:loading.class="opacity-50 cursor-progress">
+            
+            {{-- HEADER COLUMNS --}}
+            <thead class="bg-gradient-to-r from-logigate-dark to-logigate-primary text-white uppercase text-xs">
+                <tr>
+                    @foreach($columns as $col)
+                        <th class="px-4 py-2 text-left whitespace-nowrap">
+                            {{ $col['label'] }}
+                        </th>
+                    @endforeach
+                </tr>
+            </thead>
 
+            {{-- ROWS --}}
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700
+                {{ $striped ? 'odd:bg-gray-50 dark:odd:bg-gray-800' : '' }}">
+                {{ $rows }}
+            </tbody>
+        </table>
+    </div>
+
+    {{-- FOOTER --}}
+    @if(isset($footer))
+        <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-gray-500 text-sm">
+            {{ $footer }}
+        </div>
+    @endif
+</div>

@@ -28,25 +28,11 @@ class Exportador extends Model
     protected static function boot()
     {
         parent::boot();
-
         // Evento executado antes de criar um novo registro
         static::creating(function ($exportador) {
             if (Auth::check()) {
-                $exportador->user_id = Auth::user()->id;
-                $exportador->empresa_id = $exportador->empresa_id ?? Auth::user()->empresas->first()->id;
-                
                 $exportador->ExportadorID = $exportador->generateExportadorID();
             }
-        });
-        
-
-        // Evento(s) que executam antes de actualizar
-        static::updating(function ($customer){
-
-        });
-
-        static::deleting( function ($customer){
-
         });
     }
 

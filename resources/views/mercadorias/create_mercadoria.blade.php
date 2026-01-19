@@ -223,10 +223,6 @@
                 <a href="#" id="pauta_mercadoria" class="event button" data-toggle="modal" data-target="#PautaModal">
                     <span class="icon-edit icon"></span>Pauta Aduaneira
                 </a>
-                <!-- <form action="{{ route('mercadorias.reagrupar', $licenciamento->id) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-warning">Reagrupar</button>
-                </form> -->
             </div>
         </div>
 
@@ -288,78 +284,6 @@
                     @endforeach
                 </tbody>
             </table>
-        </div>
-    </div>
-
-    <!-- Modal para edição de Mercadoria -->
-    <div class="modal fade" id="modalEditarMercadoria" tabindex="-1" aria-labelledby="modalEditarMercadoriaLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEditarMercadoriaLabel">Editar Mercadoria</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Fechar">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form id="formEditarMercadoria">
-                        <input type="hidden" id="edit_id" name="id">
-                        
-                        <div class="form-group">
-                            <label for="edit_descricao">Descrição da Mercadoria:</label>
-                            <input type="text" name="Descricao" class="form-control" id="edit_descricao" required>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="edit_Quantidade">Quantidade</label>
-                                <input type="number" class="form-control" id="edit_Quantidade" name="Quantidade" min="1" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="edit_Unidade">Unidade de Medida</label>
-                                <select class="form-control" id="edit_Unidade" name="Unidade" required>
-                                    <option value="kg">Kg</option>
-                                    <option value="l">Litros</option>
-                                    <option value="uni">Unidades</option>
-                                    <option value="m">Metros</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="edit_Qualificacao">Qualificação</label>
-                                <select name="Qualificacao" id="edit_Qualificacao" class="form-control">
-                                    <option value="cont">Contentor</option>
-                                    <option value="auto">Automóvel</option>
-                                    <option value="outro">Outro</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label for="edit_Peso">Peso (Kg)</label>
-                                <input type="number" class="form-control" id="edit_Peso" name="Peso" step="0.01">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="edit_volume">Volume (m³)</label>
-                                <input type="number" class="form-control" id="edit_volume" name="volume" step="0.01">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="edit_preco_unitario">Valor Unitário (Moeda)</label>
-                                <input type="number" class="form-control" id="edit_preco_unitario" name="preco_unitario" step="0.01" required>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="edit_preco_total">Valor Total (FOB)</label>
-                                <input type="number" class="form-control" id="edit_preco_total" name="preco_total" step="0.01" required>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                            <a class="btn btn-primary" id="editMercadoriaForm">Salvar Alterações</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -491,105 +415,6 @@
             var valorTotal = quantidade * precoUnitario;
             document.getElementById('preco_total').value = valorTotal.toFixed(2);
         }
-    </script>
-    <script>
-        $(document).ready(function() {
-            $('.btn-delete').click(function(e) {
-                e.preventDefault();
-
-                let mercadoriaId = $(this).data('id');
-                let rowMercadoria = $(`#mercadoria-${mercadoriaId}`);
-                let tableMercadorias = rowMercadoria.closest('tbody');
-                let rowAgrupamento = rowMercadoria.closest('.expandable-body').prev('tr'); // Linha principal do agrupamento
-
-                if (!confirm("Tem certeza que deseja excluir esta mercadoria?")) {
-                    return;
-                }
-
-                $.ajax({
-                    url: `{{ route('mercadorias.destroy', ':id') }}`.replace(':id', mercadoriaId),
-                    type: 'POST', // Laravel exige POST para DELETE
-                    dataType: 'json',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        _method: 'DELETE'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            rowMercadoria.remove();
-
-                            // Se não houver mais mercadorias no grupo, remover o agrupamento principal
-                            if (tableMercadorias.children('tr').length === 0) {
-                                rowAgrupamento.remove();
-                                tableMercadorias.closest('.expandable-body').remove();
-                            }
-
-                            alert(response.message);
-                        } else {
-                            alert("Erro: " + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert("Erro ao excluir a mercadoria. Por favor, tente novamente.");
-                    }
-                });
-            });
-        });
-
-        $(document).ready(function() {
-             // Clique no botão Editar
-            $('.btn-edit').click(function(e) {
-                e.preventDefault();
-
-                let mercadoriaId = $(this).data('id');
-
-                // Buscar os dados da mercadoria via AJAX
-                $.ajax({
-                    url: `{{ route('mercadorias.edit', ':id') }}`.replace(':id', mercadoriaId),
-                    type: 'GET',
-                    success: function(data) {
-                        // Preencher os campos do modal com os dados retornados
-                        $('#edit_id').val(data.id);
-                        $('#edit_descricao').val(data.Descricao);
-                        $('#edit_Quantidade').val(data.Quantidade);
-                        $('#edit_Unidade').val(data.Unidade);
-                        $('#edit_Qualificacao').val(data.Qualificacao);
-                        $('#edit_Peso').val(data.Peso);
-                        $('#edit_volume').val(data.volume);
-                        $('#edit_preco_unitario').val(data.preco_unitario);
-                        $('#edit_preco_total').val(data.preco_total);
-
-                        // Abrir o modal
-                        $('#modalEditarMercadoria').modal('show');
-                    },
-                    error: function(xhr, status, error) {
-                        alert("Erro ao buscar os dados da mercadoria.");
-                    }
-                });
-            });
-
-            // Submit do formulário de edição
-            $('#editMercadoriaForm').submit(function(e) {
-                e.preventDefault();
-
-                let mercadoriaId = $('#edit_id').val();
-                let formData = $(this).serialize();
-
-                $.ajax({
-                    url: `{{ route('mercadorias.update', ':id') }}`.replace(':id', mercadoriaId),
-                    type: 'PUT', 
-                    data: formData,
-                    success: function(response) {
-                        alert("Mercadoria atualizada com sucesso!");
-                        $('#modalEditarMercadoria').modal('hide');
-                        location.reload(); // Atualiza a página para refletir as mudanças
-                    },
-                    error: function(xhr, status, error) {
-                        alert("Erro ao atualizar a mercadoria.");
-                    }
-                });
-            });
-        });
     </script>
 
 </x-app-layout>

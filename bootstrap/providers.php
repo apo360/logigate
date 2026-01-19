@@ -5,6 +5,7 @@ return [
     App\Providers\EventServiceProvider::class,
     App\Providers\FortifyServiceProvider::class,
     App\Providers\JetstreamServiceProvider::class,
+    App\Providers\LivewireServiceProvider::class,
     App\Providers\MasterRouteServiceProvider::class,
     App\Providers\VoltServiceProvider::class,
 ];

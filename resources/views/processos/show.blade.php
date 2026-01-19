@@ -71,7 +71,7 @@
                                         <div class="col-md-3"><strong>Número do Processo:</strong> <br> {{ $processo->NrProcesso }}</div>
                                         <div class="col-md-3"><strong>Conta Despacho </strong> <br> {{ $processo->ContaDespacho }}</div>
                                         <div class="col-md-3"><strong>Estância Aduaneira: </strong> <br> {{ $processo->estancia->desc_estancia }}</div>
-                                        <div class="col-md-3"><strong>Tipo de Processo: </strong> <br> {{ $processo->tipoProcesso->descricao }}</div>
+                                        <div class="col-md-3"><strong>Tipo de Processo: </strong> <br> {{ $processo->tipoDeclaracao->descricao }}</div>
                                     </div>
                                 </li>
                                
@@ -172,7 +172,7 @@
                                                 </li>
                                                 <li class="mb-2">
                                                     <div class="row">
-                                                        <div class="col-md-4"><strong>Transporte:</strong> {{ $processo->tipoTransporte->descricao }}</div>
+                                                        <div class="col-md-4"><strong>Transporte:</strong> {{ $processo->transporte->descricao }}</div>
                                                         <div class="col-md-4"><strong>Nacionalidade:</strong> {{ optional($processo->nacionalidadeNavio)->pais }}</div>
                                                     </div>
                                                     

@@ -51,16 +51,14 @@ class IbanController extends Controller
         ];
 
         $banks = $code_list['AO']['agency'];
-        $bankDetails = [];
+        $options = [];
+
         foreach ($banks as $bank) {
-            $bankDetails[] = [
-                'code' => $bank['code'],
-                'sname' => $bank['sname'],
-                'fname' => $bank['fname']
-            ];
+            $options[$bank['code']] = $bank['code'].' - '.$bank['fname'].' ('.$bank['sname'].')';
         }
 
-        return $bankDetails;
+        return $options;
+        
     }
 
     public function validateIban(Request $request)
