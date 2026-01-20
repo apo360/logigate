@@ -2,14 +2,35 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Module extends Model
 {
+    protected $table = 'modules';
+    
     protected $fillable = [
-        'parent_id', 'module_name', 'description', 'price'
+        'module_name',
+        'description',
+        'price',
+        'codigo',
+        'tipo',
+        'icone',
+        'parent_id',
+        'order_priority',
+        'ativo'
     ];
+
+    protected $casts = [
+        'price' => 'float',
+        'order_priority' => 'integer',
+        'ativo' => 'boolean'
+    ];
+
+    // Para compatibilidade
+    public function getNomeAttribute()
+    {
+        return $this->module_name;
+    }
 
     public function parent()
     {
@@ -18,22 +39,24 @@ class Module extends Model
 
     public function children()
     {
-        return $this->hasMany(Module::class, 'parent_id');
-    }
-
-    public function menus()
-    {
-        return $this->hasMany(Menu::class, 'module_id', 'id');
-    }
-
-    public function activatedModules()
-    {
-        return $this->hasMany(ActivatedModule::class);
+        return $this->hasMany(Module::class, 'parent_id')->orderBy('order_priority');
     }
 
     public function planos()
     {
-        return $this->belongsToMany(Plano::class, 'plano_modulos', 'modulo_id', 'plano_id');
+        return $this->belongsToMany(Plano::class, 'plano_modulo', 'module_id', 'plano_id')
+                    ->withPivot(['incluido', 'limite', 'preco_adicional']);
     }
 
+    public function activatedForEmpresa($empresaId)
+    {
+        return $this->hasOne(ActivatedModule::class, 'module_id')
+                    ->where('empresa_id', $empresaId)
+                    ->where('active', true);
+    }
+
+    public function isAddon()
+    {
+        return $this->tipo === 'addon';
+    }
 }

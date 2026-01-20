@@ -55,18 +55,36 @@
 
 </head>
 
-<body class="h-full font-sans antialiased">
+<body class="h-full font-sans antialiased"
+        x-data="{
+                sidebarOpen: false,
+                isMobile: () => window.innerWidth < 1024,
+                closeSidebarOnMobile() {
+                    if (this.isMobile()) this.sidebarOpen = false;
+                }
+            }"
+            @resize.window="if (!isMobile()) sidebarOpen = false">
 
-    <!-- Mobile Background Overlay -->
-    <div x-show="sidebarOpen" x-transition.opacity class="fixed inset-0 z-20 bg-black bg-opacity-40 lg:hidden" @click="sidebarOpen = false"> </div>
+    <!-- Overlay simplificado -->
+    <div x-show="sidebarOpen && isMobile()" 
+        x-transition.opacity
+        class="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden" 
+        @click="sidebarOpen = false">
+    </div>
 
     <div class="flex h-screen overflow-hidden">
-
         {{-- ======================== SIDEBAR ======================== --}}
         <aside
+            x-show="sidebarOpen || !isMobile()"
+            x-transition:enter="transition-transform duration-300"
+            x-transition:enter-start="-translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition-transform duration-300"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full"
             class="fixed inset-y-0 left-0 z-30 w-64 bg-logigate-dark text-white shadow-xl
-                   transform transition-transform duration-300 lg:translate-x-0 lg:static"
-            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+                   lg:translate-x-0 lg:static lg:z-0"
+            @click.away="closeSidebarOnMobile()">
 
             <!-- LOGO -->
             <div class="h-16 flex items-center px-5 border-b border-white/10">
@@ -125,128 +143,9 @@
                         </div>
                     </div>
 
-
-                    {{-- 🟢 SUBSCRIÇÃO --}}
-                    @php
-                        use Carbon\Carbon;
-                        use Illuminate\Support\Str;
-
-                        $empresa = auth()->user()->empresas->first();
-                        $sub = $empresa?->subscricoes()->latest('data_expiracao')->first();
-
-                        $start = $sub?->data_inicio ? Carbon::parse($sub->data_inicio) : now();
-                        $end   = $sub?->data_expiracao ? Carbon::parse($sub->data_expiracao) : now();
-                        $curr  = now();
-
-                        $totalDays = max($start->diffInDays($end), 1);
-                        $daysLeft  = $curr->diffInDays($end, false);
-
-                        $usedPercent = min(100, max(0, (($totalDays - max($daysLeft, 0)) / $totalDays) * 100));
-                        $remainingPercent = 100 - intval($usedPercent);
-
-                    @endphp
-
-                    {{-- PIE DESIGN PRO --}}
-                    <div 
-                        class="flex items-center gap-4 bg-white dark:bg-gray-900 p-4 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800"
-                        x-data="{ percent: 0, hover:false }"
-                        x-init="setTimeout(() => percent = {{ $remainingPercent }}, 300)"
-                    >
-
-                        <!-- PIE CONTAINER -->
-                        <div class="relative"
-                            :class="{
-                                'w-16 h-16': true,     /* tamanho médio */
-                                'animate-[pulse-glow_3s_ease-in-out_infinite]': percent < 20,  /* pulsar se crítico */
-                            }">
-
-                            <!-- SVG PIE -->
-                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-
-                                <!-- trilho -->
-                                <path
-                                    class="text-gray-300 dark:text-gray-700"
-                                    stroke-width="3"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    d="
-                                        M18 2.0845
-                                        a 15.9155 15.9155 0 0 1 0 31.831
-                                        a 15.9155 15.9155 0 0 1 0 -31.831
-                                    "
-                                ></path>
-
-                                <!-- gradiente -->
-                                <defs>
-                                    <linearGradient id="pieGradient" x1="1" y1="0" x2="0" y2="1">
-                                        <stop offset="0%"   stop-color="#2fe6a7"/>
-                                        <stop offset="50%"  stop-color="#16b0f8"/>
-                                        <stop offset="100%" stop-color="#8752ff"/>
-                                    </linearGradient>
-                                </defs>
-
-                                <!-- progresso -->
-                                <path
-                                    stroke-width="3"
-                                    stroke-linecap="round"
-                                    fill="none"
-                                    :stroke-dasharray="percent + ', 100'"
-                                    stroke="url(#pieGradient)"
-                                    class="transition-all duration-[1200ms] ease-out"
-                                    d="
-                                        M18 2.0845
-                                        a 15.9155 15.9155 0 0 1 0 31.831
-                                        a 15.9155 15.9155 0 0 1 0 -31.831
-                                    "
-                                ></path>
-                            </svg>
-
-                            <!-- TEXTO NO CENTRO -->
-                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-
-                                @if($daysLeft >= 0)
-                                    <span class="text-sm font-bold text-gray-800 dark:text-gray-200">
-                                        {{ $daysLeft }}d
-                                    </span>
-
-                                    <span class="text-[10px] text-gray-400 dark:text-gray-500">
-                                        left
-                                    </span>
-
-                                @else
-                                    <span class="text-base font-extrabold text-red-600 animate-pulse">
-                                        Exp
-                                    </span>
-                                @endif
-
-                            </div>
-
-                        </div>
-
-                        <!-- INFO -->
-                        <div class="flex flex-col justify-center">
-
-                            <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                                Subscrição
-                            </div>
-
-                            @if ($daysLeft >= 0)
-                                <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    expira {{ $end->format('d/m/Y') }}
-                                </div>
-                            @else
-                                <div class="text-xs text-red-500">
-                                    Expirada há {{ abs($daysLeft) }} dias
-                                </div>
-                            @endif
-
-                            <!-- Tooltip -->
-                            <div class="text-[11px] mt-1 text-gray-400 dark:text-gray-500">
-                                {{ $remainingPercent }}% restante
-                            </div>
-                        </div>
+                    <div class="ml-auto">
+                        <livewire:subscription-widget />
                     </div>
-                    {{-- FIM PIE DESIGN PRO --}}
 
                     {{-- 🔔 NOTIFICAÇÕES --}}
                     <div x-data="{ open: false }" class="relative">
@@ -285,14 +184,6 @@
                             </div>
                         </div>
                     </div>
-
-
-                    {{-- 🌙 DARK MODE --}}
-                    <button @click="toggleDarkMode"
-                            class="p-2 bg-logigate-secondary/10 text-logigate-secondary
-                                hover:bg-logigate-secondary/40">
-                        <i class="fa" :class="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
-                    </button>
 
 
                     {{-- 👤 USER DROPDOWN --}}

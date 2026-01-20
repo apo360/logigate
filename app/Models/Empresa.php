@@ -132,7 +132,7 @@ class Empresa extends Model implements Auditable
     {
         return $this->hasOne(Subscricao::class, 'empresa_id')
             ->where('status', 'ATIVA')
-            ->latest();
+            ->latest('id');
     }
 
     /**

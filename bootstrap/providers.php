@@ -7,5 +7,6 @@ return [
     App\Providers\JetstreamServiceProvider::class,
     App\Providers\LivewireServiceProvider::class,
     App\Providers\MasterRouteServiceProvider::class,
+    App\Providers\SubscricaoServiceProvider::class,
     App\Providers\VoltServiceProvider::class,
 ];
