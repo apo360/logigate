@@ -37,6 +37,7 @@ class ModuloAtivacaoService
                     ]
                 );
             }
+            
         } catch (\Throwable $th) {
             Log::error('Erro ao ativar módulos.', [
                 'error' => $th->getMessage(),

@@ -83,4 +83,11 @@ class User extends Authenticatable implements Auditable
     {
         return $this->belongsToMany(Empresa::class, 'empresa_users');
     }
+
+    public function hasActiveSubscription(): bool
+    {
+        return $this->empresas->first()->subscricoes()
+            ->where('status', 'ATIVA')
+            ->exists();
+    }
 }

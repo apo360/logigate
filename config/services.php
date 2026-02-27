@@ -24,6 +24,28 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'appypay' => [
+
+        // OAuth (GPO)
+        'oauth_url' => env('APPYPAY_OAUTH_URL'),
+        'client_id' => env('APPYPAY_CLIENT_ID'),
+        'client_secret' => env('APPYPAY_CLIENT_SECRET'),
+        'resource' => env('APPYPAY_RESOURCE'),
+
+        // Gateway
+        'gwy_url' => env('APPYPAY_GWY_URL'),
+
+        // Métodos de pagamento
+        'methods' => [
+            'gpo' => env('APPYPAY_GPO_METHOD'),
+            'ref' => env('APPYPAY_REF_METHOD'),
+        ],
+
+        // Webhook
+        'webhook_secret' => env('APPYPAY_WEBHOOK_SECRET'),
+    ],
+
+
     'resend' => [
         'key' => env('RESEND_KEY'),
     ],

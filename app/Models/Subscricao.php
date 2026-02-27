@@ -68,6 +68,11 @@ class Subscricao extends Model
         return $this->hasMany(Pagamento::class, 'subscricao_id');
     }
 
+    public function pagamentoOnline()
+    {
+        return $this->hasMany(PagamentoOnline::class, 'subscription_id');
+    }
+
     public function activatedModules()
     {
         return $this->hasMany(ActivatedModule::class, 'subscricao_id');

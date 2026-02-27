@@ -40,7 +40,7 @@
         <!-- texto centro -->
         <div class="absolute inset-0 flex flex-col items-center justify-center">
             @if($subscricao && $this->diasRestantes >= 0)
-                <span class="text-sm font-bold {{ $diasRestantes < 7 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200' }}">
+                <span class="text-sm font-bold {{ $this->diasRestantes < 7 ? 'text-red-600' : 'text-gray-800 dark:text-gray-200' }}">
                     {{ $this->diasRestantes }}d
                 </span>
                 <span class="text-[10px] text-gray-400">left</span>

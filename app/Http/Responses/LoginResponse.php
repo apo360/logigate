@@ -13,20 +13,33 @@ class LoginResponse implements LoginResponseContract
     {
         $user = Auth::user();
 
-        // Obter a designação da primeira empresa associada ao usuário
-        $designacao = $user->empresas->first()->Designacao;
+        $empresa = $user->empresas->first();
 
-        // Redirecionamento com base na designação
-        switch ($designacao) {
+        // 🔒 PRIORIDADE 1: pagamento pendente
+        if (! $user->hasActiveSubscription()) {
+            return redirect()->route('checkout', ['conta' => $empresa->conta]);
+        }
+
+        // 🏢 PRIORIDADE 2: tipo de empresa
+        if (! $empresa) {
+            Log::warning('User without company', ['user_id' => $user->id]);
+            return redirect('/dashboard');
+        }
+
+        switch ($empresa->Designacao) {
             case 'Despachante Oficial':
-                return redirect()->route('dashboard'); // Certifique-se de que a rota existe
+                return redirect()->route('dashboard');
+
             case 'Transitário':
-                return redirect()->route('transitario.dashboard'); // Certifique-se de que a rota existe
+                return redirect()->route('transitario.dashboard');
+
             case 'Agente de Carga':
-                return redirect()->route('agente_carga.dashboard'); // Certifique-se de que a rota existe
+                return redirect()->route('agente_carga.dashboard');
+
             default:
-                Log::warning('Unknown designation', ['designacao' => $designacao]);
-                return redirect('/dashboard'); // Redirecionamento padrão
+                Log::warning('Unknown designation', ['designacao' => $empresa->Designacao,]);
+
+                return redirect('/dashboard');
         }
     }
 }

@@ -1,46 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-AO">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Logigate | Cadastro</title>
-
-	<!-- Canonical SEO -->
-    <link rel="canonical" href="https://aduaneiro.hongayetu.com"/>
-
-    <!-- Meta Tags -->
-    <meta name="keywords" content="logigate, sistema de gestão aduaneira, gestão financeira, gestão contabilística, automação aduaneira, hongayetu lda, software aduaneiro, controle logístico, contabilidade aduaneira, despacho aduaneiro, gestão de operações, Angola, África">
-    <meta name="description" content="Logigate: Solução completa para gestão aduaneira, financeira e contabilística. Automatize processos, reduza custos e aumente a eficiência dos seus despachos com a Hongayetu Lda.">
-
-    <!-- Schema.org markup -->
-    <meta itemprop="name" content="Logigate - Gestão Aduaneira, Financeira e Contabilística">
-    <meta itemprop="description" content="Logigate oferece uma solução robusta e integrada para automação e controle de processos aduaneiros, financeiros e contabilísticos, garantindo eficiência e precisão.">
-    <meta itemprop="image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
-    <meta itemprop="datePublished" content="2023-10-01">
-    <meta itemprop="ratingValue" content="4.9">
-    <meta itemprop="reviewCount" content="150">
-
-    <!-- Twitter Card data -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@hongayetu">
-    <meta name="twitter:title" content="Logigate - Sistema de Gestão Aduaneira, Financeira e Contabilística">
-    <meta name="twitter:description" content="Aumente a eficiência dos seus processos com o Logigate, desenvolvido pela Hongayetu Lda. Automatize despachos e gestão financeira com uma plataforma avançada. #Logística #Angola">
-    <meta name="twitter:creator" content="@hongayetu">
-    <meta name="twitter:image" content="https://www.logigate.ao/images/logigate-thumbnail.jpg">
-    <meta name="twitter:image:alt" content="Logigate - Sistema de Gestão Aduaneira">
-
-    <!-- Open Graph data -->
-    <meta property="og:title" content="Logigate | Sistema de Gestão Aduaneira e Financeira" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://aduaneiro.hongayetu.com" />
-    <meta property="og:image" content="https://aduaneiro.hongayetu.com/images/logigate-thumbnail.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="628" />
-    <meta property="og:description" content="Logigate é uma solução desenvolvida pela Hongayetu Lda para gestão aduaneira, financeira e contabilística, garantindo automação e eficiência nos processos de despacho e controle financeiro." />
-    <meta property="og:site_name" content="Logigate" />
-    <meta property="og:locale" content="pt_AO" />
-    <meta property="og:updated_time" content="2023-10-01T00:00:00+01:00" />
+    <title>Finalizar Cadastro - LogiGate</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -182,19 +145,7 @@
                     
                     <!-- Plano Escolhido -->
                     <div class="plan-card bg-gradient-to-r from-blue-50 to-white p-5 rounded-xl mb-6">
-                        @php 
-                            use Illuminate\Support\Str; 
-                            $modalidade = $request->query('modalidade', 'monthly');
-                            $planID = $request->query('plano');
-                            $planoSelecionado = App\Models\Plano::where('id', $planID)->first();
-
-                            $price = match ($modalidade) {
-                                'monthly'   => $planoSelecionado->preco_mensal,
-                                'semestral' => $planoSelecionado->preco_semestral,
-                                'annual'    => $planoSelecionado->preco_anual,
-                            };
-
-                        @endphp
+                        @php use Illuminate\Support\Str; @endphp
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-900">{{$planoSelecionado->nome}}</h3>
@@ -308,14 +259,6 @@
                                 <span class="text-gray-500 text-sm">ou com email</span>
                             </div>
                             <div class="flex-1 h-px bg-gray-300"></div>
-                            <!-- Mensagens de Erro -->
-                            <x-validation-errors class="mb-4" />
-
-                            @if (session('status'))
-                                <div class="mb-4 font-medium text-sm text-green-600">
-                                    {{ session('status') }}
-                                </div>
-                            @endif
                         </div>
                     </div>
                     
@@ -323,11 +266,7 @@
                     <form  class="space-y-6" method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
                         @csrf
                         <!-- Plano Hidden -->
-                        <input type="hidden" id="plano_id" name="plano_id" value="{{$planoSelecionado->id}}">
-                        
-                        <!-- Modalidade Hidden -->
-                        <input type="hidden" id="modalidade_pagamento" name="modalidade_pagamento" value="{{$modalidade}}">
-                        
+                         <input type="hidden" id="plano_id" name="plano_id" value="{{$planoSelecionado->id}}">
                         <!-- Nome -->
                         <div>
                             <label class="block text-gray-700 mb-2 font-medium">
@@ -381,7 +320,6 @@
                                 <input 
                                     type="password" 
                                     id="password"
-                                    name="password"
                                     type="password"
                                     required
                                     minlength="6"
@@ -416,7 +354,6 @@
                                 <input 
                                     type="password" 
                                     id="confirmPassword"
-                                    name="password_confirmation"
                                     required
                                     class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                                     placeholder="Digite novamente"

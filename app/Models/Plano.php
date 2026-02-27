@@ -55,11 +55,15 @@ class Plano extends Model
     {
         return match($modalidade) {
             'mensal' => $this->preco_mensal,
-            'trimestral' => $this->preco_trimestral,
             'semestral' => $this->preco_semestral,
             'anual' => $this->preco_anual,
             default => $this->preco_mensal
         };
+    }
+
+    public function itemplano()
+    {
+        return $this->hasMany(PlanoItem::class, 'plano_id');
     }
 
     // Verificar se plano é gratuito
@@ -67,4 +71,13 @@ class Plano extends Model
     {
         return $this->preco_mensal == 0;
     }
+
+    /**
+     * Constantes para modalidades de pagamento
+     */
+    public const MODALIDADES_PAGAMENTO = [
+        'monthly' => 'Mensal',
+        'semestral' => 'Semestral',
+        'annual' => 'Anual',
+    ];
 }

@@ -49,6 +49,10 @@ class Empresa extends Model implements Auditable
         return $query->where('ativo', 1);
     }
 
+    public static function lastId(): int
+    {
+        return (int) self::max('id') + 1;
+    }
 
      /**
      * Relação N:N com clientes via tabela pivô customers_empresas
@@ -101,7 +105,7 @@ class Empresa extends Model implements Auditable
         parent::boot();
 
         // Criar um evento de "created" para a empresa
-        static::created(function ($empresa) {
+        static::creating(function ($empresa) {
             // // Gerar o código da conta da empresa Ex: HYSS00224
             $currentYear = Carbon::now()->year;
             // Buscar o total de Empresas

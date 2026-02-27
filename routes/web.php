@@ -44,20 +44,20 @@ use App\Http\Controllers\AsycudaController;
 use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\SAFtController;
 use App\Http\Controllers\ScheduledTaskController;
+use App\Http\Controllers\WebPage\WelcomeController;
+use App\Http\Controllers\AppyPayWebhookController;
+use App\Models\Plano;
 
     /** Rotas WEB */
-    Route::get('/', function () { $modulos = Module::all(); return view('welcome', compact('modulos')); });
+    Route::get('/', [WelcomeController::class, 'index']);
+
+    // Rotas de Checkout (Pagamento da Subscrição Rápida)
+    Route::get('/cadastro-/{conta}/Confirmar-Pagamento', function(){return view('pagamentos.pagamento-quick');})->name('checkout');
+
+    // Bloco Teste FIM AppPay
+
     // Exibir o formulário de consulta
     Route::get('/consultar-licenciamento', [RastreamentoController::class, 'consultarLicenciamento'])->name('consultar.licenciamento');
-
-    // Processar a pesquisa do código
-    Route::get('/marketplace', function() { 
-        $produtos = [
-            ['nome' => 'Produto 1', 'descricao' => 'Descrição do Produto 1', 'imagem' => 'https://via.placeholder.com/150'],
-            ['nome' => 'Produto 2', 'descricao' => 'Descrição do Produto 2', 'imagem' => 'https://via.placeholder.com/150'],
-        ];
-        return view('WebSite.marketplace', compact('produtos'));
-    })->name('marketplace');
 
     // Exibir o formulário de consulta da Pauta Aduaneira
     Route::get('/consultar-pauta-aduaneira', [PautaAduaneiraController::class, 'consultarPauta'])->name('consultar.pauta');
