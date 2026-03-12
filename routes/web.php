@@ -90,9 +90,11 @@ use App\Models\Plano;
         
         // ------------- Rotas para os despachantes ------------ //
         // Sistema de Controlle de usuarios. 
-        Route::get('/usuarios/block/{id}', [UserController::class, 'block'])->name('usuarios.block');
-        Route::get('/usuarios/unblock/{id}', [UserController::class, 'unblock'])->name('usuarios.unblock');
-        Route::get('/usuarios/resert/{id}', [UserController::class, 'resert_pass'])->name('usuarios.resetPassword');
+        // State-changing user management routes must be non-GET so they stay
+        // behind CSRF protection and cannot be triggered by crawlers/links.
+        Route::post('/usuarios/block/{id}', [UserController::class, 'block'])->name('usuarios.block');
+        Route::post('/usuarios/unblock/{id}', [UserController::class, 'unblock'])->name('usuarios.unblock');
+        Route::post('/usuarios/resert/{id}', [UserController::class, 'resert_pass'])->name('usuarios.resetPassword');
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
@@ -180,15 +182,15 @@ use App\Models\Plano;
         Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
         Route::get('licenciamento/export-excel', [LicenciamentoController::class, 'exportExcel'])->name('licenciamentos.exportExcel');
         Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
-        Route::get('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
-        Route::get('licenciamentos/duplicar/{idLicenciamento}', [LicenciamentoController::class, 'DuplicarLicenciamento'])->name('licenciamentos.duplicar');
+        Route::post('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
+        Route::post('licenciamentos/duplicar/{idLicenciamento}', [LicenciamentoController::class, 'DuplicarLicenciamento'])->name('licenciamentos.duplicar');
         Route::get('licenciamentos/listas/pice', [LicenciamentoController::class, 'pice'])->name('licenciamentos.pice');
 
 
         // Rota para Inserir Grupo/Categoria de Produtos
         Route::post('/produto/grupo/insert', [ProdutoController::class, 'InsertGrupo'])->name('insert.grupo.produto');
         // toggle.produto
-        Route::get('/produto/toggle/{id}', [ProdutoController::class, 'updateStatus'])->name('toggle.produto'); //updateStatus
+        Route::post('/produto/toggle/{id}', [ProdutoController::class, 'updateStatus'])->name('toggle.produto'); //updateStatus
         // Rota para Atualizar Preço do Produto
         Route::post('/produto/{produto}/actualizar-preço', [ProdutoController::class, 'updatePrice'])->name('produtos.updatePrice');
         // Rota para pegar a view de atualização de preço
@@ -227,7 +229,7 @@ use App\Models\Plano;
         Route::get('processos/report/{ProcessoID}/Extrato-Mercadoria', [ProcessoController::class, 'printExtratoMercadoria'])->name('processos.Extrato_mercadoria');
 
 
-        Route::get('processo/imprimir/{IdProcesso}/requisicao', [ProcessoController::class, 'printCartaDiversa'])->name('processo.print.requisicao');
+        Route::post('processo/imprimir/{IdProcesso}/requisicao', [ProcessoController::class, 'printCartaDiversa'])->name('processo.print.requisicao');
         Route::post('licenciamento/mercadorias/reagrupar/{licenciamentoId}', [MercadoriaController::class, 'reagrupar'])->name('mercadorias.reagrupar');
 
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
@@ -257,7 +259,7 @@ use App\Models\Plano;
         // Documentos
         Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
         Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');
-        Route::get('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
+        Route::post('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
         Route::get('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
         Route::post('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
         Route::get('documentos/filtrar', [DocumentoController::class, 'filtrar'])->name('faturas.filtrar');

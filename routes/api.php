@@ -45,14 +45,12 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/user', function (Request $request) { return $request->user(); })->middleware('auth:sanctum');
 
-    Route::get('/log-alert', [LogsController::class, 'getLogAlerts']);
+    Route::middleware(['auth:sanctum', 'can:viewLogs'])->get('/log-alert', [LogsController::class, 'getLogAlerts']);
 
-    // routes/api.php
-    Route::match(['post','get'], '/webhooks/appypay', [AppyPayWebhookController::class, 'handle']);
+    Route::post('/webhooks/appypay', [AppyPayWebhookController::class, 'handle']);
 
     // API para verificar NIF dos Customers
     Route::prefix('verify-nif')->group(function () {
         Route::get('cliente/{nif}', [NifVerificationController::class, 'verifyCliente']);
         Route::get('exportador/{nif}', [NifVerificationController::class, 'verifyExportador']);
     });
-

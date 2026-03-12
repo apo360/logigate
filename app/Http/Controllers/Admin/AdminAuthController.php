@@ -2,44 +2,45 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 
-class AdminAuthController extends Controller
+class AdminAuthController
 {
     public function verifyPin(Request $request)
     {
-        // 🔹 1. Validação do campo PIN
         $request->validate([
-            'pin' => ['required', 'string', 'size:' . config('admin.pin_length', 6)], // valor padrão = 6
+            'pin' => ['required', 'string', 'size:' . config('admin.pin_length', 6)],
         ]);
 
-        // 🔹 2. Cria uma "chave" única para controle de tentativas por IP
         $rateKey = 'verify-pin:' . $request->ip();
 
-        // 🔹 3. Bloqueia se excedeu o limite
         if (RateLimiter::tooManyAttempts($rateKey, 3)) {
             $seconds = RateLimiter::availableIn($rateKey);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Acesso temporariamente bloqueado. Tente novamente em ' . ceil($seconds / 60) . ' minutos.',
             ], 429);
         }
 
-        // 🔹 4. Lógica de verificação do PIN
-        // Para desenvolvimento, vamos aceitar o PIN 1234
-        $pinInserido = $request->input('pin');
-        $pinValido = '123456';
+        $configuredSecret = config('security.admin_master_secret');
 
-        // Alternativamente: usar hash no .env
-        // if (password_verify($pinInserido, env('ADMIN_MASTER_PIN_HASH'))) { ... }
+        if (blank($configuredSecret)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Segredo administrativo não configurado.',
+            ], 500);
+        }
 
-        if ($pinInserido === $pinValido) {
-            // 🔹 5. Autentica e guarda sessão
-            session(['admin_logged_in' => true]);
+        // The secret is stored as a hash in the environment and verified in constant time.
+        if (Hash::check($request->string('pin')->toString(), $configuredSecret)) {
+            session([
+                config('admin.session_key', 'is_admin_master') => true,
+                'admin_master_authenticated_at' => now()->toIso8601String(),
+            ]);
 
-            // 🔹 6. Limpa tentativas falhadas
             RateLimiter::clear($rateKey);
 
             return response()->json([
@@ -48,8 +49,7 @@ class AdminAuthController extends Controller
             ]);
         }
 
-        // 🔹 7. Incrementa tentativas falhadas
-        RateLimiter::hit($rateKey, 60); // bloqueio de 60 segundos
+        RateLimiter::hit($rateKey, 60);
 
         $tentativasRestantes = 3 - RateLimiter::attempts($rateKey);
 

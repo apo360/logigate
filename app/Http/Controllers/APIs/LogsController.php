@@ -2,11 +2,6 @@
 
 namespace App\Http\Controllers\APIs;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-
 class LogsController
 {
     public function getLogAlerts()
@@ -34,4 +29,3 @@ class LogsController
         return array_values($filtered);
     }
 }
-

@@ -88,7 +88,10 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                    <a href="{{ route('usuarios.unblock', $user->id) }}" class="btn btn-danger">Desbloquear</a>
+                                    <form action="{{ route('usuarios.unblock', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-danger">Desbloquear</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -109,7 +112,10 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                    <a href="{{ route('usuarios.block', $user->id) }}" class="btn btn-warning">Bloquear</a>
+                                    <form action="{{ route('usuarios.block', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-warning">Bloquear</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -130,7 +136,10 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                                    <a href="{{ route('usuarios.resetPassword', $user->id) }}" class="btn btn-primary">Reiniciar</a>
+                                    <form action="{{ route('usuarios.resetPassword', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary">Reiniciar</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

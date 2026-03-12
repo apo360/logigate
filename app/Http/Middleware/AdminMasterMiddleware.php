@@ -10,9 +10,11 @@ class AdminMasterMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Verifica se o administrador master está autenticado via sessão
-        if (!session()->has('admin_logged_in') || session('admin_logged_in') !== true) {
-            // Caso não esteja autenticado, redireciona para a página de login/pin
+        $sessionKey = config('admin.session_key', 'is_admin_master');
+
+        // Only accept the dedicated session flag that is set after the hashed
+        // secret is verified by AdminAuthController.
+        if (! $request->session()->get($sessionKey, false)) {
             return redirect()->route('verify-pin')->with('error', 'Acesso restrito. Insira o PIN de administrador.');
         }
 

@@ -179,6 +179,16 @@ class ProdutoController extends Controller
      */
     public function updateStatus($id)
     {
+        $produto = Produto::findOrFail($id);
+        $empresaId = Auth::user()->empresas()->value('empresas.id');
+
+        abort_unless(
+            $produto->empresa_id === $empresaId || $produto->empresa_id === 1,
+            403,
+            'Sem permissão para alterar este produto.'
+        );
+
+        // The toggle now runs behind a POST route so CSRF protection applies.
         $this->productService->toggleStatus($id);
 
         return redirect()->back()->with('status', 'Estado alterado.');

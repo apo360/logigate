@@ -27,9 +27,9 @@
             
             <div class="float-right d-flex align-items-center">
                 <a href="{{ route('usuarios.edit', $user->id) }}" class="mr-2"><i class="fas fa-edit"></i></a>
-                <form action="{{ $user->is_blocked ? route('usuarios.unblock', $user->id) : route('usuarios.block', $user->id) }}" method="GET" class="d-inline">
+                <form action="{{ $user->is_blocked ? route('usuarios.unblock', $user->id) : route('usuarios.block', $user->id) }}" method="POST" class="d-inline">
                     @csrf
-                    
+
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" id="toggleSwitch{{ $user->id }}" name="is_active" 
                             {{ !$user->is_blocked ? 'checked' : '' }} 

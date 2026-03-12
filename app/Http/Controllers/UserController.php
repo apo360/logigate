@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Access\AuthorizationException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -118,6 +119,8 @@ class UserController extends Controller
     public function block($id)
     {
         $user = User::findOrFail($id);
+        $this->authorizeManagedUser($user);
+
         $user->is_blocked = true;
         $user->save();
 
@@ -127,6 +130,8 @@ class UserController extends Controller
     public function unblock($id)
     {
         $user = User::findOrFail($id);
+        $this->authorizeManagedUser($user);
+
         $user->is_blocked = false;
         $user->save();
 
@@ -134,7 +139,28 @@ class UserController extends Controller
     }
 
     public function resert_pass($id){
-        // Palavra-Passe a ser reiniciada, vai enviar no email do 
-        // usuario a nova palavra-passe ou enviar um link para reiniciar a password
+        $user = User::findOrFail($id);
+        $this->authorizeManagedUser($user);
+
+        // Keep the existing business behaviour intact: the reset flow is still
+        // pending, but access to the action is now explicitly authorised.
+        return redirect()->route('usuarios.index')
+            ->with('warning', 'Fluxo de reinicialização de senha ainda não está implementado.');
+    }
+
+    private function authorizeManagedUser(User $managedUser): void
+    {
+        $currentUser = Auth::user();
+
+        if (! $currentUser) {
+            throw new AuthorizationException();
+        }
+
+        $currentEmpresaId = $currentUser->empresas()->value('empresas.id');
+        $sameEmpresa = $managedUser->empresas()->where('empresa_id', $currentEmpresaId)->exists();
+
+        if (! $sameEmpresa || $managedUser->is($currentUser)) {
+            throw new AuthorizationException('Sem permissão para gerir este utilizador.');
+        }
     }
 }

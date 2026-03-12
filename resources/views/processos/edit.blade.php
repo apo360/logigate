@@ -30,8 +30,11 @@
                         <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}"
                            target="_blank" class="dropdown-item">Asycuda</a>
 
-                        <a href="{{ route('processo.print.requisicao', ['IdProcesso' => $processo->id]) }}"
-                           target="_blank" class="dropdown-item">Requisição PDF</a>
+                        <form action="{{ route('processo.print.requisicao', ['IdProcesso' => $processo->id]) }}"
+                              method="POST" target="_blank">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-left w-full">Requisição PDF</button>
+                        </form>
 
                         <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}"
                            target="_blank" class="dropdown-item">Licenciamento TXT</a>

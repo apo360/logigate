@@ -324,10 +324,12 @@
                             </li>
 
                             <li>
-                                <a href="{{ route('gerar.processo', ['idLicenciamento' => $licenciamento->id]) }}" 
-                                class="btn btn-sm btn-warning w-100 text-start">
-                                    <i class="fas fa-file-download"></i> {{ __('Constituir Processo') }}
-                                </a>
+                                <form action="{{ route('gerar.processo', ['idLicenciamento' => $licenciamento->id]) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-warning w-100 text-start">
+                                        <i class="fas fa-file-download"></i> {{ __('Constituir Processo') }}
+                                    </button>
+                                </form>
                             </li>
                         </ul>
                     </div>

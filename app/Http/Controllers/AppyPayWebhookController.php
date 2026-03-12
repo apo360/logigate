@@ -2,35 +2,51 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SubscriptionActivated;
+use App\Models\PagamentoOnline;
+use App\Models\WebhookEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\PagamentoOnline;
-use App\Events\SubscriptionActivated;
 
 class AppyPayWebhookController
 {
     public function handle(Request $request)
     {
-        Log::info('APPYPAY_WEBHOOK_RECEIVED', [
-            'method' => $request->method(),
-        ]);
+        if (! $request->isMethod('post')) {
+            return response()->json(['error' => 'Method not allowed'], 405);
+        }
 
-        if ($request->isMethod('get')) {
-            return response()->json(['status' => 'webhook_online']);
+        $payload = $request->getContent();
+        $secret = config('services.appypay.webhook_secret');
+        $signature = (string) $request->header('X-AppyPay-Signature', '');
+
+        if (blank($secret) || blank($signature)) {
+            return response()->json(['error' => 'Invalid signature'], 401);
+        }
+
+        $expectedSignature = hash_hmac('sha256', $payload, $secret);
+
+        // Verify the raw webhook body to ensure the sender is trusted.
+        if (! hash_equals($signature, $expectedSignature)) {
+            Log::warning('APPYPAY_INVALID_SIGNATURE', [
+                'merchantTransactionId' => $request->input('merchantTransactionId'),
+            ]);
+
+            return response()->json(['error' => 'Invalid signature'], 401);
         }
 
         $gatewayId = $request->input('id');
         $status = $request->input('responseStatus.status');
         $merchantTransactionId = $request->input('merchantTransactionId');
+        $eventId = $this->resolveEventId($request, $payload);
 
         if (! $gatewayId && ! $merchantTransactionId) {
             Log::warning('APPYPAY_INVALID_PAYLOAD', $request->all());
-            return response()->json(['error'=>'invalid_payload'],400);
+            return response()->json(['error' => 'invalid_payload'], 400);
         }
 
         try {
-
             $subscriptionToActivate = null;
 
             DB::transaction(function () use (
@@ -38,10 +54,21 @@ class AppyPayWebhookController
                 $gatewayId,
                 $status,
                 $merchantTransactionId,
+                $eventId,
                 &$subscriptionToActivate
             ) {
+                // Persist the provider event id once so retried deliveries are harmless.
+                $webhookEvent = WebhookEvent::firstOrCreate([
+                    'provider' => 'appypay',
+                    'event_id' => $eventId,
+                ], [
+                    'processed_at' => now(),
+                ]);
 
-                // 🔎 Localizar pagamento com lock
+                if (! $webhookEvent->wasRecentlyCreated) {
+                    throw new \RuntimeException('duplicate_webhook_event');
+                }
+
                 $payment = PagamentoOnline::query()
                     ->when($merchantTransactionId, fn($q) =>
                         $q->where('merchant_transaction_id', $merchantTransactionId)
@@ -54,22 +81,21 @@ class AppyPayWebhookController
 
                 if (! $payment) {
                     Log::warning('APPYPAY_PAYMENT_NOT_FOUND', [
-                        'merchantTransactionId'=>$merchantTransactionId,
-                        'gatewayId'=>$gatewayId
+                        'merchantTransactionId' => $merchantTransactionId,
+                        'gatewayId' => $gatewayId,
                     ]);
+
                     return;
                 }
 
-                // 🛡 Idempotência nível pagamento
                 if ($payment->status === 'paid') {
                     return;
                 }
 
-                // 🎯 Mapear status
                 $newStatus = match ($status) {
                     'Success' => 'paid',
                     'Pending' => 'waiting',
-                    default => 'failed'
+                    default => 'failed',
                 };
 
                 $payment->update([
@@ -79,36 +105,45 @@ class AppyPayWebhookController
                     'paid_at' => $newStatus === 'paid' ? now() : null,
                 ]);
 
-                // 🚀 Apenas marcar para ativação
                 if ($newStatus === 'paid' && $payment->subscription) {
                     $subscriptionToActivate = $payment->subscription;
                 }
             });
 
-            // 🔔 Disparar evento APÓS commit
             if ($subscriptionToActivate &&
                 $subscriptionToActivate->status !== 'ATIVA') {
-
                 SubscriptionActivated::dispatch(
                     $subscriptionToActivate
                 )->afterCommit();
             }
 
-            return response()->json(['status'=>'ok']);
-
+            return response()->json(['status' => 'ok']);
         } catch (\Throwable $e) {
+            if ($e->getMessage() === 'duplicate_webhook_event') {
+                return response()->json(['status' => 'duplicate'], 202);
+            }
 
-            Log::error('APPYPAY_WEBHOOK_ERROR',[
-                'error'=>$e->getMessage(),
-                'payload'=>$request->all()
+            Log::error('APPYPAY_WEBHOOK_ERROR', [
+                'error' => $e->getMessage(),
+                'payload' => $request->all(),
             ]);
 
-            return response()->json(['error'=>'server_error'],500);
+            return response()->json(['error' => 'server_error'], 500);
         }
     }
 
     public function handleWebhook(Request $request)
     {
         return $this->handle($request);
+    }
+
+    private function resolveEventId(Request $request, string $payload): string
+    {
+        return (string) (
+            $request->input('eventId')
+            ?? $request->input('event_id')
+            ?? $request->header('X-Event-Id')
+            ?? hash('sha256', $payload)
+        );
     }
 }

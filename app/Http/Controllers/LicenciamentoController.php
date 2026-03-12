@@ -329,10 +329,13 @@ class LicenciamentoController extends Controller
      */
     public function ConstituirProcesso(Request $request, $idLicenciamento)
     {
-        // Busca o licenciamento pelo ID
         $licenca = Licenciamento::findOrFail($idLicenciamento);
+        abort_unless(
+            $licenca->empresa_id === Auth::user()->empresas()->value('empresas.id'),
+            403,
+            'Sem permissão para constituir este processo.'
+        );
 
-        // Inicia a transação
         DB::beginTransaction();
 
         try {
@@ -606,6 +609,13 @@ class LicenciamentoController extends Controller
             DB::beginTransaction();
 
             $licenciamento = Licenciamento::findOrFail($id);
+            abort_unless(
+                $licenciamento->empresa_id === Auth::user()->empresas()->value('empresas.id'),
+                403,
+                'Sem permissão para duplicar este licenciamento.'
+            );
+
+            // Duplication now lives behind a POST route to prevent unsafe link-triggered writes.
             $novoLicenciamento = $licenciamento->replicate();
             $novoLicenciamento->save();
 
