@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class menu-aside extends Component
+class ImportForm extends Component
 {
     /**
      * Create a new component instance.
@@ -21,6 +21,6 @@ class menu-aside extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.menu-aside');
+        return view('components.import-form');
     }
 }

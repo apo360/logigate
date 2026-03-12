@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class import-form extends Component
+class ValidationSuccess extends Component
 {
     /**
      * Create a new component instance.
@@ -21,6 +21,6 @@ class import-form extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.import-form');
+        return view('components.validation-success');
     }
 }

@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class validation-success extends Component
+class MenuAside extends Component
 {
     /**
      * Create a new component instance.
@@ -21,6 +21,6 @@ class validation-success extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.validation-success');
+        return view('components.menu-aside');
     }
 }
