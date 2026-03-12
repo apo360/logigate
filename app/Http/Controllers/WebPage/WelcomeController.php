@@ -15,6 +15,10 @@ class WelcomeController
         return view('welcome', compact('planos'));
     }
 
+    public function consultarPauta(){
+        return view('WebSite.consultar_pauta');
+    }
+
     //
     public function CheckoutPlan($planID, Request $request){
 
@@ -36,5 +40,9 @@ class WelcomeController
 
         // Redireciona para cadastro rápido
         return view('WebSite.MinCadastro', compact('planoSelecionado', 'price'));
+    }
+
+    public function marketplace(){
+        return view('WebSite.marketplace');
     }
 }

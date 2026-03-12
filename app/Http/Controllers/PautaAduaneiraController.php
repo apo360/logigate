@@ -12,9 +12,6 @@ use Illuminate\Database\QueryException;
 class PautaAduaneiraController extends Controller
 {
     // Exibir o formulário de consulta da Pauta Aduaneira
-    public function consultarPauta(){
-        return view('WebSite.consultar_pauta');
-    }
 
     public function import_view(){
 

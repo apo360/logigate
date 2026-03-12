@@ -49,7 +49,13 @@ use App\Http\Controllers\AppyPayWebhookController;
 use App\Models\Plano;
 
     /** Rotas WEB */
-    Route::get('/', [WelcomeController::class, 'index']);
+    Route::get('/', [WelcomeController::class, 'index'])->name('home');
+
+    // Exibir o formulário de consulta da Pauta Aduaneira
+    Route::get('/consultar-pauta-aduaneira', [WelcomeController::class, 'consultarPauta'])->name('consultar.pauta');
+
+    // MarketPlace
+    Route::get('/mercado', [WelcomeController::class, 'marketplace'])->name('marketplace');
 
     // Rotas de Checkout (Pagamento da Subscrição Rápida)
     Route::get('/cadastro-/{conta}/Confirmar-Pagamento', function(){return view('pagamentos.pagamento-quick');})->name('checkout');
@@ -58,9 +64,6 @@ use App\Models\Plano;
 
     // Exibir o formulário de consulta
     Route::get('/consultar-licenciamento', [RastreamentoController::class, 'consultarLicenciamento'])->name('consultar.licenciamento');
-
-    // Exibir o formulário de consulta da Pauta Aduaneira
-    Route::get('/consultar-pauta-aduaneira', [PautaAduaneiraController::class, 'consultarPauta'])->name('consultar.pauta');
 
     // Processar a pesquisa do código
     Route::post('/consultar-licenciamento', [RastreamentoController::class, 'resultadoConsulta'])->name('resultado.consulta');

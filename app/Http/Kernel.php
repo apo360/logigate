@@ -74,4 +74,8 @@ class Kernel extends HttpKernel
         'admin.master' => \App\Http\Middleware\AdminMasterMiddleware::class,
         'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
     ];
+
+    protected $schedule = [
+        'newsletter:clean' => 'daily',
+    ];
 }
