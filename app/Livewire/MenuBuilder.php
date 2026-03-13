@@ -165,7 +165,7 @@ class MenuBuilder extends Component
         $menu->save();
 
         // limpar cache
-        Menu::clearMenuCacheForUser();
+        Menu::clearMenuCacheForUser(auth()->id());
 
         $this->showModal = false;
         $this->loadMenus();
@@ -176,7 +176,7 @@ class MenuBuilder extends Component
     {
         $menu = Menu::findOrFail($id);
         $menu->delete();
-        Menu::clearMenuCacheForUser();
+        Menu::clearMenuCacheForUser(auth()->id());
         $this->loadMenus();
         $this->dispatchBrowserEvent('notify', ['type'=>'success','message'=>'Menu eliminado.']);
     }
@@ -199,7 +199,7 @@ class MenuBuilder extends Component
             ]);
         }
 
-        Menu::clearMenuCacheForUser();
+        Menu::clearMenuCacheForUser(auth()->id());
         $this->loadMenus();
         $this->dispatchBrowserEvent('notify', ['type'=>'success','message'=>'Ordem atualizada.']);
     }

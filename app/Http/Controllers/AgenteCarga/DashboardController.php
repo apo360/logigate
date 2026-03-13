@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\AgenteCarga;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AuthenticatedController;
 use Illuminate\Http\Request;
 
-class DashboardController extends Controller
+class DashboardController extends AuthenticatedController
 {
     //
 }

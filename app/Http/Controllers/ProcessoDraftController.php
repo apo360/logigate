@@ -6,7 +6,7 @@ use App\Models\ProcessoDraft;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ProcessoDraftController extends Controller
+class ProcessoDraftController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

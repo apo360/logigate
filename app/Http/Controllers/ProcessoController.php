@@ -6,16 +6,12 @@ use App\Helpers\DatabaseErrorHandler;
 use App\Helpers\PdfHelper;
 use App\Http\Requests\ProcessoRequest;
 use App\Models\ContaCorrente;
-use App\Models\Customer;
-use App\Models\Documento;
 use App\Models\Estancia;
-use App\Models\Exportador;
 use App\Models\Mercadoria;
 use App\Models\Pais;
 use App\Models\PautaAduaneira;
 use App\Models\Porto;
 use App\Models\Processo;
-use App\Models\EmolumentoTarifa;
 use App\Models\MercadoriaAgrupada;
 use App\Models\ProcessosDraft;
 use App\Models\views\ProcessosView;
@@ -23,6 +19,7 @@ use App\Models\RegiaoAduaneira;
 use App\Models\TipoTransporte;
 use App\Models\CondicaoPagamento;
 use App\Models\MercadoriaLocalizacao;
+use App\Services\ProcessoService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -34,8 +31,12 @@ use Illuminate\Validation\Rule;
 use PHPJasper\PHPJasper;
 use SimpleXMLElement;
 
-class ProcessoController extends Controller
+class ProcessoController extends AuthenticatedController
 {
+    public function __construct(private readonly ProcessoService $processoService)
+    {
+        parent::__construct();
+    }
 
     function numeroParaExtenso($numero) {
         $unidades = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
@@ -280,36 +281,7 @@ class ProcessoController extends Controller
             return response()->json(['error' => 'Processo não encontrado'], 404);
         }
 
-        // Security: process is tenant-scoped; only resolve related records after ownership check.
-        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
-
-        // Validar os campos obrigatórios
-        $erros = [];
-        if (empty($processo->NrDU)) {
-            $erros[] = 'O campo NrDU é obrigatório.';
-        }
-        if (empty($processo->BLC_Porte)) {
-            $erros[] = 'O campo BLC_Porte é obrigatório.';
-        }
-        if (empty($processo->ValorAduaneiro)) {
-            $erros[] = 'O campo ValorAduaneiro é obrigatório.';
-        }
-        if (empty($processo->cif)) {
-            $erros[] = 'O campo CIF é obrigatório.';
-        }
-        if (empty($processo->Cambio)) {
-            $erros[] = 'O campo Cambio é obrigatório.';
-        }
-
-        // Verificar se há pelo menos uma mercadoria
-        if ($processo->mercadorias()->count() == 0) {
-            $erros[] = 'Deve haver pelo menos uma mercadoria associada ao processo.';
-        }
-
-        // Verificar o emolumentoTarifa->honorario
-        if (!$emolumentoTarifa || is_null($emolumentoTarifa->honorario) || $emolumentoTarifa->honorario < 0) {
-            $erros[] = 'Os campos Honorários e Emolumentos Tarifa não podem ser nulo ou negativo.';
-        }
+        $erros = $this->processoService->validateForFinalization($processo);
 
         // Retornar erros, se existirem
         if (count($erros) > 0) {
@@ -325,44 +297,9 @@ class ProcessoController extends Controller
         }
 
         // Atualizar o estado para finalizado
-        $processo->Estado = 'finalizado';
-        $processo->DataFecho = now();
-
-        // Gerar o próximo número de ContaDespacho
-        $processo->ContaDespacho = $this->gerarContaDespachoSequencial();
-
-        // Salvar as alterações
-        $processo->save();
+        $this->processoService->finalize($processo);
 
         return response()->json(['message' => 'Processo finalizado com sucesso'], 200);
-    }
-
-    /**
-     * Gera o próximo número sequencial para o campo ContaDespacho
-     *
-     * @return string O novo valor para ContaDespacho no formato CCD-xxx/ano
-     */
-    private function gerarContaDespachoSequencial()
-    {
-        $anoCorrente = date('Y'); // Obtém o ano atual
-        $ultimaConta = Processo::whereYear('created_at', $anoCorrente)
-            ->whereNotNull('ContaDespacho')
-            ->orderByRaw("CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(ContaDespacho, '/', 1), '-', -1) AS UNSIGNED) DESC")
-            ->first();
-
-        // Determinar o próximo número sequencial
-        $sequencial = 1;
-        if ($ultimaConta) {
-            // Extrair o número sequencial da última ContaDespacho
-            preg_match('/\d+/', explode('/', $ultimaConta->ContaDespacho)[0], $match);
-            $sequencial = isset($match[0]) ? (int) $match[0] + 1 : 1;
-        }
-
-        // Formatar o número sequencial com zeros à esquerda
-        $numeroFormatado = str_pad($sequencial, 3, '0', STR_PAD_LEFT);
-
-        // Retornar o formato completo da ContaDespacho
-        return "CCD-{$numeroFormatado}/{$anoCorrente}";
     }
 
     /**
@@ -370,17 +307,7 @@ class ProcessoController extends Controller
      */
     public function processosNaoFinalizados()
     {
-        $processos = Processo::whereNotNull('NrDU')
-            ->whereNotNull('BLC_Porte')
-            ->whereNotNull('ValorAduaneiro')
-            ->whereNotNull('cif')
-            ->whereNotNull('Cambio')
-            ->whereHas('mercadorias')
-            ->whereHas('emolumentoTarifa', function ($query) {
-                $query->whereNotNull('honorario')->where('honorario', '>=', 0);
-            })
-            ->where('Estado', '!=', 'finalizado')->where('empresa_id', Auth::user()->empresas->first()->id)
-            ->get();
+        $processos = $this->processoService->listarNaoFinalizados($this->empresa->id);
 
         return response()->json($processos, 200);
     }

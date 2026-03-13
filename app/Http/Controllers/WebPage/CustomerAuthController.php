@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\WebPage;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use App\Models\Customer;
 
-class CustomerAuthController extends Controller
+class CustomerAuthController extends BaseController
 {
     public function verifyNif(Request $request)
     {

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +12,7 @@ use App\Models\NewsletterSubscriber;
 use App\Mail\NewsletterConfirmationMail;
 use App\Mail\NewsletterWelcomeMail;
 
-class NewsletterSubscriberController extends Controller
+class NewsletterSubscriberController extends BaseController
 {
     /**
      * Subscrever na newsletter

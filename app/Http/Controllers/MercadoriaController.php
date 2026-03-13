@@ -14,7 +14,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class MercadoriaController extends Controller
+class MercadoriaController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

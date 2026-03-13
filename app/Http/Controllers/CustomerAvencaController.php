@@ -7,7 +7,7 @@ use App\Models\CustomerAvenca;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CustomerAvencaController extends Controller
+class CustomerAvencaController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

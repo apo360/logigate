@@ -5,9 +5,19 @@ namespace App\Observers;
 use App\Enums\TipoMovimentoEnum;
 use App\Models\ContaCorrente;
 use App\Models\SalesInvoice;
+use App\Support\ActorContext;
+use App\Support\TenantContext;
+use Carbon\Carbon;
 
 class DocumentoObserver
 {
+    public function creating(SalesInvoice $documento): void
+    {
+        $documento->system_entry_date ??= Carbon::now()->toDateTimeString();
+        $documento->empresa_id ??= TenantContext::empresaId();
+        $documento->source_id ??= ActorContext::id();
+    }
+
     /**
      * Handle the SalesInvoice "created" event.
      */

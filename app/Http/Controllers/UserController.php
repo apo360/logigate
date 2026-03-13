@@ -11,7 +11,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-class UserController extends Controller
+class UserController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

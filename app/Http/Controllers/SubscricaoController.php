@@ -13,7 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class SubscricaoController extends Controller
+class SubscricaoController extends AuthenticatedController
 {
     // Deprecated onboarding path kept for compatibility with legacy screens.
     public function index()

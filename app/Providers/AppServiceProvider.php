@@ -95,5 +95,9 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Produto::observe(\App\Observers\ProductObserver::class);
         \App\Models\SalesInvoice::observe(\App\Observers\DocumentoObserver::class);
         \App\Models\ContaCorrente::observe(\App\Observers\ContaCorrenteObserver::class);
+        \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
+        \App\Models\Exportador::observe(\App\Observers\ExportadorObserver::class);
+        \App\Models\Processo::observe(\App\Observers\ProcessoObserver::class);
+        \App\Models\Recibo::observe(\App\Observers\ReciboObserver::class);
     }
 }

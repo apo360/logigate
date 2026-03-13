@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-class ContabilidadeController extends Controller
+class ContabilidadeController extends AuthenticatedController
 {
     /** Contas */
 

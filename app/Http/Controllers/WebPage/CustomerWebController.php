@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\WebPage;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 
-class CustomerWebController extends Controller
+class CustomerWebController extends BaseController
 {
     public function index()
     {

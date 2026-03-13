@@ -12,7 +12,7 @@ use App\Models\Saft\MasterFiles\Produtos_Servicos;
 use App\Models\Saft\SourceDocuments\SalesInvoices;
 use SimpleXMLElement;
 
-class SAFtController extends Controller
+class SAFtController extends AuthenticatedController
 {
     
     /**
@@ -137,7 +137,7 @@ class SAFtController extends Controller
         '<AuditFile xmlns="urn:OECD:StandardAuditFile-Tax:AO_1.01_01" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"></AuditFile>');
         
         // Adicionar secção Header - Criar HeaderModel com dados
-        $headerData = new Header([
+        $headerData = new Header($this->empresa, [
             'taxAccountingBasis' => 'F',
             'fiscalYear' => $fiscalYear,
             'startDate'  => $startDate,

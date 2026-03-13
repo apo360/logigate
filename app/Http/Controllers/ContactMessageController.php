@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\ContactFormMail;
@@ -11,7 +11,7 @@ use App\Models\ContactMessage;
 use Illuminate\Support\Facades\Validator;
 
 
-class ContactMessageController extends Controller
+class ContactMessageController extends BaseController
 {
     /**
      * Enviar mensagem de contacto

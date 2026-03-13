@@ -3,16 +3,11 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
-use App\Http\Controllers\IbanController;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use OwenIt\Auditing\Contracts\Auditable;
-use OwenIt\Auditing\Models\Audit;
 
 class Processo extends Model implements Auditable
 {
@@ -93,114 +88,6 @@ class Processo extends Model implements Auditable
     public function setTable($table)
     {
         $this->table = $table;
-    }
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        // Evento executado antes de criar um novo registro
-        static::creating(function ($processo) {
-
-            if (Auth::check()) {
-                $processo->user_id = Auth::user()->id;
-            }
-
-            // Gerar automaticamente o NrProcesso apenas se a tabela for 'processos'
-            if ($processo->getTable() === 'processos') {
-                $processo->NrProcesso = self::generateNewProcesso($processo->empresa_id);
-            }
-
-            // Evento executado após criar um novo registro
-            // Você pode usar este espaço para adicionar lógica adicional, como enviar notificações, etc.
-            // Exemplo: Notificar o administrador sobre a criação de um novo processo, Inserir na tabela de histórico, Autitar, etc.
-
-            // Inserir na tabela de auditoria
-            Audit::create([
-                'user_type'      => Auth::user()->roles->pluck('name')->first() ?? 'sem-perfil',
-                'user_id'        => Auth::id(),
-                'event'          => 'novo_processo',
-                'new_values'     => ['message' => 'Usuário registrou um novo processo ' . $processo->NrProcesso],
-                'url'            => request()->fullUrl(),
-                'ip_address'     => request()->ip(),
-                'user_agent'     => request()->header('User-Agent'),
-                'auditable_type' => get_class(Auth::user()),
-                'auditable_id'   => Auth::id(),
-            ]);
-
-            // Log do Laravel
-            Log::info('Novo processo criado', [
-                'NrProcesso' => $processo->NrProcesso,
-                'user_id'    => Auth::id(),
-                'empresa_id' => $processo->empresa_id,
-                'data'       => now(),
-            ]);
-
-            // (Opcional) Enviar email de notificação
-            // Mail::to(config('app.admin_email'))->send(new NovoProcessoCriadoMail($processo));
-        });
-
-        static::updating(function ($processo) {
-            if ($processo->isDirty(['Estado'])) {
-                $log = [
-                    'processo_id' => $processo->id,
-                    'user_id' => Auth::id(),
-                    'alteracao' => 'Estado alterado de ' . $processo->getOriginal('Estado') . ' para ' . $processo->Estado,
-                    'data' => now(),
-                ];
-                Log::info('Alteração no processo:', $log); // Ou salve em uma tabela de auditoria.
-            }
-
-            if ($processo->Estado === 'concluido' && $processo->isDirty('Estado')) {
-                throw new \Exception('Não é permitido alterar o estado de um processo concluído.');
-            }
-
-            // Capturar as alterações feitas no modelo
-            $alteracoes = $processo->getDirty(); // só os campos alterados
-            $originais  = $processo->getOriginal(); // valores antigos
-
-            // Montar os valores para guardar no audit
-            $detalhes = [];
-            foreach ($alteracoes as $campo => $valorNovo) {
-                $detalhes[$campo] = [
-                    'antes' => $originais[$campo] ?? null,
-                    'depois' => $valorNovo
-                ];
-            }
-
-            Audit::create([
-                'user_type'      => Auth::user()->roles->pluck('name')->first() ?? 'sem-perfil',
-                'user_id'        => Auth::id(),
-                'event'          => 'Actualização do Processo ' . $processo->NrProcesso,
-                'old_values'     => $originais, // opcional, podes guardar tudo
-                'new_values'     => $detalhes,  // só campos alterados
-                'url'            => request()->fullUrl(),
-                'ip_address'     => request()->ip(),
-                'user_agent'     => request()->header('User-Agent'),
-                'auditable_type' => get_class($processo),
-                'auditable_id'   => $processo->id,
-            ]);
-        });
-
-
-        // Evento executado antes de excluir um registro
-        static::deleting(function ($processo) {
-            // Exemplo: impedir exclusão se o processo estiver em um estado específico
-            if ($processo->Estado === ['Retido', 'Finalizado']) {
-                throw new \Exception('Processos concluídos não podem ser excluídos.');
-            }
-
-            Log::info('Processo excluído', [
-                'processo_id' => $processo->id,
-                'user_id' => Auth::id(),
-                'motivo' => request('motivo') ?? 'Não especificado',
-                'data' => now(),
-            ]);
-
-            DB::table('processos_historico')->insert($processo->toArray());
-
-            // Mail::to('admin@empresa.com')->send(new ProcessoExcluido($processo));
-        });
     }
 
     public static function getLastInsertedId()

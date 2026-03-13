@@ -18,13 +18,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
-class ProdutoController extends Controller
+class ProdutoController extends AuthenticatedController
 {
     protected ProdutoService $productService;
     protected ProdutoPriceService $priceService;
 
     public function __construct(ProdutoService $productService, ProdutoPriceService $priceService)
     {
+        parent::__construct();
+
         $this->productService = $productService;
         $this->priceService = $priceService;
     }

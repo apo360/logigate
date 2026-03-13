@@ -2,13 +2,13 @@
 
     namespace App\Http\Controllers\WebPage;
 
-    use App\Http\Controllers\Controller;
+    use App\Http\Controllers\BaseController;
     use App\Models\Licenciamento;
     use App\Models\MercadoriaAgrupada;
     use App\Models\PautaAduaneira;
     use Illuminate\Http\Request;
 
-    class RastreamentoController extends Controller
+    class RastreamentoController extends BaseController
     {
         public function consultarLicenciamento()
         {

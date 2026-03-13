@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Http\Controllers\WebPage;
+use App\Http\Controllers\BaseController;
 
 use App\Models\Plano;
 use Illuminate\Http\Request;
 
-class WelcomeController
+class WelcomeController extends BaseController
 {
     //
     public function index(){

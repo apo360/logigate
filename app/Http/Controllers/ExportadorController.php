@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class ExportadorController extends Controller
+class ExportadorController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

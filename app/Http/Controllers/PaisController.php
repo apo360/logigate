@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pais;
 use Illuminate\Http\Request;
 
-class PaisController extends Controller
+class PaisController extends AuthenticatedController
 {
 
     public function list_cambios()

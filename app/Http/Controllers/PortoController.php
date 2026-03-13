@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Porto;
 use Illuminate\Http\Request;
 
-class PortoController extends Controller
+class PortoController extends AuthenticatedController
 {
     public function getPortos($paisId)
     {

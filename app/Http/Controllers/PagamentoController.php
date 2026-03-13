@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class PagamentoController extends Controller
+class PagamentoController extends AuthenticatedController
 {
 
     public function ViewPagamento($id){

@@ -11,7 +11,7 @@ use App\Models\Subscricao;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ModuleSubscriptionController extends Controller
+class ModuleSubscriptionController extends AuthenticatedController
 {
     // Deprecated legacy subscription flow. It remains available for backwards
     // compatibility, but the Fortify onboarding path now routes through checkout.

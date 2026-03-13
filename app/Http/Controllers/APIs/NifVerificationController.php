@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\APIs;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class NifVerificationController extends Controller
+class NifVerificationController extends BaseController
 {
     /**
      * Verifica o NIF do Cliente.

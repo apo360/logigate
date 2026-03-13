@@ -8,7 +8,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class IbanController extends Controller
+class IbanController extends AuthenticatedController
 {
     public static function getBankDetails()
     {

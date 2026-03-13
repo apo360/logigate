@@ -17,7 +17,7 @@ use Aws\S3\S3Client;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class EmpresaController extends Controller
+class EmpresaController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

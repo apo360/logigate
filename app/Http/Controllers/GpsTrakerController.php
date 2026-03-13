@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\GpsTraker;
 use Illuminate\Http\Request;
 
-class GpsTrakerController extends Controller
+class GpsTrakerController extends AuthenticatedController
 {
     public function index()
     {

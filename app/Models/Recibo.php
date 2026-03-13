@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 
 class Recibo extends Model
 {
@@ -51,25 +50,4 @@ class Recibo extends Model
         return $this->belongsTo(TipoRecibo::class, 'tipo_reciboID');
     }
 
-    /**
-     * The "boot" method of the model.
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($recibo) {
-            // Lógica a ser executada antes da criação do recibo
-            $recibo->data_hora_estado = Carbon::now();
-            $recibo->estado_pagamento = 'N'; // Estado inicial
-            $recibo->sourceID = Auth::user()->id; // Usuário autenticado
-            $recibo->systemID = 1; // Definir conforme necessário
-            $recibo->periodo_contabil = now()->format('Y-m'); // Exemplo de período contabil
-        });
-
-        static::deleting(function ($recibo) {
-            // Deletar todas as associações na tabela pivô
-            $recibo->facturas()->delete();
-        });
-    }
 }

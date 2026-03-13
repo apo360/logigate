@@ -9,7 +9,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class EmolumentoTarifaController extends Controller
+class EmolumentoTarifaController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

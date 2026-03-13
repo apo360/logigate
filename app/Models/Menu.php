@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Auth;
 
 class Menu extends Model
 {
@@ -15,9 +14,12 @@ class Menu extends Model
         'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'description', 'permission'
     ];
 
-    public static function clearMenuCacheForUser($userId = null)
+    public static function clearMenuCacheForUser(?int $userId): void
     {
-        $userId = $userId ?: Auth::id();
+        if (! $userId) {
+            return;
+        }
+
         Cache::forget('menus_user_' . $userId);
     }
 

@@ -9,7 +9,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 use App\Models\Empresa;
 
-class CedulaController extends Controller
+class CedulaController extends BaseController
 {
     public function create(){
         return view('auth.verificar_cedula');

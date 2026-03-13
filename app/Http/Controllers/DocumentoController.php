@@ -16,65 +16,19 @@ use App\Models\SalesDocTotal;
 use App\Models\SalesInvoice;
 use App\Models\SalesLine;
 use App\Models\SalesStatus;
+use App\Services\DocumentoService;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class DocumentoController extends Controller
+class DocumentoController extends AuthenticatedController
 {
-    private function signAndSaveHash($invoiceId)
+    public function __construct(private readonly DocumentoService $documentoService)
     {
-        // Obtenha o modelo SalesInvoice
-        $invoice = SalesInvoice::find($invoiceId);
-
-        $DocTotal = SalesDocTotal::where('documentoID',$invoiceId)->first();
-
-        // Campos a serem assinados
-        $fieldsToSign = [
-            $invoice->invoice_date, 
-            $invoice->getSystemEntryDate(), 
-            $invoice->invoice_no, 
-            $DocTotal->gross_total
-        ];
-
-        // Crie a mensagem a ser assinada
-        $messageToSign = implode(';', $fieldsToSign);
-
-        // Salve a mensagem em um arquivo temporário
-        $filePath = storage_path('app/temp_message.txt');
-        file_put_contents($filePath, $messageToSign);
-
-        // Caminho da chave privada
-        $privateKeyPath = '/www/wwwroot/aduaneiro.hongayetu.com/ocean_system/sea/weave/fechadura_rest.pem';
-
-        if (!file_exists($privateKeyPath)) {
-            throw new Exception("Private key file not found.");
-        }
-
-        // Carregar a chave privada
-        $privateKey = openssl_pkey_get_private(file_get_contents($privateKeyPath), null);
-        if (!$privateKey) {
-            throw new Exception("Failed to load private key.");
-        }
-
-        // Assine a mensagem com SHA-1 e PKCS1 v1.5 padding
-        if (!openssl_sign($messageToSign, $signature, $privateKey, OPENSSL_ALGO_SHA1)) {
-            throw new Exception("Failed to sign the message.");
-        }
-
-        // Codifique para base64
-        $base64Signature = base64_encode($signature);
-
-        // Atualize o modelo SalesInvoice com o hash assinado
-        $invoice->hash = $base64Signature;
-
-        if (!$invoice->save()) {
-            throw new Exception("Failed to save invoice hash.");
-        }
+        parent::__construct();
     }
     /**
      * Display a listing of the resource.
@@ -404,7 +358,7 @@ class DocumentoController extends Controller
             }
 
             // Assinar o campo Hash
-            $this->signAndSaveHash($salesInvoice->id);
+            $this->documentoService->signAndSaveHash($salesInvoice->id);
 
             DB::commit();
 
@@ -470,7 +424,7 @@ class DocumentoController extends Controller
         }
 
         // Assinar o campo Hash
-        $this->signAndSaveHash($documento->id);
+        $this->documentoService->signAndSaveHash($documento->id);
 
         return redirect()->route('documentos.show',$salesInvoice)->with('success', 'Factura Anulada com Sucesso');
         

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivatedModule;
 use Illuminate\Http\Request;
 
-class ActivatedModuleController extends Controller
+class ActivatedModuleController extends AuthenticatedController
 {
     /**
      * Display a listing of the resource.

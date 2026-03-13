@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\APIs;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use App\Models\PautaAduaneira;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
-class PautaAduaneiraController 
+class PautaAduaneiraController extends BaseController 
 {
     /**
      * Número de itens por página

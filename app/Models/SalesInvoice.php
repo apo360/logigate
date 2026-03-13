@@ -7,7 +7,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Contracts\Auditable;
-use Illuminate\Support\Facades\Auth;
 
 class SalesInvoice extends Model implements Auditable
 {
@@ -48,34 +47,6 @@ class SalesInvoice extends Model implements Auditable
         'invoice_date',
         'system_entry_date', // Assuming 'system_entry_date' is a date attribute
     ];
-
-    // function boot
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            // Set the system_entry_date to current date and time when creating a new record
-            $model->system_entry_date = Carbon::now()->toDateTimeString();
-            // Set the empresa_id to the current user's empresa_id
-            $model->empresa_id = Auth::user()->empresas->first()->id ?? null;
-            // Set the source_id to the current user's id
-            if (Auth::check()) {
-                $model->source_id = Auth::user()->id;
-            }
-            // Procedure to generate a unique invoice_no
-        });
-
-        static::updating(function ($model) {
-            // Optionally, you can update the system_entry_date on updates as well
-            // $model->system_entry_date = Carbon::now()->toDateTimeString();
-        });
-
-        static::deleting(function ($model) {
-            // Actions to perform before deleting a record
-            // For example, you might want to log this action or prevent deletion based on certain conditions
-        });
-    }
 
     public function getSystemEntryDate()
     {

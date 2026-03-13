@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Validators\ValidationException;
 
 
-class CustomerController extends Controller
+class CustomerController extends AuthenticatedController
 {
     // constructor with auth middleware
     public function __construct()

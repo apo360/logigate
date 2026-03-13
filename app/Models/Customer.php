@@ -8,8 +8,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
@@ -55,23 +53,6 @@ class Customer extends Model
         'updated_at',
         'deleted_at'
     ];
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        // Evento executado antes de criar um novo registro
-        static::creating(function ($customer) {
-
-            if (Auth::check()) {
-                $customer->user_id = Auth::user()->id;
-            }
-
-            $customer->CustomerID = 'cli'.Auth::user()->empresas->first()->id.$customer->CustomerTaxID.'/'. Carbon::now()->format('y');
-            $customer->is_active = 1; 
-            $customer->AccountID = 0;
-        });
-    }
 
     public static function generateNewCodeCustomer($empresaId)
     {
@@ -181,4 +162,3 @@ class Customer extends Model
         });
     }
 }
-

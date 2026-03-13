@@ -2,12 +2,12 @@
 
 namespace App\Models\Saft;
 
+use App\Models\Empresa;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 
 class Header
 {
-    protected $empresa;
+    protected ?Empresa $empresa = null;
 
     public string $auditFileVersion = '1.01_01';
     public string $taxAccountingBasis;
@@ -19,10 +19,14 @@ class Header
     public string $endDate;
     public string $dateCreated;
 
-    public function __construct(array $data = [])
+    public function __construct(Empresa|array|null $empresa = null, array $data = [])
     {
-        // Obtém empresa autenticada
-        $this->empresa = Auth::user()->empresas->first();
+        if (is_array($empresa)) {
+            $data = $empresa;
+            $empresa = null;
+        }
+
+        $this->empresa = $empresa;
 
         // Preenche campos do input
         foreach ($data as $key => $value) {
@@ -50,7 +54,7 @@ class Header
 
     public function buildHeader(\SimpleXMLElement $xml)
     {
-        $empresa = $this->empresa;
+        $empresa = $this->empresa ?? new Empresa();
 
         $header = $xml->addChild('Header');
         $header->addChild('AuditFileVersion', $this->auditFileVersion);

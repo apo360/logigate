@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\AuthenticatedController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +10,7 @@ use App\Models\ScheduledTask;
 use App\Services\ScheduledTaskService;
 use App\Jobs\ExecuteScheduledTask;
 
-class ScheduledTaskController extends Controller
+class ScheduledTaskController extends AuthenticatedController
 {
     // 
     protected $service;
@@ -18,6 +18,7 @@ class ScheduledTaskController extends Controller
 
     public function __construct(ScheduledTaskService $service)
     {
+        parent::__construct();
         $this->service = $service;
         // $this->middleware('auth:api');
     }

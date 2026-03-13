@@ -10,7 +10,7 @@ use App\Models\Migracao;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class MigracaoController extends Controller
+class MigracaoController extends AuthenticatedController
 {
     public function create(){
         $imports = Migracao::where('empresa_id', Auth::user()->empresas->first()->id)->get();

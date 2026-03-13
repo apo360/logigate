@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
-class OtpController extends Controller
+class OtpController extends AuthenticatedController
 {
     public function showVerifyOtpForm()
     {

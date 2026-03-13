@@ -4,31 +4,29 @@ namespace App\Http\Controllers;
 
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\LicenciamentoRequest;
-use App\Models\Customer;
 use App\Models\EmpresaUser;
 use App\Models\Estancia;
-use App\Models\Exportador;
-use App\Models\Importacao;
 use App\Models\Licenciamento;
-use App\Models\LicenciamentoRascunho;
-use App\Models\Mercadoria;
 use App\Models\MercadoriaAgrupada;
 use App\Models\Pais;
 use App\Models\PautaAduaneira;
 use App\Models\Porto;
-use App\Models\Processo;
 use App\Models\RegiaoAduaneira;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use App\Exports\LicenciamentosExport;
-use App\Models\ProcLicenFactura;
+use App\Services\LicenciamentoService;
 use Maatwebsite\Excel\Facades\Excel;
 
-class LicenciamentoController extends Controller
+class LicenciamentoController extends AuthenticatedController
 {
+    public function __construct(private readonly LicenciamentoService $licenciamentoService)
+    {
+        parent::__construct();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -88,55 +86,21 @@ class LicenciamentoController extends Controller
      */
     public function store(LicenciamentoRequest $request)
     {
-        // Todos os dados já foram validados pelo StoreLicenciamentoRequest
         try {
-            DB::beginTransaction();
-            // Obtém o usuário autenticado
-            $user = Auth::user();
+            $licenciamento = $this->licenciamentoService->create(
+                $request->validated(),
+                $this->empresa->id
+            );
 
-            $licenciamento_request = $request->validated();
-
-            $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
-            $licenciamento_request['adicoes'] = 0;
-
-            // Pegar o ID do país a partir da Sigla porto de origem
-            $porto = Porto::where('sigla', $licenciamento_request['porto_origem'])->first();
-            if ($porto) {
-                $licenciamento_request['pais_origem'] = $porto->pais_id;
-            } else {
-                $licenciamento_request['pais_origem'] = null;
-            }
-
-            // Criar licenciamento (código será gerado automaticamente pelo Model)
-            $licenciamento = Licenciamento::create($licenciamento_request);
-
-            DB::commit();
-
-            // Redirecionar após a criação com uma mensagem de sucesso
             return redirect()->route('mercadorias.create', ['licenciamento_id' => $licenciamento->id])->with('success', 'Licenciamento criado com sucesso!');
-
-        } 
-        catch (QueryException $th) {
+        } catch (QueryException $th) {
             return DatabaseErrorHandler::handle($th, $request);
         }
-        
     }
 
     public function storeDraft(Request $request){
-
         try {
-            DB::beginTransaction();
-
-            // Obtém o usuário autenticado
-            $user = Auth::user();
-
-            $licenciamento_rascunho = $request->all();
-
-            $licenciamento_rascunho['empresa_id'] = $user->empresas->first()->id;
-            
-            $rascunho = LicenciamentoRascunho::create($licenciamento_rascunho);
-
-            DB::commit();
+            $this->licenciamentoService->createDraft($request->all(), $this->empresa->id);
 
             return redirect()->back()->with('warning', 'Licenciamento Salvo como Rascunho');
         } catch (QueryException $th) {
@@ -178,31 +142,14 @@ class LicenciamentoController extends Controller
      */
     public function update(LicenciamentoRequest $request, Licenciamento $licenciamento)
     {
-
-        $user = Auth::user();
-
         try {
-            DB::beginTransaction();
-
-            $licenciamento_request = $request->validated();
-
-            $licenciamento_request['empresa_id'] = $user->empresas->first()->id;
-            
-            // Pegar o ID do país a partir da Sigla porto de origem
-            $porto = Porto::where('sigla', $licenciamento_request['porto_origem'])->first();
-            if ($porto) {
-                $licenciamento_request['pais_origem'] = $porto->pais_id;
-            } else {
-                $licenciamento_request['pais_origem'] = null;
-            }
-
-            // Atualizar o licenciamento
-            $licenciamento->update($licenciamento_request);
-
-            DB::commit();
+            $this->licenciamentoService->update(
+                $licenciamento,
+                $request->validated(),
+                $this->empresa->id
+            );
 
             return redirect()->route('licenciamentos.edit', $licenciamento->id)->with('success', 'Licenciamento atualizado com sucesso!');
-
         }catch (QueryException $th) {
             return DatabaseErrorHandler::handle($th, $request);
         }
@@ -238,87 +185,16 @@ class LicenciamentoController extends Controller
     public function GerarTxT($Idlice)
     {
         try {
-            // Buscando o processo pelo ID
             $licenciamento = Licenciamento::findOrFail($Idlice);
+            $download = $this->licenciamentoService->generateTxtDownload($licenciamento);
     
-            // Verificar se os campos importantes estão preenchidos
-            if (is_null($licenciamento->frete) || is_null($licenciamento->seguro) || $licenciamento->frete === 0 || $licenciamento->seguro === 0) {
-                return redirect()->back()->withErrors(['error' => 'Os campos Frete e Seguro precisam estar preenchidos e diferentes de zero antes de gerar o licenciamento.']);
-            }
-    
-            $mercadoriaAgrupada = MercadoriaAgrupada::where('licenciamento_id', $licenciamento->id)->get();
-    
-            if ($mercadoriaAgrupada->isEmpty()) {
-                return redirect()->back()->withErrors(['error' => 'Nenhuma mercadoria agrupada encontrada para este licenciamento.']);
-            }
-    
-            $porto = Porto::where('sigla', $licenciamento->porto_origem)->first();
-            $pais_ = Pais::findOrFail($porto->pais_id);
-            if (!$porto || !$porto->pais) {
-                return redirect()->back()->withErrors(['error' => 'Porto de origem não encontrado ou sem país associado.']);
-            }
-    
-            $FOB = $licenciamento->fob_total;
-            $Frete = $licenciamento->frete;
-            $Seguro = $licenciamento->seguro;
-    
-            // Linha 0 - Cabeçalho do processo
-            $linha0 = "0|" . count($mercadoriaAgrupada) . "|{$licenciamento->estancia_id}|{$licenciamento->cliente->CompanyName}|{$licenciamento->empresa->Empresa}|{$licenciamento->empresa->Cedula}|{$licenciamento->empresa->Email}|{$licenciamento->referencia_cliente}|||||||||||||||||||||||||||||";
-    
-            // Linha 1 - Informações do exportador e transporte
-            $linha1 = "1|{$licenciamento->exportador->ExportadorTaxID}|{$licenciamento->exportador->Exportador}|{$licenciamento->cliente->CustomerTaxID}||{$licenciamento->empresa->Cedula}|{$licenciamento->tipo_transporte}|{$licenciamento->registo_transporte}|{$licenciamento->pais->codigo}|{$licenciamento->manifesto}|{$licenciamento->factura_proforma}|//|{$licenciamento->porto_entrada}|{$licenciamento->tipo_declaracao}|{$licenciamento->estancia_id}|" . count($mercadoriaAgrupada) . "|{$licenciamento->peso_bruto}||||{$licenciamento->metodo_avaliacao}|{$licenciamento->forma_pagamento}|{$licenciamento->codigo_banco}|{$licenciamento->codigo_volume}|{$licenciamento->qntd_volume}|{$licenciamento->descricao}||||{$pais_->codigo}{$porto->sigla}||{$pais_->codigo}|AO||||";
-    
-            // Linha 2 - Adições de mercadorias
-            $adicoes = [];
-            foreach ($mercadoriaAgrupada as $key => $adicao) {
-                $pautaAduaneira = PautaAduaneira::where(DB::raw("REPLACE(codigo, '.', '')"), $adicao->codigo_aduaneiro)->first();
-    
-                $ordem = $key + 1;
-    
-                // Calculando Frete e Seguro proporcionais
-                $frete_seguro = 0;
-                $CIF = 0;
-                try {
-                    $frete_seguro = Mercadoria::calcularFreteMercadoria($adicao->preco_total, $FOB, $Frete)
-                        + Mercadoria::calcularSeguroMercadoria($adicao->preco_total, $FOB, $Seguro);
-                    $CIF = $frete_seguro + $adicao->preco_total;
-                } catch (\Throwable $e) {
-                    return redirect()->back()->withErrors(['error' => 'Erro ao calcular frete/seguro: ' . $e->getMessage()]);
-                }
-    
-                if ($adicao->peso_total == 0) {
-                    $peso = $licenciamento->peso_bruto / count($mercadoriaAgrupada);
-                } else {
-                    $peso = $adicao->peso_total;
-                }
-    
-                $adicoes[] = sprintf(
-                    "2|%d|||||%s|%d||%s|%s|%s|%s|%s|%s|||%s|||||||||||||||||||",
-                    $ordem,
-                    $adicao->codigo_aduaneiro ?? 'N/A',
-                    $adicao->quantidade_total ?? 0,
-                    $pais_->codigo ?? 'N/A',
-                    $peso ?? '0.00',
-                    $licenciamento->moeda ?? 'N/A',
-                    $adicao->preco_total ?? '0.00',
-                    $frete_seguro ?? '0.00',
-                    $CIF ?? '0.00',
-                    $pautaAduaneira->uq ?? 'N/A'
-                );
-            }
-    
-            $conteudo = $linha0 . "\n" . $linha1 . "\n" . implode("\n", $adicoes);
-    
-            $nomeArquivo = 'licenciamento_' . $licenciamento->codigo_licenciamento . '.txt';
-    
-            $licenciamento->txt_gerado = 1;
-            $licenciamento->save();
-    
-            return response($conteudo)
+            return response($download['content'])
                 ->header('Content-Type', 'text/plain')
-                ->header('Content-Disposition', 'attachment; filename="'.$nomeArquivo.'"');
+                ->header('Content-Disposition', 'attachment; filename="'.$download['filename'].'"');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->back()->withErrors(['error' => 'Licenciamento não encontrado.']);
+        } catch (\InvalidArgumentException | \RuntimeException $e) {
+            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return redirect()->back()->withErrors(['error' => 'Erro inesperado ao gerar o arquivo: ' . $e->getMessage()]);
         }
@@ -335,56 +211,12 @@ class LicenciamentoController extends Controller
             403,
             'Sem permissão para constituir este processo.'
         );
-
-        DB::beginTransaction();
-
         try {
-            // Cria o processo baseado no licenciamento
-            $processo = Processo::create([
-                'ContaDespacho' => $licenca->referencia_cliente,
-                'RefCliente' => $licenca->referencia_cliente,
-                'estancia_id' => $licenca->estancia_id,
-                'Descricao' => $licenca->descricao,
-                'DataAbertura' => now(),
-                'TipoProcesso' => $licenca->tipo_declaracao,
-                'Estado' => 'Aberto',
-                'customer_id' => $licenca->cliente_id,
-                'user_id' => Auth::user()->id,
-                'empresa_id' => $licenca->empresa_id,
-                'exportador_id' => $licenca->exportador_id,
-                'forma_pagamento' => $licenca->forma_pagamento,
-                'fob_total' => $licenca->fob_total,
-                'frete' => $licenca->frete,
-                'seguro' => $licenca->seguro,
-                'codigo_banco' => $licenca->codigo_banco,
-                'peso_bruto' => $licenca->peso_bruto,
-                'TipoTransporte' => $licenca->tipo_transporte,
-                'registo_transporte' => $licenca->registo_transporte,
-                'nacionalidade_transporte' => $licenca->nacionalidade_transporte,
-                'DataChegada' => $licenca->data_entrada,
-                'Moeda' => $licenca->moeda,
-                'Cambio' => 1.0, // Ajuste conforme a lógica para câmbio
-                'ValorTotal' => $licenca->cif,
-                'cif' => $licenca->cif,
-                'ValorAduaneiro' => $licenca->cif + $licenca->frete + $licenca->seguro, // Ajuste se necessário
-            ]);
+            $processo = $this->licenciamentoService->constituirProcesso($licenca, Auth::id());
 
-            // Marca o licenciamento como utilizado
-            ProcLicenFactura::updateOrCreate(
-                ['licenciamento_id' => $licenca->id],
-                ['processo_id' => $processo->id]
-            );
-            // Atualiza as mercadorias associadas ao licenciamento para vinculá-las ao novo processo
-            Mercadoria::where('licenciamento_id', $idLicenciamento)->update(['Fk_Importacao' => $processo->id]);
-
-            // Confirma a transação
-            DB::commit();
-
-            // Redireciona para edição do processo
             return redirect()->route('processos.edit', $processo->id)
                 ->with(['success' => true, 'message' => 'Processo constituído com sucesso pelo Licenciamento ' . $licenca->codigo_licenciamento . '.']);
         }catch (QueryException $th) {
-            DB::rollBack();
             return DatabaseErrorHandler::handle($th, $request);
         }   
     }

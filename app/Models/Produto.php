@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -33,26 +32,6 @@ class Produto extends Model
         'updated_at',
         'discontinued_at',
     ];
-
-    // Function boot
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-
-            // Empresa ID
-            $model->empresa_id = Auth::user()->empresas->first()->id;
-
-            // Set the created_at timestamp to the current date and time
-            $model->created_at = Carbon::now()->toDateTimeString();
-        });
-
-        static::updating(function ($model) {
-            // Set the updated_at timestamp to the current date and time
-            $model->updated_at = Carbon::now()->toDateTimeString();
-        });
-    }
 
     // Desabilitar timestamps se não estiver usando created_at e updated_at
     public $timestamps = true;

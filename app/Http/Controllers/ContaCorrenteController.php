@@ -6,7 +6,7 @@ use App\Models\ContaCorrente;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 
-class ContaCorrenteController extends Controller
+class ContaCorrenteController extends AuthenticatedController
 {
     //
 
