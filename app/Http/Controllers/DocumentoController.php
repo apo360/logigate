@@ -182,12 +182,11 @@ class DocumentoController extends Controller
             // Retorna a view associada quando o 'id' existe
             return view('Documentos.create_documento_processo', compact('processo', 'produtos', 'tipoDocumentos', 'transacoes', 'saldo'));
         } else {
-            $empresaId = Auth::user()->empresas->first()->id;
             // Obtém todos os produtos do banco de dados 
-            $produtos = Produto::with(['prices', 'grupo'])->where('status', 0) // Apenas produtos ativos
-            ->where(function ($query) use ($empresaId) {
-                $query->where('empresa_id', $empresaId)->orWhere('empresa_id', 1); // Itens gerais visíveis para todos
-            })->get();
+            // Security: product list is now tenant-scoped only.
+            $produtos = Produto::with(['prices', 'grupo'])
+                ->where('status', 0)
+                ->get();
 
             // Retorna a view padrão de criação quando não há 'id'
             $clientes = $this->empresa->customers()->get();

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use App\Traits\SharedFieldsTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
     
     use SharedFieldsTrait;
 
@@ -166,6 +167,18 @@ class Customer extends Model
     {
         return $this->empresas()->withPivot('created_at', 'created_by')->get();
     }
-}
 
+    /**
+     * Security: customer access is tenant-bound by direct owner or explicit pivot association.
+     */
+    public function applyTenantConstraint($query, int $empresaId): void
+    {
+        $query->where(function ($tenantQuery) use ($empresaId) {
+            $tenantQuery->where('customers.empresa_id', $empresaId)
+                ->orWhereHas('empresas', function ($empresaQuery) use ($empresaId) {
+                    $empresaQuery->where('empresas.id', $empresaId);
+                });
+        });
+    }
+}
 

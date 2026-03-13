@@ -22,6 +22,7 @@ class CustomerActivityChart extends Component
         $this->customerId = $customerId;
         $this->year = now()->year;
 
+        // Security: tenant scope blocks loading customers from other companies.
         $this->customer = Customer::findOrFail($this->customerId);
 
         $this->loadData();

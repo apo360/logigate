@@ -4,17 +4,30 @@ namespace App\Policies;
 
 use App\Models\Customer;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CustomerPolicy
 {
+    /**
+     * Security: only users from the same tenant can access a customer.
+     */
+    private function belongsToTenant(User $user, Customer $customer): bool
+    {
+        $empresaId = $user->empresas()->value('empresas.id');
+
+        if (!$empresaId) {
+            return false;
+        }
+
+        return (int) $customer->empresa_id === (int) $empresaId
+            || $customer->empresas()->where('empresas.id', $empresaId)->exists();
+    }
+
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        //
-        return true;
+        return (bool) $user->empresas()->value('empresas.id');
     }
 
     /**
@@ -22,8 +35,7 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        // Todos os utilizadores Autenticados podem ver os clientes
-        return true;
+        return $this->belongsToTenant($user, $customer);
     }
 
     /**
@@ -31,8 +43,7 @@ class CustomerPolicy
      */
     public function create(User $user): bool
     {
-        // Todos os utilizadores Autenticados podem criar clientes
-        return true;
+        return (bool) $user->empresas()->value('empresas.id');
     }
 
     /**
@@ -40,22 +51,15 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        // Só pode actualizar se for o criador do cliente ou um administrador ou então utilizador pertecente a mesma empresa do criador
+        if (!$this->belongsToTenant($user, $customer)) {
+            return false;
+        }
 
-        // Antes deve se verificar se existe factura ou processos associado a este cliente
         if ($customer->invoices()->exists() || $customer->processos()->exists()) {
             return false;
         }
 
-        return 
-            $user->id === $customer->user_id || 
-            $user->hasRole('admin') ||
-            (
-                $customer->user &&
-                $customer->user->empresas->pluck('id')
-                    ->intersect($user->empresas->pluck('id'))
-                    ->isNotEmpty()
-            );
+        return true;
     }
 
     /**
@@ -63,22 +67,15 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        // Só pode eliminar se for o criador do cliente ou um administrador ou então utilizador pertecente a mesma empresa do criador
-        
-        // Antes deve se verificar se existe factura ou processos associado a este cliente
+        if (!$this->belongsToTenant($user, $customer)) {
+            return false;
+        }
+
         if ($customer->invoices()->exists() || $customer->processos()->exists()) {
             return false;
         }
 
-        return 
-            $user->id === $customer->user_id || 
-            $user->hasRole('admin') ||
-            (
-                $customer->user &&
-                $customer->user->empresas->pluck('id')
-                    ->intersect($user->empresas->pluck('id'))
-                    ->isNotEmpty()
-            );
+        return true;
     }
 
     /**
@@ -86,8 +83,7 @@ class CustomerPolicy
      */
     public function restore(User $user, Customer $customer): bool
     {
-        //
-        return $user->hasRole('admin');
+        return $this->belongsToTenant($user, $customer);
     }
 
     /**
@@ -95,7 +91,6 @@ class CustomerPolicy
      */
     public function forceDelete(User $user, Customer $customer): bool
     {
-        //
-        return $user->hasRole('admin');
+        return false;
     }
 }

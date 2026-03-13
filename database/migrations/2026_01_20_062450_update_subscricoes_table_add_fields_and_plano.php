@@ -10,14 +10,10 @@ return new class extends Migration
     {
         Schema::table('subscricoes', function (Blueprint $table) {
 
-            $table->timestamp('data_expiracao')
-                  ->nullable()
-                  ->after('data_subscricao');
-
             // Renovação automática
             $table->boolean('renovacao_automatica')
                   ->default(true)
-                  ->after('data_expiracao');
+                  ->after('data_subscricao');
 
             // Pagamento e dados extras
             $table->string('referencia_pagamento')

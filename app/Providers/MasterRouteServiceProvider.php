@@ -34,8 +34,9 @@ class MasterRouteServiceProvider extends ServiceProvider
     public function map()
     {
         // Carrega as rotas do Administrador Master
-        Route::middleware('web')
+        /* Route::middleware('web')
             ->namespace($this->namespace)
             ->group(base_path('routes/master.php'));
+            */
     }
 }

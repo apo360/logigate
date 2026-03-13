@@ -21,7 +21,6 @@ class User extends Authenticatable implements Auditable
     use HasProfilePhoto;
     use Notifiable;
     use TwoFactorAuthenticatable;
-    use Notifiable;
     use \OwenIt\Auditing\Auditable;
     
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
@@ -11,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class ProcessosDraft extends Model  implements Auditable
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, BelongsToTenant;
     use \OwenIt\Auditing\Auditable;
 
     use SoftDeletes;

@@ -159,11 +159,11 @@ use App\Models\Plano;
         Route::get('/Tarefas', [ScheduledTaskController::class, 'index'])->name('leander.dashboard');
 
         // Arquivos no S3
-        Route::get('/arquivo/download/{key}', [ArquivoController::class, 'download'])->name('arquivos.dowload');
+        Route::get('/arquivo/download/{key}', [ArquivoController::class, 'download'])->where('key', '.*')->name('arquivos.dowload');
         Route::post('/arquivo/MoveMassa', [ArquivoController::class, 'bulkActions'])->name('arquivos.bulkActions');
         Route::get('/arquivo/pasta-view', [ArquivoController::class, 'PastaView'])->name('PastaAbrir');
         Route::post('/arquivo/criar-pasta', [ArquivoController::class, 'criarPasta'])->name('arquivos.criarPasta');
-        Route::get('/arquivo/visualizar/{key}', [ArquivoController::class, 'visualizar'])->name('arquivos.visualizar');
+        Route::get('/arquivo/visualizar/{key}', [ArquivoController::class, 'visualizar'])->where('key', '.*')->name('arquivos.visualizar');
 
 
         Route::get('relatorios/licenciamento/{tipo}', [RelatorioController::class, 'RelatorioLicenciamento'])->name('relatorio.visualizar');

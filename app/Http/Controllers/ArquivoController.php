@@ -2,19 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\DatabaseErrorHandler;
-use App\Http\Requests\DocumentoAduRequest;
 use App\Models\DocumentosAduaneiros;
-use App\Models\EmpresaUser;
 use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Illuminate\Support\Facades\Storage;
 use Aws\S3\Exception\S3Exception;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ArquivoController extends Controller
 {
@@ -41,14 +36,13 @@ class ArquivoController extends Controller
 
     public function index()
     {
-        // Obter o nome do usuário autenticado
-        $empresa = EmpresaUser::where('empresa_id', auth()->user()->empresas()->first()->id)->first();
+        $prefix = $this->tenantPrefix();
 
         try {
-            // Listar as pastas e sub-pastas dentro de 'Despachantes/{empresaId}'
+            // Security: list only objects inside authenticated tenant namespace.
             $result = $this->s3Client->listObjectsV2([
                 'Bucket' => $this->bucket,
-                'Prefix' => "Despachantes/$empresa->conta/",
+                'Prefix' => $prefix,
                 'Delimiter' => '/',
             ]);
 
@@ -98,13 +92,16 @@ class ArquivoController extends Controller
         // Validação
         $request->validate([
             'files' => 'required',
-            'pasta_raiz' => 'required'
+            'pasta_raiz' => 'nullable|string'
         ]);
         
-        $pastaRaiz = $request->input('pasta_raiz');
+        // Security: normalize user path and force tenant namespace server-side.
+        $pastaRaiz = $this->normalizeTenantRelativePath($request->input('pasta_raiz'));
 
         foreach ($request->file('files') as $file) {
-            $filePath = 'Despachantes/' . $pastaRaiz . '/' . $file->getClientOriginalName();
+            $filename = basename($file->getClientOriginalName());
+            $relativePath = trim($pastaRaiz . '/' . $filename, '/');
+            $filePath = $this->buildTenantKey($relativePath);
 
             try {
                 $this->s3Client->putObject([
@@ -145,7 +142,7 @@ class ArquivoController extends Controller
                 case 'delete':
                     // Excluir os arquivos selecionados
                     foreach ($files as $fileKey) {
-                        Storage::disk('s3')->delete($fileKey);
+                        Storage::disk('s3')->delete($this->normalizeTenantKey($fileKey));
                     }
                     session()->flash('success', 'Arquivos excluídos com sucesso!');
                     break;
@@ -157,10 +154,13 @@ class ArquivoController extends Controller
                     }
                     // Mover os arquivos selecionados para a pasta de destino
                     foreach ($files as $fileKey) {
-                        $fileContent = Storage::disk('s3')->get($fileKey);
-                        $newKey = $destinationFolder . '/' . basename($fileKey);
+                        $normalizedSource = $this->normalizeTenantKey($fileKey);
+                        $fileContent = Storage::disk('s3')->get($normalizedSource);
+                        $newKey = $this->buildTenantKey(
+                            trim($this->normalizeTenantRelativePath($destinationFolder) . '/' . basename($normalizedSource), '/')
+                        );
                         Storage::disk('s3')->put($newKey, $fileContent);
-                        Storage::disk('s3')->delete($fileKey);
+                        Storage::disk('s3')->delete($normalizedSource);
                     }
                     session()->flash('success', 'Arquivos movidos com sucesso!');
                     break;
@@ -172,8 +172,11 @@ class ArquivoController extends Controller
                     }
                     // Copiar os arquivos selecionados para a pasta de destino
                     foreach ($files as $fileKey) {
-                        $fileContent = Storage::disk('s3')->get($fileKey);
-                        $newKey = $destinationFolder . '/' . basename($fileKey);
+                        $normalizedSource = $this->normalizeTenantKey($fileKey);
+                        $fileContent = Storage::disk('s3')->get($normalizedSource);
+                        $newKey = $this->buildTenantKey(
+                            trim($this->normalizeTenantRelativePath($destinationFolder) . '/' . basename($normalizedSource), '/')
+                        );
                         Storage::disk('s3')->put($newKey, $fileContent);
                     }
                     session()->flash('success', 'Arquivos copiados com sucesso!');
@@ -196,14 +199,14 @@ class ArquivoController extends Controller
      */
     public function show($arquivo)
     {
-        // Obter o nome do usuário autenticado
-        $username = Auth::user()->empresas->first()->conta;
+        $relativePath = $this->normalizeTenantRelativePath($arquivo);
+        $prefix = $this->buildTenantKey($relativePath, true);
 
         try {
             // Listar o conteúdo da pasta selecionada
             $result = $this->s3Client->listObjectsV2([
                 'Bucket' => $this->bucket,
-                'Prefix' => "Despachantes/$username/$arquivo/",
+                'Prefix' => $prefix,
             ]);
 
             // Obter arquivos e sub-pastas dentro da pasta selecionada
@@ -219,14 +222,14 @@ class ArquivoController extends Controller
      */
     public function createMasterFolder($empresa_id)
     {
-        // Obter a conta da empresa
-        $empresa = EmpresaUser::where('empresa_id', $empresa_id)->first();
-        $conta = $empresa->conta;
+        $currentEmpresaId = $this->resolveEmpresaId();
+        abort_if((int) $empresa_id !== (int) $currentEmpresaId, 403, 'Sem permissão para esta empresa.');
 
         try {
             $this->s3Client->putObject([
                 'Bucket' => $this->bucket,
-                'Key'    => "Despachantes/$conta/",
+                // Security: tenant root must stay under empresa/{empresa_id}/files/.
+                'Key'    => $this->tenantPrefix(),
                 'Body'   => "", // Corpo vazio para simular uma pasta
             ]);
 
@@ -241,8 +244,7 @@ class ArquivoController extends Controller
      */
      
     public function PastaView($dir = null){
-        $empresa = EmpresaUser::where('empresa_id', auth()->user()->empresas()->first()->id)->first();
-        $conta = $empresa->conta;
+        $conta = $this->tenantPrefix();
         return view('arquivos.criar_pasta', compact('dir', 'conta'));
     }
 
@@ -254,10 +256,10 @@ class ArquivoController extends Controller
         ]);
 
         $nomePasta = $request->input('nome_pasta');
-        $pastaRaiz = $request->input('pasta_raiz');
+        $pastaRaiz = $this->normalizeTenantRelativePath($request->input('pasta_raiz'));
 
-        // Criar o caminho completo da pasta, incluindo a raiz e o nome da pasta
-        $caminhoCompleto = 'Despachantes/' . rtrim($pastaRaiz, '/') . '/' . rtrim($nomePasta, '/') . '/';
+        // Security: folder path is normalized then rebuilt under tenant namespace.
+        $caminhoCompleto = $this->buildTenantKey(trim($pastaRaiz . '/' . trim($nomePasta, '/'), '/'), true);
 
         try {
             // Criando a "pasta" no S3
@@ -297,11 +299,12 @@ class ArquivoController extends Controller
      */
     public function destroy($arquivo)
     {
-    
+        $key = $this->normalizeTenantKey($arquivo);
+
         try {
             $this->s3Client->deleteObject([
                 'Bucket' => $this->bucket,
-                'Key'    => $arquivo,
+                'Key'    => $key,
             ]);
     
             return redirect()->back()->with('success', 'Documento excluído com sucesso!');
@@ -312,15 +315,17 @@ class ArquivoController extends Controller
 
     public function download($key)
     {
+        $normalizedKey = $this->normalizeTenantKey($key);
+
         try {
             $result = $this->s3Client->getObject([
                 'Bucket' => $this->bucket,
-                'Key'    => $key,
+                'Key'    => $normalizedKey,
             ]);
 
             return response($result['Body'])
                 ->header('Content-Type', $result['ContentType'])
-                ->header('Content-Disposition', 'attachment; filename="' . basename($key) . '"');
+                ->header('Content-Disposition', 'attachment; filename="' . basename($normalizedKey) . '"');
         } catch (AwsException $e) {
             return redirect()->back()->with('error', 'Erro ao baixar o documento: ' . $e->getMessage());
         }
@@ -328,12 +333,13 @@ class ArquivoController extends Controller
 
     public function visualizar($key)
     {
+        $normalizedKey = $this->normalizeTenantKey($key);
 
         try {
             // Gerar URL assinada para o arquivo
             $cmd = $this->s3Client->getCommand('GetObject', [
                 'Bucket' => $this->bucket,
-                'Key'    => $key,
+                'Key'    => $normalizedKey,
             ]);
             $request = $this->s3Client->createPresignedRequest($cmd, '+20 minutes'); // URL válida por 20 minutos
 
@@ -345,4 +351,85 @@ class ArquivoController extends Controller
         }
     }
 
+    /**
+     * Resolve tenant id from authenticated user or deny access.
+     */
+    private function resolveEmpresaId(): int
+    {
+        $empresaId = Auth::user()?->empresas()->value('empresas.id');
+        abort_if(!$empresaId, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        return (int) $empresaId;
+    }
+
+    /**
+     * Canonical tenant prefix for all file operations.
+     */
+    private function tenantPrefix(): string
+    {
+        return 'empresa/' . $this->resolveEmpresaId() . '/files/';
+    }
+
+    /**
+     * Security: normalize user-provided file paths to safe tenant-relative paths.
+     */
+    private function normalizeTenantRelativePath(?string $path): string
+    {
+        $empresaId = $this->resolveEmpresaId();
+        $normalized = trim((string) $path);
+        $normalized = urldecode($normalized);
+        $normalized = str_replace('\\', '/', $normalized);
+        $normalized = preg_replace('#/+#', '/', $normalized);
+        $normalized = ltrim($normalized, '/');
+
+        // Remove already-prefixed tenant namespaces.
+        $tenantPrefix = "empresa/{$empresaId}/files/";
+        if (Str::startsWith($normalized, $tenantPrefix)) {
+            $normalized = substr($normalized, strlen($tenantPrefix));
+        }
+
+        // Security: reject explicit references to a different tenant namespace.
+        if (preg_match('#^empresa/(\d+)/files/#', $normalized, $matches) === 1 && (int) $matches[1] !== $empresaId) {
+            abort(403, 'Acesso negado ao arquivo.');
+        }
+
+        // Backward compatibility for old storage prefix.
+        if (preg_match('#^Despachantes/[^/]+/?#', $normalized)) {
+            $normalized = preg_replace('#^Despachantes/[^/]+/?#', '', $normalized) ?? '';
+        }
+
+        if ($normalized === '' || $normalized === '/') {
+            return '';
+        }
+
+        $segments = array_filter(explode('/', $normalized), static fn ($segment) => $segment !== '');
+
+        foreach ($segments as $segment) {
+            abort_if($segment === '.' || $segment === '..', 403, 'Caminho inválido.');
+        }
+
+        return implode('/', $segments);
+    }
+
+    private function buildTenantKey(string $relativePath, bool $asFolder = false): string
+    {
+        $relativePath = trim($relativePath, '/');
+        $key = $this->tenantPrefix() . ($relativePath !== '' ? $relativePath : '');
+
+        return $asFolder ? rtrim($key, '/') . '/' : $key;
+    }
+
+    /**
+     * Security: incoming keys are always normalized back to current tenant namespace.
+     */
+    private function normalizeTenantKey(?string $incomingKey): string
+    {
+        $relativePath = $this->normalizeTenantRelativePath($incomingKey);
+        $normalizedKey = $this->buildTenantKey($relativePath);
+
+        // Defense in depth: enforce tenant prefix after normalization.
+        abort_unless(Str::startsWith($normalizedKey, $this->tenantPrefix()), 403, 'Acesso negado ao arquivo.');
+
+        return $normalizedKey;
+    }
 }

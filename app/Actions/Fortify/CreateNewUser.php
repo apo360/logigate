@@ -61,7 +61,6 @@ class CreateNewUser implements CreatesNewUsers
                 'plano_id' => $input['plano_id'],
                 'modalidade_pagamento' => $input['modalidade_pagamento'],
                 'data_subscricao' => Carbon::now(),
-                'data_inicio' => Carbon::now(),
                 'status' => 'pendente',
             ]);
 

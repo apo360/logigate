@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class SalesInvoice extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
     use \OwenIt\Auditing\Auditable;
 
     protected $table = 'sales_invoice';

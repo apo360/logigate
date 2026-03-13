@@ -34,13 +34,7 @@ class ProdutoController extends Controller
      */
     public function index()
     {
-        $empresaId = Auth::user()->empresas->first()->id;
-
         $products = Produto::with(['price', 'grupo'])
-            ->where(function ($q) use ($empresaId) {
-                $q->where('empresa_id', $empresaId)
-                  ->orWhere('empresa_id', 1);
-            })
             ->get();
 
         return view('service.list_service_produto', [
@@ -182,11 +176,8 @@ class ProdutoController extends Controller
         $produto = Produto::findOrFail($id);
         $empresaId = Auth::user()->empresas()->value('empresas.id');
 
-        abort_unless(
-            $produto->empresa_id === $empresaId || $produto->empresa_id === 1,
-            403,
-            'Sem permissão para alterar este produto.'
-        );
+        // Security: strict tenant boundary, no cross-company shared fallback.
+        abort_unless((int) $produto->empresa_id === (int) $empresaId, 403, 'Sem permissão para alterar este produto.');
 
         // The toggle now runs behind a POST route so CSRF protection applies.
         $this->productService->toggleStatus($id);

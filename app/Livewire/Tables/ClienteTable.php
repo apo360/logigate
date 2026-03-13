@@ -197,6 +197,7 @@ class ClienteTable extends Component
     public function deleteCliente($id)
     {
         try {
+            // Security: Customer global tenant scope prevents cross-tenant deletion.
             $cliente = Customer::findOrFail($id);
             
             // Verificar se há relacionamentos antes de deletar
@@ -233,6 +234,7 @@ class ClienteTable extends Component
     public function toggleStatus($id)
     {
         try {
+            // Security: Customer global tenant scope prevents cross-tenant updates.
             $cliente = Customer::findOrFail($id);
             $cliente->update([
                 'is_active' => $cliente->is_active === 1 ? 0 : 1

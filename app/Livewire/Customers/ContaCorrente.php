@@ -73,6 +73,7 @@ class ContaCorrente extends Component
     public function mount($customerId)
     {
         $this->customerId = $customerId;
+        // Security: tenant scope on Customer ensures cross-tenant IDs are rejected.
         $this->customer = Customer::with(['empresas', 'processos', 'contaCorrente'])->findOrFail($customerId);
         
         // Set default values

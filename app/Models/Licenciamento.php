@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Licenciamento extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     //
     protected $table = "licenciamentos";

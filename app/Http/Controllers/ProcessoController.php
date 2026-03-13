@@ -270,8 +270,6 @@ class ProcessoController extends Controller
     {
         $processo = Processo::find($processoID);
 
-        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
-
         // Verificar se o processo existe
         if (!$processo) {
             Log::error('Processo não encontrado.', [
@@ -281,6 +279,9 @@ class ProcessoController extends Controller
             ]);
             return response()->json(['error' => 'Processo não encontrado'], 404);
         }
+
+        // Security: process is tenant-scoped; only resolve related records after ownership check.
+        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
 
         // Validar os campos obrigatórios
         $erros = [];
@@ -306,7 +307,7 @@ class ProcessoController extends Controller
         }
 
         // Verificar o emolumentoTarifa->honorario
-        if (is_null($emolumentoTarifa->honorario) || $emolumentoTarifa->honorario < 0) {
+        if (!$emolumentoTarifa || is_null($emolumentoTarifa->honorario) || $emolumentoTarifa->honorario < 0) {
             $erros[] = 'Os campos Honorários e Emolumentos Tarifa não podem ser nulo ou negativo.';
         }
 
