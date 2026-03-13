@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class SubscricaoController extends Controller
 {
-    // 
+    // Deprecated onboarding path kept for compatibility with legacy screens.
     public function index()
     {
         $subscricao = Subscricao::all();
@@ -59,7 +59,7 @@ class SubscricaoController extends Controller
                 'tipo_plano' => $plano->nome,
                 'modalidade_pagamento' => $request->modalidade_pagamento,
                 'valor_pago' => $valorPago,
-                'status' => 'ATIVA',
+                'status' => Subscricao::STATUS_ATIVA,
             ]);
             // Chama o Serviço de Activação de Módulos
             app(ModuloAtivacaoService::class)->ativarModulos($request->empresa_id, $plano->id);
@@ -96,12 +96,12 @@ class SubscricaoController extends Controller
      */
     public function checkExpiradas()
     {
-        $expiradas = Subscricao::where('status', 'ATIVA')
+        $expiradas = Subscricao::whereIn('status', Subscricao::activeStatuses())
             ->whereDate('data_fim', '<', Carbon::now())
             ->get();
 
         foreach ($expiradas as $sub) {
-            $sub->update(['status' => 'EXPIRADA']);
+            $sub->update(['status' => Subscricao::STATUS_EXPIRADA]);
 
             ActivatedModule::where('empresa_id', $sub->empresa_id)
                 ->where('module_id', $sub->module_id)

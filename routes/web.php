@@ -96,11 +96,13 @@ use App\Models\Plano;
         Route::post('/usuarios/unblock/{id}', [UserController::class, 'unblock'])->name('usuarios.unblock');
         Route::post('/usuarios/resert/{id}', [UserController::class, 'resert_pass'])->name('usuarios.resetPassword');
 
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
-        Route::get('/dashboard-Licenciamento', [DashboardController::class, 'licenciamentoEstatisticas'])->name('licenciamento.estatistica');
-        Route::get('/dashboard-Processos', [DashboardController::class, 'ProcessosEstatisticas'])->name('processos.estatistica');
-        Route::get('/dashboard-Factura', [DashboardController::class, 'FacturaEstatisticas'])->name('factura.estatistica');
+        Route::middleware('check.subscription')->group(function () {
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+            Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
+            Route::get('/dashboard-Licenciamento', [DashboardController::class, 'licenciamentoEstatisticas'])->name('licenciamento.estatistica');
+            Route::get('/dashboard-Processos', [DashboardController::class, 'ProcessosEstatisticas'])->name('processos.estatistica');
+            Route::get('/dashboard-Factura', [DashboardController::class, 'FacturaEstatisticas'])->name('factura.estatistica');
+        });
 
         Route::resources([
             'activated-modules' => ActivatedModuleController::class,
@@ -232,6 +234,8 @@ use App\Models\Plano;
         Route::post('processo/imprimir/{IdProcesso}/requisicao', [ProcessoController::class, 'printCartaDiversa'])->name('processo.print.requisicao');
         Route::post('licenciamento/mercadorias/reagrupar/{licenciamentoId}', [MercadoriaController::class, 'reagrupar'])->name('mercadorias.reagrupar');
 
+        // Deprecated legacy flow. Keep reachable only through explicit legacy links,
+        // not from the SaaS onboarding path that now ends in checkout.
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
         Route::post('/subscricao/pagamentos', [ModuleSubscriptionController::class, 'pay'])->name('payment.pay');
 
@@ -263,6 +267,8 @@ use App\Models\Plano;
         Route::get('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
         Route::post('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
         Route::get('documentos/filtrar', [DocumentoController::class, 'filtrar'])->name('faturas.filtrar');
+        // Documentos (Recibo)
+        Route::get('documentos/recibos', [DocumentoController::class, ''])->name('documentos.emitir.recibo');
         
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
@@ -277,13 +283,17 @@ use App\Models\Plano;
 
         // Rotas do Transitário
         Route::prefix('transitario')->group(function () {
-            Route::get('/dashboard', [TransitarioDashboardController::class, 'dashboard'])->name('transitario.dashboard');
+            Route::middleware('check.subscription')->group(function () {
+                Route::get('/dashboard', [TransitarioDashboardController::class, 'dashboard'])->name('transitario.dashboard');
+            });
         });
         // ------------- /.Rotas do Transitário ------------ //
 
         // Rotas do Agente de Carga
         Route::prefix('agente_carga')->group(function () {
-            Route::get('/dashboard', [AgenteCargaDashboardController::class, 'dashboard'])->name('agente_carga.dashboard');
+            Route::middleware('check.subscription')->group(function () {
+                Route::get('/dashboard', [AgenteCargaDashboardController::class, 'dashboard'])->name('agente_carga.dashboard');
+            });
         });
         // ------------- /.Rotas do Agente de Carga ------------ //
     });

@@ -135,7 +135,11 @@ class Empresa extends Model implements Auditable
     public function subscricaoAtiva()
     {
         return $this->hasOne(Subscricao::class, 'empresa_id')
-            ->where('status', 'ATIVA')
+            ->whereIn('status', Subscricao::activeStatuses())
+            ->where(function ($query) {
+                $query->whereNull('data_expiracao')
+                    ->orWhere('data_expiracao', '>', now());
+            })
             ->latest('id');
     }
 

@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.master'   => \App\Http\Middleware\AdminMasterMiddleware::class,
             'customer.auth'  => \App\Http\Middleware\CustomerAuthMiddleware::class,
+            'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
         ]);
 
         /**

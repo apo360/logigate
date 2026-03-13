@@ -5,6 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\PlanoModulo;
 use App\Models\Menu;
+use App\Models\Subscricao;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -23,7 +24,11 @@ class MenuDinamico extends Component
 
         // 1) Buscar planos ativos
         $planosAtivos = $empresa->subscricoes()
-            ->where('status', 'ATIVA')
+            ->whereIn('status', Subscricao::activeStatuses())
+            ->where(function ($query) {
+                $query->whereNull('data_expiracao')
+                    ->orWhere('data_expiracao', '>', now());
+            })
             ->pluck('plano_id');
 
         // 2) Módulos ativos

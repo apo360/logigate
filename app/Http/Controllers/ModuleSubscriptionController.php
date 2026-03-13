@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ModuleSubscriptionController extends Controller
 {
+    // Deprecated legacy subscription flow. It remains available for backwards
+    // compatibility, but the Fortify onboarding path now routes through checkout.
     public function index()
     {
         $modules = Module::all();

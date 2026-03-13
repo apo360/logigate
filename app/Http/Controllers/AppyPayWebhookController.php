@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\SubscriptionActivated;
 use App\Models\PagamentoOnline;
+use App\Models\Subscricao;
 use App\Models\WebhookEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -110,8 +111,10 @@ class AppyPayWebhookController
                 }
             });
 
-            if ($subscriptionToActivate &&
-                $subscriptionToActivate->status !== 'ATIVA') {
+            if (
+                $subscriptionToActivate &&
+                Subscricao::normalizeStatus($subscriptionToActivate->status) !== Subscricao::STATUS_ATIVA
+            ) {
                 SubscriptionActivated::dispatch(
                     $subscriptionToActivate
                 )->afterCommit();

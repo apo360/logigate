@@ -13,51 +13,36 @@ class RegisterResponse implements RegisterResponseContract
     {
         $user = Auth::user();
 
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
         $empresa = $user->empresas()->first();
 
         if (! $empresa) {
-            return redirect()->route('dashboard');
+            Log::warning('RegisterResponse without empresa', ['user_id' => $user->id]);
+            return redirect()->route('home');
         }
 
-        $subscription = $empresa->subscricoes()->latest()->first();
+        $subscription = $empresa->subscricoes()
+            ->latest('id')
+            ->with('plano')
+            ->first();
 
         if (! $subscription) {
-            return redirect()->route('dashboard');
+            Log::warning('RegisterResponse without subscription', ['empresa_id' => $empresa->id]);
+            return redirect()->route('home');
         }
 
-        // 🟢 Plano grátis
-        if ($subscription->plano?->is_free) {
-
+        // Free plans are activated immediately so the onboarding can end on the dashboard.
+        if ((bool) ($subscription->plano?->is_free ?? false)) {
             app(ActivateSubscriptionAction::class)
                 ->execute($subscription);
 
             return redirect()->route('dashboard');
         }
 
-        // 💳 Plano pago
-        if (! $user->hasActiveSubscription()) {
-            return redirect()->route('checkout', [
-                'conta' => $empresa->conta
-            ]);
-        }
-
-        return redirect()->route('dashboard');
-
-        /*switch ($empresa->Designacao) {
-            case 'Despachante Oficial':
-                return redirect()->route('dashboard');
-
-            case 'Transitário':
-                return redirect()->route('transitario.dashboard');
-
-            case 'Agente de Carga':
-                return redirect()->route('agente_carga.dashboard');
-
-            default:
-                Log::warning('Unknown designation', ['designacao' => $empresa->Designacao,]);
-
-                return redirect('/dashboard');
-        }
-        */
+        // Paid plans must complete checkout before dashboard access is allowed.
+        return redirect()->route('checkout', ['conta' => $empresa->conta]);
     }
 }

@@ -85,8 +85,14 @@ class User extends Authenticatable implements Auditable
 
     public function hasActiveSubscription(): bool
     {
-        return $this->empresas->first()->subscricoes()
-            ->where('status', 'ATIVA')
-            ->exists();
+        $empresa = $this->empresas()->first();
+
+        if (! $empresa) {
+            return false;
+        }
+
+        // Route dashboard access through the company-level relation so expired
+        // records or legacy uppercase values do not bypass subscription checks.
+        return $empresa->subscricaoAtiva()->exists();
     }
 }

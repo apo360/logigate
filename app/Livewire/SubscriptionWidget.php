@@ -24,8 +24,15 @@ class SubscriptionWidget extends Component
     public function carregarDados()
     {
         $empresa = Auth::user()->empresas->first();
-        
-        $this->subscricao = $empresa?->subscricoes()->latest('data_expiracao')->with('plano')->first();
+
+        // Always prefer the active record, but safely fall back to the latest one
+        // so pending subscriptions can still render without crashing the widget.
+        $this->subscricao = $empresa?->subscricoes()
+            ->with('plano')
+            ->orderByRaw("CASE WHEN LOWER(status) = 'ativa' THEN 0 ELSE 1 END")
+            ->latest('data_expiracao')
+            ->latest('id')
+            ->first();
     }
 
     public function getDataInicioProperty(): Carbon

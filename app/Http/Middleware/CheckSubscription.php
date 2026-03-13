@@ -16,31 +16,50 @@ class CheckSubscription
      */
     public function handle(Request $request, Closure $next, $modulo = null)
     {
-        $empresa = Auth::user()->empresas->first();
-        
-        if (!$empresa) {
+        $empresa = Auth::user()?->empresas()->first();
+
+        if (! $empresa) {
             abort(403, 'Nenhuma empresa associada');
         }
 
-        // Se não tem subscrição ativa
-        if (!$empresa->temSubscricaoAtiva()) {
-            // Permitir acesso a rota de subscrição
-            if ($request->routeIs('subscricao.*')) {
-                return $next($request);
+        // Resolve the subscription explicitly so dashboard access does not depend on
+        // brittle helper macros or legacy uppercase status values.
+        $activeSubscription = $empresa->subscricoes()
+            ->active()
+            ->where(function ($query) {
+                $query->whereNull('data_expiracao')
+                    ->orWhere('data_expiracao', '>', now());
+            })
+            ->latest('id')
+            ->first();
+
+        if (! $activeSubscription) {
+            $pendingSubscription = $empresa->subscricoes()
+                ->pending()
+                ->latest('id')
+                ->first();
+
+            if ($pendingSubscription) {
+                return redirect()
+                    ->route('checkout', ['conta' => $empresa->conta])
+                    ->with('warning', 'Complete o pagamento para ativar a sua subscrição.');
             }
-            
-            // Redirecionar para página de subscrição
-            return redirect()->route('subscricao.nova')
-                           ->with('warning', 'É necessário uma subscrição ativa para acessar esta funcionalidade');
+
+            return redirect()
+                ->route('subscribe.view', ['empresa' => $empresa->id])
+                ->with('warning', 'É necessária uma subscrição ativa para acessar esta funcionalidade.');
         }
 
         // Verificar módulo específico
         if ($modulo) {
-            $moduloAtivo = $empresa->modulosAtivos()
-                                 ->where('codigo', $modulo)
-                                 ->first();
-            
-            if (!$moduloAtivo) {
+            $moduloAtivo = $activeSubscription->activatedModules()
+                ->with('module')
+                ->where('active', true)
+                ->get()
+                ->pluck('module')
+                ->firstWhere('codigo', $modulo);
+
+            if (! $moduloAtivo) {
                 abort(403, 'Módulo não disponível na sua subscrição');
             }
         }

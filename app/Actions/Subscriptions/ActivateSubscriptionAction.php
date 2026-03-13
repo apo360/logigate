@@ -13,26 +13,17 @@ class ActivateSubscriptionAction
     public function execute(Subscricao $subscription): void
     {
         DB::transaction(function () use ($subscription) {
-
-            // 🔐 Idempotência definitiva
+            // Idempotência explícita para evitar dupla ativação em callbacks repetidos.
             if ($subscription->activated_at !== null) {
                 return;
             }
 
-            $duracao = match ($subscription->modalidade_pagamento) {
-                'monthly' => 1,
-                'trimestral' => 3,
-                'semestral' => 6,
-                'annual' => 12,
-                default => 1
-            };
-
             $inicio = now();
 
             $subscription->update([
-                'status' => 'ATIVA',
+                'status' => Subscricao::STATUS_ATIVA,
                 'data_inicio' => $inicio,
-                'data_expiracao' => $inicio->copy()->addMonths($duracao),
+                'data_expiracao' => $subscription->calcularDataExpiracao($inicio),
                 'activated_at' => now(),
             ]);
 
@@ -49,11 +40,18 @@ class ActivateSubscriptionAction
             // 📧 Futuro: Enviar o e-mail de confirmação
             // Mail::to($user->email)->send(new ConfirmationMail($otp));
 
-            // Activar e criar pasta principal no S3
-            app(ArquivoController::class)->
-                createMasterFolder(
-                    $subscription->empresa_id
-                );
+            // The webhook can run outside a browser session, so file bootstrap must
+            // never block subscription activation if storage setup is unavailable.
+            try {
+                app(ArquivoController::class)
+                    ->createMasterFolder($subscription->empresa_id);
+            } catch (\Throwable $exception) {
+                Log::warning('SUBSCRIPTION_MASTER_FOLDER_CREATION_FAILED', [
+                    'subscription_id' => $subscription->id,
+                    'empresa_id' => $subscription->empresa_id,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         
             // Emitir factura
 

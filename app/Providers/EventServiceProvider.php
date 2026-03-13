@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\SubscriptionActivated;
+use App\Listeners\ActivateSubscription;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -27,6 +29,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Event::listen(SubscriptionActivated::class, ActivateSubscription::class);
 
         // Escutar o evento de login e registrar auditoria
         Event::listen(Login::class, function ($event) {

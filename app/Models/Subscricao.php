@@ -24,6 +24,7 @@ class Subscricao extends Model
         'data_subscricao',
         'data_inicio',
         'data_expiracao',
+        'activated_at',
         'status',
         'referencia_pagamento',
         'renovacao_automatica',
@@ -37,6 +38,7 @@ class Subscricao extends Model
         'data_subscricao' => 'datetime',
         'data_inicio' => 'datetime',
         'data_expiracao' => 'datetime',
+        'activated_at' => 'datetime',
         'renovacao_automatica' => 'boolean',
         'dados_personalizados' => 'array'
     ];
@@ -47,6 +49,15 @@ class Subscricao extends Model
     const STATUS_EXPIRADA = 'expirada';
     const STATUS_CANCELADA = 'cancelada';
     const STATUS_SUSPENSA = 'suspensa';
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $subscription): void {
+            // Keep persisted status values canonical even when older flows still
+            // submit uppercase or mixed-case values.
+            $subscription->status = self::normalizeStatus($subscription->status);
+        });
+    }
 
     public function empresa()
     {
@@ -82,7 +93,7 @@ class Subscricao extends Model
     // Métodos de verificação
     public function isAtiva()
     {
-        return $this->status === self::STATUS_ATIVA && !$this->isExpirada();
+        return $this->hasStatus(self::STATUS_ATIVA) && !$this->isExpirada();
     }
 
     public function isExpirada()
@@ -97,17 +108,57 @@ class Subscricao extends Model
         return Carbon::now()->diffInDays($this->data_expiracao, false);
     }
 
+    public function hasStatus(string $status): bool
+    {
+        return self::normalizeStatus($this->status) === $status;
+    }
+
     // Calcular data de expiração baseado na modalidade
     public function calcularDataExpiracao($dataInicio = null)
     {
         $dataInicio = $dataInicio ?? now();
         
         return match($this->modalidade_pagamento) {
+            'monthly',
             'mensal' => $dataInicio->copy()->addMonth(),
+            'quarterly',
             'trimestral' => $dataInicio->copy()->addMonths(3),
             'semestral' => $dataInicio->copy()->addMonths(6),
+            'annual',
             'anual' => $dataInicio->copy()->addYear(),
             default => $dataInicio->copy()->addMonth()
+        };
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', self::activeStatuses());
+    }
+
+    public function scopePending($query)
+    {
+        return $query->whereIn('status', self::pendingStatuses());
+    }
+
+    public static function activeStatuses(): array
+    {
+        return [self::STATUS_ATIVA, 'ATIVA'];
+    }
+
+    public static function pendingStatuses(): array
+    {
+        return [self::STATUS_PENDENTE, 'PENDENTE'];
+    }
+
+    public static function normalizeStatus(?string $status): string
+    {
+        return match (strtolower((string) $status)) {
+            'ativa' => self::STATUS_ATIVA,
+            'expirada' => self::STATUS_EXPIRADA,
+            'cancelada' => self::STATUS_CANCELADA,
+            'suspensa' => self::STATUS_SUSPENSA,
+            'pendente' => self::STATUS_PENDENTE,
+            default => self::STATUS_PENDENTE,
         };
     }
 

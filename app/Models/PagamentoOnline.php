@@ -16,10 +16,13 @@ class PagamentoOnline extends Model
         'status', //['pendente', 'processando', 'concluido', 'falhado']
         'raw_response',
         'subscription_id', //novo
+        'paid_at',
+        'idempotency_key',
     ];
 
     protected $casts = [
         'raw_response' => 'array',
+        'paid_at' => 'datetime',
     ];
 
     public function subscription()

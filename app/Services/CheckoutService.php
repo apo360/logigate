@@ -62,6 +62,7 @@ class CheckoutService
                 'amount'=>$amount,
                 'status'=>'pending',
                 'merchant_transaction_id'=>$merchantId,
+                'idempotency_key' => $merchantId,
             ]);
 
             // =====================

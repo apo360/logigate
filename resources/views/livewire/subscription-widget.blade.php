@@ -59,14 +59,14 @@
         </div>
 
         @if($subscricao)
-            @if($this->diasRestantes >= 0)
+            @if($subscricao->data_expiracao && $this->diasRestantes >= 0)
                 <div class="text-xs text-gray-500">
                     Expira {{ $subscricao->data_expiracao->format('d/m/Y') }}
                 </div>
                 <div class="text-[11px] mt-1 text-gray-400">
                     {{ $this->percentualRestante }}% restante
                 </div>
-            @else
+            @elseif($subscricao->data_expiracao)
                 <div class="text-xs text-red-500">
                     Expirada há {{ abs($this->diasRestantes) }} dias
                 </div>
@@ -74,6 +74,10 @@
                         class="mt-2 text-xs bg-logigate-primary text-white px-3 py-1 rounded-lg">
                     Renovar Agora
                 </button>
+            @else
+                <div class="text-xs text-gray-500">
+                    Subscrição registada. Aguardando ativação.
+                </div>
             @endif
         @else
             <div class="text-xs text-gray-500">Nenhuma subscrição ativa</div>

@@ -28,12 +28,17 @@
                 @php
                     use App\Models\PlanoModulo;
                     use App\Models\Menu;
+                    use App\Models\Subscricao;
 
                     $empresa = auth()->user()->empresas->first(); // Empresa associada ao usuário autenticado
 
                     // Buscar planos ativos dessa empresa
                     $planosAtivos = $empresa->subscricoes()
-                        ->where('status', 'ATIVA')
+                        ->whereIn('status', Subscricao::activeStatuses())
+                        ->where(function ($query) {
+                            $query->whereNull('data_expiracao')
+                                ->orWhere('data_expiracao', '>', now());
+                        })
                         ->pluck('plano_id');
 
                     // Buscar módulos associados aos planos ativos
