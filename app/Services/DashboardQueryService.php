@@ -21,11 +21,11 @@ class DashboardQueryService
             $clientes = Customer::whereHas('empresas', fn ($query) => $query->where('empresas.id', $empresaId))
                 ->orderBy('customers.CompanyName', 'asc')
                 ->get();
-            $exportadores = DB::table('exportador_empresas')
-                ->join('exportadores', 'exportador_empresas.exportador_id', '=', 'exportadores.id')
+            $exportadors = DB::table('exportador_empresas')
+                ->join('exportadors', 'exportador_empresas.exportador_id', '=', 'exportadors.id')
                 ->where('exportador_empresas.empresa_id', $empresaId)
-                ->orderBy('exportadores.Exportador')
-                ->select('exportadores.*')
+                ->orderBy('exportadors.Exportador')
+                ->select('exportadors.*')
                 ->get();
 
             $totalFaturamento = SalesInvoice::with('salesdoctotal')
@@ -77,7 +77,7 @@ class DashboardQueryService
                 ->get();
 
             return compact(
-                'clientes', 'exportadores', 'processos', 'licenciamento', 'topCountries',
+                'clientes', 'exportadors', 'processos', 'licenciamento', 'topCountries',
                 'processesByCustomer', 'processesByCountries', 'totalFaturamento',
                 'numeroFaturas', 'dailyRevenue', 'monthlyRevenue', 'yearlyRevenue',
                 'previousYearRevenue', 'processosPorEstado', 'faturacaoHoje', 'mesAnterior',

@@ -13,8 +13,12 @@ class DashboardController extends AuthenticatedController
         parent::__construct();
     }
 
-    public function index(){
-        return view('dashboard', $this->dashboardQueryService->overview($this->empresa->id));
+    public function index()
+    {
+        // The main SaaS dashboard now loads through isolated Livewire widgets so
+        // onboarding, operational, financial, customs, and forecast panels can
+        // evolve independently without impacting the legacy reporting pages.
+        return view('dashboard');
     }
 
 

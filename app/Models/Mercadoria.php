@@ -85,22 +85,38 @@ class Mercadoria extends Model
     // Se necessário, podemos definir mutators ou acessors para formatar valores
     public function setValorUnitarioAttribute($value)
     {
-        $this->attributes['preco_unitario'] = round($value, 2); // Arredondar para 2 casas decimais
+        $this->attributes['preco_unitario'] = is_numeric($value)
+            ? round((float) $value, 2)
+            : 0.00; // Arredondar para 2 casas decimais com fallback seguro
     }
 
     public function setFreteAttribute($value)
     {
-        $this->attributes['frete'] = round($value, 2);
+        $this->attributes['frete'] = is_numeric($value)
+            ? round((float) $value, 2)
+            : 0.00;
     }
 
     public function setSeguroAttribute($value)
     {
-        $this->attributes['seguro'] = round($value, 2);
+        $this->attributes['seguro'] = is_numeric($value)
+            ? round((float) $value, 2)
+            : 0.00;
     }
 
     public function getValorTotalAttribute()
     {
-        return $this->attributes['quantidade'] * $this->attributes['preco_unitario'];
+        // Accessors can run before every raw attribute is present on the model,
+        // so guard missing values and fall back to the persisted total when set.
+        $quantidade = (float) ($this->getAttributeFromArray('Quantidade') ?? 0);
+        $precoUnitario = (float) ($this->getAttributeFromArray('preco_unitario') ?? 0);
+        $precoTotal = $this->getAttributeFromArray('preco_total');
+
+        if ($precoTotal !== null) {
+            return (float) $precoTotal;
+        }
+
+        return round($quantidade * $precoUnitario, 2);
     }
 
     // Função auxiliar para calcular o direito aduaneiro
