@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domains\Banco\Repositories\EmpresaBancoRepositoryInterface;
+use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
+use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
+use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
 use App\Models\Empresa;
 use App\Models\Licenciamento;
@@ -26,7 +30,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(LicenciamentoRepositoryInterface::class, EloquentLicenciamentoRepository::class);
+        $this->app->bind(EmpresaBancoRepositoryInterface::class, EloquentEmpresaBancoRepository::class);
     }
 
     /**

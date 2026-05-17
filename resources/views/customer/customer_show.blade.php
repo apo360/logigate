@@ -198,7 +198,7 @@
                     </div>
                 </div>
                 @php
-                    $saldo = $customer->contaCorrente()->orderBy('created_at', 'desc')->value('saldo_contabilistico') ?? 0;
+                    $saldo = $customer->contaCorrente()->orderBy('created_at', 'desc')->value('valor') ?? 0;
                     $saldoCor = $saldo >= 0 ? 'text-green-600' : 'text-red-600';
                 @endphp
                 <div class="text-3xl font-bold {{ $saldoCor }} mb-2">
@@ -469,7 +469,7 @@
                             <p class="text-gray-500 italic">Nenhum licenciamento registrado.</p>
                         </div>
                         <!-- Ação para adicionar licenciamento -->
-                        <a href="#" 
+                        <a href="{{ route('licenciamentos.create', ['customer_id' => $customer->id]) }}" 
                            class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium">
                             ➕ Adicionar Licenciamento
                         </a>
@@ -498,8 +498,7 @@
                                         <span class="text-sm text-gray-500">{{ $processos->count() }} ({{ number_format(($processos->count() / $customer->processos->count()) * 100, 1) }}%)</span>
                                     </div>
                                     <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" 
-                                             style="width: {{ ($processos->count() / $customer->processos->count()) * 100 }}%"></div>
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ ($processos->count() / $customer->processos->count()) * 100 }}%"></div>
                                     </div>
                                 </div>
                                 @endforeach

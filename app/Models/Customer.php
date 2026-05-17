@@ -32,6 +32,7 @@ class Customer extends Model
         'is_active',
         'foto',
         'user_id',
+        'empresa_id',
         'nacionality',
         'doc_type',
         'doc_num',

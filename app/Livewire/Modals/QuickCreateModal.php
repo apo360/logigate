@@ -3,36 +3,31 @@
 namespace App\Livewire\Modals;
 
 use Livewire\Component;
-use Livewire\Attributes\On;
 
 class QuickCreateModal extends Component
 {
-    public $isOpen = false;
-    public $type = null;
-    
+    public bool $isOpen = false;
+    public ?string $entity = null;
+
     protected $listeners = [
-        'openQuickModal' => 'openModal',
-        'closeQuickModal' => 'close' // Adicionar este ouvinte
+        'open-quick-create-modal' => 'openModal',
+        'quick-entity-selected' => 'close',
     ];
 
-    public function openModal($type)
+    public function openModal($payload = null): void
     {
-        // Se for array, extrair o tipo
-        if (is_array($type) && isset($type['type'])) {
-            $this->type = $type['type'];
-        } else {
-            $this->type = $type;
-        }
-        
-        $this->isOpen = true;
+        $this->entity = is_array($payload)
+            ? ($payload['entity'] ?? null)
+            : null;
+
+        $this->isOpen = in_array($this->entity, ['customer', 'exportador'], true);
     }
 
-    public function close()
+    public function close(): void
     {
         $this->isOpen = false;
-        $this->type = null;
+        $this->entity = null;
     }
-
 
     public function render()
     {

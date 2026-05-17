@@ -14,7 +14,7 @@
     <link rel="icon" type="image/png" href="{{ asset('dist/img/LOGIGATE.png') }}">
 
     <!-- Font Awesome (leve e necessária) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -56,14 +56,12 @@
 </head>
 
 <body class="h-full font-sans antialiased"
-        x-data="{
-                sidebarOpen: false,
-                isMobile: () => window.innerWidth < 1024,
-                closeSidebarOnMobile() {
-                    if (this.isMobile()) this.sidebarOpen = false;
-                }
-            }"
-            @resize.window="if (!isMobile()) sidebarOpen = false">
+    x-data="{ sidebarOpen: false, isMobile: () => window.innerWidth < 1024,
+            closeSidebarOnMobile() {
+                if (this.isMobile()) this.sidebarOpen = false;
+            }
+        }"
+        @resize.window="if (!isMobile()) sidebarOpen = false">
 
     <!-- Overlay simplificado -->
     <div x-show="sidebarOpen && isMobile()" 

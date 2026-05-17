@@ -19,7 +19,7 @@
                         <a href="{{ route('processos.estatistica') }}" class="rounded-2xl bg-slate-900 px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-slate-300 transition hover:-translate-y-0.5 hover:bg-slate-800">
                             Ver estatísticas operacionais
                         </a>
-                        <a href="{{ route('factura.estatistica') }}" class="rounded-2xl bg-cyan-500 px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-cyan-200 transition hover:-translate-y-0.5 hover:bg-cyan-600">
+                        <a href="{{ route('factura.estatistica') }}" class="rounded-2xl bg-red-500 px-5 py-4 text-sm font-semibold text-white shadow-lg shadow-red-200 transition hover:-translate-y-0.5 hover:bg-red-600">
                             Ver facturação detalhada
                         </a>
                     </div>

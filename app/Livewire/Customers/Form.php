@@ -2,13 +2,14 @@
 
 namespace App\Livewire\Customers;
 
+use App\Domains\Customers\Actions\CreateCustomerAction;
+use App\Domains\Customers\Data\CustomerFormData;
 use Livewire\Component;
 use App\Models\Customer;
 use App\Models\Pais;
 use App\Models\Provincia;
 use App\Models\Empresa;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class Form extends Component
 {
@@ -34,12 +35,16 @@ class Form extends Component
         'Country' => 'Angola',
         'PostalCode' => '0000-000',
         'Province' => '',
+        'Address' => '',
+        'AddressType' => 'Facturamento',
         
         // Campos para cliente individual
         'nacionality' => '',
         'doc_type' => 'BI',
         'doc_num' => '',
         'validade_date_doc' => '',
+        'Status' => 'Ativo',
+        'Notes' => '',
     ];
 
     public $empresas = [];
@@ -113,7 +118,7 @@ class Form extends Component
         }
     }
 
-     public function checkNifExists()
+    public function checkNifExists()
     {
         $nif = $this->form['CustomerTaxID'];
 
@@ -266,65 +271,19 @@ class Form extends Component
         $this->validate();
 
         try {
-            DB::beginTransaction();
+            $this->form['CustomerTaxID'] = $cleanNif;
+            $dto = CustomerFormData::fromArray($this->form);
+            $cliente = app(CreateCustomerAction::class)->execute($dto, $empresa);
 
-            // 6. Dados do cliente
-            $clienteData = [
-                'CustomerTaxID' => $cleanNif,
-                'CustomerType' => $this->form['CustomerType'],
-                'CompanyName' => $this->form['CompanyName'],
-                'Email' => $this->form['Email'],
-                'Telephone' => $this->form['Telephone'],
-                'PostalCode' => $this->form['PostalCode'],
-                'Province' => $this->form['Province'],
-                'Fax' => $this->form['Fax'],
-                'Website' => $this->form['Website'],
-                'SelfBillingIndicator' => $this->form['SelfBillingIndicator'],
-                'metodo_pagamento' => $this->form['metodo_pagamento'],
-                'Address' => $this->form['Address'],
-                'City' => $this->form['City'],
-                'Country' => $this->form['Country'],
-                'TipoCliente' => $this->form['TipoCliente'],
-                'Status' => $this->form['Status'],
-                'Notes' => $this->form['Notes'],
-                'created_by' => Auth::id(),
-            ];
-
-            if ($this->form['CustomerType'] === 'Individual') {
-                $clienteData += [
-                    'nacionality' => $this->form['nacionality'],
-                    'doc_type' => $this->form['doc_type'],
-                    'doc_num' => $this->form['doc_num'],
-                    'validade_date_doc' => $this->form['validade_date_doc'],
-                ];
-            }
-
-            // 7. Criar cliente
-            $cliente = Customer::create($clienteData);
-
-            // 8. Associação obrigatória
-            $cliente->empresas()->syncWithoutDetaching([
-                $empresa->id => ['created_by' => auth()->id()]
-            ]);
-
-            // 9. Endereço (ajustar conforme modelo real)
-            $cliente->endereco()->create([
-                'AddressDetail' => $this->form['AddressDetail'],
-                'AddressType' => $this->form['AddressType'],
-                'Province' => $this->form['Province'],
-                'City' => $this->form['City'],
-                'PostalCode' => $this->form['PostalCode'],
-                'Country' => $this->form['Country'],
-            ]);
-
-            DB::commit();
-
-            session()->flash('success', 'Cliente criado com sucesso!');
+            $this->dispatch('toast', ['type' => 'success', 'message' => 'Cliente criado com sucesso!']);
+            
             return redirect()->route('customers.show', $cliente->id);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
+            report($e);
+
             session()->flash('error', 'Erro ao criar cliente: ' . $e->getMessage());
+            $this->dispatch('toast', ['type' => 'error', 'message' => 'Erro ao criar cliente: ' . $e->getMessage()]);
         }
     }
 

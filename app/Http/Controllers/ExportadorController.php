@@ -58,9 +58,7 @@ class ExportadorController extends AuthenticatedController
             }
 
             // Verifica se já está associado à empresa
-            $jaAssociado = $exportador->empresas()
-                ->where('empresa_id', $empresa->id)
-                ->exists();
+            $jaAssociado = $exportador->empresas()->where('empresa_id', $empresa->id)->exists();
 
             if (!$jaAssociado) {
                 $exportador->empresas()->attach($empresa->id, [

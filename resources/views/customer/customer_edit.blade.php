@@ -69,30 +69,30 @@
                             <div id="endereco" class="subtab-pane block space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <x-label for="CustomerTaxID" value="NIF Cliente" />
-                                        <x-input id="CustomerTaxID" name="CustomerTaxID" type="text" value="{{ old('CustomerTaxID', $customer->CustomerTaxID) }}" />
+                                        <label for="CustomerTaxID" value="NIF Cliente" />
+                                        <input id="CustomerTaxID" name="CustomerTaxID" type="text" value="{{ old('CustomerTaxID', $customer->CustomerTaxID) }}" />
                                     </div>
                                     <div>
-                                        <x-label for="CompanyName" value="Cliente" />
-                                        <x-input id="CompanyName" name="CompanyName" type="text" value="{{ old('CompanyName', $customer->CompanyName) }}" readonly />
+                                        <label for="CompanyName" value="Cliente" />
+                                        <input id="CompanyName" name="CompanyName" type="text" value="{{ old('CompanyName', $customer->CompanyName) }}" readonly />
                                     </div>
                                     <div>
-                                        <x-label for="Email" value="Email" />
-                                        <x-input id="Email" name="Email" type="email" value="{{ old('Email', $customer->Email ?? '') }}" />
+                                        <label for="Email" value="Email" />
+                                        <input id="Email" name="Email" type="email" value="{{ old('Email', $customer->Email ?? '') }}" />
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <x-label for="Telephone" value="Telefone" />
-                                        <x-input id="Telephone" name="Telephone" type="text" value="{{ old('Telephone', $customer->Telephone ?? '') }}" required />
+                                        <label for="Telephone" value="Telefone" />
+                                        <input id="Telephone" name="Telephone" type="text" value="{{ old('Telephone', $customer->Telephone ?? '') }}" required />
                                     </div>
                                     <div>
-                                        <x-label for="PostalCode" value="Código Postal" />
-                                        <x-input id="PostalCode" name="PostalCode" type="text" value="{{ old('PostalCode', $customer->endereco->PostalCode ?? '00000') }}" />
+                                        <label for="PostalCode" value="Código Postal" />
+                                        <input id="PostalCode" name="PostalCode" type="text" value="{{ old('PostalCode', $customer->endereco->PostalCode ?? '00000') }}" />
                                     </div>
                                     <div>
-                                        <x-label for="SelfBillingIndicator" value="Autofaturação" />
+                                        <label for="SelfBillingIndicator" value="Autofaturação" />
                                         <select id="SelfBillingIndicator" name="SelfBillingIndicator" class="form-select w-full border-gray-300 rounded-md">
                                             <option value="0" @selected($customer->SelfBillingIndicator == 0)>Não</option>
                                             <option value="1" @selected($customer->SelfBillingIndicator == 1)>Sim</option>
@@ -102,7 +102,7 @@
 
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
-                                        <x-label for="nacionality" value="País" />
+                                        <label for="nacionality" value="País" />
                                         <select name="nacionality" id="nacionality" class="form-select w-full border-gray-300 rounded-md">
                                             @foreach($paises as $pais)
                                                 <option value="{{ $pais->id }}" @selected($pais->id == $customer->nacionality)>{{ $pais->pais }}</option>
@@ -110,7 +110,7 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <x-label for="doc_type" value="Tipo de Documento" />
+                                        <label for="doc_type" value="Tipo de Documento" />
                                         <select name="doc_type" id="doc_type" class="form-select w-full border-gray-300 rounded-md">
                                             <option value="">Selecionar</option>
                                             <option value="BI" @selected($customer->doc_type == 'BI')>Bilhete de Identidade</option>
@@ -120,23 +120,23 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <x-label for="doc_num" value="Nº Documento" />
-                                        <x-input id="doc_num" name="doc_num" type="text" value="{{ old('doc_num', $customer->doc_num ?? '') }}" />
+                                        <label for="doc_num" value="Nº Documento" />
+                                        <input id="doc_num" name="doc_num" type="text" value="{{ old('doc_num', $customer->doc_num ?? '') }}" />
                                     </div>
                                     <div>
-                                        <x-label for="validade_date_doc" value="Validade" />
-                                        <x-input id="validade_date_doc" name="validade_date_doc" type="date" value="{{ old('validade_date_doc', $customer->validade_date_doc ?? '') }}" />
+                                        <label for="validade_date_doc" value="Validade" />
+                                        <input id="validade_date_doc" name="validade_date_doc" type="date" value="{{ old('validade_date_doc', $customer->validade_date_doc ?? '') }}" />
                                     </div>
                                 </div>
 
                                 <div class="mt-4">
-                                    <x-label for="AddressDetail" value="Morada Completa" />
-                                    <x-input id="AddressDetail" name="AddressDetail" type="text" value="{{ old('AddressDetail', $customer->endereco->AddressDetail ?? '') }}" />
+                                    <label for="AddressDetail" value="Morada Completa" />
+                                    <input id="AddressDetail" name="AddressDetail" type="text" value="{{ old('AddressDetail', $customer->endereco->AddressDetail ?? '') }}" />
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                                     <div>
-                                        <x-label for="Province" value="Província" />
+                                        <label for="Province" value="Província" />
                                         <select id="Province" name="Province" class="form-select w-full border-gray-300 rounded-md">
                                             @foreach ($provincias as $provincia)
                                                 <option value="{{ $provincia->Nome }}" @selected($provincia->Nome === ($customer->endereco->Province ?? ''))>{{ $provincia->Nome }}</option>
@@ -144,16 +144,16 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <x-label for="municipality" value="Município" />
-                                        <x-input id="municipality" name="municipality" type="text" value="{{ old('municipality', $customer->endereco->municipality ?? '') }}" />
+                                        <label for="municipality" value="Município" />
+                                        <input id="municipality" name="municipality" type="text" value="{{ old('municipality', $customer->endereco->municipality ?? '') }}" />
                                     </div>
                                     <div>
-                                        <x-label for="City" value="Distrito" />
-                                        <x-input id="City" name="City" type="text" value="{{ old('City', $customer->endereco->City ?? '') }}" />
+                                        <label for="City" value="Distrito" />
+                                        <input id="City" name="City" type="text" value="{{ old('City', $customer->endereco->City ?? '') }}" />
                                     </div>
                                     <div>
-                                        <x-label for="BuildingNumber" value="Rua, Andar, Apartamento" />
-                                        <x-input id="BuildingNumber" name="BuildingNumber" type="text" value="{{ old('BuildingNumber',$customer->endereco->BuildingNumber ?? '') }}" />
+                                        <label for="BuildingNumber" value="Rua, Andar, Apartamento" />
+                                        <input id="BuildingNumber" name="BuildingNumber" type="text" value="{{ old('BuildingNumber',$customer->endereco->BuildingNumber ?? '') }}" />
                                     </div>
                                 </div>
                             </div>
@@ -162,7 +162,7 @@
                             <div id="aduaneiro" class="subtab-pane hidden space-y-4">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <x-label for="tipo_cliente" value="Tipo de Cliente" />
+                                        <label for="tipo_cliente" value="Tipo de Cliente" />
                                         <select id="tipo_cliente" name="tipo_cliente" class="form-select w-full border-gray-300 rounded-md">
                                             <option value="importador" @selected($customer->tipo_cliente == 'importador')>Importador</option>
                                             <option value="exportador" @selected($customer->tipo_cliente == 'exportador')>Exportador</option>
@@ -170,7 +170,7 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <x-label for="tipo_mercadoria" value="Tipo de Mercadoria" />
+                                        <label for="tipo_mercadoria" value="Tipo de Mercadoria" />
                                         <select id="tipo_mercadoria" name="tipo_mercadoria" class="form-select w-full border-gray-300 rounded-md">
                                             <option value="diversas" @selected($customer->tipo_mercadoria == 'diversas')>Mercadorias Diversas</option>
                                             <option value="petroleo" @selected($customer->tipo_mercadoria == 'petroleo')>Petróleo</option>
@@ -183,7 +183,7 @@
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <x-label for="frequencia" value="Frequência" />
+                                        <label for="frequencia" value="Frequência" />
                                         <select id="frequencia" name="frequencia" class="form-select w-full border-gray-300 rounded-md">
                                             <option value="ocasional" @selected($customer->frequencia == 'ocasional')>Ocasional</option>
                                             <option value="mensal" @selected($customer->frequencia == 'mensal')>Mensal</option>
@@ -191,7 +191,7 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <x-label for="moeda_operacao" value="Moeda Preferencial" />
+                                        <label for="moeda_operacao" value="Moeda Preferencial" />
                                         <select id="moeda_operacao" name="moeda_operacao" class="form-select w-full border-gray-300 rounded-md">
                                             <option value="USD" @selected($customer->moeda_operacao == 'USD')>USD</option>
                                             <option value="EUR" @selected($customer->moeda_operacao == 'EUR')>EUR</option>
@@ -199,18 +199,18 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <x-label for="num_licenca" value="Nº de Licença" />
-                                        <x-input id="num_licenca" name="num_licenca" type="text" value="{{ old('num_licenca',$customer->num_licenca ?? '') }}" />
+                                        <label for="num_licenca" value="Nº de Licença" />
+                                        <input id="num_licenca" name="num_licenca" type="text" value="{{ old('num_licenca',$customer->num_licenca ?? '') }}" />
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <x-label for="validade_licenca" value="Validade da Licença" />
-                                        <x-input id="validade_licenca" name="validade_licenca" type="date" value="{{ old('validade_licenca',$customer->validade_licenca ?? '') }}" />
+                                        <label for="validade_licenca" value="Validade da Licença" />
+                                        <input id="validade_licenca" name="validade_licenca" type="date" value="{{ old('validade_licenca',$customer->validade_licenca ?? '') }}" />
                                     </div>
                                     <div>
-                                        <x-label for="observacoes" value="Observações" />
+                                        <label for="observacoes" value="Observações" />
                                         <textarea id="observacoes" name="observacoes" rows="3" class="form-textarea w-full border-gray-300 rounded-md">{{ old('observacoes',$customer->observacoes ?? '') }}</textarea>
                                     </div>
                                 </div>
@@ -234,7 +234,7 @@
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <x-label for="tipo_documento" value="Tipo de Documento" />
+                                <label for="tipo_documento" value="Tipo de Documento" />
                                 <select id="tipo_documento" name="tipo_documento" class="form-select w-full border-gray-300 rounded-md" required>
                                     <option value="bi">Bilhete de Identidade</option>
                                     <option value="passaporte">Passaporte</option>
@@ -244,19 +244,19 @@
                                 </select>
                             </div>
                             <div>
-                                <x-label for="numero_documento" value="Número do Documento" />
-                                <x-input id="numero_documento" name="numero_documento" type="text" required />
+                                <label for="numero_documento" value="Número do Documento" />
+                                <input id="numero_documento" name="numero_documento" type="text" required />
                             </div>
                             <div>
-                                <x-label for="validade_documento" value="Validade" />
-                                <x-input id="validade_documento" name="validade_documento" type="date" />
+                                <label for="validade_documento" value="Validade" />
+                                <input id="validade_documento" name="validade_documento" type="date" />
                             </div>
                             <div>
-                                <x-label for="upload_documento" value="Anexar Documento (PDF ou Imagem)" />
+                                <label for="upload_documento" value="Anexar Documento (PDF ou Imagem)" />
                                 <input id="upload_documento" name="upload_documento" type="file" accept=".pdf,.jpg,.jpeg,.png" class="w-full border-gray-300 rounded-md" required />
                             </div>
                             <div class="col-span-2">
-                                <x-label for="observacoes_documento" value="Observações" />
+                                <label for="observacoes_documento" value="Observações" />
                                 <textarea id="observacoes_documento" name="observacoes_documento" rows="3" class="form-textarea w-full border-gray-300 rounded-md"></textarea>
                             </div>
                         </div>

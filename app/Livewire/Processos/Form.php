@@ -2,12 +2,15 @@
 
 namespace App\Livewire\Processos;
 
-use App\Http\Controllers\IbanController;
-use Livewire\Component;
+use App\Domains\Banco\Services\BancoListService;
+use App\Domains\Processos\Actions\CreateProcessAction;
+use App\Domains\Processos\Data\ProcessFormData;
 use App\Models\Processo;
 use App\Models\ProcessosDraft;
+use App\Services\ProcessoFormService;
 use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class Form extends Component
 {
@@ -20,13 +23,12 @@ class Form extends Component
     public $schema = [];
     public $form = [];
     public array $banks = [];
+    public ?string $tipoProcessoCodigo = null;
+    public bool $showCrudExportFields = false;
 
     public $listeners = [
-        'cliente-created' => 'onClienteCreated',
-        'exportador-created' => 'onExportadorCreated',
         'loadDraft' => 'loadDraft',
-        'selectSearchUpdated' => 'onSelectSearchUpdated',
-        'select-search-updated' => 'applySelectValue'
+        'load-draft' => 'loadDraft',
     ];
 
      // Schemas por bloco
@@ -69,16 +71,13 @@ class Form extends Component
 
         $this->processoId = $processo?->id;
 
-        if ($this->mode === 'edit') {
-            $this->form['customer_id']   = $this->processo->customer_id;
-            $this->form['exportador_id'] = $this->processo->exportador_id;
-        }
-
-        $this->banks = IbanController::getBankDetails();
+        $this->banks = BancoListService::getOptions();
 
         $this->buildSchema();
 
         $this->hydrateFormFromModel();
+        $this->applyPrefillFromRequest();
+        $this->syncTipoProcessoState();
     }
 
     // 2. Propriedade computada para sugestões dinâmicas
@@ -219,6 +218,7 @@ class Form extends Component
                 'where' => [
                     ['empresa_id', '=', $this->_empresa->id]
                 ],
+                'required' => true,
                 'field' => 'customer_id',   // ← este é o campo final que o form recebe
                 'size' => 4, // 3 campos por linha
             ],
@@ -371,25 +371,14 @@ class Form extends Component
         }
     }
 
-    public function onSelectSearchUpdated($data)
-    {
-        foreach ($this->schema as $field => $conf) {
-            if (($conf['type'] ?? null) === 'select-search' &&
-                $data['value'] === $this->form[$field] ?? null) {
-                $this->form[$field] = $data['id'];
-            }
-        }
-    }
-
     #[On('select-search-updated')]
-    public function setSelectSearch($field, $value)
+    public function setSelectSearch($field, $value, $label = null)
     {
         $this->form[$field] = $value;
-    }
 
-    public function applySelectValue($field, $value)
-    {
-        $this->{$field} = $value;
+        if ($field === 'TipoProcesso') {
+            $this->syncTipoProcessoState();
+        }
     }
 
     /**
@@ -458,12 +447,20 @@ class Form extends Component
         return $rules;
     }
 
+    #[On('recalc-cif')]
+    public function handleRecalcCif(): void
+    {
+        $this->recalcCifAndAduaneiro();
+    }
+
     public function updated($field, $value)
     {
-        // quaisquer alterações a campos específicos
         if (in_array($field, ['form.fob_total','form.frete','form.seguro','form.Cambio','form.ValorAduaneiro'])) {
-            
             $this->recalcCifAndAduaneiro();
+        }
+
+        if ($field === 'form.TipoProcesso') {
+            $this->syncTipoProcessoState();
         }
     }
 
@@ -481,7 +478,7 @@ class Form extends Component
         $fob    = floatval(str_replace(',', '.', str_replace('.', '', $this->form['fob_total'] ?? 0)));
         $frete  = floatval(str_replace(',', '.', str_replace('.', '', $this->form['frete'] ?? 0)));
         $seguro = floatval(str_replace(',', '.', str_replace('.', '', $this->form['seguro'] ?? 0)));
-        $cambio = floatval(str_replace(',', '.', str_replace('.', '', $this->form['cambio'] ?? 1)));
+        $cambio = floatval(str_replace(',', '.', str_replace('.', '', $this->form['Cambio'] ?? 1)));
 
         // ✅ CIF = FOB + FRETE + SEGURO
         $cif = $fob + $frete + $seguro;
@@ -499,66 +496,39 @@ class Form extends Component
      */
     public function save()
     {
-        // dd($this->form);
-
         try {
-            foreach (['cif','ValorAduaneiro','fob_total','frete','seguro', 'Cambio'] as $field) {
-                if (!empty($this->form[$field])) {
-                    $this->form[$field] = floatval(
-                        str_replace(['.',','], ['','.'], $this->form[$field])
-                    );
-                }
-            }
-            
             $this->validate();
-            foreach ($this->schema as $name => $conf) {
-                if (!empty($conf['readonly'])) continue;
-                $this->processo->{$name} = $this->form[$name] ?? null;
-            }
+            $dto = ProcessFormData::fromArray($this->form);
 
-            $this->processo->cif = $this->form['cif'] ?? 0;
-            $this->processo->ValorAduaneiro = $this->form['ValorAduaneiro'] ?? 0;
+            $this->processo = app(CreateProcessAction::class)->execute(
+                $dto,
+                $this->_empresa,
+                Auth::user(),
+                $this->mode === 'edit' ? $this->processo : null,
+            );
 
-            $this->processo->empresa_id = Auth::user()->empresas->first()->id;
-            $this->processo->user_id = Auth::user()->id;
-
-            if ($this->mode === 'edit') {
-                $this->processo->save();
-                $msg = 'Processo actualizado com sucesso!';
-            } else {
-                $this->processo->save();
-                $msg = 'Processo criado com sucesso!';
-            }
+            $msg = $this->mode === 'edit'
+                ? 'Processo actualizado com sucesso!'
+                : 'Processo criado com sucesso!';
 
             $this->dispatch('toast', type: 'success', message: $msg);
 
             return redirect()->route('processos.index');
 
         } catch (\Throwable $e) {
-
-            logger()->error('ERRO LIVEWIRE SAVE', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
+            report($e);
             $this->dispatch('toast', type: 'error', message: $e->getMessage());
         }
     }
 
-    // quick modals callbacks
-    public function onClienteCreated($payload)
+    #[On('quick-entity-selected')]
+    public function onQuickEntitySelected($entity, $id, $label): void
     {
-        // payload: ['id'=>..., 'label'=>...
-        $this->form['customer_id'] = $payload['id'];
-        $this->dispatch('toast', type: 'success', message: 'Cliente adicionado');
+        $field = $entity === 'customer' ? 'customer_id' : 'exportador_id';
 
-    }
-
-    public function onExportadorCreated($payload)
-    {
-        $this->form['exportador_id'] = $payload['id'];
-        $this->dispatch('toast', type: 'success', message: 'Exportador adicionado');
-
+        $this->form[$field] = $id;
+        $this->dispatch('select-search-updated', field: $field, value: $id, label: $label);
+        $this->dispatch('toast', type: 'success', message: ($entity === 'customer' ? 'Cliente' : 'Exportador') . ' adicionado');
     }
 
     // Rascunhos
@@ -571,7 +541,7 @@ class Form extends Component
             'payload' => json_encode($this->form),
         ]);
 
-        $this->dispatchBrowserEvent('toast', ['type'=>'success','message'=>'Rascunho guardado']);
+        $this->dispatch('toast', type: 'success', message: 'Rascunho guardado');
     }
 
     public function loadDraft($id)
@@ -580,7 +550,38 @@ class Form extends Component
         if (!$d) return;
         $payload = json_decode($d->payload, true);
         foreach ($payload as $k => $v) $this->form[$k] = $v;
-        $this->dispatchBrowserEvent('toast', ['type'=>'info','message'=>'Rascunho carregado']);
+        $this->syncTipoProcessoState();
+        $this->dispatch('toast', type: 'info', message: 'Rascunho carregado');
+    }
+
+    private function applyPrefillFromRequest(): void
+    {
+        if ($this->mode !== 'create') {
+            return;
+        }
+
+        $customerId = request()->integer('customer_id');
+        $exportadorId = request()->integer('exportador_id');
+
+        if ($customerId) {
+            $this->form['customer_id'] = $customerId;
+        }
+
+        if ($exportadorId) {
+            $this->form['exportador_id'] = $exportadorId;
+        }
+    }
+
+    private function syncTipoProcessoState(): void
+    {
+        $tipoProcessoId = isset($this->form['TipoProcesso']) && $this->form['TipoProcesso'] !== ''
+            ? (int) $this->form['TipoProcesso']
+            : null;
+
+        $service = app(ProcessoFormService::class);
+
+        $this->tipoProcessoCodigo = $service->processTypeCode($tipoProcessoId);
+        $this->showCrudExportFields = $service->shouldShowCrudExport($tipoProcessoId);
     }
 
     public function render()

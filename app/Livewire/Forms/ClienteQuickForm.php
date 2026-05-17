@@ -1,71 +1,70 @@
 <?php
 
-namespace App\Http\Livewire\Forms;
+namespace App\Livewire\Forms;
 
 use Livewire\Component;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ClienteQuickForm extends Component
 {
-    public $CompanyName = '';
+    public $showModal = false;
+    
     public $CustomerTaxID = '';
+    public $CompanyName = '';
     public $Telephone = '';
     public $Email = '';
-    public $modalType;
+    public $pagamento = '';
     
     protected $rules = [
-        'CompanyName' => 'required|min:3',
-        'CustomerTaxID' => 'nullable|string|max:20',
-        'Telephone' => 'nullable|string|max:20',
+        'CustomerTaxID' => 'required|string|unique:customers,CustomerTaxID',
+        'CompanyName' => 'required|string',
+        'Telephone' => 'required|string',
         'Email' => 'nullable|email',
+        'pagamento' => 'nullable|string',
     ];
-
+    
+    protected $listeners = ['abrirModalCliente' => 'open'];
+    
+    public function open()
+    {
+        $this->reset();
+        $this->resetValidation();
+        $this->showModal = true;
+    }
+    
+    public function close()
+    {
+        $this->showModal = false;
+    }
+    
     public function save()
     {
         $this->validate();
         
-        try {
-            $existing = Customer::where('CompanyName', $this->CompanyName)->first();
-            
-            if ($existing) {
-                session()->flash('error', 'Já existe um cliente com este nome.');
-                return;
-            }
-            
-            $cliente = Customer::create([
-                'CompanyName' => $this->CompanyName,
-                'CustomerTaxID' => $this->CustomerTaxID,
-                'Telephone' => $this->Telephone,
-                'Email' => $this->Email,
-                'created_by' => auth()->id(),
-            ]);
-
-            // CORREÇÃO: dispatch() em vez de emit()
-            $this->dispatch('closeQuickModal');
-            $this->dispatch('clienteCreated', [
-                'id' => $cliente->id,
-                'name' => $cliente->CompanyName,
-            ]);
-
-            $this->reset(['CompanyName', 'CustomerTaxID', 'Telephone', 'Email']);
-            
-            session()->flash('success', 'Cliente criado com sucesso!');
-
-        } catch (\Exception $e) {
-            Log::error('Erro ao criar cliente', ['error' => $e->getMessage()]);
-            session()->flash('error', 'Erro ao criar cliente: ' . $e->getMessage());
-        }
+        $empresa = Auth::user()->empresas->first(); // ajuste conforme sua lógica
+        
+        $cliente = Customer::create([
+            'CustomerTaxID' => $this->CustomerTaxID,
+            'CompanyName' => $this->CompanyName,
+            'Telephone' => $this->Telephone,
+            'Email' => $this->Email,
+            'pagamento' => $this->pagamento,
+            'empresa_id' => $empresa->id,
+        ]);
+        
+        // Dispara evento para o formulário principal atualizar a lista e selecionar o novo cliente
+        $this->dispatch('clienteCriado', clienteId: $cliente->id, nome: $cliente->CompanyName);
+        
+        $this->close();
+        session()->flash('message', 'Cliente criado com sucesso!');
     }
-
-    public function cancel()
-    {
-        // CORREÇÃO: dispatch() em vez de emit()
-        $this->dispatch('closeQuickModal');
-    }
-
+    
     public function render()
     {
-        return view('livewire.forms.cliente-quick-form');
+        return view('livewire.forms.cliente-quick-form', [
+            'showModal' => $this->showModal,
+        ]);
     }
 }
+

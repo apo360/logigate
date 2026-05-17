@@ -4,32 +4,30 @@
             <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-gray-800">
-                        @if($type === 'customer_id')
+                        @if($entity === 'customer')
                             Criar Novo Cliente
-                        @elseif($type === 'exportador_id')
+                        @elseif($entity === 'exportador')
                             Criar Novo Exportador
                         @else
                             Criar Novo Registo
                         @endif
                     </h2>
-                    <button 
-                        wire:click="close" 
+                    <button
+                        wire:click="close"
                         class="text-gray-400 hover:text-gray-600"
                     >
                         ✕
                     </button>
                 </div>
-                
+
                 <div class="space-y-4">
-                    @if($type === 'customer_id')
-                        <livewire:forms.cliente-quick-form 
+                    @if($entity === 'customer')
+                        <livewire:forms.cliente-quick-form
                             :key="'cliente-form-' . now()->timestamp"
-                            :modal-type="$type"
                         />
-                    @elseif($type === 'exportador_id')
-                        <livewire:forms.exportador-quick-form 
+                    @elseif($entity === 'exportador')
+                        <livewire:forms.exportador-quick-form
                             :key="'exportador-form-' . now()->timestamp"
-                            :modal-type="$type"
                         />
                     @else
                         <div class="text-center py-8 text-gray-500">
@@ -41,5 +39,3 @@
         </div>
     @endif
 </div>
-
-

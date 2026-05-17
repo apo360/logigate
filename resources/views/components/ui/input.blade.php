@@ -27,6 +27,7 @@
     'extraField' => null,
     'searchField' => null,
     'field' => null,
+    'value' => null,
     'key' => null,
     'emptyMessage' => 'Nenhum resultado encontrado.',
     'where' => [],
@@ -160,12 +161,13 @@
                     :search-field="$searchField"
                     :where="$where"
                     :field="$field"
+                    :selected-id="$value"
                     wire:key="ss-{{ $name }}"
                 />
 
                 @if(in_array($name, ['customer_id', 'exportador_id']))
                     <button type="button"
-                        wire:click="$dispatch('openQuickModal', '{{ $name }}')"
+                        wire:click="$dispatch('open-quick-create-modal', { entity: '{{ $name === 'customer_id' ? 'customer' : 'exportador' }}' })"
                         class="absolute right-2 top-2 text-[10px] text-indigo-400 hover:text-indigo-300">
                         + Novo {{ $name === 'customer_id' ? 'Cliente' : 'Exportador' }}
                     </button>

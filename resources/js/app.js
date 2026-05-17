@@ -1,6 +1,7 @@
 import './bootstrap';
-
+import Alpine from 'alpinejs';
 import toastr from 'toastr';
+
 window.toastr = toastr;
 
 toastr.options = {
@@ -10,3 +11,6 @@ toastr.options = {
     "timeOut": "3000",
 };
 
+
+window.Alpine = Alpine
+Alpine.start()

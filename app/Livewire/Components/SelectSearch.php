@@ -12,20 +12,18 @@ class SelectSearch extends Component
     public ?string $extraField = null;
     public string $searchField;
     public array $where = [];
-
-    public $search = '';
-    public $selected = null;
-    public $open = false;
-    public $results = [];
-    public $highlightIndex = 0;
     public string $field;
-    public $selectedLabel = '';
-    public $selectedExtra = '';
+
+    public string $search = '';
+    public bool $open = false;
+    public $results = [];
+    public int $highlightIndex = 0;
+    public string $selectedLabel = '';
+    public string $selectedExtra = '';
     public $selectedId = null;
-    
-    // Listener para atualizações externas
+
     protected $listeners = [
-        'selectSearchUpdated' => 'handleExternalUpdate'
+        'select-search-updated' => 'handleExternalUpdate',
     ];
 
     public function mount(
@@ -33,33 +31,36 @@ class SelectSearch extends Component
         string $displayField,
         string $searchField,
         string $field,
+        $selectedId = null,
         ?string $extraField = null,
         array $where = []
-    ) {
-        // Carregar resultados iniciais se houver um ID selecionado
+    ): void {
+        $this->model = $model;
+        $this->displayField = $displayField;
+        $this->searchField = $searchField;
+        $this->field = $field;
+        $this->selectedId = $selectedId;
+        $this->extraField = $extraField;
+        $this->where = $where;
+
         if ($this->selectedId) {
             $this->loadSelectedItem();
         }
     }
 
-    public function loadResults()
+    public function loadResults(): void
     {
         try {
             $query = app($this->model)->query();
-            
-            // Aplicar condições where
-            if (!empty($this->where)) {
-                foreach ($this->where as $condition) {
-                    if (is_array($condition) && count($condition) >= 3) {
-                        $query->where(...$condition);
-                    }
+
+            foreach ($this->where as $condition) {
+                if (is_array($condition) && count($condition) >= 3) {
+                    $query->where(...$condition);
                 }
             }
-            
-            // Aplicar busca
-            if ($this->search) {
+
+            if ($this->search !== '') {
                 if (str_contains($this->searchField, '.')) {
-                    // Relação: 'customer.CompanyName'
                     [$relation, $field] = explode('.', $this->searchField, 2);
                     $query->whereHas($relation, function ($q) use ($field) {
                         $q->where($field, 'like', '%' . $this->search . '%');
@@ -68,89 +69,69 @@ class SelectSearch extends Component
                     $query->where($this->searchField, 'like', '%' . $this->search . '%');
                 }
             }
-            
-            // Limitar resultados
+
             $this->results = $query->limit(15)->get();
-            
-        } catch (\Exception $e) {
-            Log::error('Error in SelectSearch:', [
+        } catch (\Throwable $e) {
+            Log::error('Error in SelectSearch', [
                 'model' => $this->model,
-                'error' => $e->getMessage()
+                'field' => $this->field,
+                'error' => $e->getMessage(),
             ]);
             $this->results = collect();
         }
     }
 
-    public function selectItem($id, $label, $extra = '')
+    public function selectItem($id, $label, $extra = ''): void
     {
         $this->selectedId = $id;
-        $this->selectedLabel = $label;
-        $this->selectedExtra = $extra;
+        $this->selectedLabel = (string) $label;
+        $this->selectedExtra = (string) $extra;
+        $this->search = (string) $label;
         $this->open = false;
-        $this->search = $label; // Mostrar o item selecionado no input
-        
-        // Emitir evento para o componente pai
-        $this->dispatch('selectSearchUpdated', [
-            'field' => $this->field,
-            'value' => $id,
-            'label' => $label,
-            'extra' => $extra
-        ]);
+
+        $this->dispatch('select-search-updated', field: $this->field, value: $id, label: $label);
     }
 
-    public function moveHighlightDown()
+    public function handleExternalUpdate($field, $value, $label = ''): void
     {
-        if ($this->highlightIndex < count($this->results) - 1) {
-            $this->highlightIndex++;
+        if ($this->field !== $field) {
+            return;
         }
+
+        $this->selectedId = $value;
+        $this->selectedLabel = (string) $label;
+        $this->selectedExtra = '';
+        $this->search = (string) $label;
+        $this->open = false;
     }
 
-    public function moveHighlightUp()
+    public function loadSelectedItem(): void
     {
-        if ($this->highlightIndex > 0) {
-            $this->highlightIndex--;
+        if (! $this->selectedId) {
+            return;
         }
-    }
 
-    public function selectHighlighted()
-    {
-        if (!isset($this->results[$this->highlightIndex])) return;
+        try {
+            $query = app($this->model)->query();
+            $item = $this->field !== 'id'
+                ? $query->where($this->field, $this->selectedId)->first()
+                : $query->find($this->selectedId);
 
-        $item = $this->results[$this->highlightIndex];
-
-        $label = data_get($item, $this->displayField);
-
-        $this->selectItem($item->id, $label);
-    }
-
-    public function handleExternalUpdate($data)
-    {
-        if ($this->field === ($data['field'] ?? null)) {
-            $this->selectedId = $data['value'];
-            $this->selectedLabel = $data['label'];
-            $this->selectedExtra = $data['extra'] ?? '';
-            $this->search = $data['label'];
-            $this->open = false;
-        }
-    }
-    
-    public function loadSelectedItem()
-    {
-        if ($this->selectedId) {
-            try {
-                $item = app($this->model)->find($this->selectedId);
-                if ($item) {
-                    $this->selectedLabel = data_get($item, $this->displayField);
-                    $this->selectedExtra = $this->extraField ? data_get($item, $this->extraField) : '';
-                    $this->search = $this->selectedLabel;
-                }
-            } catch (\Exception $e) {
-                Log::error('Error loading selected item:', ['error' => $e->getMessage()]);
+            if ($item) {
+                $this->selectedLabel = (string) data_get($item, $this->displayField, '');
+                $this->selectedExtra = $this->extraField ? (string) data_get($item, $this->extraField, '') : '';
+                $this->search = $this->selectedLabel;
             }
+        } catch (\Throwable $e) {
+            Log::error('Error loading selected item', [
+                'field' => $this->field,
+                'selected_id' => $this->selectedId,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
-    public function updatedSearch()
+    public function updatedSearch(): void
     {
         $this->loadResults();
         $this->open = true;

@@ -120,7 +120,7 @@ class Licenciamento extends Model
 
     public function mercadoriasAgrupadas()
     {
-        return $this->hasMany(MercadoriaAgrupada::class, 'licenciamento_id')->onDelete('cascade');
+        return $this->hasMany(MercadoriaAgrupada::class, 'licenciamento_id');
     }
 
     public function documentos()

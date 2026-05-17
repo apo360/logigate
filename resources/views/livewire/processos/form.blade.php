@@ -23,21 +23,6 @@
                     </div>
                 @endif
             </x-slot>
-<div>
-    <!-- Botão + Novo Cliente -->
-    <button type="button"
-        wire:click="$dispatch('openQuickModal', { type: 'customer_id' })"
-        class="absolute right-2 top-2 text-[10px] text-indigo-400 hover:text-indigo-300">
-        + Novo Cliente
-    </button>
-    
-    <!-- Botão + Novo Exportador -->
-    <button type="button"
-        wire:click="$dispatch('openQuickModal', { type: 'exportador_id' })"
-        class="absolute right-2 top-2 text-[10px] text-indigo-400 hover:text-indigo-300">
-        + Novo Exportador
-    </button>
-</div>
             <x-slot name="footerRight">
                 @if($mode === 'edit')
                     <button
@@ -150,7 +135,7 @@
                 </div>
 
                 {{-- SEÇÃO 3: EXPORTAÇÃO CRUD (condicional) --}}
-                @if($mode === 'create' || ($processo->TipoProcesso && str_contains($processo->tipoProcesso->descricao ?? '', 'CRUD')))
+                @if($showCrudExportFields)
                 <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
                         <div class="flex items-center justify-between">

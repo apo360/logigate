@@ -4,83 +4,71 @@ namespace App\Livewire\Forms;
 
 use Livewire\Component;
 use App\Models\Exportador;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use App\Models\Pais;
+use Illuminate\Support\Facades\Auth;
 
 class ExportadorQuickForm extends Component
 {
-    public $form = [
-        'Exportador' => '',
-        'ExportadorTaxID' => '',
-        'Telefone' => '',
-        'Email' => '',
-        'Pais' => '',
-        'Website' => '',
-    ];
+    public $showModal = false;
     
-    public $modalType;
+    public $ExportadorTaxID = '';
+    public $Exportador = '';
+    public $Pais = '';
+    public $Endereco = '';
+    public $Telefone = '';
+    public $Email = '';
     
     protected $rules = [
-        'form.Exportador' => 'required|min:3',
-        'form.ExportadorTaxID' => 'nullable|string|max:20',
-        'form.Telefone' => 'nullable|string|max:20',
-        'form.Email' => 'nullable|email',
-        'form.Pais' => 'nullable|string|max:100',
+        'ExportadorTaxID' => 'required|string|unique:exportadors,ExportadorTaxID',
+        'Exportador' => 'required|string',
+        'Pais' => 'required|exists:paises,id',
+        'Endereco' => 'required|string',
+        'Telefone' => 'required|string',
+        'Email' => 'nullable|email',
     ];
-
+    
+    protected $listeners = ['abrirModalExportador' => 'open'];
+    
+    public function open()
+    {
+        $this->reset();
+        $this->resetValidation();
+        $this->showModal = true;
+    }
+    
+    public function close()
+    {
+        $this->showModal = false;
+    }
+    
     public function save()
     {
         $this->validate();
         
-        try {
-            // Verificar se já existe exportador com mesmo NIF e Empresa ou User
-            $existing = Exportador::where('ExportadorTaxID', $this->form['ExportadorTaxID'])
-                    ->where('user_id', Auth()->id())
-                    ->first();
-            
-            if ($existing) {
-                session()->flash('error', 'Já existe um exportador com este nif.');
-                return;
-            }
-            
-            $exportador = Exportador::create([
-                'Exportador' => $this->form['Exportador'],
-                'ExportadorTaxID' => $this->form['ExportadorTaxID'],
-                'Telefone' => $this->form['Telefone'],
-                'Email' => $this->form['Email'],
-                'user_id' => Auth()->id(),
-                'Pais' => Pais::getByField('pais', 'Angola', 'id'),
-            ]);
-
-            // Emitir evento para fechar modal
-            $this->dispatch('closeQuickModal');
-            
-            // Emitir evento para atualizar selects
-            $this->dispatch('exportadorCreated', [
-                'id' => $exportador->id,
-                'name' => $exportador->Exportador,
-                'nif' => $exportador->NIF,
-            ]);
-
-            // Limpar formulário
-            $this->reset('form');
-            
-            session()->flash('success', 'Exportador criado com sucesso!');
-
-        } catch (\Exception $e) {
-            Log::error('Erro ao criar exportador:', ['error' => $e->getMessage()]);
-            session()->flash('error', 'Erro ao criar exportador: ' . $e->getMessage());
-        }
+        $empresa = Auth::user()->empresas->first();
+        
+        $exportador = Exportador::create([
+            'ExportadorTaxID' => $this->ExportadorTaxID,
+            'Exportador' => $this->Exportador,
+            'Pais' => $this->Pais,
+            'Endereco' => $this->Endereco,
+            'Telefone' => $this->Telefone,
+            'Email' => $this->Email,
+            'empresa_id' => $empresa->id,
+            'user_id' => Auth::id(),
+        ]);
+        
+        $this->dispatch('exportadorCriado', exportadorId: $exportador->id, nome: $exportador->Exportador);
+        
+        $this->close();
+        session()->flash('message', 'Exportador criado com sucesso!');
     }
-
-    public function cancel()
-    {
-        $this->dispatch('closeQuickModal');
-    }
-
+    
     public function render()
     {
-        return view('livewire.forms.exportador-quick-form');
+        return view('livewire.forms.exportador-quick-form', [
+            'paises' => Pais::all(),
+        ]);
     }
 }
+

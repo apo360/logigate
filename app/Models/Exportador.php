@@ -20,6 +20,7 @@ class Exportador extends Model
         'Pais',
         'Website',
         'user_id',
+        'empresa_id',
     ];
 
     /**

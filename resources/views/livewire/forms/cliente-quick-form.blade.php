@@ -1,75 +1,60 @@
-<!-- resources/views/livewire/forms/cliente-quick-form.blade.php -->
 <div>
-    <form wire:submit.prevent="save" class="space-y-4">
-        @if(session()->has('success'))
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-                {{ session('success') }}
+    @if($showModal)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="close"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                    Novo Cliente
+                                </h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">NIF *</label>
+                                        <input type="text" wire:model="CustomerTaxID" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('CustomerTaxID') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Cliente *</label>
+                                        <input type="text" wire:model="CompanyName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('CompanyName') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Telefone *</label>
+                                        <input type="text" wire:model="Telephone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('Telephone') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                                        <input type="email" wire:model="Email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('Email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Método de Pagamento</label>
+                                        <select wire:model="pagamento" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="">Pronto Pagamento</option>
+                                            <option value="15">Pagamento 15 dias</option>
+                                            <option value="30">Pagamento 30 dias</option>
+                                            <option value="45">Pagamento 45 dias</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" wire:click="save" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Salvar Cliente
+                        </button>
+                        <button type="button" wire:click="close" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
             </div>
-        @endif
-        
-        @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                <ul class="list-disc list-inside">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        
-        <x-ui.input 
-            name="CompanyName" 
-            label="Nome da Empresa" 
-            wire:model.defer="CompanyName" 
-            :required="true"
-            placeholder="Digite o nome do Cliente Singular ou da Empresa"
-        />
-        
-        <x-ui.input 
-            name="CustomerTaxID" 
-            label="NIF" 
-            wire:model.defer="CustomerTaxID" 
-            placeholder="Digite o NIF"
-            required="true"
-        />
-        
-        <x-ui.input 
-            name="Telephone" 
-            label="Telefone" 
-            wire:model.defer="Telephone" 
-            placeholder="Digite o telefone"
-        />
-        
-        <x-ui.input 
-            name="Email" 
-            label="Email" 
-            type="email" 
-            wire:model.defer="Email" 
-            placeholder="Digite o email"
-        />
-        
-        <div class="flex justify-end space-x-3 pt-4 border-t">
-            <button 
-                type="button" 
-                wire:click="cancel"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            >
-                Cancelar
-            </button>
-            <button 
-                type="submit" 
-                class="px-4 py-2 text-sm font-medium text-white bg-logigate-primary hover:bg-blue-700 rounded-lg transition-colors flex items-center"
-                wire:loading.attr="disabled"
-            >
-                <span wire:loading.remove>Salvar Cliente</span>
-                <span wire:loading>
-                    <svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Salvando...
-                </span>
-            </button>
         </div>
-    </form>
+    @endif
 </div>

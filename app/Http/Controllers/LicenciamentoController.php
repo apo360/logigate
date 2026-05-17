@@ -3,22 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DatabaseErrorHandler;
-use App\Http\Requests\LicenciamentoRequest;
-use App\Models\EmpresaUser;
-use App\Models\Estancia;
 use App\Models\Licenciamento;
 use App\Models\MercadoriaAgrupada;
-use App\Models\Pais;
-use App\Models\PautaAduaneira;
-use App\Models\Porto;
-use App\Models\RegiaoAduaneira;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Response;
-use App\Exports\LicenciamentosExport;
 use App\Services\LicenciamentoService;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
 
 class LicenciamentoController extends AuthenticatedController
 {
@@ -32,70 +23,19 @@ class LicenciamentoController extends AuthenticatedController
      */
     public function index()
     {
-        // Filtrar por empresa se fornecido
-        $empresaId = Auth::user()->empresas->first()->id;
-        
-        // Inicializando a consulta de licenciamentos
-        $query = Licenciamento::query();
-
-        // Aplicando filtro se houver empresa
-        if ($empresaId) {
-            $query->where('empresa_id', $empresaId);
-        }
-
-        // Paginar os resultados para exibir 10 por página
-        $licenciamentos = $query->with(['empresa', 'cliente', 'exportador'])
-                                ->orderBy('created_at', 'desc') // Ordenar por data de criação, mais recente primeiro
-                                ->paginate(10);
-
         // Retornar a view com os licenciamentos paginados
-        return view('processos.licenciamento_index', compact('licenciamentos'));
+        return view('Licenciamento.index');
     }
     
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $clientes = $this->empresa->customers()->get();
-        $exportador = $this->empresa->exportadors()->get();
-        $estancias = Estancia::all();
-        $regioes = RegiaoAduaneira::all();
-        $paises = Pais::all();
-        $portos = Porto::all();
-        $ibans = IbanController::getBankDetails();
-        $pautaAduaneira = PautaAduaneira::all();
-        $empresa = EmpresaUser::where('empresa_id', $this->empresa->id)->get();
-
-        // chamar a stored procedure
-        return view('processos.licenciamento', 
-        compact('clientes', 
-                'estancias', 
-                'regioes', 
-                'exportador', 
-                'paises', 
-                'empresa', 
-                'portos', 
-                'ibans', 
-                'pautaAduaneira'
-            ));
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(LicenciamentoRequest $request)
-    {
-        try {
-            $licenciamento = $this->licenciamentoService->create(
-                $request->validated(),
-                $this->empresa->id
-            );
-
-            return redirect()->route('mercadorias.create', ['licenciamento_id' => $licenciamento->id])->with('success', 'Licenciamento criado com sucesso!');
-        } catch (QueryException $th) {
-            return DatabaseErrorHandler::handle($th, $request);
-        }
+        // A lógica de criação agora é tratada pelo Livewire, então apenas retornamos a view que contém o componente Livewire.
+        return view('Licenciamento.create', [
+                'customer_id' => $request->query('customer_id')
+            ]);
     }
 
     public function storeDraft(Request $request){
@@ -114,46 +54,17 @@ class LicenciamentoController extends AuthenticatedController
 
     public function show(Licenciamento $licenciamento)
     {
-        // Buscar o licenciamento pelo ID
-        $licenciamento = Licenciamento::with('mercadorias')->findOrFail($licenciamento->id);
-
-        // Retornar a view com os dados do licenciamento
-        return view('processos.licenciamento_show', compact('licenciamento'));
+        // A lógica de exibição agora é tratada pelo Livewire, então apenas retornamos a view que contém o componente Livewire.
+        return view('Licenciamento.show', compact('licenciamento'));
     }
-
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(Licenciamento $licenciamento)
     {
-        $estancias = Estancia::all();
-        $regioes = RegiaoAduaneira::all();
-        $paises = Pais::all();
-        $portos = Porto::all();
-        $bancos = IbanController::getBankDetails();
-
         // Continue com o processo de edição
-        return view('processos.licenciamento_edit', compact('licenciamento', 'bancos','portos', 'paises', 'regioes', 'estancias'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(LicenciamentoRequest $request, Licenciamento $licenciamento)
-    {
-        try {
-            $this->licenciamentoService->update(
-                $licenciamento,
-                $request->validated(),
-                $this->empresa->id
-            );
-
-            return redirect()->route('licenciamentos.edit', $licenciamento->id)->with('success', 'Licenciamento atualizado com sucesso!');
-        }catch (QueryException $th) {
-            return DatabaseErrorHandler::handle($th, $request);
-        }
-
+        return view('Licenciamento.edit', compact('licenciamento'));
     }
 
     /**
@@ -176,135 +87,6 @@ class LicenciamentoController extends AuthenticatedController
         } catch (\Exception $e) {
             return redirect()->route('licenciamentos.index')
                             ->with('error', 'Erro ao excluir o licenciamento. Tente novamente.');
-        }
-    }
-    /**
-     * Gerar arquivo TXT para o licenciamento.
-     */
-    // ...existing code...
-    public function GerarTxT($Idlice)
-    {
-        try {
-            $licenciamento = Licenciamento::findOrFail($Idlice);
-            $download = $this->licenciamentoService->generateTxtDownload($licenciamento);
-    
-            return response($download['content'])
-                ->header('Content-Type', 'text/plain')
-                ->header('Content-Disposition', 'attachment; filename="'.$download['filename'].'"');
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->back()->withErrors(['error' => 'Licenciamento não encontrado.']);
-        } catch (\InvalidArgumentException | \RuntimeException $e) {
-            return redirect()->back()->withErrors(['error' => $e->getMessage()]);
-        } catch (\Throwable $e) {
-            return redirect()->back()->withErrors(['error' => 'Erro inesperado ao gerar o arquivo: ' . $e->getMessage()]);
-        }
-    }
-    
-    /**
-     * Constituir um processo a partir de um licenciamento.
-     */
-    public function ConstituirProcesso(Request $request, $idLicenciamento)
-    {
-        $licenca = Licenciamento::findOrFail($idLicenciamento);
-        abort_unless(
-            $licenca->empresa_id === Auth::user()->empresas()->value('empresas.id'),
-            403,
-            'Sem permissão para constituir este processo.'
-        );
-        try {
-            $processo = $this->licenciamentoService->constituirProcesso($licenca, Auth::id());
-
-            return redirect()->route('processos.edit', $processo->id)
-                ->with(['success' => true, 'message' => 'Processo constituído com sucesso pelo Licenciamento ' . $licenca->codigo_licenciamento . '.']);
-        }catch (QueryException $th) {
-            return DatabaseErrorHandler::handle($th, $request);
-        }   
-    }
-
-    public function exportCsv()
-    {
-        $licenciamentos = Licenciamento::where('empresa_id', Auth::user()->empresas->first()->id)->get();
-
-        // Definindo o nome do arquivo
-        $fileName = 'licenciamentos_' . now()->format('Ymd_His') . '.csv';
-
-        // Cabeçalhos para o arquivo CSV
-        $headers = array(
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=$fileName",
-            "Pragma" => "no-cache",
-            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
-            "Expires" => "0"
-        );
-
-        // Abrir o arquivo para escrita
-        $handle = fopen('php://output', 'w');
-
-        // Escrever a linha de cabeçalhos no CSV
-        fputcsv($handle, [
-            'Cliente', 'Descrição', 'Peso Bruto','Unidade', 'Origem', 'Estado', 'CIF','Moeda', 'Factura'
-        ]);
-
-        // Escrever os dados de cada licenciamentos
-        foreach ($licenciamentos as $licenciamento) {
-            fputcsv($handle, [
-                $licenciamento->cliente->CompanyName,
-                $licenciamento->descricao,
-                $licenciamento->peso_bruto,
-                $licenciamento->peso_bruto < 1000 ? ' Kg' : ' Ton',
-                $licenciamento->porto_origem,
-                ucfirst($licenciamento->estado_licenciamento),
-                number_format($licenciamento->cif, 2, ',', '.'),
-                $licenciamento->moeda,
-                $licenciamento->procLicenFaturas->isNotEmpty() ? $licenciamento->Nr_factura : 'Sem Factura'
-            ]);
-        }
-
-        // Fechar o arquivo
-        fclose($handle);
-
-        // Retornar a resposta com os cabeçalhos apropriados
-        return Response::make('', 200, $headers);
-    }
-
-    public function exportExcel()
-    {
-        return Excel::download(new LicenciamentosExport, 'licenciamentos.xlsx');
-    }
-
-    public function import(Request $request)
-    {
-        // Validar o arquivo
-        $request->validate([
-            'file' => 'required|file|mimes:csv,xlsx,xls,txt|max:5120', // Limite de 5MB
-        ]);
-
-        // verificar se o arquivo é txt
-        $fileMime = $request->file('file')->getClientMimeType();
-        if ($fileMime == 'text/plain') {
-            // Chama a Função para lidar com arquivos TXT
-            $this->handleTxtImport($request);
-            
-            //return back()->with('error', 'O formato TXT não é suportado para importação. Por favor, utilize CSV ou Excel.');
-        }
-        // Processar o arquivo CSV ou Excel
-        try {
-            $file = $request->file('file');
-            $extension = $file->getClientOriginalExtension();
-
-            if ($extension == 'csv') {
-                // Processamento para CSV
-                $data = array_map('str_getcsv', file($file));
-            } else {
-                // Processamento para Excel usando Laravel Excel
-                $data = Excel::toArray([], $file);
-            }
-
-            // Aqui você pode fazer a inserção dos dados no banco de dados
-
-            return back()->with('success', 'Ficheiro importado com sucesso!');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Erro ao importar o ficheiro: ' . $e->getMessage());
         }
     }
 
@@ -431,39 +213,4 @@ class LicenciamentoController extends AuthenticatedController
             return back()->with('error', 'Erro ao importar o arquivo TXT: ' . $e->getMessage());
         }
     }
-
-    /**
-     * Duplicar um licenciamento existente.
-     */
-    public function DuplicarLicenciamento($id)
-    {
-        try {
-            DB::beginTransaction();
-
-            $licenciamento = Licenciamento::findOrFail($id);
-            abort_unless(
-                $licenciamento->empresa_id === Auth::user()->empresas()->value('empresas.id'),
-                403,
-                'Sem permissão para duplicar este licenciamento.'
-            );
-
-            // Duplication now lives behind a POST route to prevent unsafe link-triggered writes.
-            $novoLicenciamento = $licenciamento->replicate();
-            $novoLicenciamento->save();
-
-            DB::commit();
-            return back()->with('success', 'Licenciamento duplicado com sucesso!');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return back()->with('error', 'Erro ao duplicar o licenciamento: ' . $e->getMessage());
-        }
-    }
-
-    /** PICE */
-    public function pice()
-    {
-        // Lógica para exibir a lista PICE
-        return view('licenciamentos.pice');
-    }
-
 }
