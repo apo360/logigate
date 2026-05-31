@@ -130,48 +130,6 @@ class ProcessoController extends AuthenticatedController
     }
 
     /**
-     * Store a newly created resource in storage.
-     */
-    // public function store(ProcessoRequest $request)
-    // {
-        
-    //     try {
-
-    //         // Dados validados do request
-    //         $processo_request = $request->validated();
-
-    //         DB::beginTransaction();
-
-    //         // Cria o processo e obtém a instância completa
-    //         $novoProcesso = Processo::create($processo_request);
-
-    //         // Após cria o processos definitivo, deve apagar o rascunho
-
-    //         // Verifica se há um rascunho para excluir
-    //         if ($request->filled('id_rascunho')) {
-    //             $rascunho = $request->input('id_rascunho');
-
-    //             // Verifica se o rascunho existe antes de tentar excluí-lo
-    //             if (ProcessosDraft::find($rascunho)) { ProcessosDraft::destroy($rascunho); } else {
-    //                 Log::warning("Tentativa de excluir rascunho inexistente com ID: {$rascunho}");
-    //             }
-    //         }
-
-    //         DB::commit();
-
-    //         // Redirecione para a página de edição de processos com uma mensagem de sucesso
-    //         return redirect()->route('processos.edit', $novoProcesso->id)->with('success', 'Processo inserido com sucesso!');
-
-    //     } catch (QueryException $e) {
-    //         DB::rollBack();
-    //         return DatabaseErrorHandler::handle($e, $request);
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return response()->json(['message' => 'Erro inesperado: ' . $e->getMessage(),], 500);
-    //     }
-    // }
-
-    /**
      * Display the specified resource.
      */
     public function show($processoID)
@@ -228,41 +186,6 @@ class ProcessoController extends AuthenticatedController
             'tipoTransp',
             'emolumentoTarifa', 'clientes', 'localizacoes'));
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    // public function update(ProcessoRequest $request, $processoID)
-    // {
-    //     // Dados validados do request
-    //     $processo_requestUP = $request->validated();
-
-    //     try {
-    //         // Inicia uma transação para garantir a integridade dos dados
-    //         DB::beginTransaction();
-
-    //         // Verifica se o processo existe
-    //         $processo = Processo::find($processoID);
-    //         if (!$processo) {
-    //             return redirect()->back()->with('error', 'Processo não encontrado');
-    //         }
-
-    //         // Atualiza os campos do processo
-    //         $processo->update($processo_requestUP);
-
-    //         DB::commit();
-
-    //         return redirect()->back()->with('success', 'Dados atualizados com sucesso');
-
-    //     } catch (QueryException $e) {
-    //         DB::rollBack();
-
-    //         // Registro do erro
-    //         Log::error('Erro ao atualizar o processo', ['error' => $e->getMessage()]);
-
-    //         return redirect()->back()->with('error', 'Erro ao atualizar os dados. Por favor, tente novamente.');
-    //     }
-    // }
 
     /**
      * Função para finalizar o processo
@@ -365,43 +288,6 @@ class ProcessoController extends AuthenticatedController
 
         return view('processos.tarifas', compact('impostos'));
     }
-    // -------------------------------   Blocos para ser eliminados ---------------------------------------- //
-
-    public function atualizarCodigoAduaneiro(Request $request)
-    {
-        $data = $request->validate([
-            'mercadoria_id' => 'required|array',
-            'mercadoria_id.*' => 'exists:mercadorias,id',
-            'codigo_aduaneiro' => 'required|array',
-            'codigo_aduaneiro.*' => 'string|max:255',
-        ]);
-
-        foreach ($data['mercadoria_id'] as $index => $id) {
-            $mercadoria = Mercadoria::find($id);
-            if ($mercadoria) {
-                $mercadoria->codigo_aduaneiro = $data['codigo_aduaneiro'][$index];
-                $mercadoria->save();
-            }
-        }
-
-        return redirect()->back()->with('success', 'Códigos aduaneiros atualizados com sucesso!');
-    }
-
-    public function getProcessesByIdAndStatus($ProcessoId, $status)
-    {
-        // Find processes with the specified customer ID and status
-        $processos = Processo::where('ProcessoID', $ProcessoId)->where('Situacao', $status)->get();
-    
-        // You can return the processes as a JSON response
-        return response()->json([
-            'processos' => $processos,
-            'cliente' => $processos->first()->cliente, // Assuming all processes belong to the same customer
-            'mercadorias' => $processos->flatMap->mercadorias,
-            'cobranca' => $processos->first()->cobrado
-        ]);
-    }
-
-    // -------------------------------   */Blocos para ser eliminados/* ---------------------------------------- //
 
     /**
      * Metodo para imprimir Nota de Despesas do Processo
@@ -620,19 +506,6 @@ class ProcessoController extends AuthenticatedController
 
         return response()->file($file);
         
-    }
-
-    // Metodo para enviar os parametros e emitir uma factura
-    private function emitirFatura($clienteID, $valor, $tipo, $processo)
-    {
-        // Simulação de emissão de fatura (pode ser ajustado conforme sua lógica)
-        /*Documento::create([
-            'cliente_id' => $clienteID,
-            'valor' => $valor,
-            'tipo' => $tipo, // 'FR' ou 'FT'
-            'descricao' => "Fatura $tipo referente ao Processo Nº: $processo",
-            'data' => now(),
-        ]);*/
     }
 
     public function printExtratoMercadoria($ProcessoID){
