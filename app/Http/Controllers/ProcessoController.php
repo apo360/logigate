@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domains\Banco\Services\BancoListService;
 use App\Helpers\DatabaseErrorHandler;
 use App\Helpers\PdfHelper;
 use App\Http\Requests\ProcessoRequest;
@@ -18,8 +19,11 @@ use App\Models\views\ProcessosView;
 use App\Models\RegiaoAduaneira;
 use App\Models\TipoTransporte;
 use App\Models\CondicaoPagamento;
+use App\Models\EmolumentoTarifa;
 use App\Models\MercadoriaLocalizacao;
 use App\Services\ProcessoService;
+
+
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -114,7 +118,7 @@ class ProcessoController extends AuthenticatedController
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
         return view('processos.index');
     }
@@ -122,55 +126,31 @@ class ProcessoController extends AuthenticatedController
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-
         // Retornar uma view com o formulário para criar um novo processo
-        return view('processos.create');
+        return view('processos.create', [
+            'customer_id' => $request->query('customer_id')
+        ]);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show($processoID)
+    public function show(Processo $processo)
     {
-        $processo = Processo::with('mercadorias')->findOrFail($processoID);
-        $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id',$processoID)->get();
-
-        $pautaAduaneira = PautaAduaneira::all();
-        $transacoes = ContaCorrente::where('cliente_id', $processo->cliente->id)->orderBy('data', 'desc')->get();
-
-        
-
-        // Calcular o saldo baseado nas transações
-        $saldo = $transacoes->sum(function ($transacao) {
-            return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
-        });
-
-        $camposImportantes = [
-            'estancia_id' => 'Estância Aduaneira',
-            'porto_desembarque_id' => 'Porto de Desembarque',
-            'localizacao_mercadoria_id' => 'Localização da Mercadoria',
-            'regime_aduaneiro' => 'Regime Aduaneiro',
-            'fob_total' => 'Valor FOB',
-            'Pais_origem' => 'País de Origem',
-        ];
-
-        $camposNaoPreenchidos = $processo->getCamposNaoPreenchidos($camposImportantes);
-
-        return view('processos.show', compact('processo', 'pautaAduaneira', 'mercadoriasAgrupadas', 'saldo', 'camposImportantes'));
+        return view('processos.show', compact('processo'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Request $request, $processoID)
+    public function edit(Request $request, Processo $processo)
     {
-        $processo = Processo::findOrFail($processoID);
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
         $portos = Porto::all();
-        $ibans = IbanController::getBankDetails();
+        $ibans = BancoListService::getOptions();
         $tipoTransp = TipoTransporte::all();
         $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
         $clientes = $this->empresa->customers()->get(); // Busca os Clientes

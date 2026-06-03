@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domains\Processo\Repositories;
 
-use App\Domains\Processo\DTOs\AtualizarProcessoDTO;
-use App\Domains\Processo\DTOs\CriarProcessoDTO;
+use App\Application\Processo\DTOs\AtualizarProcessoDTO;
+use App\Application\Processo\DTOs\CriarProcessoDTO;
 use App\Domains\Processo\Exceptions\ProcessoNaoEncontradoException;
 use App\Models\Processo;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -81,5 +81,24 @@ final class EloquentProcessoRepository implements ProcessoRepositoryInterface
         $processo = $this->findOrFail($id);
 
         return (bool) $processo->delete();
+    }
+
+    /**
+     * Verifica quais campos importantes estão vazios e retorna um array com os campos não preenchidos.
+     * 
+     * @param array $camposImportantes Array associativo onde a chave é o nome do campo e o valor é o rótulo amigável do campo.
+     * @return array Array associativo dos campos não preenchidos, onde a chave é o
+     */
+    public function verificarCamposImportantes(array $camposImportantes): array
+    {
+        $naoPreenchidos = [];
+
+        foreach ($camposImportantes as $campo => $label) {
+            if (empty($this->$campo)) {
+                $naoPreenchidos[$campo] = $label;
+            }
+        }
+
+        return $naoPreenchidos;
     }
 }

@@ -6,6 +6,10 @@ use App\Models\EmolumentoTarifa;
 use App\Models\Processo;
 use Illuminate\Support\Collection;
 
+/**
+ * LEGADO (congelado): não deve ser usado em novas telas.
+ * Use a camada App\Application\Processo (Actions/DTOs) como caminho oficial.
+ */
 class ProcessoService
 {
     public function validateForFinalization(Processo $processo): array
@@ -40,7 +44,7 @@ class ProcessoService
 
     public function finalize(Processo $processo): Processo
     {
-        $processo->Estado = 'finalizado';
+        $processo->Estado = \App\Domains\Processo\Enums\EstadoProcessoEnum::FINALIZADO->value;
         $processo->DataFecho = now();
         $processo->ContaDespacho = $this->gerarContaDespachoSequencial();
         $processo->save();
@@ -59,7 +63,7 @@ class ProcessoService
             ->whereHas('emolumentoTarifa', function ($query) {
                 $query->whereNotNull('honorario')->where('honorario', '>=', 0);
             })
-            ->where('Estado', '!=', 'finalizado')
+            ->where('Estado', '!=', \App\Domains\Processo\Enums\EstadoProcessoEnum::FINALIZADO->value)
             ->where('empresa_id', $empresaId)
             ->get();
     }

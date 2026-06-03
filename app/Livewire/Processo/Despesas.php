@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Processos;
+namespace App\Livewire\Processo;
 
 use Livewire\Component;
 use App\Models\Processo;
@@ -333,7 +333,7 @@ class Despesas extends Component
 
     public function render()
     {
-        return view('livewire.processos.despesas', [
+        return view('livewire.processo.despesas', [
             'tarifa' => $this->tarifa,
             'totalGeral' => $this->totalGeral,
             'totaisPorCategoria' => $this->totaisPorCategoria,

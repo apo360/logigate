@@ -230,7 +230,6 @@ use App\Models\Plano;
         Route::post('processos/report/{ProcessoID}/imprimir-carta', [ProcessoController::class, 'printCartaDiversa'])->name('processos.imprimirCarta');
         Route::get('processos/report/{ProcessoID}/Extrato-Mercadoria', [ProcessoController::class, 'printExtratoMercadoria'])->name('processos.Extrato_mercadoria');
 
-
         Route::post('processo/imprimir/{IdProcesso}/requisicao', [ProcessoController::class, 'printCartaDiversa'])->name('processo.print.requisicao');
         Route::post('licenciamento/mercadorias/reagrupar/{licenciamentoId}', [MercadoriaController::class, 'reagrupar'])->name('mercadorias.reagrupar');
 

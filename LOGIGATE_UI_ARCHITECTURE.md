@@ -26,6 +26,33 @@ All UI screens must follow these principles:
 
 ---
 
+# 12. Refactoring Freeze: Processo (Fase 1)
+
+A partir desta fase, as fontes concorrentes do módulo **Processo** devem ser congeladas.
+
+## 12.1 Classes legadas (congeladas)
+
+- `App\Services\ProcessoService`
+- `App\Domains\Processos\Actions\CreateProcessAction`
+
+Essas classes são mantidas apenas para compatibilidade. **Não usar em novas telas**.
+
+## 12.2 Caminho oficial
+
+O caminho oficial para criação/edição de Processo é:
+
+- `App\Application\Processo`
+  - `CriarProcessoAction`
+  - `AtualizarProcessoAction`
+  - `FinalizarProcessoAction`
+
+## 12.3 Forms: evitar `Processos\Form`
+
+Não criar novas telas/fluxos usando `Processos\Form` para criação/edição de Processo.
+
+
+---
+
 # 2. Livewire Component Architecture
 
 Each Livewire component should follow this structure:

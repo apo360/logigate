@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Livewire\Processo;
 
 use App\Application\Processo\Actions\CriarProcessoAction;
@@ -12,7 +10,6 @@ use App\Domains\Processo\Enums\EstadoProcessoEnum;
 use App\Domains\Processo\Enums\FormaPagamentoEnum;
 use App\Models\Customer;
 use App\Models\Estancia;
-use App\Models\Exportador;
 use App\Models\Pais;
 use App\Models\Porto;
 use App\Models\RegiaoAduaneira;
@@ -90,7 +87,7 @@ final class ProcessoCreate extends Component
     #[Rule('nullable|string|max:100')]
     public ?string $registo_transporte = null;
 
-    #[Rule('nullable|exists:pais,id')]
+    #[Rule('nullable|exists:paises,id')]
     public ?int $nacionalidade_transporte = null;
 
     #[Rule('nullable|string|max:20')]
@@ -105,16 +102,15 @@ final class ProcessoCreate extends Component
     #[Rule('nullable|string|max:50')]
     public ?string $BLC_Porte = null;
 
-    #[Rule('nullable|exists:pais,id')]
+    #[Rule('nullable|exists:paises,id')]
     public ?int $Pais_origem = null;
 
     #[Rule('nullable|string|max:100')]
     public ?string $PortoOrigem = null;
 
-    #[Rule('nullable|string|max:100')]
-    public ?string $porto_desembarque_id = null;
+    public ?string $porto_desembarque_id;
 
-    #[Rule('nullable|exists:mercadoria_localizacoes,id')]
+    #[Rule('nullable|exists:mercadoria_localizacaos,id')]
     public ?int $local_mercadoria_id = null;
 
     #[Rule('nullable|in:Tr,CK,RD,Ou')]

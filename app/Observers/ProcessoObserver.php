@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Domains\Processo\Enums\EstadoProcessoEnum;
 use App\Models\Processo;
 use App\Support\ActorContext;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +15,6 @@ class ProcessoObserver
     {
         if (empty($processo->user_id)) {
             $processo->user_id = ActorContext::id();
-        }
-
-        if ($processo->getTable() === 'processos') {
-            $processo->NrProcesso = Processo::generateNewProcesso($processo->empresa_id);
         }
 
         Audit::create([
@@ -51,8 +48,10 @@ class ProcessoObserver
             ]);
         }
 
-        if ($processo->Estado === 'concluido' && $processo->isDirty('Estado')) {
-            throw new \Exception('Não é permitido alterar o estado de um processo concluído.');
+        $estadoOriginal = EstadoProcessoEnum::tryFrom((string) $processo->getOriginal('Estado'));
+
+        if ($processo->isDirty('Estado') && $estadoOriginal?->isFinalizado() && $processo->Estado !== EstadoProcessoEnum::FINALIZADO->value) {
+            throw new \Exception('Não é permitido alterar o estado de um processo finalizado.');
         }
 
         $alteracoes = $processo->getDirty();
@@ -82,7 +81,7 @@ class ProcessoObserver
 
     public function deleting(Processo $processo): void
     {
-        if ($processo->Estado === ['Retido', 'Finalizado']) {
+        if (in_array((string) $processo->Estado, [EstadoProcessoEnum::FINALIZADO->value, EstadoProcessoEnum::CANCELADO->value], true)) {
             throw new \Exception('Processos concluídos não podem ser excluídos.');
         }
 

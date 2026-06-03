@@ -93,7 +93,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ number_format($p->ValorAduaneiro ?? 0, 2) }} Kz</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ \Carbon\Carbon::parse($p->DataAbertura)->format('d/m/Y') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    @if($p->facturas->isNotEmpty())
+                                    @if($p->procLicenFaturas->isNotEmpty())
                                         <a href="{{ route('documentos.show', $p->facturas->last()->id) }}" class="text-indigo-600 hover:underline">Emitida</a>
                                     @else
                                         <span class="text-gray-400">Não emitida</span>

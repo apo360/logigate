@@ -301,7 +301,7 @@ class Processo extends Model implements Auditable
 
     public function mercadoriasAgrupadas()
     {
-        return $this->hasMany(MercadoriaAgrupada::class, 'processo_id')->onDelete('cascade');
+        return $this->hasMany(MercadoriaAgrupada::class, 'processo_id');
     }
 
     public function procLicenFaturas()
@@ -352,24 +352,5 @@ class Processo extends Model implements Auditable
     public function localizacaoMercadoria()
     {
         return $this->belongsTo(MercadoriaLocalizacao::class, 'localizacao_mercadoria_id');
-    }
-
-    /**
-     * Lista apenas os campos não preenchidos
-     *
-     * @param array $camposImportantes
-     * @return array
-     */
-    public function getCamposNaoPreenchidos(array $camposImportantes)
-    {
-        $naoPreenchidos = [];
-
-        foreach ($camposImportantes as $campo => $label) {
-            if (empty($this->$campo)) {
-                $naoPreenchidos[$campo] = $label;
-            }
-        }
-
-        return $naoPreenchidos;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Processos;
+namespace App\Livewire\Processo;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -55,7 +55,7 @@ class Documentos extends Component
 
     public function render()
     {
-        return view('livewire.processos.documentos', [
+        return view('livewire.processo.documentos', [
             'docs' => $this->processo->documentos
         ]);
     }

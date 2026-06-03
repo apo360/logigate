@@ -33,9 +33,12 @@ final readonly class CriarProcessoAction
                 throw new InvalidArgumentException('A data de fecho não pode ser anterior à data de abertura.');
             }
 
-            return $this->processos->create(CriarProcessoDTO::fromArray($dto->toArray() + [
-                'NrProcesso' => $numero,
-            ]));
+            // Evita reconversão desnecessária via toArray/fromArray (contrato simétrico do DTO)
+            // e garante que o número gerado seja persistido no campo correto.
+            $payload = $dto->toArray();
+            $payload['NrProcesso'] = $numero;
+
+            return $this->processos->create(CriarProcessoDTO::fromArray($payload));
         });
     }
 }

@@ -58,7 +58,7 @@
 
         {{-- TAB 1 — INFO --}}
         <div x-show="tab === 'info'" x-cloak>
-            <livewire:processos.form :processo="$processo" mode="edit"/>
+            <livewire:processo.processo-create :processo="$processo" mode="edit"/>
         </div>
 
         {{-- TAB 2 — MERCADORIAS --}}
@@ -69,7 +69,7 @@
         <!-- TAB 3 — DESPESAS -->
         <div x-show="tab === 'despesas'" x-cloak>
             <!-- CORREÇÃO: Passar o model Processo em vez de apenas o ID -->
-            <livewire:processos.despesas :processo="$processo" />
+            <livewire:processo.despesas :processo="$processo" />
         </div>
 
         {{-- TAB 4 — DOCUMENTOS --}}
@@ -120,7 +120,7 @@
 
         {{-- TAB 5 — RESUMO --}}
         <div x-show="tab === 'resumo'" x-cloak>
-            <livewire:processos.resumo-asys :processo="$processo" />
+            <livewire:processo.resumo-asys :processo="$processo" />
         </div>
 
     </div>

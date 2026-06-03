@@ -471,7 +471,7 @@
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 mb-12">
-              <a href="#planos" class="btn-primary text-lg">
+              <a href="{{ route('checkout', 2) }}" class="btn-primary text-lg">
                 <i class="fas fa-rocket mr-2" aria-hidden="true"></i>Começar Agora
               </a>
               <a href="#demo" class="btn-outline text-lg">

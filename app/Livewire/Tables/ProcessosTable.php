@@ -67,7 +67,7 @@ class ProcessosTable extends Component
     {
         // Ajusta a tua lógica real de "não finalizados"
         $this->notifications = Processo::query()
-            ->where('Estado', '!=', 'finalizado')
+            ->where('Estado', '!=', \App\Domains\Processo\Enums\EstadoProcessoEnum::FINALIZADO->value)
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get();

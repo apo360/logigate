@@ -202,13 +202,13 @@
                                     <input type="text" wire:model="porto_desembarque_id" list="portos_list_desembarque" class="w-full rounded-md border-gray-300 shadow-sm">
                                     <datalist id="portos_list_desembarque">
                                         @foreach($portos as $porto)
-                                            <option value="{{ $porto->sigla }}">{{ $porto->porto }}</option>
+                                            <option value="{{ $porto->id }}">{{ $porto->porto }}</option>
                                         @endforeach
                                     </datalist>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Localização Mercadoria</label>
-                                    <select wire:model="local_mercadoria_id" class="w-full rounded-md border-gray-300 shadow-sm">
+                                    <select wire:model="localizacao_mercadoria_id" class="w-full rounded-md border-gray-300 shadow-sm">
                                         <option value="">Selecione</option>
                                         @foreach($localMercadoria as $local)
                                             <option value="{{ $local->id }}">{{ $local->descricao }}</option>

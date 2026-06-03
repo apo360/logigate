@@ -8,6 +8,10 @@ use App\Models\Processo;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * LEGADO (congelado): não deve ser usado em novas telas.
+ * Use a camada App\Application\Processo (Actions/DTOs) como caminho oficial.
+ */
 final class CreateProcessAction
 {
     public function execute(

@@ -67,6 +67,7 @@ final class ProcessoEdit extends Component
     public function rules(): array
     {
         return [
+            // Campos do formulário (schema/type-check). Regras de transição ficam 100% no action.
             'form.customer_id' => ['required', 'exists:customers,id'],
             'form.exportador_id' => ['required', 'exists:exportadors,id'],
             'form.estancia_id' => ['required', 'exists:estancias,id'],
@@ -75,12 +76,14 @@ final class ProcessoEdit extends Component
             'form.RefCliente' => ['nullable', 'string', 'max:200'],
             'form.Descricao' => ['nullable', 'string', 'max:200'],
             'form.DataAbertura' => ['nullable', 'date'],
+            // Valores monetários
             'form.fob_total' => ['nullable', 'numeric', 'min:0'],
             'form.frete' => ['nullable', 'numeric', 'min:0'],
             'form.seguro' => ['nullable', 'numeric', 'min:0'],
             'form.cif' => ['nullable', 'numeric', 'min:0'],
         ];
     }
+
 
     public function render()
     {

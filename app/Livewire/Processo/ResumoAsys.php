@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Processos;
+namespace App\Livewire\Processo;
 
 use App\Models\Processo;
 use App\Models\MercadoriaAgrupada;
@@ -251,7 +251,7 @@ class ResumoAsys extends Component
 
     public function render()
     {
-        return view('livewire.processos.resumo-asys', [
+        return view('livewire.processo.resumo-asys', [
             'processo' => $this->processo,
             'despesasFiltradas' => $this->despesasDetalhadasFiltradas,
             'impostosFiltrados' => $this->impostosDetalhadosFiltrados,

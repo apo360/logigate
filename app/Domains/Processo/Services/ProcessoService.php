@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domains\Processo\Services;
 
-use App\Domains\Processo\Actions\AtualizarProcessoAction;
-use App\Domains\Processo\Actions\CriarProcessoAction;
-use App\Domains\Processo\Actions\FinalizarProcessoAction;
-use App\Domains\Processo\DTOs\AtualizarProcessoDTO;
-use App\Domains\Processo\DTOs\CriarProcessoDTO;
+use App\Application\Processo\Actions\AtualizarProcessoAction;
+use App\Application\Processo\Actions\CriarProcessoAction;
+use App\Application\Processo\Actions\FinalizarProcessoAction;
+use App\Application\Processo\DTOs\AtualizarProcessoDTO;
+use App\Application\Processo\DTOs\CriarProcessoDTO;
 use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Models\Processo;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
