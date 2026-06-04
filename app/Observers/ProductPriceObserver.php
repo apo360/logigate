@@ -88,10 +88,10 @@ class ProductPriceObserver
      */
     private function deactivateOtherPrices(ProductPrice $price)
     {
-        if ($price->status ?? 1) { // se ativo
+        if ($price->ativo ?? true) { // se ativo
             ProductPrice::where('fk_product', $price->fk_product)
                 ->where('id', '!=', $price->id ?? 0)
-                ->update(['status' => 0]);
+                ->update(['ativo' => false]);
         }
     }
 
@@ -108,14 +108,19 @@ class ProductPriceObserver
      */
     private function saveHistory(ProductPrice $price, $action)
     {
+        $oldPrice = (float) ($price->getOriginal('venda') ?? 0);
+        $newPrice = (float) ($price->venda ?? 0);
+        $variacao = $oldPrice > 0 ? (($newPrice - $oldPrice) / $oldPrice) * 100 : 0;
+
         ProductPriceLogs::create([
-            'product_price_id' => $price->id,
-            'fk_product'       => $price->fk_product,
-            'user_id'          => Auth::id(),
-            'action'           => $action,
-            'changes'          => json_encode($price->getChanges()),
-            'full_data'        => json_encode($price->toArray()),
-            'reasonID'         => $price->reasonID,
+            'produto_id' => $price->fk_product,
+            'old_price' => $oldPrice,
+            'new_price' => $newPrice,
+            'variacao' => $variacao,
+            'motivo' => (string) ($price->motivo_alteracao ?? $action),
+            'user_id' => Auth::id(),
+            'ia_impacto' => 'Sem mudança',
+            'ia_reavaliacao' => now()->addDays(30),
         ]);
     }
 

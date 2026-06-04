@@ -15,10 +15,12 @@ class Exportador extends Model
         'ExportadorTaxID',
         'AccountID',
         'Exportador',
+        'Endereco',
         'Telefone',
         'Email',
         'Pais',
         'Website',
+        'Cidade',
         'user_id',
         'empresa_id',
     ];

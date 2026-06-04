@@ -26,11 +26,14 @@
                 </div>
 
                 <!-- Abas (Alpine.js) -->
-                <div x-data="{ tab: 'info' }" class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div x-data="{ tab: @js(request('tab', 'info')) }" class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="border-b border-gray-200 px-6">
                         <nav class="flex space-x-6">
                             <button @click="tab = 'info'" :class="{ 'border-blue-500 text-blue-600': tab === 'info', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'info' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                                 <i class="fas fa-info-circle"></i> Informações Gerais
+                            </button>
+                            <button @click="tab = 'mercadoria'" :class="{ 'border-blue-500 text-blue-600': tab === 'mercadoria', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'mercadoria' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                                <i class="fas fa-box"></i> Mercadorias
                             </button>
                             <button @click="tab = 'docs'" :class="{ 'border-blue-500 text-blue-600': tab === 'docs', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'docs' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                                 <i class="fas fa-paperclip"></i> Documentos Aduaneiros
@@ -276,6 +279,11 @@
                                     <input wire:model="status_fatura" type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- ABA: MERCADORIAS -->
+                        <div x-show="tab === 'mercadoria'" x-cloak>
+                            <livewire:mercadorias.index context="licenciamento" parentId="{{ $licenciamento->id }}" />
                         </div>
 
                         <!-- ABA: DOCUMENTOS -->

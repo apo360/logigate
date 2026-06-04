@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Tables;
 
+use App\Domains\Exportadores\Actions\DeleteExportadorAction;
+use App\Domains\Exportadores\Queries\ExportadorTableQuery;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Exportador;
@@ -57,10 +59,15 @@ class ExportadorTable extends Component
     public function deleteExportador()
     {
         if ($this->exportadorIdToDelete) {
-            Exportador::find($this->exportadorIdToDelete)->delete();
+            $empresa = Auth::user()->empresas->first();
+            $exportador = Exportador::findOrFail($this->exportadorIdToDelete);
+            $action = app(DeleteExportadorAction::class);
+
+            $action->execute($exportador, $empresa, Auth::user());
+
             $this->confirmingDelete = false;
             $this->exportadorIdToDelete = null;
-            $this->dispatch('toast', type: 'success', message: 'Exportador excluído com sucesso.');
+            $this->dispatch('toast', type: 'success', message: 'Exportador removido da empresa com sucesso.');
         }
     }
 
@@ -68,28 +75,16 @@ class ExportadorTable extends Component
     {
         // Obtém a empresa do utilizador autenticado
         $empresa = Auth::user()->empresas->first(); // ou use a lógica da empresa actual
-        $empresaId = $empresa ? $empresa->id : null;
+        $query = app(ExportadorTableQuery::class);
 
-        $exportadores = Exportador::query()
-            ->when($empresaId, fn($q) => $q->where('empresa_id', $empresaId))
-            ->when($this->search, function ($q) {
-                $q->where(function ($q) {
-                    $q->where('Exportador', 'like', '%'.$this->search.'%')
-                    ->orWhere('ExportadorTaxID', 'like', '%'.$this->search.'%')
-                    ->orWhere('Endereco', 'like', '%'.$this->search.'%')
-                    ->orWhere('Telefone', 'like', '%'.$this->search.'%')
-                    ->orWhere('Email', 'like', '%'.$this->search.'%');
-                });
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+        $exportadores = $query->paginate($empresa, [
+            'search' => $this->search,
+            'perPage' => $this->perPage,
+            'sortField' => $this->sortField,
+            'sortDirection' => $this->sortDirection,
+        ]);
 
-        // Estatísticas também filtradas pela empresa
-        $stats = (object) [
-            'total' => Exportador::where('empresa_id', $empresaId)->count(),
-            'ativos' => Exportador::where('empresa_id', $empresaId)->count(), // ajuste se tiver campo status
-            'com_licenciamentos' => 0,
-        ];
+        $stats = $query->stats($empresa);
 
         return view('livewire.tables.exportador-table', [
             'exportadores' => $exportadores,

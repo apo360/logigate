@@ -2,6 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Domains\Produtos\Actions\CreateProdutoAction;
+use App\Domains\Produtos\Actions\DeleteProdutoAction;
+use App\Domains\Produtos\Actions\ToggleProdutoStatusAction;
+use App\Domains\Produtos\Actions\UpdateProdutoAction;
+use App\Domains\Produtos\Actions\UpdateProdutoPriceAction;
+use App\Domains\Produtos\Data\ProdutoFormData;
+use App\Domains\Produtos\Data\ProdutoPriceData;
+use App\Domains\Produtos\Queries\ProdutoTableQuery;
 use App\Http\Requests\ServicoProdutoRequest;
 use App\Http\Requests\ServicoProdutoPriceRequest;
 use App\Models\Produto;
@@ -12,9 +20,6 @@ use App\Models\ProductPriceLogs;
 use App\Models\TaxTable;
 use App\Services\ProdutoService;
 use App\Services\ProdutoPriceService;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
@@ -34,13 +39,10 @@ class ProdutoController extends AuthenticatedController
     /**
      * Listagem
      */
-    public function index()
+    public function index(ProdutoTableQuery $query)
     {
-        $products = Produto::with(['price', 'grupo'])
-            ->get();
-
         return view('service.list_service_produto', [
-            'products' => $products,
+            'products' => $query->paginate($this->empresa),
             'taxas' => TaxTable::orderBy('TaxPercentage', 'desc')->get(),
             'productTypes' => ProductType::all(),
             'productExemptionReasons' => ProductExemptionReason::all(),
@@ -64,22 +66,17 @@ class ProdutoController extends AuthenticatedController
     /**
      * Store (com lógica 100% movida para Services + Observers)
      */
-    public function store(ServicoProdutoRequest $request, ServicoProdutoPriceRequest $priceRequest)
+    public function store(
+        ServicoProdutoRequest $request,
+        ServicoProdutoPriceRequest $priceRequest,
+        CreateProdutoAction $action
+    )
     {
-        DB::transaction(function () use ($request, $priceRequest) {
-
-            // Somente dados do produto
-            $produto = $this->productService->createProduct(
-                $request->validated(),
-                Auth::user()
-            );
-
-            // Somente dados de preço
-            $this->priceService->createInitialPrice(
-                $produto,
-                $priceRequest->validated()
-            );
-        });
+        $action->execute(
+            ProdutoFormData::fromArray($request->validated()),
+            ProdutoPriceData::fromArray($priceRequest->validated()),
+            $this->empresa
+        );
 
         return redirect()->route('produtos.index')->with('status', 'Produto/Serviço Criado com Sucesso');
     }
@@ -90,7 +87,9 @@ class ProdutoController extends AuthenticatedController
     public function show($id)
     {
         return view('service.show_service', [
-            'produto' => Produto::with(['price', 'grupo', 'tipo', 'empresa'])->findOrFail($id),
+            'produto' => Produto::with(['price', 'grupo', 'tipo', 'empresa'])
+                ->where('empresa_id', $this->empresa->id)
+                ->findOrFail($id),
             'productTypes' => ProductType::all(),
             'productExemptionReasons' => ProductExemptionReason::all(),
             'categories' => ProductGroup::all(),
@@ -105,7 +104,7 @@ class ProdutoController extends AuthenticatedController
     public function edit($id)
     {
         return view('service.edit_service', [
-            'produto' => Produto::findOrFail($id),
+            'produto' => Produto::where('empresa_id', $this->empresa->id)->findOrFail($id),
             'productTypes' => ProductType::all(),
             'productExemptionReasons' => ProductExemptionReason::all(),
             'categories' => ProductGroup::all(),
@@ -116,18 +115,13 @@ class ProdutoController extends AuthenticatedController
     /**
      * Update refatorado
      */
-    public function update(ServicoProdutoRequest $request, Produto $produto)
+    public function update(ServicoProdutoRequest $request, Produto $produto, UpdateProdutoAction $action)
     {
-        DB::transaction(function () use ($produto, $request) {
-            // Update do Produto
-            $this->productService->updateProduct($produto, $request->validated());
-
-            // Update do Preço + regras através do Observer
-            /*$this->priceService->updateProductPrice(
-                $produto,
-                $request->validated()
-            );*/
-        });
+        $action->execute(
+            $produto,
+            ProdutoFormData::fromArray($request->validated()),
+            $this->empresa
+        );
 
         
         return redirect()->back()
@@ -137,11 +131,11 @@ class ProdutoController extends AuthenticatedController
     /**
      * Eliminar Produto
      */
-    public function destroy(Produto $produto)
+    public function destroy(Produto $produto, DeleteProdutoAction $action)
     {
-        $this->productService->deleteProduct($produto);
+        $action->execute($produto, $this->empresa);
 
-        return redirect()->back()->with('status', 'Produto/Serviço apagado.');
+        return redirect()->back()->with('status', 'Produto/Serviço desativado.');
     }
 
     /**
@@ -173,16 +167,10 @@ class ProdutoController extends AuthenticatedController
     /**
      * Atualizar estado (ativo/inativo)
      */
-    public function updateStatus($id)
+    public function updateStatus($id, ToggleProdutoStatusAction $action)
     {
         $produto = Produto::findOrFail($id);
-        $empresaId = Auth::user()->empresas()->value('empresas.id');
-
-        // Security: strict tenant boundary, no cross-company shared fallback.
-        abort_unless((int) $produto->empresa_id === (int) $empresaId, 403, 'Sem permissão para alterar este produto.');
-
-        // The toggle now runs behind a POST route so CSRF protection applies.
-        $this->productService->toggleStatus($id);
+        $action->execute($produto, $this->empresa);
 
         return redirect()->back()->with('status', 'Estado alterado.');
     }
@@ -192,6 +180,8 @@ class ProdutoController extends AuthenticatedController
      */
     public function showUpdatePriceForm(Produto $produto)
     {
+        abort_unless((int) $produto->empresa_id === (int) $this->empresa->id, 403);
+
         return view('service.update_price', [
             'produto' => $produto,
             'taxas' => TaxTable::orderBy('TaxPercentage', 'desc')->get(),
@@ -203,7 +193,7 @@ class ProdutoController extends AuthenticatedController
     /**
      * Atualizar preço (lógica)
      */    
-    public function updatePrice(Request $request, Produto $produto)
+    public function updatePrice(Request $request, Produto $produto, UpdateProdutoPriceAction $action)
     {
         // Validação
         $request->validate([
@@ -218,7 +208,7 @@ class ProdutoController extends AuthenticatedController
 
         try {
             // Fluxo completo de atualização de preço
-            $resultado = $this->priceService->updateProductPrice($produto, $data);
+            $action->execute($produto, ProdutoPriceData::fromArray($data), $this->empresa);
 
         } catch (\Exception $e) {
 

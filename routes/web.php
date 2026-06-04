@@ -113,7 +113,6 @@ use App\Models\Plano;
             'empresas' => EmpresaController::class,
             'exportadors' => ExportadorController::class,
             'menus' => MenuController::class,
-            'mercadorias' => MercadoriaController::class,
             'modules' => ModuleController::class,
             'permissions' => PermissionsController::class,
             'processos' => ProcessoController::class,
@@ -176,9 +175,6 @@ use App\Models\Plano;
         Route::get('relatorios/licenciamento/{tipo}', [RelatorioController::class, 'RelatorioLicenciamento'])->name('relatorio.visualizar');
         Route::get('licenciamento/relatorio', [RelatorioController::class, 'SelecionarRelatorio'])->name('relatorio.licenciamento');
 
-        // Rota personalizada para criar mercadorias com licenciamento ou processo
-        Route::get('/mercadorias/create/{licenciamento_id?}{processo_id?}', [MercadoriaController::class, 'create'])->name('mercadorias.createWithParams');
-        
         // web.php
         Route::get('get-codigo-aduaneiro/{cod_pauta}', [MercadoriaController::class, 'getCodigosAduaneiros'])->name('pauta.get');
         Route::get('get-portos/{paisId}', [PortoController::class, 'getPortos'])->name('portos.get');

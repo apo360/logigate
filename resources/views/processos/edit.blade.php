@@ -7,7 +7,7 @@
         ['name' => 'Editar Processo']
     ]"/>
 
-    <div class="py-6 max-w-7xl mx-auto" x-data="{ tab: 'info' }">
+    <div class="py-6 max-w-7xl mx-auto" x-data="{ tab: @js(request('tab', 'info')) }">
 
         {{-- CABEÇALHO DE AÇÕES --}}
         <div class="flex items-center justify-between mb-6">

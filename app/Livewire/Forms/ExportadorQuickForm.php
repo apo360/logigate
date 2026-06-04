@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Forms;
 
+use App\Domains\Exportadores\Actions\CreateOrAssociateExportadorAction;
+use App\Domains\Exportadores\Data\ExportadorFormData;
 use Livewire\Component;
-use App\Models\Exportador;
 use App\Models\Pais;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,7 +20,7 @@ class ExportadorQuickForm extends Component
     public $Email = '';
     
     protected $rules = [
-        'ExportadorTaxID' => 'required|string|unique:exportadors,ExportadorTaxID',
+        'ExportadorTaxID' => 'nullable|string|min:6|max:20',
         'Exportador' => 'required|string',
         'Pais' => 'required|exists:paises,id',
         'Endereco' => 'required|string',
@@ -43,20 +44,16 @@ class ExportadorQuickForm extends Component
     
     public function save()
     {
-        $this->validate();
+        $data = $this->validate();
         
         $empresa = Auth::user()->empresas->first();
+        $action = app(CreateOrAssociateExportadorAction::class);
         
-        $exportador = Exportador::create([
-            'ExportadorTaxID' => $this->ExportadorTaxID,
-            'Exportador' => $this->Exportador,
-            'Pais' => $this->Pais,
-            'Endereco' => $this->Endereco,
-            'Telefone' => $this->Telefone,
-            'Email' => $this->Email,
-            'empresa_id' => $empresa->id,
-            'user_id' => Auth::id(),
-        ]);
+        $exportador = $action->execute(
+            ExportadorFormData::fromArray($data),
+            $empresa,
+            Auth::user()
+        );
         
         $this->dispatch('exportadorCriado', exportadorId: $exportador->id, nome: $exportador->Exportador);
         
@@ -71,4 +68,3 @@ class ExportadorQuickForm extends Component
         ]);
     }
 }
-

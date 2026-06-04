@@ -110,9 +110,9 @@
                     </label>
                     <select name="Pais" id="Pais" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 select2" required>
                         <option value="" disabled>Selecione um país</option>
-                        @foreach ($paises as $codigo => $nome)
-                            <option value="{{ $codigo }}" data-flag="{{ strtolower($codigo) }}" {{ old('Pais', $exportador->Pais) == $codigo ? 'selected' : '' }}>
-                                <span class="flag-icon flag-icon-{{ strtolower($codigo) }}"></span> {{ $nome }}
+                        @foreach ($paises as $pais)
+                            <option value="{{ $pais->id }}" data-flag="{{ strtolower($pais->codigo) }}" {{ old('Pais', $exportador->Pais) == $pais->id ? 'selected' : '' }}>
+                                <span class="flag-icon flag-icon-{{ strtolower($pais->codigo) }}"></span> {{ $pais->pais }}
                             </option>
                         @endforeach
                     </select>

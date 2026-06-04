@@ -54,7 +54,7 @@ class ProductObserver
         }
 
         // Impedir alterar ProductCode associado a SalesInvoices (regra SAFT)
-        if ($product->facturas()->exists() && $product->isDirty('ProductCode')) {
+        if ($product->salesLines()->exists() && $product->isDirty('ProductCode')) {
             throw new \Exception("Não é permitido alterar o produto: .".$product->ProductCode." já está associado a facturas.");
         }
 

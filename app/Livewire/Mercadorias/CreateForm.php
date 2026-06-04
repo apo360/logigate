@@ -2,11 +2,15 @@
 
 namespace App\Livewire\Mercadorias;
 
+use App\Application\Mercadoria\Actions\AtualizarMercadoriaAction;
+use App\Application\Mercadoria\Actions\CriarMercadoriaAction;
+use App\Application\Mercadoria\Actions\ExcluirMercadoriaAction;
+use App\Application\Mercadoria\DTOs\MercadoriaData;
+use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
+use App\Application\Mercadoria\Services\MercadoriaRules;
+use App\Application\Mercadoria\Services\PautaAduaneiraLookupService;
 use Livewire\Component;
-use App\Models\Mercadoria;
-use App\Models\MercadoriaAgrupada;
 use App\Models\Subcategoria;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 
 class CreateForm extends Component
@@ -113,6 +117,7 @@ class CreateForm extends Component
     {
         $this->resetValidation();
         $this->mode = 'create';
+        $this->mercadoriaId = null;
         $this->open = true;
     }
 
@@ -120,7 +125,7 @@ class CreateForm extends Component
     public function openEditModal(int $id): void
     {
         $this->resetValidation();
-        $m = Mercadoria::findOrFail($id);
+        $m = app(MercadoriaRepositoryInterface::class)->findInContext($id, $this->context, $this->parentId);
 
         $this->mercadoriaId = $id;
         $this->mode = 'edit';
@@ -133,7 +138,7 @@ class CreateForm extends Component
             'peso'            => $m->Peso,
             'unidade'         => $m->Unidade,
             'ncm_hs'          => $m->NCM_HS,
-            'ncm_hs_numero'   => $m->NCM_HS_numero,
+            'ncm_hs_numero'   => $m->NCM_HS_Numero,
             'qualificacao'    => $m->Qualificacao,
             'preco_unitario'  => $m->preco_unitario,
             'preco_total'     => $m->preco_total,
@@ -144,6 +149,8 @@ class CreateForm extends Component
             'potencia'        => $m->potencia,
         ];
 
+        $this->loadPautasForSubcategoria($m->subcategoria_id);
+        $this->updatedFormCodigoAduaneiro($m->codigo_aduaneiro);
 
         $this->open = true;
     }
@@ -181,15 +188,10 @@ class CreateForm extends Component
 
     protected function calcularTotal($value = null)
     {
-        // Prevenir que o preço total seja manualmente alterado para valor incorreto
-        $calculated = (float) $this->form['quantidade'] * (float) $this->form['preco_unitario'];
-        
-        if (abs($value - $calculated) > 0.01) { // Tolerância de 0.01
-            $this->addError('form.preco_total', 'O preço total deve ser igual a quantidade × preço unitário.');
-            
-            // Corrigir automaticamente
-            $this->form['preco_total'] = $calculated;
-        }
+        $this->form['preco_total'] = round(
+            (float) $this->form['quantidade'] * (float) $this->form['preco_unitario'],
+            2
+        );
     }
 
     public function updatedFormSubcategoriaId($value)
@@ -202,26 +204,7 @@ class CreateForm extends Component
             return;
         }
 
-        $sub = SubCategoria::find($value);
-
-        if (!$sub) {
-            return;
-        }
-
-        // carregar pautas como fazias no AJAX
-        $this->pautas = DB::table('pauta_aduaneira')
-            ->where('codigo', 'like', SubCategoria::find($value)->cod_pauta . '%')
-            ->get()
-            ->toArray();
-
-        // ATIVAÇÃO POR CATEGORIA
-        if (in_array($sub->cod_pauta, [87, 88])) {
-            $this->showVeiculos = true;
-        }
-
-        if ($sub->cod_pauta == 84) {
-            $this->showMaquinas = true;
-        }
+        $this->loadPautasForSubcategoria((int) $value);
         
         // limpa código anterior
         $this->form['codigo_aduaneiro'] = '';
@@ -230,6 +213,7 @@ class CreateForm extends Component
     public function updatedFormCodigoAduaneiro($value)
     {
         $this->showVeiculos = false;
+        $this->showMaquinas = false;
         $this->codigoStatus = 'idle';
         $this->codigoMessage = '';
 
@@ -238,17 +222,9 @@ class CreateForm extends Component
         }
 
         // Prefixos válidos para veículos
-        $prefixosVeiculos = [
-            '8701','8702','8703','8704','8705','8706','8707',
-            '8709','8711','8712','8713'
-        ];
-
-        foreach ($prefixosVeiculos as $prefixo) {
-            if (str_starts_with($value, $prefixo)) {
-                $this->showVeiculos = true;
-                break;
-            }
-        }
+        $rules = app(MercadoriaRules::class);
+        $this->showVeiculos = $rules->isVehicleCode((string) $value);
+        $this->showMaquinas = $rules->isMachineCode((string) $value);
 
         $exactMatch = false;
         $prefixMatch = false;
@@ -284,6 +260,7 @@ class CreateForm extends Component
     public function save(): void
     {
         $this->validate();
+        $this->calcularTotal();
 
         // Bloqueio caso o código esteja errado
         if ($this->codigoStatus !== 'valid') {
@@ -292,52 +269,18 @@ class CreateForm extends Component
         }
 
         try {
-            $mercadoria = $this->mode === 'edit' && $this->mercadoriaId
-                ? Mercadoria::findOrFail($this->mercadoriaId)
-                : new Mercadoria();
-            
-            // Atribuição dos campos - considere usar fill() para código mais limpo
-            $mercadoria->fill([
-                'subcategoria_id'  => $this->form['subcategoria_id'],
-                'codigo_aduaneiro' => $this->form['codigo_aduaneiro'],
-                'Descricao'        => $this->form['descricao'],
-                'Quantidade'       => $this->form['quantidade'],
-                'Unidade'          => $this->form['unidade'],
-                'NCM_HS'           => $this->form['ncm_hs'],
-                'NCM_HS_numero'    => $this->form['ncm_hs_numero'],
-                'Qualificacao'     => $this->form['qualificacao'],
-                'Peso'             => $this->form['peso'],
-                'preco_unitario'   => $this->form['preco_unitario'],
-                'preco_total'      => $this->form['preco_total'],
-                'marca'            => $this->form['marca'],
-                'modelo'           => $this->form['modelo'],
-                'chassis'          => $this->form['chassis'],
-                'ano_fabricacao'   => $this->form['ano_fabricacao'],
-                'potencia'         => $this->form['potencia'],
-            ]);
+            $data = MercadoriaData::fromLivewire(
+                $this->form,
+                $this->context,
+                $this->parentId,
+                $this->mode === 'edit' ? $this->mercadoriaId : null
+            );
 
-            // Apenas na criação, definir a relação pai
-            if ($this->mode === 'create') {
-                if ($this->context === 'processo') {
-                    $mercadoria->Fk_Importacao = $this->parentId;
-                } elseif ($this->context === 'licenciamento') {
-                    $mercadoria->licenciamento_id = $this->parentId;
-                }
-            }
-
-            // Se for edição, remover do agrupamento antigo (caso código tenha mudado)
             if ($this->mode === 'edit') {
-                $oldCodigo = Mercadoria::find($this->mercadoriaId)->codigo_aduaneiro ?? null;
-                if ($oldCodigo && $oldCodigo !== $this->form['codigo_aduaneiro']) {
-                    $oldMercadoria = Mercadoria::find($this->mercadoriaId);
-                    MercadoriaAgrupada::removeFromAgrupamento($oldMercadoria);
-                }
+                app(AtualizarMercadoriaAction::class)->execute($data);
+            } else {
+                app(CriarMercadoriaAction::class)->execute($data);
             }
-
-            $mercadoria->save();
-
-            // Sincronizar agrupada (se for o caso)
-            MercadoriaAgrupada::StoreAndUpdateAgrupamento($mercadoria);
 
             // Limpar formulário
             $this->reset('form');
@@ -372,16 +315,7 @@ class CreateForm extends Component
     public function delete($id): void
     {
         try {
-            $mercadoria = Mercadoria::findOrFail($id);
-            
-            // Verificar se pode deletar (dependendo do seu contexto de negócio)
-            // Por exemplo: if ($mercadoria->hasRelatedRecords()) { ... }
-            
-            // Remover do agrupamento antes de deletar
-            MercadoriaAgrupada::removeFromAgrupamento($mercadoria);
-            
-            // Deletar a mercadoria
-            $mercadoria->delete();
+            app(ExcluirMercadoriaAction::class)->execute((int) $id, $this->context, $this->parentId);
             
             // Emitir eventos
             $this->dispatch('mercadoriaDeleted', id: $id);
@@ -420,5 +354,26 @@ class CreateForm extends Component
     public function render()
     {
         return view('livewire.mercadorias.create-form');
+    }
+
+    private function loadPautasForSubcategoria(?int $subcategoriaId): void
+    {
+        $subcategoria = $subcategoriaId ? Subcategoria::find($subcategoriaId) : null;
+
+        if (! $subcategoria) {
+            return;
+        }
+
+        $this->pautas = app(PautaAduaneiraLookupService::class)
+            ->bySubcategoriaId($subcategoria->id)
+            ->map(fn ($pauta) => (object) [
+                'codigo' => $pauta->codigo,
+                'descricao' => $pauta->descricao,
+            ])
+            ->values()
+            ->all();
+
+        $this->showVeiculos = in_array((int) $subcategoria->cod_pauta, [87, 88], true);
+        $this->showMaquinas = (int) $subcategoria->cod_pauta === 84;
     }
 }

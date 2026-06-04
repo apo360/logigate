@@ -2,10 +2,9 @@
 
 namespace App\Livewire\Mercadorias;
 
+use App\Application\Mercadoria\Actions\ExcluirMercadoriaAction;
+use App\Application\Mercadoria\Queries\ListarMercadoriasQuery;
 use Livewire\Component;
-use App\Models\Mercadoria;
-use App\Models\MercadoriaAgrupada;
-
 
 class Index extends Component
 {
@@ -15,6 +14,14 @@ class Index extends Component
     public array $agrupadas = [];
     public array $mercadorias = [];
     public array $expanded = [];
+    public array $totais = [
+        'quantidade' => 0,
+        'peso' => 0,
+        'fob' => 0,
+        'fob_aplicado' => 0,
+    ];
+
+    public float $fob_percent = 100;
 
     public ?int $editingId = null;
     public array $editingFields = [];
@@ -52,19 +59,11 @@ class Index extends Component
 
     public function reload(): void
     {
-        $this->mercadorias = Mercadoria::query()
-            ->when($this->context === 'processo', fn($q) => $q->where('Fk_Importacao', $this->parentId))
-            ->when($this->context === 'licenciamento', fn($q) => $q->where('licenciamento_id', $this->parentId))
-            ->orderBy('codigo_aduaneiro')
-            ->get()
-            ->toArray();
+        $result = app(ListarMercadoriasQuery::class)->execute($this->context, $this->parentId);
 
-        $this->agrupadas = MercadoriaAgrupada::query()
-            ->when($this->context === 'processo', fn($q) => $q->where('processo_id', $this->parentId))
-            ->when($this->context === 'licenciamento', fn($q) => $q->where('licenciamento_id', $this->parentId))
-            ->orderBy('codigo_aduaneiro')
-            ->get()
-            ->toArray();
+        $this->mercadorias = $result['mercadorias'];
+        $this->agrupadas = $result['agrupadas'];
+        $this->totais = $this->withAppliedFob($result['totais']);
 
         foreach ($this->agrupadas as $g) {
             $this->expanded[$g['codigo_aduaneiro']] ??= false;
@@ -77,6 +76,22 @@ class Index extends Component
         $this->expanded[$codigo] = ! $this->expanded[$codigo];
     }
 
+    public function updatedFobPercent(): void
+    {
+        $this->totais = $this->withAppliedFob($this->totais);
+    }
+
+    public function deleteItem(int $id): void
+    {
+        try {
+            app(ExcluirMercadoriaAction::class)->execute($id, $this->context, $this->parentId);
+            $this->reload();
+            $this->dispatch('mercadoriaDeleted', id: $id);
+            $this->dispatch('toast', type: 'success', message: 'Mercadoria excluída com sucesso!');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: 'Erro ao excluir mercadoria: ' . $e->getMessage());
+        }
+    }
 
     public function render()
     {
@@ -89,5 +104,16 @@ class Index extends Component
         });
 
         return view('livewire.mercadorias.index', compact('groups'));
+    }
+
+    private function withAppliedFob(array $totais): array
+    {
+        $fob = (float) ($totais['fob'] ?? 0);
+        $percent = max(0, min((float) $this->fob_percent, 100));
+        $this->fob_percent = $percent;
+
+        $totais['fob_aplicado'] = round($fob * ($percent / 100), 2);
+
+        return $totais;
     }
 }

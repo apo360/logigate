@@ -6,10 +6,16 @@ use App\Domains\Banco\Repositories\EmpresaBancoRepositoryInterface;
 use App\Application\Arquivo\Policies\DocumentoPolicy;
 use App\Application\Arquivo\Repositories\DocumentoRepositoryInterface;
 use App\Application\Arquivo\Repositories\EloquentDocumentoRepository;
+use App\Application\Mercadoria\Repositories\EloquentMercadoriaRepository;
+use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
 use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
 use App\Domains\Processo\Repositories\EloquentProcessoRepository;
 use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
+use App\Domains\Exportadores\Repositories\EloquentExportadorRepository;
+use App\Domains\Exportadores\Repositories\ExportadorRepositoryInterface;
+use App\Domains\Produtos\Repositories\EloquentProdutoRepository;
+use App\Domains\Produtos\Repositories\ProdutoRepositoryInterface;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
 use App\Models\DocumentoArquivo;
@@ -40,6 +46,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(LicenciamentoRepositoryInterface::class, EloquentLicenciamentoRepository::class);
         $this->app->bind(EmpresaBancoRepositoryInterface::class, EloquentEmpresaBancoRepository::class);
         $this->app->bind(DocumentoRepositoryInterface::class, EloquentDocumentoRepository::class);
+        $this->app->bind(ExportadorRepositoryInterface::class, EloquentExportadorRepository::class);
+        $this->app->bind(ProdutoRepositoryInterface::class, EloquentProdutoRepository::class);
+        $this->app->bind(MercadoriaRepositoryInterface::class, EloquentMercadoriaRepository::class);
     }
 
     /**

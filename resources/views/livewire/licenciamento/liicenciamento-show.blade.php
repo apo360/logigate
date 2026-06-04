@@ -19,7 +19,7 @@
                                 <i class="fas fa-filter"></i> Opções
                             </button>
                             <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                                <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('licenciamentos.edit', ['licenciamento' => $licenciamento->id, 'tab' => 'mercadoria']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-plus-circle"></i> Adicionar Mercadoria
                                 </a>
                                 <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -239,11 +239,7 @@
                                                     <td class="px-4 py-2">{{ number_format($merc->preco_unitario, 2, ',', '.') }}</td>
                                                     <td class="px-4 py-2">{{ number_format($merc->preco_total, 2, ',', '.') }}</td>
                                                     <td class="px-4 py-2 space-x-1">
-                                                        <a href="{{ route('mercadorias.edit', $merc->id) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
-                                                        <form action="{{ route('mercadorias.destroy', $merc->id) }}" method="POST" class="inline">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Tem certeza?')"><i class="fas fa-trash"></i></button>
-                                                        </form>
+                                                        <a href="{{ route('licenciamentos.edit', ['licenciamento' => $licenciamento->id, 'tab' => 'mercadoria']) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -267,7 +263,7 @@
                     <h3 class="font-semibold text-gray-700"><i class="fas fa-hand-point-right"></i> Ações Rápidas</h3>
                 </div>
                 <div class="p-4 space-y-2">
-                    <a href="{{ route('mercadorias.create', ['licenciamento_id' => $licenciamento->id]) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
+                    <a href="{{ route('licenciamentos.edit', ['licenciamento' => $licenciamento->id, 'tab' => 'mercadoria']) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
                         <i class="fas fa-plus-circle text-green-500 w-5"></i> <span>Adicionar Mercadoria</span>
                     </a>
                     <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">

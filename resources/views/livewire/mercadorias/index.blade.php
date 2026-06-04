@@ -115,55 +115,7 @@
 
                                         <td class="whitespace-nowrap px-6 py-4 text-right">
                                             <div class="flex justify-end items-center gap-2">
-                                                <button
-                                                    wire:click="$dispatch('open-edit-agrupamento', {codigo: '{{ $group['codigo_aduaneiro'] }}'})"
-                                                    class="text-gray-400 hover:text-blue-600 transition-colors p-1"
-                                                    title="Editar agrupamento"
-                                                >
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                </button>
-                                                
-                                                <div class="relative" x-data="{ open: false }">
-                                                    <button
-                                                        @click="open = !open"
-                                                        class="text-gray-400 hover:text-gray-600 transition-colors p-1"
-                                                        title="Mais opções"
-                                                    >
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                                        </svg>
-                                                    </button>
-                                                    
-                                                    <div
-                                                        x-show="open"
-                                                        @click.away="open = false"
-                                                        x-transition
-                                                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200"
-                                                    >
-                                                        <button
-                                                            wire:click="exportGroup('{{ $group['codigo_aduaneiro'] }}')"
-                                                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            Exportar CSV
-                                                        </button>
-                                                        <button
-                                                            wire:click="mergeGroup('{{ $group['codigo_aduaneiro'] }}')"
-                                                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                        >
-                                                            Consolidar
-                                                        </button>
-                                                        <div class="border-t border-gray-200"></div>
-                                                        <button
-                                                            wire:click="deleteGroup('{{ $group['codigo_aduaneiro'] }}')"
-                                                            wire:confirm="Tem certeza que deseja excluir este agrupamento e todos os itens?"
-                                                            class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                                                        >
-                                                            Excluir Agrupamento
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                <span class="text-xs text-gray-400">Agrupamento automático</span>
                                             </div>
                                         </td>
                                     </tr>

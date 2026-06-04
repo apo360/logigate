@@ -318,7 +318,7 @@
                     <h3 class="font-semibold"><i class="fas fa-filter mr-2"></i> Comandos</h3>
                 </div>
                 <div class="p-4 space-y-2">
-                    <a href="{{ route('mercadorias.create', ['processo_id' => $processo->id]) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
+                    <a href="{{ route('processos.edit', ['processo' => $processo->id, 'tab' => 'mercadoria']) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
                         <i class="fas fa-plus-circle text-green-500 w-5"></i> Adicionar Mercadoria
                     </a>
                     <a href="{{ route('processos.print', $processo->id) }}" target="_blank" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">

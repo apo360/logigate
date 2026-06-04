@@ -28,10 +28,15 @@ class ExportadorRequest extends FormRequest
             'ExportadorTaxID' => ['nullable', 'string', 'min:6', 'max:20'], // NIF deve ter exatamente 20 dígitos
             'AccountID' => ['nullable', 'string', 'max:30'],
             'Exportador' => ['required', 'string', 'max:100'],
+            'Endereco' => ['nullable', 'string', 'max:254'],
             'Telefone' => ['nullable', 'string', 'max:20'], // Defina um tamanho máximo apropriado para o telefone
             'Email' => ['nullable', 'email', 'max:254'],
             'Pais' => ['required', 'numeric'],
             'Website' => ['nullable', 'url', 'max:60'], // Verifica se é uma URL válida
+            'Cidade' => ['nullable', 'string', 'max:60'],
+            'codigo_exportador' => ['nullable', 'string', 'max:150'],
+            'additional_info' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'in:ATIVO,INATIVO'],
         ];
     }
 

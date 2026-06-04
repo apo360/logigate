@@ -14,14 +14,14 @@ class PautaAduaneira extends Model
     protected $fillable = [
         'codigo',  // O código na base dados está com pontos Ex: 0203.11.00
         'descricao',
-        'uq',
-        'rg',
-        'sadc',
-        'ua',
-        'requisitos',
+        'uq', // Unidade de Quantidade
+        'rg', // Taxa de Importação
+        'sadc', // 
+        'ua', // 
+        'requisitos', // Requisitos para importação (Ex: Licença, Certificado, etc.)
         'observacao',
-        'iva',
-        'ieq'
+        'iva', // Taxa de IVA
+        'ieq' // Taxa de IEQ
     ];
 
     public function toSearchableArray()

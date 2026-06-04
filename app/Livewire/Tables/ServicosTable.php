@@ -2,11 +2,15 @@
 
 namespace App\Livewire\Tables;
 
+use App\Domains\Produtos\Actions\DeleteProdutoAction;
+use App\Domains\Produtos\Actions\ToggleProdutoStatusAction;
+use App\Domains\Produtos\Queries\ProdutoTableQuery;
 use Livewire\Component;
 use App\Models\Produto;
 use Livewire\WithPagination;
 use App\Models\TaxTable; // se usa
 use App\Models\ProductType; // se usa
+use Illuminate\Support\Facades\Auth;
 
 class ServicosTable extends Component
 {
@@ -69,8 +73,9 @@ class ServicosTable extends Component
 
     public function toggleStatus(Produto $product)
     {
-        $product->status = !$product->status;
-        $product->save();
+        $empresa = Auth::user()->empresas->first();
+        $action = app(ToggleProdutoStatusAction::class);
+        $action->execute($product, $empresa);
 
         $this->dispatch('toast', type:'success', message:'Estado atualizado!');
     }
@@ -82,35 +87,29 @@ class ServicosTable extends Component
 
     public function deleteProduct(Produto $product)
     {
-        if($product->salesLines()->exists()){
-            return $this->dispatch('toast', type:'danger', message:'Não pode apagar, já existe faturação ligada.');
+        try {
+            $empresa = Auth::user()->empresas->first();
+            $action = app(DeleteProdutoAction::class);
+            $action->execute($product, $empresa);
+        } catch (\RuntimeException $e) {
+            return $this->dispatch('toast', type:'danger', message:$e->getMessage());
         }
 
-        $product->delete();
-
-        $this->dispatch('toast', type:'success', message:'Produto removido.');
+        $this->dispatch('toast', type:'success', message:'Produto desativado.');
     }
 
     public function render()
     {
-        $products = Produto::query()
-            ->with(['price','grupo','salesLines'])
-            ->when($this->search, fn($q) =>
-                $q->where(function($query) {
-                    $query->where('ProductDescription','like','%'.$this->search.'%')
-                          ->orWhere('ProductCode','like','%'.$this->search.'%');
-                })
-            )
-            ->when($this->taxa, fn($q) =>
-                $q->whereHas('price', fn($query)=>
-                    $query->where('imposto', $this->taxa)
-                )
-            )
-            ->when($this->productType, fn($q)=>
-                $q->where('ProductType',$this->productType)
-            )
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+        $empresa = Auth::user()->empresas->first();
+        $query = app(ProdutoTableQuery::class);
+        $products = $query->paginate($empresa, [
+            'search' => $this->search,
+            'taxa' => $this->taxa,
+            'productType' => $this->productType,
+            'sortField' => $this->sortField,
+            'sortDirection' => $this->sortDirection,
+            'perPage' => $this->perPage,
+        ]);
 
         return view('livewire.tables.servicos-table', compact('products'));
     }
