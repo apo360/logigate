@@ -15,6 +15,7 @@ use App\Http\Controllers\ContaCorrenteController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentoController;
+use App\Http\Controllers\DocumentoArquivoController;
 use App\Http\Controllers\ExportadorController;
 use App\Http\Controllers\IbanController;
 use App\Http\Controllers\LicenciamentoController;
@@ -125,6 +126,10 @@ use App\Models\Plano;
             'emolumento_tarifas' => EmolumentoTarifaController::class,
             'processos-drafts' => ProcessoDraftController::class,
         ]);
+
+        Route::get('/documentos-arquivo/{documentoArquivo}/preview', [DocumentoArquivoController::class, 'preview'])->name('documentos-arquivo.preview');
+        Route::get('/documentos-arquivo/{documentoArquivo}/download', [DocumentoArquivoController::class, 'download'])->name('documentos-arquivo.download');
+        Route::delete('/documentos-arquivo/{documentoArquivo}', [DocumentoArquivoController::class, 'destroy'])->name('documentos-arquivo.destroy');
 
         Route::prefix('customers')->group(function () {
             Route::post('/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);

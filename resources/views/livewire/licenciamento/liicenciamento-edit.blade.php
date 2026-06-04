@@ -280,55 +280,7 @@
 
                         <!-- ABA: DOCUMENTOS -->
                         <div x-show="tab === 'docs'" x-cloak>
-                            <div class="space-y-6">
-                                <!-- Drag-and-drop area -->
-                                <div wire:ignore>
-                                    <div id="drop-area" class="p-8 border-2 border-dashed rounded-lg text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer">
-                                        <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-3"></i>
-                                        <h6 class="font-semibold text-gray-700">Arraste e solte documentos aqui</h6>
-                                        <p class="text-sm text-gray-500 mb-3">ou clique para selecionar</p>
-                                        <label for="file-input" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 cursor-pointer inline-block">
-                                            Escolher Arquivo(s)
-                                        </label>
-                                        <input type="file" id="file-input" wire:model="novosDocumentos" multiple hidden>
-                                    </div>
-                                    @error('novosDocumentos.*') <p class="text-red-500 text-sm mt-2">{{ $message }}</p> @enderror
-                                </div>
-
-                                <!-- Lista de documentos já anexados -->
-                                @if($licenciamento->documentos->count())
-                                    <div>
-                                        <h6 class="font-semibold text-gray-700 mb-2"><i class="fas fa-folder-open"></i> Documentos Anexados</h6>
-                                        <ul class="divide-y divide-gray-200 border rounded-lg overflow-hidden">
-                                            @foreach($licenciamento->documentos as $doc)
-                                                <li class="px-4 py-2 flex justify-between items-center hover:bg-gray-50">
-                                                    <div>
-                                                        <span class="font-medium">{{ $doc->TipoDocumento ?? 'Documento' }}</span>
-                                                        <span class="text-sm text-gray-500 ml-2">({{ $doc->created_at->format('d/m/Y') }})</span>
-                                                    </div>
-                                                    <div class="space-x-2">
-                                                        <a href="{{ route('arquivos.download', $doc->NrDocumento) }}" class="text-blue-600 hover:underline text-sm">
-                                                            <i class="fas fa-download"></i> Baixar
-                                                        </a>
-                                                        <button type="button" wire:click="removerDocumento({{ $doc->id }})" class="text-red-500 hover:text-red-700 text-sm">
-                                                            <i class="fas fa-trash"></i> Remover
-                                                        </button>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @else
-                                    <p class="text-gray-500 text-center py-4">Nenhum documento anexado ainda.</p>
-                                @endif
-
-                                <!-- Botão para adicionar documentos via formulário separado -->
-                                <div class="flex justify-end">
-                                    <button type="button" wire:click="uploadDocumentos" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
-                                        <i class="fas fa-upload"></i> Carregar Novos Documentos
-                                    </button>
-                                </div>
-                            </div>
+                            <livewire:arquivo.documentos-manager contexto="licenciamento" :entidade-id="$licenciamento->id" />
                         </div>
                     </div>
                 </div>

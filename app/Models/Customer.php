@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
 use App\Traits\SharedFieldsTrait;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -55,25 +54,6 @@ class Customer extends Model
         'deleted_at'
     ];
 
-    public static function generateNewCodeCustomer($empresaId)
-    {
-        $ultimoCliente = Customer::where('empresa_id', $empresaId)->orderBy('id', 'desc')->first();
-        
-        if ($ultimoCliente) {
-            
-            $ultimoCodigo = (int) substr($ultimoCliente->CustomerID, -4); // Exemplo: pega os 4 dígitos específicos
-            
-            $novoCodigo = $ultimoCodigo + 1;
-        } else {
-            // Caso seja o primeiro licenciamento da empresa
-            $novoCodigo = 1;
-        }
-         
-        $codigo = 'cli'.str_pad($novoCodigo, 3,'0', STR_PAD_LEFT).'/'. Carbon::now()->format('y');
-        
-        return $codigo;
-    }
-    
     public function endereco(){
         return $this->hasOne(Endereco::class, 'customer_id');
     }
@@ -95,6 +75,11 @@ class Customer extends Model
     public function processos()
     {
         return $this->hasMany(Processo::class, 'customer_id');
+    }
+
+    public function documentosArquivos()
+    {
+        return $this->hasMany(DocumentoArquivo::class, 'customer_id');
     }
 
     // Licenciamentos do cliente
@@ -119,8 +104,15 @@ class Customer extends Model
 
     public function getSaldoAttribute()
     {
-        $creditos = $this->contaCorrente()->where('tipo', 'credito')->sum('valor');
-        $debitos  = $this->contaCorrente()->where('tipo', 'debito')->sum('valor');
+        $creditos = ContaCorrente::query()
+            ->where('cliente_id', $this->id)
+            ->where('tipo', 'credito')
+            ->sum('valor');
+
+        $debitos = ContaCorrente::query()
+            ->where('cliente_id', $this->id)
+            ->where('tipo', 'debito')
+            ->sum('valor');
 
         return $creditos - $debitos;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Customers;
 
+use App\Domains\Customers\Services\CustomerAccountStatementService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\ContaCorrente as CC;
@@ -88,14 +89,14 @@ class ContaCorrente extends Component
         $movimentos = CC::where('cliente_id', $this->customerId)->get();
 
         $this->totalDebitos = $movimentos
-            ->where('valor', '<', 0)
-            ->sum('valor') * -1; // torna positivo
+            ->filter(fn ($movimento) => in_array($movimento->tipo, ['debito', 'Factura', 'Débito', 'Ajuste'], true))
+            ->sum(fn ($movimento) => abs((float) $movimento->valor));
 
         $this->totalCreditos = $movimentos
-            ->where('valor', '>', 0)
-            ->sum('valor');
+            ->filter(fn ($movimento) => in_array($movimento->tipo, ['credito', 'Pagamento', 'Crédito'], true))
+            ->sum(fn ($movimento) => abs((float) $movimento->valor));
 
-        $this->saldoAtual = $movimentos->sum('valor');
+        $this->saldoAtual = app(CustomerAccountStatementService::class)->saldo((int) $this->customerId);
 
         $this->saldoInicial = 0; // opcional se não existir
     }

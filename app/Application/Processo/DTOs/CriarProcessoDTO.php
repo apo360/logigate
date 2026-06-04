@@ -74,56 +74,56 @@ class CriarProcessoDTO
             ? new ValorData($data['DataAbertura'])
             : new ValorData(date('Y-m-d')); // fallback para hoje
 
-        $dataFecho = isset($data['DataFecho'])
+        $dataFecho = !empty($data['DataFecho'])
             ? new ValorData($data['DataFecho'])
             : null;
 
-        $dataChegada = isset($data['DataChegada'])
+        $dataChegada = !empty($data['DataChegada'])
             ? new ValorData($data['DataChegada'])
             : null;
 
-        $dataCarregamento = isset($data['data_carregamento'])
+        $dataCarregamento = !empty($data['data_carregamento'])
             ? new ValorData($data['data_carregamento'])
             : null;
 
         // Converte valores monetários
-        $cambio = isset($data['Cambio'])
+        $cambio = isset($data['Cambio']) && $data['Cambio'] !== ''
             ? new ValorMonetario((float) $data['Cambio'])
             : null;
 
-        $valorTotal = isset($data['ValorTotal'])
+        $valorTotal = isset($data['ValorTotal']) && $data['ValorTotal'] !== ''
             ? new ValorMonetario((float) $data['ValorTotal'])
             : null;
 
-        $valorAduaneiro = isset($data['ValorAduaneiro'])
+        $valorAduaneiro = isset($data['ValorAduaneiro']) && $data['ValorAduaneiro'] !== ''
             ? new ValorMonetario((float) $data['ValorAduaneiro'])
             : null;
 
-        $fobTotal = isset($data['fob_total'])
+        $fobTotal = isset($data['fob_total']) && $data['fob_total'] !== ''
             ? new ValorMonetario((float) $data['fob_total'])
             : null;
 
-        $frete = isset($data['frete'])
+        $frete = isset($data['frete']) && $data['frete'] !== ''
             ? new ValorMonetario((float) $data['frete'])
             : null;
 
-        $seguro = isset($data['seguro'])
+        $seguro = isset($data['seguro']) && $data['seguro'] !== ''
             ? new ValorMonetario((float) $data['seguro'])
             : null;
 
-        $cif = isset($data['cif'])
+        $cif = isset($data['cif']) && $data['cif'] !== ''
             ? new ValorMonetario((float) $data['cif'])
             : null;
 
-        $pesoBruto = isset($data['peso_bruto'])
+        $pesoBruto = isset($data['peso_bruto']) && $data['peso_bruto'] !== ''
             ? new ValorMonetario((float) $data['peso_bruto'])
             : null;
 
-        $valorBarrilUSD = isset($data['valor_barril_usd'])
+        $valorBarrilUSD = isset($data['valor_barril_usd']) && $data['valor_barril_usd'] !== ''
             ? new ValorMonetario((float) $data['valor_barril_usd'])
             : null;
 
-        $valorBarrilLocal = isset($data['valor_barril_local'])
+        $valorBarrilLocal = isset($data['valor_barril_local']) && $data['valor_barril_local'] !== ''
             ? new ValorMonetario((float) $data['valor_barril_local'])
             : null;
 
@@ -147,14 +147,14 @@ class CriarProcessoDTO
             dataFecho: $dataFecho,
             estado: $estado,
             nrDu: $data['NrDU'] ?? null,
-            nDar: isset($data['N_Dar']) ? (int) $data['N_Dar'] : null,
+            nDar: self::nullableInt($data['N_Dar'] ?? $data['NrDAR'] ?? null),
             marcaFiscal: $data['MarcaFiscal'] ?? null,
             blcPorte: $data['BLC_Porte'] ?? null,
-            paisOrigem: isset($data['Pais_origem']) ? (int) $data['Pais_origem'] : null,
-            paisDestino: isset($data['Pais_destino']) ? (int) $data['Pais_destino'] : null,
+            paisOrigem: self::nullableInt($data['Pais_origem'] ?? null),
+            paisDestino: self::nullableInt($data['Pais_destino'] ?? null),
             portoOrigem: $data['PortoOrigem'] ?? null,
             dataChegada: $dataChegada,
-            tipoTransporte: isset($data['TipoTransporte']) ? (int) $data['TipoTransporte'] : null,
+            tipoTransporte: self::nullableInt($data['TipoTransporte'] ?? null),
             registoTransporte: $data['registo_transporte'] ?? null,
             nacionalidadeTransporte: $data['nacionalidade_transporte'] ?? null,
             formaPagamento: $data['forma_pagamento'] ?? null,
@@ -168,19 +168,19 @@ class CriarProcessoDTO
             seguro: $seguro,
             cif: $cif,
             pesoBruto: $pesoBruto,
-            portoDesembarqueId: isset($data['porto_desembarque_id']) ? (int) $data['porto_desembarque_id'] : null,
-            localizacaoMercadoriaId: isset($data['localizacao_mercadoria_id']) ? (int) $data['localizacao_mercadoria_id'] : null,
-            condicaoPagamentoId: isset($data['condicao_pagamento_id']) ? (int) $data['condicao_pagamento_id'] : null,
+            portoDesembarqueId: self::nullableInt($data['porto_desembarque_id'] ?? null),
+            localizacaoMercadoriaId: self::nullableInt($data['localizacao_mercadoria_id'] ?? null),
+            condicaoPagamentoId: self::nullableInt($data['condicao_pagamento_id'] ?? null),
             observacoes: $data['observacoes'] ?? null,
             vinheta: $data['vinheta'] ?? null,
-            quantidadeBarris: isset($data['quantidade_barris']) ? (int) $data['quantidade_barris'] : null,
+            quantidadeBarris: self::nullableInt($data['quantidade_barris'] ?? null),
             dataCarregamento: $dataCarregamento,
             valorBarrilUSD: $valorBarrilUSD,
             valorBarrilLocal: $valorBarrilLocal,
             numDeslocacoes: $data['num_deslocacoes'] ?? null,
             rsmNum: $data['rsm_num'] ?? null,
             certificadoOrigem: $data['certificado_origem'] ?? null,
-            guiaExploracao: $data['guia_exploracao'] ?? null,
+            guiaExploracao: $data['guia_exportacao'] ?? $data['guia_exploracao'] ?? null,
         );
     }
 
@@ -294,5 +294,10 @@ class CriarProcessoDTO
             'certificado_origem' => $this->certificadoOrigem,
             'guia_exploracao' => $this->guiaExploracao,
         ], static fn ($value): bool => $value !== null);
+    }
+
+    private static function nullableInt(mixed $value): ?int
+    {
+        return $value === null || $value === '' || $value === 0 || $value === '0' ? null : (int) $value;
     }
 }

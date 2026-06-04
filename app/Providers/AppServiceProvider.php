@@ -3,12 +3,16 @@
 namespace App\Providers;
 
 use App\Domains\Banco\Repositories\EmpresaBancoRepositoryInterface;
+use App\Application\Arquivo\Policies\DocumentoPolicy;
+use App\Application\Arquivo\Repositories\DocumentoRepositoryInterface;
+use App\Application\Arquivo\Repositories\EloquentDocumentoRepository;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
 use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
 use App\Domains\Processo\Repositories\EloquentProcessoRepository;
 use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
+use App\Models\DocumentoArquivo;
 use App\Models\Empresa;
 use App\Models\Licenciamento;
 use App\Models\Processo;
@@ -35,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ProcessoRepositoryInterface::class, EloquentProcessoRepository::class);
         $this->app->bind(LicenciamentoRepositoryInterface::class, EloquentLicenciamentoRepository::class);
         $this->app->bind(EmpresaBancoRepositoryInterface::class, EloquentEmpresaBancoRepository::class);
+        $this->app->bind(DocumentoRepositoryInterface::class, EloquentDocumentoRepository::class);
     }
 
     /**
@@ -44,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Security: register tenant-aware policies for core domain models.
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(DocumentoArquivo::class, DocumentoPolicy::class);
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
         Gate::policy(SalesInvoice::class, SalesInvoicePolicy::class);

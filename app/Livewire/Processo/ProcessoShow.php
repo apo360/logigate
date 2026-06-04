@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Processo;
 
-use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Models\PautaAduaneira;
 use App\Models\Processo;
 use Livewire\Component;
@@ -18,11 +17,25 @@ final class ProcessoShow extends Component
     public array $camposNaoPreenchidos = [];
     public array $camposImportantes = [];
 
-    public function mount(Processo $processo, ProcessoRepositoryInterface $repository): void
+    public function mount(Processo $processo): void
     {
         $this->pautaAduaneira = PautaAduaneira::all();
 
-        $this->processo = $processo->load(['cliente', 'exportador', 'estancia', 'mercadorias', 'procLicenFaturas', 'mercadoriasAgrupadas']);
+        $this->processo = $processo->loadMissing([
+            'cliente',
+            'exportador',
+            'estancia',
+            'tipoDeclaracao',
+            'paisOrigem',
+            'paisDestino',
+            'nacionalidadeNavio',
+            'mercadorias',
+            'procLicenFaturas',
+            'mercadoriasAgrupadas',
+            'emolumentoTarifa',
+            'portoDesembarque',
+            'localizacaoMercadoria',
+        ]);
 
         $this->camposImportantes = [
             'estancia_id' => 'Estância Aduaneira',
@@ -33,7 +46,9 @@ final class ProcessoShow extends Component
             'Pais_origem' => 'País de Origem',
         ];
 
-        $this->camposNaoPreenchidos = $repository->verificarCamposImportantes($this->camposImportantes);
+        $this->camposNaoPreenchidos = collect($this->camposImportantes)
+            ->filter(fn (string $label, string $campo): bool => blank($this->processo->{$campo}))
+            ->all();
     }
 
     public function render()

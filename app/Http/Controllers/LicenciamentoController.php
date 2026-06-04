@@ -2,14 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Licenciamento\Actions\ConstituirProcessoAction;
+use App\Application\Licenciamento\Actions\AtualizarLicenciamentoAction;
+use App\Application\Licenciamento\Actions\CriarLicenciamentoAction;
+use App\Application\Licenciamento\Actions\DuplicarLicenciamentoAction;
+use App\Application\Licenciamento\Actions\ExcluirLicenciamentoAction;
+use App\Application\Licenciamento\Actions\Export\ExportLicenciamentosToCsvAction;
+use App\Application\Licenciamento\Actions\Export\ExportLicenciamentosToExcelAction;
+use App\Application\Licenciamento\Actions\GerarTxtLicenciamentoAction;
+use App\Application\Licenciamento\DTOs\AtualizarLicenciamentoDTO;
+use App\Application\Licenciamento\DTOs\CriarLicenciamentoDTO;
 use App\Helpers\DatabaseErrorHandler;
+use App\Domains\Licenciamento\Services\LicenciamentoImportExportService;
 use App\Models\Licenciamento;
-use App\Models\MercadoriaAgrupada;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Services\LicenciamentoService;
-use Illuminate\Support\Facades\DB;
 
 class LicenciamentoController extends AuthenticatedController
 {
@@ -36,6 +44,13 @@ class LicenciamentoController extends AuthenticatedController
         return view('Licenciamento.create', [
                 'customer_id' => $request->query('customer_id')
             ]);
+    }
+
+    public function store(Request $request, CriarLicenciamentoAction $action)
+    {
+        $licenciamento = $action->execute(CriarLicenciamentoDTO::fromRequest($request, $this->empresa->id));
+
+        return redirect()->route('licenciamentos.show', $licenciamento)->with('success', 'Licenciamento criado com sucesso!');
     }
 
     public function storeDraft(Request $request){
@@ -67,150 +82,80 @@ class LicenciamentoController extends AuthenticatedController
         return view('Licenciamento.edit', compact('licenciamento'));
     }
 
+    public function update(Request $request, Licenciamento $licenciamento, AtualizarLicenciamentoAction $action)
+    {
+        $updated = $action->execute(AtualizarLicenciamentoDTO::fromRequest($request, $this->empresa->id));
+
+        return redirect()->route('licenciamentos.show', $updated)->with('success', 'Licenciamento atualizado com sucesso!');
+    }
+
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Licenciamento $licenciamento)
+    public function destroy(Licenciamento $licenciamento, ExcluirLicenciamentoAction $action)
     {
         try {
-            // Verificar se o licenciamento tem facturas, Processos ou outros registros relacionados
-            if ($licenciamento->procLicenFaturas->isNotEmpty()) {
-                return redirect()->route('licenciamentos.index')
-                                ->with('error', 'Não é possível excluir o licenciamento. Existem faturas associadas.');
-            }
-
-            // Excluir o licenciamento
-            $licenciamento->delete();
+            $action->execute((int) $licenciamento->id);
 
             return redirect()->route('licenciamentos.index')
                             ->with('success', 'Licenciamento excluído com sucesso!');
         } catch (\Exception $e) {
             return redirect()->route('licenciamentos.index')
-                            ->with('error', 'Erro ao excluir o licenciamento. Tente novamente.');
+                            ->with('error', $e->getMessage() ?: 'Erro ao excluir o licenciamento. Tente novamente.');
         }
     }
 
-    private function handleTxtImport(Request $request)
+    public function GerarTxT($IdProcesso, GerarTxtLicenciamentoAction $action)
     {
-        // Lógica para validar e processar o arquivo TXT
+        $licenciamento = Licenciamento::findOrFail((int) $IdProcesso);
+        $result = $action->execute($licenciamento);
 
-        // Lógica para processar o arquivo TXT
-        // Exemplo: Ler o arquivo linha por linha e processar os dados
+        return response()->streamDownload(function () use ($result): void {
+            echo $result['content'];
+        }, $result['filename']);
+    }
+
+    public function ConstituirProcesso($idLicenciamento, ConstituirProcessoAction $action)
+    {
+        $processo = $action->execute(Licenciamento::findOrFail((int) $idLicenciamento));
+
+        return redirect()->route('processos.edit', $processo)->with('success', 'Processo constituído com sucesso!');
+    }
+
+    public function DuplicarLicenciamento($idLicenciamento, DuplicarLicenciamentoAction $action)
+    {
+        $novo = $action->execute(Licenciamento::findOrFail((int) $idLicenciamento));
+
+        return redirect()->route('licenciamentos.show', $novo)->with('success', 'Licenciamento duplicado com sucesso!');
+    }
+
+    public function exportCsv(ExportLicenciamentosToCsvAction $action)
+    {
+        return $action->execute([]);
+    }
+
+    public function exportExcel(ExportLicenciamentosToExcelAction $action)
+    {
+        return $action->execute([]);
+    }
+
+    public function import(Request $request, LicenciamentoImportExportService $service)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,xlsx,xls,txt|max:10240',
+        ]);
+
         try {
-            DB::beginTransaction();
-            $file = $request->file('file');
-            $lines = file($file);
+            $licenciamento = $service->import($request->file('file'), $this->empresa->id, auth()->id());
 
-            $licenciamento = null;
-            $adicoes = [];
-            $empresaLogada = Auth::user()->empresas->first();
-
-            $linha0 = null;
-            $linha1 = null;
-
-            // Primeiro, capturar as linhas 0 e 1 para validação
-            foreach ($lines as $line) {
-                $fields = explode('|', trim($line));
-                if ($fields[0] == '0') {
-                    $linha0 = $fields;
-                }
-                if ($fields[0] == '1') {
-                    $linha1 = $fields;
-                }
-                if ($linha0 && $linha1) break;
-            }
-
-             // Validação da empresa (nome e cedula/nif)
-            $nomeEmpresaArquivo = $linha0[4] ?? null;
-            $cedulaEmpresaArquivo = $linha0[5] ?? null;
-            if (
-                !$empresaLogada ||
-                $empresaLogada->Empresa !== $nomeEmpresaArquivo ||
-                $empresaLogada->Cedula !== $cedulaEmpresaArquivo
-            ) {
-                return back()->with('error', 'O ficheiro não pertence à empresa logada. Importação cancelada.');
-            }
-
-            // Validação do cliente
-            $nomeClienteArquivo = $linha0[3] ?? null;
-            $customerTaxIdArquivo = $linha1[3] ?? null;
-            $cliente = \App\Models\Customer::where('CompanyName', $nomeClienteArquivo)
-                ->where('CustomerTaxID', $customerTaxIdArquivo)
-                ->where('empresa_id', $empresaLogada->id)
-                ->first();
-
-            if (!$cliente) {
-                // Aqui você pode implementar lógica para perguntar ao usuário se deseja cadastrar automaticamente
-                // Exemplo: salvar em sessão e redirecionar para tela de confirmação/cadastro
-                // Por padrão, cancela a importação
-                return back()->with('error', 'Cliente não encontrado. Cadastre o cliente antes de importar ou implemente cadastro automático.');
-            }
-
-            // Validação do exportador
-            $nomeExportadorArquivo = $linha1[2] ?? null;
-            $exportadorTaxIdArquivo = $linha1[1] ?? null;
-            $exportador = \App\Models\Exportador::where('Exportador', $nomeExportadorArquivo)
-                ->where('ExportadorTaxID', $exportadorTaxIdArquivo)
-                ->where('empresa_id', $empresaLogada->id)
-                ->first();
-
-            if (!$exportador) {
-                // Mesma lógica do cliente
-                return back()->with('error', 'Exportador não encontrado. Cadastre o exportador antes de importar ou implemente cadastro automático.');
-            }
-
-            foreach ($lines as $line) {
-                // Processar cada linha do arquivo TXT
-                // Exemplo: Dividir a linha em campos e salvar no banco de dados
-                $fields = explode('|', trim($line));
-                $tipo = $fields[0];
-
-                // Aqui você pode mapear os campos para o modelo correspondente e salvar
-                if ($tipo == '0') {
-                    // Linha 0: Cabeçalho do processo
-                    $licenciamento = Licenciamento::create([
-                        'estancia_id' => $fields[2] ?? null,
-                        'descricao' => $fields[3] ?? null,
-                        'empresa_id' => Auth::user()->empresas->first()->id,
-                        'referencia_cliente' => $fields[7] ?? null,
-                        // Adicione outros campos conforme necessário
-                    ]);
-                } elseif ($tipo == '1' && $licenciamento) {
-                    // Linha 1: Informações do exportador e transporte
-                    $licenciamento->update([
-                        'tipo_transporte' => $fields[6] ?? null,
-                        'registo_transporte' => $fields[7] ?? null,
-                        'manifesto' => $fields[9] ?? null,
-                        'factura_proforma' => $fields[10] ?? null,
-                        'porto_entrada' => $fields[12] ?? null,
-                        'tipo_declaracao' => $fields[13] ?? null,
-                        'peso_bruto' => $fields[15] ?? null,
-                        // Adicione outros campos conforme necessário
-                    ]);
-                } elseif ($tipo == '2' && $licenciamento) {
-                    // Linha 2: Adições de mercadorias
-                    $adicoes[] = [
-                        'licenciamento_id' => $licenciamento->id,
-                        'codigo_aduaneiro' => $fields[6] ?? null,
-                        'quantidade_total' => $fields[7] ?? null,
-                        'peso_total' => $fields[10] ?? null,
-                        'moeda' => $fields[11] ?? null,
-                        'preco_total' => $fields[12] ?? null,
-                        // Adicione outros campos conforme necessário
-                    ];
-                }
-            }
-
-            // Salvar adições
-            foreach ($adicoes as $adicao) {
-                MercadoriaAgrupada::create($adicao);
-            }
-
-            DB::commit();
-            return back()->with('success', 'Licenciamento importado com sucesso!');
+            return redirect()->route('licenciamentos.show', $licenciamento)->with('success', 'Importação concluída!');
         } catch (\Throwable $e) {
-            DB::rollBack();
-            return back()->with('error', 'Erro ao importar o arquivo TXT: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function pice()
+    {
+        return view('Licenciamento.index');
     }
 }

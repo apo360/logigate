@@ -11,8 +11,6 @@ use Illuminate\Support\Str;
 
 class FileService
 {
-    private string $bucket = 'logigate-arquivos-aduaneiro';
-
     public function __construct(private readonly ?S3Client $s3Client = null)
     {
     }
@@ -20,7 +18,7 @@ class FileService
     public function listItems(int $empresaId): array
     {
         $result = $this->client()->listObjectsV2([
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Prefix' => $this->tenantPrefix($empresaId),
             'Delimiter' => '/',
         ]);
@@ -61,7 +59,7 @@ class FileService
             $filePath = $this->buildTenantKey($empresaId, $relativePath);
 
             $this->client()->putObject([
-                'Bucket' => $this->bucket,
+                'Bucket' => $this->bucket(),
                 'Key' => $filePath,
                 'SourceFile' => $file->getPathname(),
             ]);
@@ -95,7 +93,7 @@ class FileService
     {
         $prefix = $this->buildTenantKey($empresaId, $this->normalizeTenantRelativePath($empresaId, $arquivo), true);
         $result = $this->client()->listObjectsV2([
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Prefix' => $prefix,
         ]);
 
@@ -105,7 +103,7 @@ class FileService
     public function createMasterFolder(int $empresaId): void
     {
         $this->client()->putObject([
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Key' => $this->tenantPrefix($empresaId),
             'Body' => '',
         ]);
@@ -120,7 +118,7 @@ class FileService
         );
 
         $this->client()->putObject([
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Key' => $caminhoCompleto,
             'Body' => '',
         ]);
@@ -129,7 +127,7 @@ class FileService
     public function deleteObject(int $empresaId, string $arquivo): void
     {
         $this->client()->deleteObject([
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Key' => $this->normalizeTenantKey($empresaId, $arquivo),
         ]);
     }
@@ -138,7 +136,7 @@ class FileService
     {
         $normalizedKey = $this->normalizeTenantKey($empresaId, $key);
         $result = $this->client()->getObject([
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Key' => $normalizedKey,
         ]);
 
@@ -153,7 +151,7 @@ class FileService
     {
         $normalizedKey = $this->normalizeTenantKey($empresaId, $key);
         $command = $this->client()->getCommand('GetObject', [
-            'Bucket' => $this->bucket,
+            'Bucket' => $this->bucket(),
             'Key' => $normalizedKey,
         ]);
 
@@ -226,5 +224,10 @@ class FileService
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ],
         ]);
+    }
+
+    private function bucket(): string
+    {
+        return (string) config('filesystems.disks.s3.bucket');
     }
 }

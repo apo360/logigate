@@ -22,7 +22,8 @@ class CustomerRequest extends FormRequest
      */
     public function rules()
     {
-        $id = $this->route('customer'); // Obtém o ID do cliente se estiver na atualização
+        $routeCustomer = $this->route('customer');
+        $id = is_object($routeCustomer) ? $routeCustomer->id : $routeCustomer; // Obtém o ID do cliente se estiver na atualização
         $customer = Customer::where('id', $id)->first(); 
 
         // Verifica se o cliente possui faturas ou processos fechados
@@ -31,14 +32,19 @@ class CustomerRequest extends FormRequest
             $customer->processos()->where('Estado', 'fechado')->exists() // Cliente tem processo fechado
         );
 
-        return [
-                'CustomerTaxID' => [
+        $taxIdRules = [
                 'required',
                 'string',
                 'min:6',
                 'max:14',
-                Rule::unique('customers', 'CustomerTaxID')->ignore($id),
-            ],
+        ];
+
+        if ($id) {
+            $taxIdRules[] = Rule::unique('customers', 'CustomerTaxID')->ignore($id);
+        }
+
+        return [
+                'CustomerTaxID' => $taxIdRules,
             'AccountID' => ['nullable', 'string', 'max:30'],
             'CompanyName' => ['required', 'string', 'max:100'],
             'Telephone' => ['nullable', 'string', 'max:20'],

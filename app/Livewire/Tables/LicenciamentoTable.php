@@ -210,7 +210,18 @@ class LicenciamentoTable extends Component
                       ->orWhere('licenciamentos.codigo_licenciamento', 'like', '%' . $this->search . '%');
                 });
             })
-            ->when($this->status, fn($q) => $q->where('licenciamentos.estado_licenciamento', $this->status))
+            ->when($this->status, function ($q): void {
+                match ($this->status) {
+                    'Por licenciar' => $q->where(function ($query): void {
+                        $query->whereNull('licenciamentos.txt_gerado')->orWhere('licenciamentos.txt_gerado', 0);
+                    }),
+                    'Licenciado' => $q->where('licenciamentos.txt_gerado', 1)
+                        ->whereHas('procLicenFaturas', fn ($query) => $query->where('status_fatura', 'paga')),
+                    'Em licenciamento' => $q->where('licenciamentos.txt_gerado', 1)
+                        ->whereDoesntHave('procLicenFaturas', fn ($query) => $query->where('status_fatura', 'paga')),
+                    default => null,
+                };
+            })
             ->when($this->estancia_id, fn($q) => $q->where('licenciamentos.estancia_id', $this->estancia_id))
             ->when($this->data_inicio, fn($q) => $q->whereDate('licenciamentos.created_at', '>=', $this->data_inicio))
             ->when($this->data_fim, fn($q) => $q->whereDate('licenciamentos.created_at', '<=', $this->data_fim))

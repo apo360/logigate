@@ -2,7 +2,8 @@
 
 namespace App\Livewire\Customers;
 
-use App\Domains\Customers\Actions\CreateCustomerAction;
+use App\Domains\Customers\Actions\CreateOrAssociateCustomerAction;
+use App\Domains\Customers\Actions\UpdateCustomerAssociationAction;
 use App\Domains\Customers\Data\CustomerFormData;
 use Livewire\Component;
 use App\Models\Customer;
@@ -178,8 +179,11 @@ class Form extends Component
                 return;
             }
             
-            // Associar cliente existente à empresa do usuário
-            $this->existingCustomer->empresas()->syncWithoutDetaching([$userEmpresaId]);
+            $empresa = Auth::user()->empresas->first();
+            app(UpdateCustomerAssociationAction::class)->execute($this->existingCustomer, $empresa, [
+                'status' => 'ativo',
+                'data_associacao' => now(),
+            ]);
 
             
             // Fechar modal e resetar formulário
@@ -273,7 +277,7 @@ class Form extends Component
         try {
             $this->form['CustomerTaxID'] = $cleanNif;
             $dto = CustomerFormData::fromArray($this->form);
-            $cliente = app(CreateCustomerAction::class)->execute($dto, $empresa);
+            $cliente = app(CreateOrAssociateCustomerAction::class)->execute($dto, $empresa);
 
             $this->dispatch('toast', ['type' => 'success', 'message' => 'Cliente criado com sucesso!']);
             

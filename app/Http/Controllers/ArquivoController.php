@@ -190,6 +190,8 @@ class ArquivoController extends AuthenticatedController
 
     public function download($key)
     {
+        $this->denyLegacyKeyRoute();
+
         try {
             $result = $this->fileService->downloadObject($this->resolveEmpresaId(), $key);
 
@@ -203,6 +205,8 @@ class ArquivoController extends AuthenticatedController
 
     public function visualizar($key)
     {
+        $this->denyLegacyKeyRoute();
+
         try {
             $presignedUrl = $this->fileService->createPreviewUrl($this->resolveEmpresaId(), $key);
 
@@ -221,5 +225,14 @@ class ArquivoController extends AuthenticatedController
         abort_if(!$empresaId, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return (int) $empresaId;
+    }
+
+    private function denyLegacyKeyRoute(): void
+    {
+        abort_unless(
+            (bool) env('ALLOW_LEGACY_FILE_KEY_ROUTES', false),
+            403,
+            'Rotas legadas por chave de arquivo estão bloqueadas até migração para autorização por documento.'
+        );
     }
 }

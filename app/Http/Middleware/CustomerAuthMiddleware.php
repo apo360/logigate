@@ -15,9 +15,6 @@ class CustomerAuthMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!session()->has('customer_logged_in') || !$request->session()->get('customer_logged_in')) {
-            return redirect()->route('customer.verify-nif')->with('error', 'Acesso restrito. Insira o NIF corretamente.');
-        }
-        return $next($request);
+        abort(403, 'O portal do cliente está temporariamente bloqueado até ser migrado para autenticação segura.');
     }
 }

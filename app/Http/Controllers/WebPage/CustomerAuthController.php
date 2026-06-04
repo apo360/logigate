@@ -4,27 +4,11 @@ namespace App\Http\Controllers\WebPage;
 
 use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
-use App\Models\Customer;
 
 class CustomerAuthController extends BaseController
 {
     public function verifyNif(Request $request)
     {
-        $request->validate([
-            'nif' => 'required|string|size:12',
-        ]);
-
-        // Verificar a existencia do nif no banco de dados
-        $customer = Customer::where('CustomerTaxID', $request->nif)->first();
-
-        if ($customer) {
-            session(['customer_logged_in' => true]);
-             return response()->json([
-                'success' => true,
-                'redirect_url' => route('customer.web.dashboard'),
-            ]);
-        }
-
-        return back()->withErrors(['nif' => 'NIF inválido.']);
+        abort(403, 'O acesso ao portal do cliente por NIF está temporariamente bloqueado até ser migrado para autenticação segura.');
     }
 }

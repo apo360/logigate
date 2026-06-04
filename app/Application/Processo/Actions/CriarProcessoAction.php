@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace App\Application\Processo\Actions;
 
+use App\Application\Arquivo\Actions\CriarPastaProcessoAction;
 use App\Application\Processo\DTOs\CriarProcessoDTO;
 use App\Domains\Processo\Exceptions\NumeroProcessoDuplicadoException;
 use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Domains\Processo\Services\GeradorNumeroProcessoService;
+use App\Domains\Processo\Services\ProcessoLifecycleRules;
 use App\Models\Processo;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 final readonly class CriarProcessoAction
 {
     public function __construct(
         private ProcessoRepositoryInterface $processos,
         private GeradorNumeroProcessoService $geradorNumero,
+        private ProcessoLifecycleRules $rules,
+        private CriarPastaProcessoAction $criarPastaProcesso,
     ) {
     }
 
@@ -29,16 +32,17 @@ final readonly class CriarProcessoAction
                 throw NumeroProcessoDuplicadoException::comNumero($numero);
             }
 
-            if ($dto->dataFecho !== null && $dto->dataAbertura !== null && $dto->dataFecho < $dto->dataAbertura) {
-                throw new InvalidArgumentException('A data de fecho não pode ser anterior à data de abertura.');
-            }
+            $this->rules->assertDataFechoNaoAnterior((string) $dto->dataAbertura, $dto->dataFecho?->__toString());
 
             // Evita reconversão desnecessária via toArray/fromArray (contrato simétrico do DTO)
             // e garante que o número gerado seja persistido no campo correto.
             $payload = $dto->toArray();
             $payload['NrProcesso'] = $numero;
 
-            return $this->processos->create(CriarProcessoDTO::fromArray($payload));
+            $processo = $this->processos->create(CriarProcessoDTO::fromArray($payload));
+            $this->criarPastaProcesso->execute($processo);
+
+            return $processo;
         });
     }
 }

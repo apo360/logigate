@@ -3,6 +3,8 @@
 
 namespace App\Application\Licenciamento\Actions\Import;
 
+use App\Application\Licenciamento\Actions\CriarLicenciamentoAction;
+use App\Application\Licenciamento\DTOs\CriarLicenciamentoDTO;
 use App\Models\Licenciamento;
 use App\Models\MercadoriaAgrupada;
 use App\Models\Customer;
@@ -14,6 +16,10 @@ use Illuminate\Support\Facades\Log;
 
 class ImportLicenciamentosFromTxtAction
 {
+    public function __construct(private CriarLicenciamentoAction $criarLicenciamento)
+    {
+    }
+
     public function execute(UploadedFile $file, int $empresaId, int $userId): Licenciamento
     {
         $path = $file->getRealPath();
@@ -134,10 +140,7 @@ class ImportLicenciamentosFromTxtAction
             $data['fob_total'] = $fobTotal;
             $data['cif'] = $fobTotal; // pode adicionar frete/seguro se houver no TXT
 
-            // Gerar código automaticamente
-            $data['codigo_licenciamento'] = $this->gerarCodigo();
-
-            $licenciamento = Licenciamento::create($data);
+            $licenciamento = $this->criarLicenciamento->execute(new CriarLicenciamentoDTO($data));
 
             // Inserir adições (MercadoriaAgrupada)
             foreach ($linhasAdicoes as $idx => $adicao) {
@@ -160,15 +163,4 @@ class ImportLicenciamentosFromTxtAction
         });
     }
 
-    private function gerarCodigo(): string
-    {
-        $year = now()->format('Y');
-        $last = Licenciamento::whereYear('created_at', $year)->max('codigo_licenciamento');
-        $sequence = 1;
-        if ($last) {
-            $parts = explode('/', $last);
-            $sequence = (int)end($parts) + 1;
-        }
-        return sprintf('%s/%04d', $year, $sequence);
-    }
 }

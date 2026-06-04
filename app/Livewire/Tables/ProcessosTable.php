@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Tables;
 
+use App\Application\Processo\Actions\ExcluirProcessoAction;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Processo;
@@ -85,15 +86,13 @@ class ProcessosTable extends Component
 
     public function deleteProcesso(int $id): void
     {
-        $processo = Processo::find($id);
-
-        if ($processo) {
-            $processo->delete();
+        try {
+            app(ExcluirProcessoAction::class)->execute($id);
             $this->resetPage();
             $this->loadNotifications();
             $this->dispatch('toast', type: 'success', message: 'Processo eliminado com sucesso.');
-        } else {
-            $this->dispatch('toast', type: 'error', message: 'Processo não encontrado.');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: $e->getMessage());
         }
     }
 

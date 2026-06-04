@@ -2,6 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Processo\Actions\ExcluirProcessoAction;
+use App\Application\Processo\Actions\FinalizarProcessoAction;
+use App\Application\Processo\Actions\AtualizarProcessoAction;
+use App\Application\Processo\Actions\CriarProcessoAction;
+use App\Application\Processo\DTOs\AtualizarProcessoDTO;
+use App\Application\Processo\DTOs\CriarProcessoDTO;
+use App\Application\Processo\Queries\ListarProcessosFinalizaveisQuery;
 use App\Domains\Banco\Services\BancoListService;
 use App\Helpers\DatabaseErrorHandler;
 use App\Helpers\PdfHelper;
@@ -21,7 +28,6 @@ use App\Models\TipoTransporte;
 use App\Models\CondicaoPagamento;
 use App\Models\EmolumentoTarifa;
 use App\Models\MercadoriaLocalizacao;
-use App\Services\ProcessoService;
 
 
 use Carbon\Carbon;
@@ -37,7 +43,7 @@ use SimpleXMLElement;
 
 class ProcessoController extends AuthenticatedController
 {
-    public function __construct(private readonly ProcessoService $processoService)
+    public function __construct()
     {
         parent::__construct();
     }
@@ -134,11 +140,38 @@ class ProcessoController extends AuthenticatedController
         ]);
     }
 
+    public function store(ProcessoRequest $request, CriarProcessoAction $action)
+    {
+        $data = $request->validated();
+        $data['user_id'] = Auth::id();
+        $data['empresa_id'] = $this->empresa->id;
+
+        $processo = $action->execute(CriarProcessoDTO::fromArray($data));
+
+        return redirect()->route('processos.edit', $processo)->with('success', 'Processo criado com sucesso!');
+    }
+
     /**
      * Display the specified resource.
      */
     public function show(Processo $processo)
     {
+        $processo->load([
+            'cliente',
+            'exportador',
+            'estancia',
+            'tipoDeclaracao',
+            'paisOrigem',
+            'paisDestino',
+            'nacionalidadeNavio',
+            'mercadorias',
+            'mercadoriasAgrupadas',
+            'procLicenFaturas',
+            'emolumentoTarifa',
+            'portoDesembarque',
+            'localizacaoMercadoria',
+        ]);
+
         return view('processos.show', compact('processo'));
     }
 
@@ -167,50 +200,49 @@ class ProcessoController extends AuthenticatedController
             'emolumentoTarifa', 'clientes', 'localizacoes'));
     }
 
+    public function update(ProcessoRequest $request, Processo $processo, AtualizarProcessoAction $action)
+    {
+        $updated = $action->execute(AtualizarProcessoDTO::fromArray(['id' => $processo->id] + $request->validated()));
+
+        return redirect()->route('processos.edit', $updated)->with('success', 'Processo atualizado com sucesso!');
+    }
+
     /**
      * Função para finalizar o processo
      */
-    public function processoFinalizar($processoID)
+    public function processoFinalizar($processoID, FinalizarProcessoAction $action)
     {
-        $processo = Processo::find($processoID);
+        try {
+            $action->execute((int) $processoID);
 
-        // Verificar se o processo existe
-        if (!$processo) {
-            Log::error('Processo não encontrado.', [
+            return response()->json(['message' => 'Processo finalizado com sucesso'], 200);
+        } catch (\InvalidArgumentException $e) {
+            Log::error('Erros ao finalizar o processo:', [
                 'processo_id' => $processoID,
-                'user_id' => Auth::user()->id,
+                'erro' => $e->getMessage(),
+                'user_id' => Auth::user()->id ?? 'Usuário não autenticado',
                 'timestamp' => now(),
             ]);
+
+            return response()->json(['errors' => [$e->getMessage()]], 422);
+        } catch (\Throwable $e) {
+            Log::error('Processo não encontrado ou erro ao finalizar.', [
+                'processo_id' => $processoID,
+                'erro' => $e->getMessage(),
+                'user_id' => Auth::user()->id ?? null,
+                'timestamp' => now(),
+            ]);
+
             return response()->json(['error' => 'Processo não encontrado'], 404);
         }
-
-        $erros = $this->processoService->validateForFinalization($processo);
-
-        // Retornar erros, se existirem
-        if (count($erros) > 0) {
-            // Registrar os erros nos logs
-            Log::error('Erros ao finalizar o processo:', [
-                'processo_id' => $processoID, // Supondo que você tenha o ID do processo
-                'erros' => $erros,
-                'user_id' => Auth::user()->id ?? 'Usuário não autenticado',
-                'timestamp' => now()
-            ]);
-            return response()->json(['errors' => $erros], 422);
-            
-        }
-
-        // Atualizar o estado para finalizado
-        $this->processoService->finalize($processo);
-
-        return response()->json(['message' => 'Processo finalizado com sucesso'], 200);
     }
 
     /**
      * Função que permite listar todos os processos em condições de finalizar, mas não estão finalizados
      */
-    public function processosNaoFinalizados()
+    public function processosNaoFinalizados(ListarProcessosFinalizaveisQuery $query)
     {
-        $processos = $this->processoService->listarNaoFinalizados($this->empresa->id);
+        $processos = $query->execute($this->empresa->id);
 
         return response()->json($processos, 200);
     }
@@ -218,14 +250,15 @@ class ProcessoController extends AuthenticatedController
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy($id, ExcluirProcessoAction $action)
     {
-        $processo = Processo::find($id);
-        if ($processo) {
-            $processo->delete();
+        try {
+            $action->execute((int) $id);
+
             return redirect()->route('processos.index')->with('success', 'Processo excluído com sucesso!');
+        } catch (\Throwable $e) {
+            return redirect()->route('processos.index')->with('error', $e->getMessage() ?: 'Processo não encontrado.');
         }
-        return redirect()->route('processos.index')->with('error', 'Processo não encontrado.');
     }
     /**
      * Função para calcular as tarifas e impostos

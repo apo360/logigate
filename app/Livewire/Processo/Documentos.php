@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Processo;
 use App\Models\ProcessoDocumento;
+use Illuminate\Validation\ValidationException;
 
 class Documentos extends Component
 {
@@ -21,6 +22,10 @@ class Documentos extends Component
     public function save()
     {
         $this->validate();
+
+        throw ValidationException::withMessages([
+            'files' => 'Upload de documentos do processo está temporariamente bloqueado até migração para S3 privado com autorização por documento.',
+        ]);
 
         foreach ($this->files as $file) {
 
@@ -45,6 +50,10 @@ class Documentos extends Component
 
     public function remove($id)
     {
+        throw ValidationException::withMessages([
+            'documento' => 'Remoção de documentos do processo está temporariamente bloqueada até migração para S3 privado com autorização por documento.',
+        ]);
+
         ProcessoDocumento::findOrFail($id)->delete();
 
         $this->dispatch('toast',
@@ -60,4 +69,3 @@ class Documentos extends Component
         ]);
     }
 }
-

@@ -134,6 +134,9 @@ class AtualizarLicenciamentoDTO
                 + ($validated['seguro'] ?? 0);
         }
 
+        $routeLicenciamento = $request->route('licenciamento');
+        $validated['id'] = is_object($routeLicenciamento) ? $routeLicenciamento->id : $routeLicenciamento;
+
         return new self($validated);
     }
 

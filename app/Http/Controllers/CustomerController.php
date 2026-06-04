@@ -2,23 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Arquivo\Actions\UploadDocumentoAction;
+use App\Application\Arquivo\DTOs\UploadDocumentoDTO;
+use App\Domains\Arquivo\Enums\DocumentoCategoriaEnum;
+use App\Domains\Arquivo\Enums\DocumentoContextoEnum;
+use App\Domains\Customers\Actions\CreateOrAssociateCustomerAction;
+use App\Domains\Customers\Actions\DeleteCustomerAction;
+use App\Domains\Customers\Actions\ToggleCustomerStatusAction;
+use App\Domains\Customers\Actions\UpdateCustomerAssociationAction;
+use App\Domains\Customers\Actions\UpdateCustomerProfileAction;
+use App\Domains\Customers\Data\CustomerFormData;
+use App\Domains\Customers\Services\CustomerAccountStatementService;
 use App\Exports\CustomersExport;
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\CustomerRequest;
 use App\Imports\CustomersImport;
-use App\Models\ContaCorrente;
 use App\Models\Customer;
-use App\Models\Endereco;
 use App\Models\Municipio;
 use App\Models\Pais;
 use App\Models\Processo;
 use App\Models\Provincia;
-use App\Models\SalesInvoice;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -61,39 +67,23 @@ class CustomerController extends AuthenticatedController
         $formType = $request->get('formType'); 
 
         try {
-            DB::beginTransaction();
-
-            $custValidate = $request->validated();
-
-            // Verificar se o cliente já existe
-            $existingCustomer = Customer::where('CustomerTaxID', $custValidate['CustomerTaxID'])->first();
-
-            if (!$existingCustomer) {
-                // Cria novo cliente
-                $customer = Customer::create($custValidate);
-            } else {
-                $customer = $existingCustomer;
-            }
-
-            // Verificar se já está associado à empresa
             $empresa = Auth::user()->empresas->first();
-            $jaAssociado = $customer->empresas()->where('empresa_id', $empresa->id)->exists();
+            $customer = app(CreateOrAssociateCustomerAction::class)->execute(
+                CustomerFormData::fromArray($request->validated() + $request->only([
+                    'BuildingNumber',
+                    'StreetName',
+                    'AddressDetail',
+                    'Province',
+                    'City',
+                    'PostalCode',
+                    'Country',
+                    'AddressType',
+                    'codigo_cliente',
+                    'status',
+                ])),
+                $empresa
+            );
 
-            if (!$jaAssociado) {
-                DB::table('customers_empresas')->insert([
-                    'customer_id' => $customer->id,
-                    'empresa_id' => $empresa->id,
-                    'codigo_cliente' => null,
-                    'status' => 'ativo',
-                    'data_associacao' => now(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            DB::commit();
-
-            // ✅ Resposta para formulários do tipo "modal"
             if ($formType === 'modal') {
                 return response()->json([
                     'message' => 'Cliente adicionado com sucesso!',
@@ -101,23 +91,6 @@ class CustomerController extends AuthenticatedController
                     'codCli' => $customer->CustomerTaxID,
                 ], 200);
             }
-
-            // ✅ Criação de endereço (apenas quando não é modal)
-            $enderecoData = $request->only([
-                'BuildingNumber',
-                'StreetName',
-                'AddressDetail',
-                'Province',
-                'City',
-                'PostalCode',
-                'Country',
-            ]);
-
-            $enderecoData['AddressType'] = 'Facturamento';
-            $enderecoData['customer_id'] = $customer->id;
-
-            $enderecoController = new EnderecoController();
-            $enderecoController->store(new Request($enderecoData));
 
             return redirect()->route('customers.edit', $customer->id)
                 ->with('success', 'Cliente inserido com sucesso!');
@@ -134,8 +107,6 @@ class CustomerController extends AuthenticatedController
      */
     public function show(Customer $customer)
     {
-        $customer = Customer::findOrFail($customer->id);
-
         $processosMes = $customer->processos()
             ->selectRaw('MONTH(created_at) as mes, COUNT(*) total')
             ->groupBy('mes')
@@ -194,64 +165,33 @@ class CustomerController extends AuthenticatedController
     {
 
         try {
-            DB::beginTransaction();
-
             $user = Auth::user();
             $empresa = $user->empresas->first();
             $dadosValidados = $request->validated();
             $escopo = $request->get('escopo', 'local'); // padrão: local
 
-            // Verifica se o cliente está associado à empresa
-            $associacao = $customer->empresas()->where('empresa_id', $empresa->id)->first();
-
             if ($escopo === 'global') {
-                // Atualização global (dados centrais do cliente)
                 if ($user->hasRole('admin') || $user->can('update-global-customer')) {
-                    $customer->update($dadosValidados);
+                    app(UpdateCustomerProfileAction::class)->execute(
+                        $customer,
+                        CustomerFormData::fromArray($dadosValidados + $request->only([
+                            'BuildingNumber',
+                            'StreetName',
+                            'AddressDetail',
+                            'Province',
+                            'City',
+                            'PostalCode',
+                            'Country',
+                            'AddressType',
+                        ]))
+                    );
                 } else {
                     throw new \Exception('Sem permissão para atualização global.');
                 }
             } else {
-                // Atualização local (dados da associação)
-                if ($associacao) {
-                    $customer->empresas()->updateExistingPivot($empresa->id, [
-                        'codigo_cliente'   => $dadosValidados['codigo_cliente'] ?? $associacao->pivot->codigo_cliente,
-                        'additional_info'  => $dadosValidados['additional_info'] ?? $associacao->pivot->additional_info,
-                        'status'           => $dadosValidados['status'] ?? $associacao->pivot->status,
-                        'data_associacao'  => $associacao->pivot->data_associacao ?? now(),
-                    ]);
-                } else {
-                    // Cria associação se não existir
-                    $customer->empresas()->attach($empresa->id, [
-                        'codigo_cliente'   => $dadosValidados['codigo_cliente'] ?? null,
-                        'additional_info'  => $dadosValidados['additional_info'] ?? null,
-                        'status'           => $dadosValidados['status'] ?? 'ATIVO',
-                        'data_associacao'  => now(),
-                    ]);
-                }
+                app(UpdateCustomerAssociationAction::class)->execute($customer, $empresa, $dadosValidados);
             }
 
-            // Atualiza ou cria endereço (somente se for global)
-            if ($escopo === 'global') {
-                $endereco = $customer->endereco ?? Endereco::create(['customer_id' => $customer->id]);
-                $enderecoController = new EnderecoController();
-
-                $enderecoRequest = new Request($request->only([
-                    'BuildingNumber',
-                    'StreetName',
-                    'AddressDetail',
-                    'Province',
-                    'City',
-                    'PostalCode',
-                    'Country',
-                ]));
-
-                $enderecoController->update($enderecoRequest, $endereco);
-            }
-
-            DB::commit();
-
-            // Se for AJAX
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
@@ -269,8 +209,6 @@ class CustomerController extends AuthenticatedController
                     : 'Cliente atualizado localmente com sucesso!');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -288,103 +226,30 @@ class CustomerController extends AuthenticatedController
     public function destroy(Request $request, Customer $customer)
     {
         try {
-            DB::beginTransaction();
+            app(DeleteCustomerAction::class)->execute($customer);
 
-            // Check if the customer has any related  processes
-            if ($customer->processos()->exists()) {
-                // If the customer has related processes, don't delete and alert the administrator.
-                return redirect()->route('customers.index')->with('error', 'O cliente possui processos relacionados e não pode ser removido!');
-            }
-
-            // Check if the customer has any related invoices
-            if ($customer->invoices()->exists()) {
-                // If the customer has related invoices, don't delete and alert the administrator.
-                return redirect()->route('customers.index')->with('error', 'O cliente possui faturas relacionados e não pode ser removido!');
-            }
-
-            // If the customer does not have any related invoices or processes, proceed with deletion
-            $customer->delete();
-
-            DB::commit();
-
-            // Redirect to the customer listing page
             return redirect()->route('customers.index')->with('success', 'Cliente removido com sucesso!');
 
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('customers.index')->with('error', $e->getMessage());
         } catch (QueryException $e) {
-            DB::rollBack();
-
             return DatabaseErrorHandler::handle($e, $request);
         }
     }
 
-    public function index_conta()
+    public function index_conta(CustomerAccountStatementService $statementService)
     {
-        // Listar todos os clientes
         $clientes = Customer::all();
-        $resultados = [];
+        $summary = $statementService->resumoPorClientes($clientes);
 
-        // Inicializar as variaveis (Totais gerais)
-        $totalSaldo = 0;
-        $totalDividaCorrente = 0;
-        $totalDividaVencida = 0;
-
-        foreach ($clientes as $cliente) {
-            // Obter todas as transações da conta corrente do cliente
-            $transacoes = ContaCorrente::where('cliente_id', $cliente->id)->orderBy('data', 'desc')->get();
-
-            // Calcular o saldo
-            $saldo = $transacoes->sum(function ($transacao) {
-                return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
-            });
-
-            // Inicializar variaveis de dívidas
-            $dividaCorrente = 0;
-            $dividaVencida = 0;
-
-            // Obter as faturas associadas ao cliente, se houver
-            $facturas = SalesInvoice::where('customer_id', $cliente->id)->get();
-
-            if ($facturas->isNotEmpty()) {
-                foreach ($facturas as $invoice) {
-                    $grossTotal = $invoice->salesdoctotal->gross_total ?? 0;
-
-                    if ($invoice->invoice_date_end >= Carbon::now()) {
-                        $dividaCorrente += $grossTotal;
-                    } else {
-                        $dividaVencida += $grossTotal;
-                    }
-                }
-            }
-
-            // Somente armazena resultados para clientes com valores diferentes de zero
-            if ($saldo != 0 || $dividaCorrente != 0 || $dividaVencida != 0) {
-                $resultados[] = [
-                    'cliente' => $cliente,
-                    'saldo' => $saldo,
-                    'dividaCorrente' => $dividaCorrente,
-                    'dividaVencida' => $dividaVencida,
-                ];
-            }
-
-            // Atualizar totais gerais
-            $totalSaldo += $saldo;
-            $totalDividaCorrente += $dividaCorrente;
-            $totalDividaVencida += $dividaVencida;
-        }
-
-        return view('customer.index_conta_c', compact('resultados', 'totalSaldo', 'totalDividaCorrente', 'totalDividaVencida'));
+        return view('customer.index_conta_c', $summary);
     }
 
-    public function conta($id){
+    public function conta($id, CustomerAccountStatementService $statementService){
 
         $cliente = Customer::findOrFail($id);
-        
-        $transacoes = ContaCorrente::where('cliente_id', $id)->orderBy('data', 'desc')->get();
-
-        // Calcular o saldo baseado nas transações
-        $saldo = $transacoes->sum(function ($transacao) {
-            return $transacao->tipo === 'credito' ? $transacao->valor : -$transacao->valor;
-        });
+        $transacoes = $statementService->movimentos((int) $id);
+        $saldo = $statementService->saldo((int) $id);
 
         return view('customer.conta_c', compact('cliente', 'transacoes', 'saldo'));
     }
@@ -448,9 +313,7 @@ class CustomerController extends AuthenticatedController
     {
         try {
             $customer = Customer::findOrFail($id);
-
-            $customer->is_active = $request->is_active;
-            $customer->save();
+            app(ToggleCustomerStatusAction::class)->execute($customer, (bool) $request->is_active);
 
             return response()->json(['success' => true, 'message' => 'Status atualizado com sucesso.']);
         } catch (ModelNotFoundException $e) {
@@ -468,21 +331,24 @@ class CustomerController extends AuthenticatedController
     /**
      * Documentos Store do Cliente para o S3
      */
-    public function documentosStore(Request $request, $id)
+    public function documentosStore(Request $request, $id, UploadDocumentoAction $action)
     {
         // Validação do arquivo
         $request->validate([
-            'documento' => 'required|file|max:5120', // Máximo 5MB
+            'documento' => 'required|file|max:10240',
+            'categoria' => 'nullable|string',
         ]);
 
         $customer = Customer::findOrFail($id);
 
-        // Armazenar o arquivo no S3
-        $path = $request->file('documento')->store('customer_documents/' . $customer->id, 's3');
+        $documento = $action->execute(new UploadDocumentoDTO(
+            file: $request->file('documento'),
+            contexto: DocumentoContextoEnum::CUSTOMER,
+            categoria: DocumentoCategoriaEnum::tryFrom((string) $request->input('categoria')) ?? DocumentoCategoriaEnum::DOCUMENTOS,
+            entidadeId: (int) $customer->id,
+            uploadedBy: (int) Auth::id(),
+        ));
 
-        // Salvar o caminho do arquivo no banco de dados (se necessário)
-        // Exemplo: $customer->document_path = $path; $customer->save();
-
-        return response()->json(['message' => 'Documento armazenado com sucesso!', 'path' => $path]);
+        return response()->json(['message' => 'Documento armazenado com sucesso!', 'documento_id' => $documento->id]);
     }
 }

@@ -42,8 +42,11 @@ final class ProcessoCreate extends Component
     #[Rule('required|string|max:50')]
     public ?string $vinheta = null;
 
-    #[Rule('required|in:11,21')]
+    #[Rule('required|exists:regiao_aduaneiras,id')]
     public string $TipoProcesso = '11';
+
+    #[Rule('required|string')]
+    public string $Estado = 'Aberto';
 
     #[Rule('nullable|string|max:200')]
     public ?string $RefCliente = null;
@@ -82,7 +85,7 @@ final class ProcessoCreate extends Component
     public ?float $ValorAduaneiro = 0;
 
     #[Rule('nullable|string')]
-    public ?string $tipo_transporte = null;
+    public $TipoTransporte = null;
 
     #[Rule('nullable|string|max:100')]
     public ?string $registo_transporte = null;
@@ -93,8 +96,8 @@ final class ProcessoCreate extends Component
     #[Rule('nullable|string|max:20')]
     public ?string $NrDU = null;
 
-    #[Rule('nullable|string|max:20')]
-    public ?string $NrDAR = null;
+    #[Rule('nullable|integer|min:0')]
+    public $NrDAR = null;
 
     #[Rule('nullable|string|max:50')]
     public ?string $NrMarcaFiscal = null;
@@ -108,10 +111,11 @@ final class ProcessoCreate extends Component
     #[Rule('nullable|string|max:100')]
     public ?string $PortoOrigem = null;
 
-    public ?string $porto_desembarque_id;
+    #[Rule('nullable|exists:portos,id')]
+    public $porto_desembarque_id = null;
 
     #[Rule('nullable|exists:mercadoria_localizacaos,id')]
-    public ?int $local_mercadoria_id = null;
+    public ?int $localizacao_mercadoria_id = null;
 
     #[Rule('nullable|in:Tr,CK,RD,Ou')]
     public ?string $forma_pagamento = null;
@@ -124,6 +128,9 @@ final class ProcessoCreate extends Component
 
     #[Rule('nullable|string|max:500')]
     public ?string $observacoes = null;
+
+    #[Rule('nullable|numeric|min:0')]
+    public ?float $peso_bruto = null;
 
     // Campos específicos de exportação (CRUD petróleo)
     #[Rule('nullable|date')]
@@ -270,6 +277,8 @@ final class ProcessoCreate extends Component
             'user_id' => $user->id,
             'empresa_id' => $empresa->id,
             'ValorAduaneiro' => $this->ValorAduaneiro,
+            'N_Dar' => $this->NrDAR,
+            'MarcaFiscal' => $this->NrMarcaFiscal,
         ]);
 
         try {
@@ -278,7 +287,6 @@ final class ProcessoCreate extends Component
             session()->flash('success', 'Processo criado com sucesso!');
             return redirect()->route('processos.show', $processo);
         } catch (\Exception $e) {
-            dd($e->getMessage());
             session()->flash('error', 'Erro ao criar processo: ' . $e->getMessage());
             return null;
         }

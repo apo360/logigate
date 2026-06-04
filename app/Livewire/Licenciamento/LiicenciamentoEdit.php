@@ -8,6 +8,7 @@ use App\Models\Licenciamento;
 use App\Domains\Licenciamento\Enums\TipoDeclaracao;
 use App\Domains\Licenciamento\Enums\TipoTransporte;
 use App\Domains\Licenciamento\Enums\MetodoAvaliacao;
+use App\Domains\Licenciamento\Services\CalcularCifLicenciamentoService;
 use App\Domains\Banco\Services\BancoListService;
 use Livewire\Component;
 use Livewire\Attributes\Rule;
@@ -129,7 +130,9 @@ class LiicenciamentoEdit extends Component
     public function updated($field)
     {
         if (in_array($field, ['fob_total', 'frete', 'seguro']) && !$this->cifManuallyChanged) {
-            $this->cif = (float)$this->fob_total + (float)$this->frete + (float)$this->seguro;
+            $this->cif = app(CalcularCifLicenciamentoService::class)
+                ->calcular((float) $this->fob_total, (float) $this->frete, (float) $this->seguro)
+                ->getValor();
         }
     }
 

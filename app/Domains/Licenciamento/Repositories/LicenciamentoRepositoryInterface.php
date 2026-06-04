@@ -14,4 +14,5 @@ interface LicenciamentoRepositoryInterface
     public function update(int $id, AtualizarLicenciamentoDTO $data): Licenciamento;
     public function find(int $id): ?Licenciamento;
     public function findByCustomer(int $customerId): Collection;
+    public function delete(int $id): bool;
 }

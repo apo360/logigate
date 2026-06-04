@@ -3,10 +3,15 @@
 namespace App\Application\Licenciamento\Actions;
 
 use App\Models\Licenciamento;
+use App\Domains\Licenciamento\Services\GeradorCodigoLicenciamentoService;
 use Illuminate\Support\Facades\DB;
 
 class DuplicarLicenciamentoAction
 {
+    public function __construct(private GeradorCodigoLicenciamentoService $geradorCodigo)
+    {
+    }
+
     public function execute(Licenciamento $original): Licenciamento
     {
         return DB::transaction(function () use ($original) {
@@ -20,9 +25,7 @@ class DuplicarLicenciamentoAction
                 $dados['codigo_licenciamento'] // será gerado novamente
             );
 
-            // Gerar novo código de licenciamento (ex: ano/sequência)
-            $dados['codigo_licenciamento'] = $this->gerarNovoCodigo();
-            $dados['estado_licenciamento'] = 'Pendente'; // resetar estado
+            $dados['codigo_licenciamento'] = $this->geradorCodigo->gerar((int) $original->empresa_id);
 
             // Criar novo licenciamento
             $novo = Licenciamento::create($dados);
@@ -48,15 +51,4 @@ class DuplicarLicenciamentoAction
         });
     }
 
-    private function gerarNovoCodigo(): string
-    {
-        $year = now()->format('Y');
-        $last = Licenciamento::whereYear('created_at', $year)->max('codigo_licenciamento');
-        $sequence = 1;
-        if ($last) {
-            $parts = explode('/', $last);
-            $sequence = (int)end($parts) + 1;
-        }
-        return sprintf('%s/%04d', $year, $sequence);
-    }
 }

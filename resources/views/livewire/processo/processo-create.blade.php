@@ -412,11 +412,11 @@
                         <h3 class="font-semibold text-gray-700">Resumo do Processo</h3>
                     </div>
                     <div class="p-4 space-y-3 text-sm">
-                        <div><strong>Cliente:</strong> {{ $clientes->firstWhere('id', $form['customer_id'] ?? 0)->CompanyName ?? '—' }}</div>
-                        <div><strong>Exportador:</strong> {{ $exportadores->firstWhere('id', $form['exportador_id'] ?? 0)->Exportador ?? '—' }}</div>
-                        <div><strong>FOB Total:</strong> {{ number_format($form['fob_total'] ?? 0, 2) }} {{ $form['Moeda'] ?? 'USD' }}</div>
-                        <div><strong>CIF:</strong> {{ number_format(($form['fob_total'] ?? 0) + ($form['frete'] ?? 0) + ($form['seguro'] ?? 0), 2) }} {{ $form['Moeda'] ?? 'USD' }}</div>
-                        <div><strong>Valor Aduaneiro:</strong> {{ number_format($form['ValorAduaneiro'] ?? 0, 2) }} Kz</div>
+                        <div><strong>Cliente:</strong> {{ $clientes->firstWhere('id', (int) ($customer_id ?? 0))->CompanyName ?? '—' }}</div>
+                        <div><strong>Exportador:</strong> {{ $exportadores->firstWhere('id', (int) ($exportador_id ?? 0))->Exportador ?? '—' }}</div>
+                        <div><strong>FOB Total:</strong> {{ number_format($fob_total ?? 0, 2) }} {{ $Moeda ?? 'USD' }}</div>
+                        <div><strong>CIF:</strong> {{ number_format(($fob_total ?? 0) + ($frete ?? 0) + ($seguro ?? 0), 2) }} {{ $Moeda ?? 'USD' }}</div>
+                        <div><strong>Valor Aduaneiro:</strong> {{ number_format($ValorAduaneiro ?? 0, 2) }} Kz</div>
                         <hr>
                         <div class="text-xs text-gray-500">O processo será registado com numeração automática.</div>
                     </div>

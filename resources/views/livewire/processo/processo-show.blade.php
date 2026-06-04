@@ -85,7 +85,9 @@
                                     <span class="text-sm text-gray-500">Cliente</span>
                                     <p class="font-medium">
                                         {{ $processo->cliente->CompanyName ?? '—' }}
-                                        <a href="{{ route('customers.edit', $processo->cliente->id) }}" class="text-blue-600 ml-2"><i class="fas fa-edit"></i></a>
+                                        @if($processo->cliente)
+                                            <a href="{{ route('customers.edit', $processo->cliente->id) }}" class="text-blue-600 ml-2"><i class="fas fa-edit"></i></a>
+                                        @endif
                                     </p>
                                     <p class="text-sm text-gray-600">NIF: {{ $processo->cliente->CustomerTaxID ?? '—' }}</p>
                                     <p class="text-sm text-gray-600">
@@ -100,7 +102,9 @@
                                     <span class="text-sm text-gray-500">Exportador</span>
                                     <p class="font-medium">
                                         {{ $processo->exportador->Exportador ?? '—' }}
-                                        <a href="{{ route('exportadors.edit', $processo->exportador->id) }}" class="text-blue-600 ml-2"><i class="fas fa-edit"></i></a>
+                                        @if($processo->exportador)
+                                            <a href="{{ route('exportadors.edit', $processo->exportador->id) }}" class="text-blue-600 ml-2"><i class="fas fa-edit"></i></a>
+                                        @endif
                                     </p>
                                 </div>
                                 <div>
@@ -300,35 +304,7 @@
 
                     {{-- ABA DOCUMENTOS --}}
                     <div x-show="tab === 'documentos'" x-cloak>
-                        <div class="flex justify-end mb-3">
-                            <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
-                                <i class="fas fa-plus-circle"></i> Adicionar Documento
-                            </a>
-                        </div>
-                        @if($licenciamento->documentos->isNotEmpty())
-                            <div class="space-y-4">
-                                @foreach($licenciamento->documentos->groupBy('tipo_documento') as $tipo => $documentos)
-                                    <div class="border rounded-lg overflow-hidden">
-                                        <div class="bg-gray-100 px-4 py-2 font-semibold">{{ $tipo }}</div>
-                                        <ul class="divide-y divide-gray-200">
-                                            @foreach($documentos as $doc)
-                                                <li class="px-4 py-2 hover:bg-gray-50">
-                                                    <a href="{{ route('documentos.show', $doc->id) }}" class="text-blue-600 hover:underline">
-                                                        <i class="fas fa-file-alt text-gray-500 mr-2"></i> {{ $doc->tipo_documento }} - {{ $doc->numero }}
-                                                    </a>
-                                                    <span class="text-xs text-gray-400 ml-2">(Emitido: {{ $doc->created_at->format('d/m/Y') }})</span>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-center py-10 text-gray-500">
-                                <i class="fas fa-list-alt text-4xl mb-2"></i>
-                                <p>Não existem documentos associados.</p>
-                            </div>
-                        @endif
+                        <livewire:arquivo.documentos-manager contexto="processo" :entidade-id="$processo->id" />
                     </div>
                 </div>
             </div>

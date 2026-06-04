@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -184,44 +183,6 @@ class Processo extends Model implements Auditable
     }
 
     /**
-     * Gera um novo código de processo sequencial a cada ano.
-     *
-     * @return string
-     */
-
-    // Função para gerar o código único e sequencial
-    public static function generateNewProcesso($empresaId)
-    {
-        // Obtenha o último licenciamento dessa empresa
-        $ultimoProcesso = Processo::where('empresa_id', $empresaId)->orderBy('id', 'desc')->first();
-
-        // Se houver um licenciamento anterior, incremente o número
-        if ($ultimoProcesso) {
-            $ultimoCodigo = (int) substr($ultimoProcesso->NrProcesso, -7, 4); // Exemplo: pega os 4 dígitos específicos
-            $novoCodigo = $ultimoCodigo + 1;
-        } else {
-            // Caso seja o primeiro licenciamento da empresa
-            $novoCodigo = 1;
-        }
-
-        // Obtenha o nome da empresa e gere as iniciais
-        $empresa = Empresa::findOrFail($empresaId);
-
-        if ($empresa->CodProcesso == '') {
-            // Função para obter as iniciais do nome da empresa
-            $iniciais = implode('', array_map(function ($word) {
-                return strtoupper($word[0]);
-            }, explode(' ', $empresa->nome)));
-        } else {
-            $iniciais = $empresa->CodProcesso;
-        }
-        // Gera o código com as iniciais, ID da empresa e o código do processo
-        $codigoProcesso = $iniciais . '-' . str_pad($empresaId, 3, '0', STR_PAD_LEFT) . '-' . str_pad($novoCodigo, 4, '0', STR_PAD_LEFT) . '/' . Carbon::now()->format('y');
-
-        return $codigoProcesso;
-    }
-
-    /**
      * Metodos para obter estatisticas relativamente aos processos.
      *
      * @return int
@@ -307,6 +268,11 @@ class Processo extends Model implements Auditable
     public function procLicenFaturas()
     {
         return $this->hasMany(ProcLicenFactura::class, 'processo_id');
+    }
+
+    public function documentosArquivos()
+    {
+        return $this->hasMany(DocumentoArquivo::class, 'processo_id');
     }
 
     public function porto()

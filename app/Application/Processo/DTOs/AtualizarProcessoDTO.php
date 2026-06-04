@@ -57,46 +57,46 @@ final readonly class AtualizarProcessoDTO
 
     public static function fromArray(array $data): self
     {
-        $estado = $data['Estado'] ?? null;
+        $estado = self::nullableString($data['Estado'] ?? null);
 
         return new self(
             id: (int) $data['id'],
-            contaDespacho: $data['ContaDespacho'] ?? null,
-            referenciaCliente: $data['RefCliente'] ?? null,
-            descricao: $data['Descricao'] ?? null,
-            dataAbertura: $data['DataAbertura'] ?? null,
-            dataFecho: $data['DataFecho'] ?? null,
-            tipoProcesso: isset($data['TipoProcesso']) ? (string) $data['TipoProcesso'] : null,
+            contaDespacho: self::nullableString($data['ContaDespacho'] ?? null),
+            referenciaCliente: self::nullableString($data['RefCliente'] ?? null),
+            descricao: self::nullableString($data['Descricao'] ?? null),
+            dataAbertura: self::nullableString($data['DataAbertura'] ?? null),
+            dataFecho: self::nullableString($data['DataFecho'] ?? null),
+            tipoProcesso: self::nullableString($data['TipoProcesso'] ?? null),
             estado: $estado === null ? null : ($estado instanceof EstadoProcessoEnum ? $estado : EstadoProcessoEnum::from((string) $estado)),
-            customerId: isset($data['customer_id']) ? (int) $data['customer_id'] : null,
-            exportadorId: isset($data['exportador_id']) ? (int) $data['exportador_id'] : null,
-            estanciaId: isset($data['estancia_id']) ? (int) $data['estancia_id'] : null,
-            nrDu: $data['NrDU'] ?? null,
-            nDar: isset($data['N_Dar']) ? (int) $data['N_Dar'] : null,
-            marcaFiscal: $data['MarcaFiscal'] ?? null,
-            blcPorte: $data['BLC_Porte'] ?? null,
-            paisOrigem: isset($data['Pais_origem']) ? (int) $data['Pais_origem'] : null,
-            paisDestino: isset($data['Pais_destino']) ? (int) $data['Pais_destino'] : null,
-            portoOrigem: $data['PortoOrigem'] ?? null,
-            dataChegada: $data['DataChegada'] ?? null,
-            tipoTransporte: isset($data['TipoTransporte']) ? (int) $data['TipoTransporte'] : null,
-            registoTransporte: $data['registo_transporte'] ?? null,
-            nacionalidadeTransporte: $data['nacionalidade_transporte'] ?? null,
-            formaPagamento: $data['forma_pagamento'] ?? null,
-            codigoBanco: $data['codigo_banco'] ?? null,
-            moeda: $data['Moeda'] ?? null,
-            cambio: isset($data['Cambio']) ? (float) $data['Cambio'] : null,
-            valorTotal: isset($data['ValorTotal']) ? (float) $data['ValorTotal'] : null,
-            valorAduaneiro: isset($data['ValorAduaneiro']) ? (float) $data['ValorAduaneiro'] : null,
-            fobTotal: isset($data['fob_total']) ? (float) $data['fob_total'] : null,
-            frete: isset($data['frete']) ? (float) $data['frete'] : null,
-            seguro: isset($data['seguro']) ? (float) $data['seguro'] : null,
-            cif: isset($data['cif']) ? (float) $data['cif'] : null,
-            pesoBruto: isset($data['peso_bruto']) ? (float) $data['peso_bruto'] : null,
-            portoDesembarqueId: isset($data['porto_desembarque_id']) ? (int) $data['porto_desembarque_id'] : null,
-            localizacaoMercadoriaId: isset($data['localizacao_mercadoria_id']) ? (int) $data['localizacao_mercadoria_id'] : null,
-            condicaoPagamentoId: isset($data['condicao_pagamento_id']) ? (int) $data['condicao_pagamento_id'] : null,
-            observacoes: $data['observacoes'] ?? null,
+            customerId: self::nullableInt($data['customer_id'] ?? null),
+            exportadorId: self::nullableInt($data['exportador_id'] ?? null),
+            estanciaId: self::nullableInt($data['estancia_id'] ?? null),
+            nrDu: self::nullableString($data['NrDU'] ?? null),
+            nDar: self::nullableInt($data['N_Dar'] ?? $data['NrDAR'] ?? null),
+            marcaFiscal: self::nullableString($data['MarcaFiscal'] ?? $data['NrMarcaFiscal'] ?? null),
+            blcPorte: self::nullableString($data['BLC_Porte'] ?? null),
+            paisOrigem: self::nullableInt($data['Pais_origem'] ?? null),
+            paisDestino: self::nullableInt($data['Pais_destino'] ?? null),
+            portoOrigem: self::nullableString($data['PortoOrigem'] ?? null),
+            dataChegada: self::nullableString($data['DataChegada'] ?? null),
+            tipoTransporte: self::nullableInt($data['TipoTransporte'] ?? null),
+            registoTransporte: self::nullableString($data['registo_transporte'] ?? null),
+            nacionalidadeTransporte: self::nullableString($data['nacionalidade_transporte'] ?? null),
+            formaPagamento: self::nullableString($data['forma_pagamento'] ?? null),
+            codigoBanco: self::nullableString($data['codigo_banco'] ?? null),
+            moeda: self::nullableString($data['Moeda'] ?? null),
+            cambio: self::nullableFloat($data['Cambio'] ?? null),
+            valorTotal: self::nullableFloat($data['ValorTotal'] ?? null),
+            valorAduaneiro: self::nullableFloat($data['ValorAduaneiro'] ?? null),
+            fobTotal: self::nullableFloat($data['fob_total'] ?? null),
+            frete: self::nullableFloat($data['frete'] ?? null),
+            seguro: self::nullableFloat($data['seguro'] ?? null),
+            cif: self::nullableFloat($data['cif'] ?? null),
+            pesoBruto: self::nullableFloat($data['peso_bruto'] ?? null),
+            portoDesembarqueId: self::nullableInt($data['porto_desembarque_id'] ?? null),
+            localizacaoMercadoriaId: self::nullableInt($data['localizacao_mercadoria_id'] ?? null),
+            condicaoPagamentoId: self::nullableInt($data['condicao_pagamento_id'] ?? null),
+            observacoes: self::nullableString($data['observacoes'] ?? null),
         );
     }
 
@@ -140,5 +140,20 @@ final readonly class AtualizarProcessoDTO
             'condicao_pagamento_id' => $this->condicaoPagamentoId,
             'observacoes' => $this->observacoes,
         ], static fn ($value): bool => $value !== null);
+    }
+
+    private static function nullableInt(mixed $value): ?int
+    {
+        return $value === null || $value === '' || $value === 0 || $value === '0' ? null : (int) $value;
+    }
+
+    private static function nullableFloat(mixed $value): ?float
+    {
+        return $value === null || $value === '' ? null : (float) $value;
+    }
+
+    private static function nullableString(mixed $value): ?string
+    {
+        return $value === null || $value === '' ? null : (string) $value;
     }
 }

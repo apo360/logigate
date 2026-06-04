@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
+use App\Domains\Licenciamento\Services\EstadoLicenciamentoService;
 use App\Models\Concerns\BelongsToTenant;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -128,60 +128,23 @@ class Licenciamento extends Model
         return $this->hasMany(DocumentosAduaneiros::class, 'licenciamento_id');
     }
 
+    public function documentosArquivos()
+    {
+        return $this->hasMany(DocumentoArquivo::class, 'licenciamento_id');
+    }
+
     // Métodos auxiliares
 
-    // Evento para gerar o código automaticamente
+    // Eventos do modelo não devem conter regras de negócio críticas.
     protected static function boot()
     {
         parent::boot();
-
-        // Gera o próximo código sequencial para a empresa
-        static::creating(function ($licenciamento) {
-            $licenciamento->codigo_licenciamento = self::generateCodigoLicenciamento($licenciamento->empresa_id);
-        });
-
-        // Impedir a alteração de moeda se houver uma fatura emitida ou paga
-        static::updating(function ($licenciamento) {
-            if ($licenciamento->procLicenFaturas()->whereIn('status_fatura', ['emitida', 'paga'])->exists()) {
-                if ($licenciamento->isDirty('moeda')) {
-                    throw new \Exception('Não é permitido alterar a moeda pois uma fatura já foi emitida ou paga.');
-                }
-            }
-        });
     }
 
     public function getEstadoLicenciamentoAttribute() {
-        if ($this->txt_gerado == 0) {
-            return 'Por licenciar';
-        } elseif ($this->txt_gerado == 1 && $this->procLicenFaturas->where('status_fatura', 'paga')->isNotEmpty()) {
-            return 'Licenciado';
-        } else {
-            return 'Em licenciamento';
-        }
+        return app(EstadoLicenciamentoService::class)->estado($this);
     }
     
-    // Função para gerar o código único e sequencial
-    public static function generateCodigoLicenciamento($empresaId)
-    {
-        // Obtenha o último licenciamento dessa empresa
-        $ultimoLicenciamento = Licenciamento::where('empresa_id', $empresaId)->orderBy('id', 'desc')->first();
-
-        // Se houver um licenciamento anterior, incremente o número
-        if ($ultimoLicenciamento) {
-            $ultimoCodigo = (int) substr($ultimoLicenciamento->codigo_licenciamento, -4); // Exemplo: pega os últimos 4 dígitos
-            $novoCodigo = $ultimoCodigo + 1;
-        } else {
-            // Caso seja o primeiro licenciamento da empresa
-            $novoCodigo = 1;
-        }
-
-        // Formata o código (por exemplo, HYLC-001-0001, onde EMP001 é o código da empresa)
-        $codigoEmpresa = 'HYLC-' . str_pad($empresaId, 3, '0', STR_PAD_LEFT);
-        $codigoLicenciamento = $codigoEmpresa . '-' . str_pad($novoCodigo, 5, '0', STR_PAD_LEFT) .'/'. Carbon::now()->format('y');
-
-        return $codigoLicenciamento;
-    }
-
     // Verifica se o licenciamento pode ser editado
     public function podeSerEditado()
     {

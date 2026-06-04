@@ -58,7 +58,7 @@
 
         {{-- TAB 1 — INFO --}}
         <div x-show="tab === 'info'" x-cloak>
-            <livewire:processo.processo-create :processo="$processo" mode="edit"/>
+            <livewire:processo.processo-edit :processo="$processo" />
         </div>
 
         {{-- TAB 2 — MERCADORIAS --}}
@@ -74,48 +74,7 @@
 
         {{-- TAB 4 — DOCUMENTOS --}}
         <div x-show="tab === 'docs'" x-cloak>
-            @if(isset($documentos) && count($documentos) > 0)
-            <div class="bg-white rounded-lg border shadow-sm p-6">
-                <h3 class="text-lg font-semibold mb-4">Documentos do Processo</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    @foreach($documentos as $documento)
-                    <div class="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-medium text-gray-900">{{ $documento->tipo }}</h4>
-                                <p class="text-sm text-gray-500 mt-1">
-                                    {{ $documento->created_at->format('d/m/Y H:i') }}
-                                </p>
-                            </div>
-                            <a href="{{ asset('storage/' . $documento->caminho) }}" 
-                               target="_blank"
-                               class="text-blue-600 hover:text-blue-800">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
-                            </a>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-            @else
-            <div class="bg-white rounded-lg border shadow-sm p-12 text-center">
-                <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum documento anexado</h3>
-                <p class="text-gray-500 mb-4">Adicione documentos ao processo</p>
-                <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}" 
-                   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Adicionar Documento
-                </a>
-            </div>
-            @endif
+            <livewire:arquivo.documentos-manager contexto="processo" :entidade-id="$processo->id" />
         </div>
 
         {{-- TAB 5 — RESUMO --}}

@@ -2,8 +2,9 @@
 
 namespace App\Livewire\Forms;
 
+use App\Domains\Customers\Actions\CreateOrAssociateCustomerAction;
+use App\Domains\Customers\Data\CustomerFormData;
 use Livewire\Component;
-use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
 
 class ClienteQuickForm extends Component
@@ -17,7 +18,7 @@ class ClienteQuickForm extends Component
     public $pagamento = '';
     
     protected $rules = [
-        'CustomerTaxID' => 'required|string|unique:customers,CustomerTaxID',
+        'CustomerTaxID' => 'required|string',
         'CompanyName' => 'required|string',
         'Telephone' => 'required|string',
         'Email' => 'nullable|email',
@@ -44,14 +45,16 @@ class ClienteQuickForm extends Component
         
         $empresa = Auth::user()->empresas->first(); // ajuste conforme sua lógica
         
-        $cliente = Customer::create([
+        $cliente = app(CreateOrAssociateCustomerAction::class)->execute(CustomerFormData::fromArray([
             'CustomerTaxID' => $this->CustomerTaxID,
+            'CustomerType' => 'Empresa',
             'CompanyName' => $this->CompanyName,
             'Telephone' => $this->Telephone,
             'Email' => $this->Email,
-            'pagamento' => $this->pagamento,
-            'empresa_id' => $empresa->id,
-        ]);
+            'metodo_pagamento' => $this->pagamento,
+            'TipoCliente' => 'Importador',
+            'Status' => 'Ativo',
+        ]), $empresa);
         
         // Dispara evento para o formulário principal atualizar a lista e selecionar o novo cliente
         $this->dispatch('clienteCriado', clienteId: $cliente->id, nome: $cliente->CompanyName);
@@ -67,4 +70,3 @@ class ClienteQuickForm extends Component
         ]);
     }
 }
-

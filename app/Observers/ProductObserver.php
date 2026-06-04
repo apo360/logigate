@@ -6,11 +6,6 @@ use App\Models\Produto;
 use App\Models\ProductHistory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
-// Usar AWS S3 para arquivar imagens
-use aws\S3\S3Client;
 
 class ProductObserver
 {

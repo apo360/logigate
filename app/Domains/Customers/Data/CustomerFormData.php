@@ -25,16 +25,24 @@ final class CustomerFormData
         public readonly ?string $country,
         public readonly ?string $postalCode,
         public readonly ?string $province,
-        public readonly ?int $nacionality,
-        public readonly ?string $docType,
-        public readonly ?string $docNum,
-        public readonly ?string $validadeDateDoc,
+        public readonly ?string $buildingNumber = null,
+        public readonly ?string $streetName = null,
+        public readonly ?string $accountId = null,
+        public readonly ?string $codigoCliente = null,
+        public readonly ?string $status = null,
+        public readonly ?int $nacionality = null,
+        public readonly ?string $docType = null,
+        public readonly ?string $docNum = null,
+        public readonly ?string $validadeDateDoc = null,
     ) {
     }
 
     public static function fromArray(array $form): self
     {
-        $status = (string) ($form['Status'] ?? 'Ativo');
+        $status = (string) ($form['Status'] ?? ($form['status'] ?? 'Ativo'));
+        $isActive = array_key_exists('is_active', $form)
+            ? (bool) $form['is_active']
+            : in_array(strtolower($status), ['ativo', 'activa', 'active'], true);
 
         return new self(
             customerTaxId: preg_replace('/[^0-9]/', '', (string) ($form['CustomerTaxID'] ?? '')),
@@ -46,8 +54,8 @@ final class CustomerFormData
             website: self::nullableString($form['Website'] ?? null),
             selfBillingIndicator: (int) ($form['SelfBillingIndicator'] ?? 0),
             metodoPagamento: self::nullableString($form['metodo_pagamento'] ?? null),
-            tipoCliente: strtolower((string) ($form['TipoCliente'] ?? 'importador')),
-            isActive: $status === 'Ativo',
+            tipoCliente: strtolower((string) ($form['TipoCliente'] ?? ($form['tipo_cliente'] ?? 'importador'))),
+            isActive: $isActive,
             observacoes: self::nullableString($form['Notes'] ?? ($form['observacoes'] ?? null)),
             moedaOperacao: self::nullableString($form['moeda_operacao'] ?? 'AOA'),
             frequencia: self::nullableString($form['frequencia'] ?? null),
@@ -57,6 +65,11 @@ final class CustomerFormData
             country: self::nullableString($form['Country'] ?? 'Angola'),
             postalCode: self::nullableString($form['PostalCode'] ?? null),
             province: self::nullableString($form['Province'] ?? null),
+            buildingNumber: self::nullableString($form['BuildingNumber'] ?? null),
+            streetName: self::nullableString($form['StreetName'] ?? null),
+            accountId: self::nullableString($form['AccountID'] ?? null),
+            codigoCliente: self::nullableString($form['codigo_cliente'] ?? null),
+            status: self::nullableString($form['status'] ?? ($form['Status'] ?? null)),
             nacionality: isset($form['nacionality']) && $form['nacionality'] !== '' ? (int) $form['nacionality'] : null,
             docType: self::nullableString($form['doc_type'] ?? null),
             docNum: self::nullableString($form['doc_num'] ?? null),
@@ -87,6 +100,11 @@ final class CustomerFormData
             'Country' => $this->country,
             'PostalCode' => $this->postalCode,
             'Province' => $this->province,
+            'BuildingNumber' => $this->buildingNumber,
+            'StreetName' => $this->streetName,
+            'AccountID' => $this->accountId,
+            'codigo_cliente' => $this->codigoCliente,
+            'status' => $this->status,
             'nacionality' => $this->nacionality,
             'doc_type' => $this->docType,
             'doc_num' => $this->docNum,
