@@ -7,6 +7,8 @@ use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaAgrupamentoService;
 use App\Application\Mercadoria\Services\MercadoriaParentTotalsService;
 use App\Application\Mercadoria\Services\MercadoriaRules;
+use App\Application\PautaAduaneira\Actions\AssociarPautaMercadoriaAction;
+use App\Application\PautaAduaneira\Actions\ConsultarCodigoPautalAction;
 use App\Models\Mercadoria;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +19,8 @@ final class AtualizarMercadoriaAction
         private readonly MercadoriaRules $rules,
         private readonly MercadoriaAgrupamentoService $agrupamento,
         private readonly MercadoriaParentTotalsService $parentTotals,
+        private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
+        private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
     ) {
     }
 
@@ -29,12 +33,19 @@ final class AtualizarMercadoriaAction
                 throw new \InvalidArgumentException('ID da mercadoria é obrigatório para atualização.');
             }
 
+            $pauta = $this->consultarCodigoPautal->execute($data->codigoAduaneiro);
             $mercadoria = $this->mercadorias->findInContext($data->id, $data->context, $data->parentId);
             $before = clone $mercadoria;
 
             $this->agrupamento->remove($mercadoria);
 
             $updated = $this->mercadorias->update($mercadoria, $data->toModelAttributes());
+            $updated = $this->associarPautaMercadoria->execute(
+                mercadoriaId: $updated->id,
+                pautaAduaneiraId: $pauta->id,
+                reason: $data->pautaChangeReason,
+                source: $data->pautaChangeSource,
+            );
 
             $this->agrupamento->addOrUpdate($updated);
             $this->parentTotals->applyUpdate($before, $updated);

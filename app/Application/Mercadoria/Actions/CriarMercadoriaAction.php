@@ -7,6 +7,8 @@ use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaAgrupamentoService;
 use App\Application\Mercadoria\Services\MercadoriaParentTotalsService;
 use App\Application\Mercadoria\Services\MercadoriaRules;
+use App\Application\PautaAduaneira\Actions\AssociarPautaMercadoriaAction;
+use App\Application\PautaAduaneira\Actions\ConsultarCodigoPautalAction;
 use App\Models\Mercadoria;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +19,8 @@ final class CriarMercadoriaAction
         private readonly MercadoriaRules $rules,
         private readonly MercadoriaAgrupamentoService $agrupamento,
         private readonly MercadoriaParentTotalsService $parentTotals,
+        private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
+        private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
     ) {
     }
 
@@ -24,8 +28,15 @@ final class CriarMercadoriaAction
     {
         return DB::transaction(function () use ($data): Mercadoria {
             $this->rules->validate($data);
+            $pauta = $this->consultarCodigoPautal->execute($data->codigoAduaneiro);
 
             $mercadoria = $this->mercadorias->create($data->toModelAttributes());
+            $mercadoria = $this->associarPautaMercadoria->execute(
+                mercadoriaId: $mercadoria->id,
+                pautaAduaneiraId: $pauta->id,
+                reason: $data->pautaChangeReason,
+                source: $data->pautaChangeSource === 'ai_suggestion' ? 'ai_suggestion' : 'system',
+            );
 
             $this->agrupamento->addOrUpdate($mercadoria);
             $this->parentTotals->applyCreate($mercadoria);

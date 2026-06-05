@@ -2,12 +2,17 @@
 
 namespace App\Application\Mercadoria\Services;
 
-use App\Models\PautaAduaneira;
+use App\Application\PautaAduaneira\Services\PautaSearchService;
 use App\Models\Subcategoria;
 use Illuminate\Support\Collection;
 
 final class PautaAduaneiraLookupService
 {
+    public function __construct(
+        private readonly PautaSearchService $search,
+    ) {
+    }
+
     public function bySubcategoriaId(int $subcategoriaId): Collection
     {
         $subcategoria = Subcategoria::find($subcategoriaId);
@@ -21,9 +26,8 @@ final class PautaAduaneiraLookupService
 
     public function byPrefix(string $prefix): Collection
     {
-        return PautaAduaneira::query()
-            ->where('codigo', 'like', $prefix . '%')
-            ->orderBy('codigo')
-            ->get();
+        return $this->search
+            ->search(['codigo' => $prefix], 100)
+            ->getCollection();
     }
 }

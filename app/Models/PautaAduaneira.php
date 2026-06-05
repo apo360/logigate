@@ -24,6 +24,14 @@ class PautaAduaneira extends Model
         'ieq' // Taxa de IEQ
     ];
 
+    protected $casts = [
+        'rg' => 'float',
+        'sadc' => 'float',
+        'ua' => 'float',
+        'iva' => 'float',
+        'ieq' => 'float',
+    ];
+
     public function toSearchableArray()
     {
         $array = $this->toArray();
@@ -36,6 +44,6 @@ class PautaAduaneira extends Model
      */
     public function mercadorias()
     {
-        return $this->hasMany(Mercadoria::class, 'codigo_aduaneiro', 'codigo');
+        return $this->hasMany(Mercadoria::class, 'pauta_aduaneira_id');
     }
 }

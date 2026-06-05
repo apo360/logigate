@@ -28,6 +28,19 @@ class Mercadoria extends Model
         'potencia',
         'licenciamento_id',
         'subcategoria_id',
+        'pauta_aduaneira_id',
+        'codigo_pautal_snapshot',
+        'descricao_pautal_snapshot',
+        'rg_snapshot',
+        'sadc_snapshot',
+        'ua_snapshot',
+        'iva_snapshot',
+        'ieq_snapshot',
+        'pauta_snapshot_at',
+    ];
+
+    protected $casts = [
+        'pauta_snapshot_at' => 'datetime',
     ];
 
     public function processos()
@@ -42,15 +55,31 @@ class Mercadoria extends Model
 
     public function pautaAduaneira()
     {
+        return $this->belongsTo(PautaAduaneira::class, 'pauta_aduaneira_id');
+    }
+
+    public function pautaAduaneiraPorCodigo()
+    {
         return $this->belongsTo(PautaAduaneira::class, 'codigo_aduaneiro', 'codigo');
+    }
+
+    public function pautaAudits()
+    {
+        return $this->hasMany(MercadoriaPautaAudit::class);
     }
 
     public function getDescricaoAduaneiraAttribute()
     {
-        if ($this->pautaAduaneira 
-            && $this->codigo_aduaneiro === $this->pautaAduaneira->codigo_sem_pontos) {
-            return $this->pautaAduaneira->descricao;
+        if ($this->descricao_pautal_snapshot) {
+            return $this->descricao_pautal_snapshot;
         }
+
+        $pauta = $this->pautaAduaneira ?: $this->pautaAduaneiraPorCodigo;
+
+        if ($pauta) {
+            return $pauta->descricao;
+        }
+
         return 'N/D';
     }
 

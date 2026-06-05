@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\APIs;
 
+use App\Application\PautaAduaneira\Actions\ConsultarCodigoPautalAction;
+use App\Application\PautaAduaneira\Services\PautaSearchService;
 use App\Http\Controllers\BaseController;
 use App\Models\PautaAduaneira;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 class PautaAduaneiraController extends BaseController 
 {
@@ -43,32 +44,10 @@ class PautaAduaneiraController extends BaseController
         $cacheKey = 'pauta_index_' . md5(json_encode($request->all()));
         
         $data = Cache::remember($cacheKey, now()->addHours(6), function () use ($request) {
-            $query = PautaAduaneira::query();
-            
-            // Filtros
-            if ($request->filled('codigo')) {
-                $query->where('codigo', 'LIKE', $request->codigo . '%');
-            }
-            
-            if ($request->filled('descricao')) {
-                $query->where('descricao', 'ILIKE', '%' . $request->descricao . '%');
-            }
-            
-            if ($request->filled('capitulo')) {
-                $query->where('codigo', 'LIKE', $request->capitulo . '%');
-            }
-            
-            if ($request->filled('posicao')) {
-                $query->where('codigo', 'LIKE', $request->posicao . '%');
-            }
-            
-            // Ordenação
-            $query->orderBy('codigo', 'asc');
-            
-            // Paginação
-            $perPage = $request->get('per_page', $this->perPage);
-            
-            return $query->paginate($perPage);
+            return app(PautaSearchService::class)->search(
+                $request->all(),
+                (int) $request->get('per_page', $this->perPage)
+            );
         });
 
         return response()->json([
@@ -89,12 +68,12 @@ class PautaAduaneiraController extends BaseController
      * @param string $codigo
      * @return \Illuminate\Http\JsonResponse
      */
-    public function show($codigo)
+    public function show($codigo, ConsultarCodigoPautalAction $action)
     {
         $cacheKey = 'pauta_show_' . $codigo;
         
-        $item = Cache::remember($cacheKey, now()->addDay(), function () use ($codigo) {
-            return PautaAduaneira::where('codigo', $codigo)->first();
+        $item = Cache::remember($cacheKey, now()->addDay(), function () use ($codigo, $action) {
+            return $action->execute($codigo);
         });
 
         if (!$item) {
@@ -134,26 +113,12 @@ class PautaAduaneiraController extends BaseController
         $cacheKey = 'pauta_search_' . md5($request->q . $request->tipo);
         
         $results = Cache::remember($cacheKey, now()->addHours(2), function () use ($request) {
-            $query = PautaAduaneira::query();
-            
-            $termo = $request->q;
-            $tipo = $request->get('tipo', 'ambos');
-            
-            if ($tipo === 'codigo' || $tipo === 'ambos') {
-                $query->where('codigo', 'LIKE', '%' . $termo . '%');
-            }
-            
-            if ($tipo === 'descricao' || $tipo === 'ambos') {
-                if ($tipo === 'ambos') {
-                    $query->orWhere('descricao', 'ILIKE', '%' . $termo . '%');
-                } else {
-                    $query->where('descricao', 'ILIKE', '%' . $termo . '%');
-                }
-            }
-            
-            $limit = $request->get('limit', 50);
-            
-            return $query->limit($limit)->get();
+            return app(PautaSearchService::class)
+                ->search([
+                    'q' => $request->q,
+                    'tipo' => $request->get('tipo', 'ambos'),
+                ], (int) $request->get('limit', 50))
+                ->getCollection();
         });
 
         return response()->json([
@@ -219,10 +184,9 @@ class PautaAduaneiraController extends BaseController
         $termo = $request->termo;
         
         $sugestoes = Cache::remember('pauta_suggest_' . $termo, now()->addHours(1), function () use ($termo) {
-            return PautaAduaneira::where('codigo', 'LIKE', $termo . '%')
-                ->orWhere('descricao', 'ILIKE', '%' . $termo . '%')
-                ->limit(10)
-                ->get(['codigo', 'descricao']);
+            return app(PautaSearchService::class)
+                ->search(['q' => $termo], 10)
+                ->getCollection();
         });
 
         return response()->json([
@@ -273,7 +237,11 @@ class PautaAduaneiraController extends BaseController
      */
     private function formatCollection($items)
     {
-        return $items->map(function($item) {
+        $collection = method_exists($items, 'getCollection')
+            ? $items->getCollection()
+            : collect($items);
+
+        return $collection->map(function($item) {
             return [
                 'codigo' => $item->codigo,
                 'descricao' => $item->descricao,
@@ -282,6 +250,18 @@ class PautaAduaneiraController extends BaseController
                 'link' => url('/api/v1/pauta/' . $item->codigo)
             ];
         });
+    }
+
+    public function export(Request $request)
+    {
+        $results = app(PautaSearchService::class)
+            ->search($request->all(), (int) $request->get('per_page', 100))
+            ->getCollection();
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->formatCollection($results),
+        ]);
     }
 
     /**

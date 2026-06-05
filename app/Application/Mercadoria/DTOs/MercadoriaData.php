@@ -24,6 +24,8 @@ final class MercadoriaData
         public readonly ?string $chassis,
         public readonly ?int $anoFabricacao,
         public readonly ?float $potencia,
+        public readonly ?string $pautaChangeReason = null,
+        public readonly string $pautaChangeSource = 'manual',
     ) {
     }
 
@@ -52,6 +54,8 @@ final class MercadoriaData
             chassis: self::nullableString($form['chassis'] ?? null),
             anoFabricacao: self::nullableInt($form['ano_fabricacao'] ?? null),
             potencia: self::nullableFloat($form['potencia'] ?? null),
+            pautaChangeReason: self::nullableString($form['pauta_change_reason'] ?? null),
+            pautaChangeSource: self::normalizeSource($form['pauta_change_source'] ?? 'manual'),
         );
     }
 
@@ -123,5 +127,12 @@ final class MercadoriaData
         }
 
         return (float) $value;
+    }
+
+    private static function normalizeSource(mixed $value): string
+    {
+        $value = (string) $value;
+
+        return in_array($value, ['manual', 'ai_suggestion', 'import', 'system'], true) ? $value : 'manual';
     }
 }

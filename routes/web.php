@@ -48,6 +48,7 @@ use App\Http\Controllers\ScheduledTaskController;
 use App\Http\Controllers\WebPage\WelcomeController;
 use App\Http\Controllers\AppyPayWebhookController;
 use App\Models\Plano;
+use App\Models\Processo;
 
     /** Rotas WEB */
     Route::get('/', [WelcomeController::class, 'index'])->name('home');
@@ -224,6 +225,7 @@ use App\Models\Plano;
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
+        Route::get('processos/{processo}/simulador-pauta', fn (Processo $processo) => redirect()->route('processos.edit', ['processo' => $processo->id, 'tab' => 'simulacao']))->name('processos.simulador-pauta');
         Route::post('/processo/finalizar/{processoID}', [ProcessoController::class, 'processoFinalizar'])->name('processo.finalizar');
         Route::get('/processo/nao-finalizados', [ProcessoController::class, 'processosNaoFinalizados']);
 
@@ -248,8 +250,10 @@ use App\Models\Plano;
 
         // Pauta Aduaneira
         Route::get('pauta-aduaneira', [PautaAduaneiraController::class, 'index'])->name('pauta.index');
+        Route::get('pauta-aduaneira/simulador', [PautaAduaneiraController::class, 'simulador'])->name('pauta.simulador');
         Route::get('pauta-aduaneira/importar', [PautaAduaneiraController::class, 'import'])->name('pauta.import_view');
         Route::get('pauta-aduaneira/consultar', [PautaAduaneiraController::class, 'consultar'])->name('pauta.consultar');
+        Route::get('pauta-aduaneira/{id}', [PautaAduaneiraController::class, 'show'])->whereNumber('id')->name('pauta.show');
 
         // Contabilidade Aduaneira
         Route::get('contabilidade/contas', [ContabilidadeController::class, 'contas'])->name('contabilidade.contas');

@@ -9,6 +9,8 @@ use App\Application\Mercadoria\DTOs\MercadoriaData;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaRules;
 use App\Application\Mercadoria\Services\PautaAduaneiraLookupService;
+use App\Application\PautaAduaneira\IA\PautaSuggestionDTO;
+use App\Application\PautaAduaneira\IA\SugerirCodigoPautalAction;
 use Livewire\Component;
 use App\Models\Subcategoria;
 use Livewire\Attributes\On;
@@ -30,6 +32,12 @@ class CreateForm extends Component
     // idle | incomplete | invalid | valid
 
     public string $codigoMessage = '';
+
+    public ?string $originalCodigoAduaneiro = null;
+
+    public array $pautaSuggestions = [];
+
+    public bool $suggestingPauta = false;
 
     /** FORM */
     public array $form = [
@@ -53,6 +61,8 @@ class CreateForm extends Component
 
         // máquina
         'potencia'        => null,
+        'pauta_change_reason' => null,
+        'pauta_change_source' => 'manual',
     ];
 
 
@@ -93,6 +103,10 @@ class CreateForm extends Component
             $rules['form.potencia'] = 'required|numeric|min:0';
         }
 
+        if ($this->mode === 'edit' && $this->codigoPautalChanged()) {
+            $rules['form.pauta_change_reason'] = 'required|string|min:5|max:500';
+        }
+
         return $rules;
     }
 
@@ -105,6 +119,7 @@ class CreateForm extends Component
             'form.modelo.required' => 'O modelo é obrigatório para veículos.',
             'form.chassis.required' => 'O chassis é obrigatório para veículos.',
             'form.potencia.required' => 'A potência é obrigatória para máquinas.',
+            'form.pauta_change_reason.required' => 'Informe a justificativa da alteração do código pautal.',
         ];
     }
 
@@ -118,6 +133,8 @@ class CreateForm extends Component
         $this->resetValidation();
         $this->mode = 'create';
         $this->mercadoriaId = null;
+        $this->originalCodigoAduaneiro = null;
+        $this->pautaSuggestions = [];
         $this->open = true;
     }
 
@@ -129,6 +146,7 @@ class CreateForm extends Component
 
         $this->mercadoriaId = $id;
         $this->mode = 'edit';
+        $this->originalCodigoAduaneiro = $m->codigo_aduaneiro;
 
         $this->form = [
             'subcategoria_id' => $m->subcategoria_id,
@@ -147,6 +165,8 @@ class CreateForm extends Component
             'chassis'         => $m->chassis,
             'ano_fabricacao'  => $m->ano_fabricacao,
             'potencia'        => $m->potencia,
+            'pauta_change_reason' => null,
+            'pauta_change_source' => 'manual',
         ];
 
         $this->loadPautasForSubcategoria($m->subcategoria_id);
@@ -164,6 +184,9 @@ class CreateForm extends Component
         $this->showVeiculos = false;
         $this->showMaquinas = false;
         $this->pautas = [];
+        $this->originalCodigoAduaneiro = null;
+        $this->pautaSuggestions = [];
+        $this->suggestingPauta = false;
     }
 
     // Atualizar closeModal para usar resetForm
@@ -216,6 +239,11 @@ class CreateForm extends Component
         $this->showMaquinas = false;
         $this->codigoStatus = 'idle';
         $this->codigoMessage = '';
+        $this->pautaSuggestions = [];
+
+        if ($this->mode === 'edit' && $this->codigoPautalChanged() && ($this->form['pauta_change_source'] ?? 'manual') !== 'ai_suggestion') {
+            $this->form['pauta_change_source'] = 'manual';
+        }
 
         if (!$value || count($this->pautas) === 0) {
             return;
@@ -254,6 +282,58 @@ class CreateForm extends Component
 
         $this->codigoStatus = 'invalid';
         $this->codigoMessage = 'Código inválido. Escolha um da lista.';
+    }
+
+    public function suggestCodigoPautal(): void
+    {
+        $this->suggestingPauta = true;
+        $this->pautaSuggestions = [];
+
+        try {
+            $this->pautaSuggestions = app(SugerirCodigoPautalAction::class)->execute(PautaSuggestionDTO::fromArray([
+                'descricao' => $this->form['descricao'] ?? null,
+                'subcategoria_id' => $this->form['subcategoria_id'] ?? null,
+                'marca' => $this->form['marca'] ?? null,
+                'modelo' => $this->form['modelo'] ?? null,
+                'chassis' => $this->form['chassis'] ?? null,
+                'codigo_aduaneiro' => $this->form['codigo_aduaneiro'] ?? null,
+                'limit' => 5,
+            ]));
+
+            if ($this->pautaSuggestions === []) {
+                $this->dispatch('toast', type: 'warning', message: 'Nenhuma sugestão encontrada para esta mercadoria.');
+            }
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: 'Erro ao sugerir código pautal: ' . $e->getMessage());
+        } finally {
+            $this->suggestingPauta = false;
+        }
+    }
+
+    public function applyPautaSuggestion(int $pautaId): void
+    {
+        $suggestion = collect($this->pautaSuggestions)->firstWhere('pauta_aduaneira_id', $pautaId);
+
+        if (! $suggestion) {
+            return;
+        }
+
+        $this->form['codigo_aduaneiro'] = $suggestion['codigo'];
+        $this->form['pauta_change_source'] = 'ai_suggestion';
+
+        if (! collect($this->pautas)->contains(fn ($pauta) => $pauta->codigo === $suggestion['codigo'])) {
+            $this->pautas[] = (object) [
+                'codigo' => $suggestion['codigo'],
+                'descricao' => $suggestion['descricao'],
+            ];
+        }
+
+        if ($this->mode === 'edit' && $this->codigoPautalChanged() && empty($this->form['pauta_change_reason'])) {
+            $this->form['pauta_change_reason'] = 'Sugestão de IA aplicada: ' . ($suggestion['reason'] ?? 'código pautal sugerido.');
+        }
+
+        $this->updatedFormCodigoAduaneiro($suggestion['codigo']);
+        $this->dispatch('pautaSuggestionSelected', pauta_aduaneira_id: $pautaId, codigo: $suggestion['codigo']);
     }
 
 
@@ -375,5 +455,14 @@ class CreateForm extends Component
 
         $this->showVeiculos = in_array((int) $subcategoria->cod_pauta, [87, 88], true);
         $this->showMaquinas = (int) $subcategoria->cod_pauta === 84;
+    }
+
+    public function codigoPautalChanged(): bool
+    {
+        if ($this->mode !== 'edit') {
+            return false;
+        }
+
+        return trim((string) $this->originalCodigoAduaneiro) !== trim((string) ($this->form['codigo_aduaneiro'] ?? ''));
     }
 }

@@ -116,8 +116,56 @@
                     {{ $selectedPauta->descricao }}
                 </p>
             @endif
+
+            <div class="mt-3">
+                <button
+                    type="button"
+                    wire:click="suggestCodigoPautal"
+                    wire:loading.attr="disabled"
+                    wire:target="suggestCodigoPautal"
+                    class="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50"
+                >
+                    <span wire:loading.remove wire:target="suggestCodigoPautal">Sugerir código com IA</span>
+                    <span wire:loading wire:target="suggestCodigoPautal">A sugerir...</span>
+                </button>
+            </div>
+
+            @if(count($pautaSuggestions) > 0)
+                <div class="mt-3 space-y-2 rounded-lg border border-blue-100 bg-blue-50 p-3">
+                    <p class="text-xs font-semibold uppercase text-blue-800">Sugestões</p>
+                    @foreach($pautaSuggestions as $suggestion)
+                        <button
+                            type="button"
+                            wire:click="applyPautaSuggestion({{ $suggestion['pauta_aduaneira_id'] }})"
+                            class="block w-full rounded-md bg-white p-2 text-left text-xs hover:bg-blue-100"
+                        >
+                            <span class="font-semibold text-gray-900">{{ $suggestion['codigo'] }}</span>
+                            <span class="ml-2 text-blue-700">{{ $suggestion['confidence'] }}%</span>
+                            <span class="block text-gray-600">{{ $suggestion['descricao'] }}</span>
+                            <span class="block text-gray-500">{{ $suggestion['reason'] }}</span>
+                        </button>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
+
+    @if($mode === 'edit' && $this->codigoPautalChanged())
+        <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+            <label class="block text-sm font-medium text-yellow-900 mb-1">
+                Justificativa da alteração do código pautal *
+            </label>
+            <textarea
+                wire:model.defer="form.pauta_change_reason"
+                rows="2"
+                class="w-full rounded-lg border-yellow-300 focus:border-yellow-500 focus:ring focus:ring-yellow-200 focus:ring-opacity-50"
+                placeholder="Explique por que o código pautal foi alterado"
+            ></textarea>
+            @error('form.pauta_change_reason')
+                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+    @endif
 
     {{-- Descrição --}}
     <div>

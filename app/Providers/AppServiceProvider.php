@@ -8,6 +8,8 @@ use App\Application\Arquivo\Repositories\DocumentoRepositoryInterface;
 use App\Application\Arquivo\Repositories\EloquentDocumentoRepository;
 use App\Application\Mercadoria\Repositories\EloquentMercadoriaRepository;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
+use App\Application\PautaAduaneira\IA\OpenAIPautaSuggestionProvider;
+use App\Application\PautaAduaneira\IA\PautaSuggestionProviderInterface;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
 use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
 use App\Domains\Processo\Repositories\EloquentProcessoRepository;
@@ -16,6 +18,8 @@ use App\Domains\Exportadores\Repositories\EloquentExportadorRepository;
 use App\Domains\Exportadores\Repositories\ExportadorRepositoryInterface;
 use App\Domains\Produtos\Repositories\EloquentProdutoRepository;
 use App\Domains\Produtos\Repositories\ProdutoRepositoryInterface;
+use App\Domains\PautaAduaneira\Repositories\EloquentPautaAduaneiraRepository;
+use App\Domains\PautaAduaneira\Repositories\PautaAduaneiraRepositoryInterface;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
 use App\Models\DocumentoArquivo;
@@ -49,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ExportadorRepositoryInterface::class, EloquentExportadorRepository::class);
         $this->app->bind(ProdutoRepositoryInterface::class, EloquentProdutoRepository::class);
         $this->app->bind(MercadoriaRepositoryInterface::class, EloquentMercadoriaRepository::class);
+        $this->app->bind(PautaAduaneiraRepositoryInterface::class, EloquentPautaAduaneiraRepository::class);
+        $this->app->bind(PautaSuggestionProviderInterface::class, OpenAIPautaSuggestionProvider::class);
     }
 
     /**
