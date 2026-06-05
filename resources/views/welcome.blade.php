@@ -1270,7 +1270,7 @@
           <h4 class="font-bold text-lg mb-6">Recursos</h4>
           <ul class="space-y-3">
             <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Legislação Aduaneira</a></li>
-            <li><a href="{{ route('portal.cliente') }}" class="text-gray-400 hover:text-white transition-colors">Portal do Cliente</a></li>
+            <li><a href="{{ route('portal-cliente.login') }}" class="text-gray-400 hover:text-white transition-colors">Portal do Cliente</a></li>
             <li><a href="{{ route('portal.transitarios') }}" class="text-gray-400 hover:text-white transition-colors">Transitários</a></li>
             <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Blog</a></li>
             <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Política de Privacidade</a></li>

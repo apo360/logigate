@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('visibilidade', 40)->default('privado')->index();
             $table->string('storage_disk', 40)->default('s3');
             $table->string('bucket')->nullable();
-            $table->string('storage_key', 1024)->unique();
+            $table->string('storage_key', 255)->unique();
             $table->string('nome_original');
             $table->string('mime_type', 150)->nullable();
             $table->string('extension', 20)->nullable();

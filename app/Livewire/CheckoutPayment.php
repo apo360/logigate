@@ -2,185 +2,70 @@
 
 namespace App\Livewire;
 
+use App\Application\Billing\DTOs\StartCheckoutData;
+use App\Application\Billing\UseCases\BuildPaymentViewData;
+use App\Application\Billing\UseCases\StartCheckout;
+use App\Domains\Billing\Enums\BillingCycle;
+use App\Domains\Billing\Enums\PaymentMethod;
+use App\Domains\Billing\Enums\PaymentStatus;
 use App\Models\PagamentoOnline;
-use Livewire\Component;
-use App\Models\Plano;
-use App\Services\CheckoutService;
-use Illuminate\Support\Facades\Cache;
+use App\Models\Subscricao;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
+use Livewire\Component;
 
 class CheckoutPayment extends Component
 {
-    public Plano $plano;
-
-    public string $cycle = 'monthly';
     public string $method = 'GPO';
     public ?string $phone = null;
-    public float $amount = 0;
-    public ?int $empresa_id = null;
-
-    public bool $loading = false;
-    public bool $showPhoneField = false;
-    public bool $showCardFields = false;
-    public bool $showRefInfo = false;
-    public bool $showTransferInfo = false;
-    public bool $processing = false;
-    public ?string $error = null;
-    public ?array $response = null;
+    public ?int $empresaId = null;
+    public ?int $subscriptionId = null;
+    public ?int $paymentId = null;
     public ?string $paymentStatus = null;
-    public ?array $referenceData = null;
-    public ?string $transactionId = null;
+    public ?string $merchantTransactionId = null;
+    public ?string $error = null;
+    public bool $processing = false;
+    public array $paymentView = [];
 
-    protected $rules = [
-        'method' => 'required|in:GPO,REF,TRANSFER',
-        'phone' => ['required_if:method,GPO', 'nullable', 'regex:/^9[0-9]{8}$/'],
-    ];
-    
-    protected $messages = [
-        'phone.required_if' => 'O número de telefone é obrigatório para pagamento GPO',
-        'phone.regex' => 'Formato inválido. Use: 9XXXXXXXX (9 dígitos)',
+    protected function rules(): array
+    {
+        return [
+            'method' => ['required', 'in:GPO,REF'],
+            'phone' => ['required_if:method,GPO', 'nullable', 'regex:/^9[0-9]{8}$/'],
+        ];
+    }
+
+    protected array $messages = [
+        'phone.required_if' => 'O numero de telefone e obrigatorio para pagamento GPO.',
+        'phone.regex' => 'Formato invalido. Use: 9XXXXXXXX.',
     ];
 
     public function mount(): void
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             redirect()->route('login');
             return;
         }
 
-        $empresa = $user->empresas->first();
+        $empresa = $user->empresas()->first();
 
-        if (!$empresa) {
-            redirect()->route('dashboard')->with('error', 'Nenhuma empresa encontrada.');
+        if (! $empresa) {
+            redirect()->route('home')->with('error', 'Nenhuma empresa encontrada.');
             return;
         }
 
-        $this->empresa_id = $empresa->id;
-
-        // 🔎 Buscar subscrição pendente
-        $subscription = $empresa->subscricoes()
-            ->where('status', 'pendente')
-            ->latest()
-            ->first();
-
-        if (!$subscription) {
-            redirect()->route('plans')->with('error', 'Nenhuma subscrição pendente encontrada.');
-            return;
-        }
-
-        $this->plano = Plano::findOrFail($subscription->plano_id);
-        $this->cycle = $subscription->modalidade_pagamento;
-
-        $this->calculateAmount();
-
-        // 🔎 Buscar pagamento existente
-        $payment = $subscription->pagamentoOnline()
-            ->whereIn('status', ['pending', 'processing', 'waiting', 'paid'])
-            ->latest()
-            ->first();
-
-        if (!$payment) {
-            $this->updateMethodFields();
-            return;
-        }
-
-        // ⏱ Verificar expiração
-        $expired = $this->checkPaymentExpiration($payment);
-
-        if ($expired) {
-            $payment->update(['status' => 'expired']);
-            $this->updateMethodFields();
-            return;
-        }
-
-        // 🎯 Carregar estado na UI
-        $this->loadExistingPayment($payment);
+        $this->empresaId = $empresa->id;
+        $this->loadCheckoutState();
     }
 
-    /**
-     * Verifica se o pagamento expirou baseado no método
-     */
-    private function checkPaymentExpiration($payment): bool
-    {
-        $now = Carbon::now();
-        
-        return match($payment->method) {
-            'GPO' => $payment->created_at->addMinutes(3)->isPast(),
-            'REF' => $payment->created_at->addDays(15)->isPast(),
-            'TRANSFER' => $payment->created_at->addDays(2)->isPast(),
-            default => false,
-        };
-    }
-
-    /**
-     * Carrega dados de pagamento existente
-     */
-    private function loadExistingPayment($payment): void
-    {
-        $this->method = $payment->method;
-        $this->paymentStatus = $payment->status;
-        $this->transactionId = $payment->merchant_transaction_id;
-        $this->phone = $payment->phone ?? null;
-
-        // Normalizar resposta
-        if ($payment->raw_response) {
-            $rawResponse = $payment->raw_response;
-            
-            if (isset($rawResponse['response'])) {
-                $this->response = $this->normalizeResponse([
-                    'response' => $rawResponse['response']
-                ]);
-            } elseif (is_array($rawResponse)) {
-                $this->response = $this->normalizeResponse([
-                    'response' => $rawResponse
-                ]);
-            }
-        }
-
-        $this->updateMethodFields();
-    }
-
-    /**
-     * Atualiza campos baseado no método selecionado
-     */
-    private function updateMethodFields(): void
-    {
-        $this->showPhoneField = ($this->method === 'GPO');
-        $this->showCardFields = ($this->method === 'CARD');
-        $this->showRefInfo = ($this->method === 'REF');
-        $this->showTransferInfo = ($this->method === 'TRANSFER');
-    }
-
-    public function calculateAmount(): void
-    {
-        $this->amount = match($this->cycle) {
-            'monthly' => $this->plano->preco_mensal,
-            'trimestral' => $this->plano->preco_trimestral,
-            'semestral' => $this->plano->preco_semestral,
-            'anual' => $this->plano->preco_annual,
-            default => $this->plano->preco_mensal,
-        };
-        
-        // Adicionar IVA 14%
-        $this->amount = round($this->amount * 1.14);
-    }
-
-    public function updatedMethod($value): void
+    public function updatedMethod(string $value): void
     {
         $this->method = $value;
-        $this->updateMethodFields();
-        $this->resetError();
-        
-        // Limpar resposta anterior ao mudar método
-        if ($this->response) {
-            $this->response = null;
-            $this->paymentStatus = null;
-            $this->transactionId = null;
-        }
+        $this->error = null;
+        $this->resetValidation();
     }
 
     public function updatedPhone(): void
@@ -188,337 +73,153 @@ class CheckoutPayment extends Component
         $this->validateOnly('phone');
     }
 
-    public function checkPaymentStatus(): void
+    public function submit(StartCheckout $startCheckout): void
     {
-        if (!$this->transactionId) {
+        $this->validate();
+        $this->startPayment($startCheckout, PaymentMethod::fromInput($this->method));
+    }
+
+    public function retryGpo(StartCheckout $startCheckout): void
+    {
+        $this->method = PaymentMethod::GPO->value;
+        $this->startPayment($startCheckout, PaymentMethod::GPO);
+    }
+
+    public function switchToRef(StartCheckout $startCheckout): void
+    {
+        $this->method = PaymentMethod::REF->value;
+        $this->phone = null;
+        $this->resetValidation();
+        $this->startPayment($startCheckout, PaymentMethod::REF);
+    }
+
+    public function refreshPaymentStatus(): void
+    {
+        if (! $this->paymentId) {
             return;
         }
 
-        try {
-            $payment = PagamentoOnline::where('merchant_transaction_id', $this->transactionId)
-                ->latest()
-                ->first();
+        $payment = PagamentoOnline::with('subscription.plano')->find($this->paymentId);
 
-            if (!$payment) {
-                return;
-            }
-
-            // Verificar expiração
-            if ($payment->status !== 'paid' && $this->checkPaymentExpiration($payment)) {
-                $payment->update(['status' => 'expired']);
-            }
-
-            // Atualizar UI apenas se o status mudou
-            if ($this->paymentStatus !== $payment->status) {
-                $this->paymentStatus = $payment->status;
-                
-                if ($payment->status === 'paid') {
-                    $this->dispatch('payment-success', ['plan' => $this->plano->nome]);
-                } elseif ($payment->status === 'expired') {
-                    $this->dispatch('payment-expired');
-                }
-            }
-
-            // Atualizar resposta se disponível
-            if ($payment->raw_response && $payment->status !== $this->response['status'] ?? null) {
-                $rawResponse = $payment->raw_response;
-                
-                if (isset($rawResponse['response'])) {
-                    $this->response = $this->normalizeResponse([
-                        'response' => $rawResponse['response']
-                    ]);
-                }
-            }
-
-        } catch (\Exception $e) {
-            Log::error('Erro ao verificar status do pagamento', [
-                'transaction_id' => $this->transactionId,
-                'error' => $e->getMessage()
-            ]);
+        if (! $payment || ! $payment->subscription) {
+            return;
         }
+
+        $this->applyPaymentView(app(BuildPaymentViewData::class)->fromSubscription($payment->subscription, $payment));
     }
 
-    public function submit(CheckoutService $checkout): void
+    private function startPayment(StartCheckout $startCheckout, PaymentMethod $method): void
     {
-        $this->validate();
-
-        $this->processing = true;
-        $this->error = null;
-
-        // 📱 Normalizar telefone GPO
-        if ($this->method === 'GPO' && $this->phone) {
-            $this->phone = $this->normalizePhone($this->phone);
+        if (! $this->empresaId) {
+            $this->error = 'Empresa nao encontrada.';
+            return;
         }
 
         $lock = Cache::lock('checkout_' . Auth::id(), 10);
 
-        if (!$lock->get()) {
-            $this->error = 'Processamento já em andamento.';
-            $this->processing = false;
+        if (! $lock->get()) {
+            $this->error = 'Processamento ja em andamento.';
             return;
         }
 
+        $this->processing = true;
+        $this->error = null;
+
         try {
-            $empresa = Auth::user()->empresas->first();
+            $viewData = $startCheckout->execute(new StartCheckoutData(
+                (int) Auth::id(),
+                $this->empresaId,
+                $method,
+                $this->phone,
+            ));
 
-            if (!$empresa) {
-                throw new \RuntimeException('Empresa não encontrada.');
-            }
-
-            $result = $checkout->pay([
-                'plano' => $this->plano,
-                'cycle' => $this->cycle,
-                'method' => $this->method,
-                'phone' => $this->phone,
-                'empresa' => $empresa,
-                'amount' => $this->amount,
+            $this->applyPaymentView($viewData);
+        } catch (\Throwable $exception) {
+            Log::error('BILLING_CHECKOUT_ERROR', [
+                'user_id' => Auth::id(),
+                'empresa_id' => $this->empresaId,
+                'method' => $method->value,
+                'error' => $exception->getMessage(),
             ]);
 
-            if (!is_array($result)) {
-                throw new \RuntimeException('Resposta inválida do serviço de pagamento.');
-            }
-
-            // 🔁 Caso pagamento já exista (idempotência)
-            if (isset($result['message']) && $result['message'] === 'Pagamento já iniciado.') {
-                $this->handleExistingPayment($result);
-                return;
-            }
-
-            // 🎯 Processar nova resposta
-            $this->processNewPayment($result);
-
-        } catch (\Throwable $e) {
-            $this->handlePaymentError($e);
+            $this->error = $exception instanceof \InvalidArgumentException
+                ? $exception->getMessage()
+                : 'Erro ao processar pagamento. Tente novamente.';
         } finally {
             optional($lock)->release();
             $this->processing = false;
         }
     }
 
-    /**
-     * Normaliza número de telefone para formato internacional
-     */
-    private function normalizePhone(string $phone): string
+    private function loadCheckoutState(): void
     {
-        // Remover tudo que não é número
-        $phone = preg_replace('/[^0-9]/', '', $phone);
-        
-        // Remover 244 se já estiver presente
-        $phone = preg_replace('/^244/', '', $phone);
-        
-        // Garantir que tem 9 dígitos
-        if (strlen($phone) === 9) {
-            return '244' . $phone;
+        $subscription = Subscricao::with(['plano', 'pagamentoOnline'])
+            ->where('empresa_id', $this->empresaId)
+            ->pending()
+            ->latest('id')
+            ->first();
+
+        if (! $subscription) {
+            redirect()->route('home')->with('error', 'Nenhuma subscricao pendente encontrada.');
+            return;
         }
-        
-        return $phone;
+
+        $this->subscriptionId = $subscription->id;
+
+        $payment = $subscription->pagamentoOnline()
+            ->whereIn('method', [PaymentMethod::GPO->value, PaymentMethod::REF->value])
+            ->whereIn('status', [
+                PaymentStatus::Pending->value,
+                PaymentStatus::Processing->value,
+                PaymentStatus::Paid->value,
+                PaymentStatus::Failed->value,
+                PaymentStatus::Expired->value,
+            ])
+            ->latest('id')
+            ->first();
+
+        $this->applyPaymentView(app(BuildPaymentViewData::class)->fromSubscription($subscription, $payment));
     }
 
-    /**
-     * Processa pagamento existente
-     */
-    private function handleExistingPayment(array $result): void
+    private function applyPaymentView(object $viewData): void
     {
-        $responseData = $result['response'] ?? [];
-        
-        $this->response = $this->normalizeResponse([
-            'response' => $responseData
-        ]);
-        
-        $this->paymentStatus = $this->response['status'] ?? null;
-        $this->transactionId = $responseData['id'] ?? $responseData['merchantTransactionId'] ?? null;
-        
-        $this->dispatch('payment-already-started');
-    }
+        $this->paymentView = $viewData->toArray();
+        $this->method = $this->paymentView['method'];
+        $this->paymentId = $this->paymentView['payment_id'];
+        $this->paymentStatus = $this->paymentView['status'];
+        $this->merchantTransactionId = $this->paymentView['merchant_transaction_id'];
 
-    /**
-     * Processa novo pagamento
-     */
-    private function processNewPayment(array $result): void
-    {
-        $this->response = $this->normalizeResponse($result);
-        $this->paymentStatus = $this->response['status'] ?? null;
-        
-        // Extrair transaction ID
-        $gatewayResponse = $result['response'] ?? [];
-        $this->transactionId = $gatewayResponse['id'] 
-            ?? $gatewayResponse['merchantTransactionId'] 
-            ?? $gatewayResponse['transactionId'] 
-            ?? null;
-
-        // Disparar evento baseado no status
-        if ($this->paymentStatus === 'pending') {
-            $this->dispatch('payment-initiated', [
-                'method' => $this->method,
-                'transaction' => $this->transactionId
-            ]);
+        if (($this->paymentView['phone'] ?? null) && str_starts_with($this->paymentView['phone'], '244')) {
+            $this->phone = substr($this->paymentView['phone'], 3);
         }
     }
 
-    /**
-     * Trata erros de pagamento
-     */
-    private function handlePaymentError(\Throwable $e): void
+    public function getShouldPollProperty(): bool
     {
-        Log::error('Erro ao processar pagamento', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'user_id' => Auth::id(),
-            'empresa_id' => $this->empresa_id,
-            'method' => $this->method
-        ]);
-
-        $this->error = match(true) {
-            str_contains($e->getMessage(), 'timeout') => 'Tempo limite excedido. Tente novamente.',
-            str_contains($e->getMessage(), 'connection') => 'Erro de conexão. Tente novamente.',
-            default => 'Erro ao processar pagamento: ' . $e->getMessage(),
-        };
+        return ($this->paymentView['method'] ?? null) === PaymentMethod::GPO->value
+            && in_array($this->paymentStatus, [PaymentStatus::Pending->value, PaymentStatus::Processing->value], true);
     }
 
-    /**
-     * Normaliza resposta do gateway para formato da UI
-     */
-    private function normalizeResponse(array $result): array
+    public function getHasPaymentProperty(): bool
     {
-        $gateway = $result['response'] ?? [];
-        
-        // Extrair status da resposta
-        $responseStatus = $gateway['response']['responseStatus'] ?? $gateway['responseStatus'] ?? [];
-        $status = $responseStatus['status'] ?? null;
-        $message = $responseStatus['message'] ?? 'Pedido recebido';
-
-        $normalized = [
-            'method' => $this->method,
-            'status' => $this->mapPaymentStatus($status),
-            'message' => $message,
-            'timestamp' => now()->toIso8601String(),
-        ];
-
-        // Adicionar dados específicos por método
-        if ($this->method === 'REF') {
-            $normalized = array_merge($normalized, $this->normalizeReferenceData($responseStatus));
-        } elseif ($this->method === 'TRANSFER') {
-            $normalized = array_merge($normalized, $this->getTransferData());
-        }
-
-        return $normalized;
+        return $this->paymentId !== null;
     }
 
-    /**
-     * Mapeia status do gateway para status interno
-     */
-    private function mapPaymentStatus(?string $status): string
+    public function getBaseAmountProperty(): float
     {
-        return match($status) {
-            'Success', 'PAID', 'paid', 'success' => 'paid',
-            'Pending', 'pending', 'waiting', 'processing' => 'pending',
-            'Failed', 'failed', 'error' => 'failed',
-            'Expired', 'expired' => 'expired',
-            default => 'pending',
-        };
+        return round(((float) ($this->paymentView['amount'] ?? 0)) / 1.14, 2);
     }
 
-    /**
-     * Normaliza dados de referência
-     */
-    private function normalizeReferenceData(array $responseStatus): array
+    public function getVatAmountProperty(): float
     {
-        $reference = $responseStatus['reference'] ?? [];
-        
-        return [
-            'reference' => [
-                'entity' => $reference['entity'] ?? '12345',
-                'reference_number' => $reference['referenceNumber'] ?? $reference['reference_number'] ?? null,
-                'due_date' => $reference['dueDate'] ?? $reference['due_date'] ?? now()->addDays(15)->format('Y-m-d'),
-            ]
-        ];
+        return round(((float) ($this->paymentView['amount'] ?? 0)) - $this->baseAmount, 2);
     }
 
-    /**
-     * Retorna dados de transferência bancária
-     */
-    private function getTransferData(): array
-    {
-        $reference = 'LOGIGATE-' . strtoupper(substr(md5(uniqid()), 0, 8));
-        
-        return [
-            'bank_data' => [
-                'banco' => 'Banco BIC',
-                'titular' => 'HONGAYETU LDA',
-                'nib' => '0043.0000.12345678901.51',
-                'iban' => 'AO06.0043.0000.12345678901.51',
-                'swift' => 'BICBAOLUXXX',
-                'valor' => $this->amount,
-                'moeda' => 'AOA',
-                'referencia' => $reference,
-                'descricao' => 'Pagamento plano ' . $this->plano->nome . ' - ' . ucfirst($this->cycle),
-                'instructions' => [
-                    'Utilize os dados bancários abaixo para transferência',
-                    'Inclua a referência no descritivo do pagamento',
-                    'Após transferência, faça upload do comprovativo',
-                    'Aguarde confirmação (até 2 dias úteis)'
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * Atualiza assinatura (chamado após confirmação)
-     */
-    public function updateSubscription(CheckoutService $checkout): void
-    {
-        try {
-            $empresa = Auth::user()->empresas->first();
-            
-            if (!$empresa) {
-                throw new \RuntimeException('Empresa não encontrada.');
-            }
-
-            $this->calculateAmount();
-            
-            $checkout->updateSubscription([
-                'plano' => $this->plano,
-                'cycle' => $this->cycle,
-                'empresa' => $empresa,
-            ], $this->amount);
-
-            $this->dispatch('subscription-updated');
-            
-        } catch (\Exception $e) {
-            Log::error('Erro ao atualizar assinatura', [
-                'error' => $e->getMessage()
-            ]);
-            
-            $this->error = 'Erro ao atualizar assinatura. Contate o suporte.';
-        }
-    }
-
-    /**
-     * Reseta erro
-     */
-    public function resetError(): void
-    {
-        $this->error = null;
-    }
-
-    /**
-     * Cancela pagamento atual
-     */
-    public function cancelPayment(): void
-    {
-        $this->response = null;
-        $this->paymentStatus = null;
-        $this->transactionId = null;
-        $this->error = null;
-        
-        $this->dispatch('payment-cancelled');
-    }
-
-    /**
-     * Renderiza o componente
-     */
     public function render()
     {
-        return view('livewire.checkout-payment');
+        return view('livewire.checkout-payment', [
+            'statusEnum' => $this->paymentStatus ? PaymentStatus::fromPersisted($this->paymentStatus) : PaymentStatus::Pending,
+            'cycleEnum' => isset($this->paymentView['cycle']) ? BillingCycle::fromInput($this->paymentView['cycle']) : BillingCycle::Monthly,
+        ]);
     }
 }

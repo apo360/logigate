@@ -284,21 +284,25 @@ use App\Models\Processo;
         Route::get('/saft/{year}/{start}/{end}/build', [SAFtController::class, 'buildSAFT'])->name('saft.build');
 
         // ------------- /.Rotas para os despachantes ------------ //
-
-        // Rotas do Transitário
-        Route::prefix('transitario')->group(function () {
-            Route::middleware('check.subscription')->group(function () {
-                Route::get('/dashboard', [TransitarioDashboardController::class, 'dashboard'])->name('transitario.dashboard');
-            });
-        });
-        // ------------- /.Rotas do Transitário ------------ //
-
-        // Rotas do Agente de Carga
-        Route::prefix('agente_carga')->group(function () {
-            Route::middleware('check.subscription')->group(function () {
-                Route::get('/dashboard', [AgenteCargaDashboardController::class, 'dashboard'])->name('agente_carga.dashboard');
-            });
-        });
-        // ------------- /.Rotas do Agente de Carga ------------ //
     });
+
+    // Rotas do Transitário
+    Route::prefix('transitario')->group(function () {
+        // Login do Transitário
+        Route::get('/Acesso', function () { return view('WebSite.TransitarioPages.transitario_login'); })->name('portal.transitarios');
+        Route::middleware('check.subscription')->group(function () {
+            Route::get('/dashboard', [TransitarioDashboardController::class, 'dashboard'])->name('transitario.dashboard');
+        });
+    });
+    // ------------- /.Rotas do Transitário ------------ //
+
+    // Rotas do Portal do Cliente
+    Route::prefix('portal-cliente')->group(function () {
+        // Login do Portal do Cliente
+        Route::get('/Acesso', function () { return view('WebSite.ClienteAppPage.portal_login'); })->name('portal-cliente.login');
+        Route::middleware('check.subscription')->group(function () {
+            Route::get('/dashboard', [AgenteCargaDashboardController::class, 'dashboard'])->name('portal-cliente.dashboard');
+        });
+    });
+    // ------------- /.Rotas do Portal do Cliente ------------ //
     
