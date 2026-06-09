@@ -28,7 +28,7 @@ class DashboardController extends AuthenticatedController
     }
 
     public function ProcessosEstatisticas(){
-        $this->dashboardQueryService->processoStats($this->empresa->id);
+        return view('dashboard_processos', $this->dashboardQueryService->processoStats($this->empresa->id));
 
     }
 

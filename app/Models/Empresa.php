@@ -38,7 +38,8 @@ class Empresa extends Model implements Auditable
         'Contacto_movel',
         'Contacto_fixo',
         'Sigla',
-        'ativo'
+        'ativo',
+        'conta',
     ];
 
     /**

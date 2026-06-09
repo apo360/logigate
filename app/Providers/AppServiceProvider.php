@@ -10,6 +10,9 @@ use App\Application\Mercadoria\Repositories\EloquentMercadoriaRepository;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\PautaAduaneira\IA\OpenAIPautaSuggestionProvider;
 use App\Application\PautaAduaneira\IA\PautaSuggestionProviderInterface;
+use App\Domains\Empresa\Policies\EmpresaPolicy;
+use App\Domains\Empresa\Repositories\EloquentEmpresaRepository;
+use App\Domains\Empresa\Repositories\EmpresaRepositoryInterface;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
 use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
 use App\Domains\Processo\Repositories\EloquentProcessoRepository;
@@ -20,6 +23,9 @@ use App\Domains\Produtos\Repositories\EloquentProdutoRepository;
 use App\Domains\Produtos\Repositories\ProdutoRepositoryInterface;
 use App\Domains\PautaAduaneira\Repositories\EloquentPautaAduaneiraRepository;
 use App\Domains\PautaAduaneira\Repositories\PautaAduaneiraRepositoryInterface;
+use App\Domains\Usuarios\Policies\UsuarioEmpresaPolicy;
+use App\Domains\Usuarios\Repositories\EloquentUsuarioRepository;
+use App\Domains\Usuarios\Repositories\UsuarioRepositoryInterface;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
 use App\Models\DocumentoArquivo;
@@ -55,6 +61,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MercadoriaRepositoryInterface::class, EloquentMercadoriaRepository::class);
         $this->app->bind(PautaAduaneiraRepositoryInterface::class, EloquentPautaAduaneiraRepository::class);
         $this->app->bind(PautaSuggestionProviderInterface::class, OpenAIPautaSuggestionProvider::class);
+        $this->app->bind(EmpresaRepositoryInterface::class, EloquentEmpresaRepository::class);
+        $this->app->bind(UsuarioRepositoryInterface::class, EloquentUsuarioRepository::class);
     }
 
     /**
@@ -65,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
         // Security: register tenant-aware policies for core domain models.
         Gate::policy(Customer::class, CustomerPolicy::class);
         Gate::policy(DocumentoArquivo::class, DocumentoPolicy::class);
+        Gate::policy(Empresa::class, EmpresaPolicy::class);
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
         Gate::policy(SalesInvoice::class, SalesInvoicePolicy::class);
@@ -84,6 +93,14 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return str_starts_with($key, "empresa/{$empresaId}/files/");
+        });
+
+        Gate::define('manageUser', function (User $actor, Empresa $empresa, User $managedUser): bool {
+            return app(UsuarioEmpresaPolicy::class)->manageUser($actor, $empresa, $managedUser);
+        });
+
+        Gate::define('manageGlobalPermissions', function (User $actor, mixed ...$args): bool {
+            return app(UsuarioEmpresaPolicy::class)->manageGlobalPermissions($actor);
         });
 
         // Security: explicit tenant-aware route model binding prevents cross-tenant IDOR.

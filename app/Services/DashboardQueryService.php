@@ -246,24 +246,33 @@ class DashboardQueryService
                 ->sum(fn ($invoice) => $invoice->salesdoctotal->gross_total ?? 0);
             $numeroFaturas = SalesInvoice::where('empresa_id', $empresaId)->whereYear('created_at', $ano)->get();
             $ticketMedio = $totalFaturamentos / max(count($numeroFaturas), 1);
-            $faturamentoMes = SalesDocTotal::whereMonth('created_at', now()->month)->sum('gross_total');
-            $faturacaoHoje = SalesDocTotal::whereDate('created_at', Carbon::today())->sum('gross_total');
-            $mesAnterior = SalesDocTotal::whereMonth('created_at', now()->month - 1)->sum('gross_total');
+            $faturamentoMes = $this->salesTotalsForEmpresa($empresaId)
+                ->whereMonth('sales_document_totals.created_at', now()->month)
+                ->sum('sales_document_totals.gross_total');
+            $faturacaoHoje = $this->salesTotalsForEmpresa($empresaId)
+                ->whereDate('sales_document_totals.created_at', Carbon::today())
+                ->sum('sales_document_totals.gross_total');
+            $mesAnterior = $this->salesTotalsForEmpresa($empresaId)
+                ->whereMonth('sales_document_totals.created_at', now()->subMonth()->month)
+                ->whereYear('sales_document_totals.created_at', now()->subMonth()->year)
+                ->sum('sales_document_totals.gross_total');
             $percentCrescimento = $mesAnterior > 0 ? (($faturacaoHoje - $mesAnterior) / $mesAnterior) * 100 : 0;
-            $faturamentoAnoAnterior = SalesDocTotal::whereYear('created_at', now()->month - 1)->sum('gross_total');
+            $faturamentoAnoAnterior = $this->salesTotalsForEmpresa($empresaId)
+                ->whereYear('sales_document_totals.created_at', now()->subYear()->year)
+                ->sum('sales_document_totals.gross_total');
             $lucroLiquidoTotal = SalesInvoice::where('empresa_id', $empresaId)->whereYear('created_at', $ano)->get()->sum(fn ($invoice) => ($invoice->salesdoctotal->gross_total ?? 0) - ($invoice->total_costs ?? 0));
             $percentualCrescimentoLucro = $faturamentoAnoAnterior > 0 ? (($lucroLiquidoTotal - $faturamentoAnoAnterior) / $faturamentoAnoAnterior) * 100 : 0;
             $custosTotais = SalesInvoice::where('empresa_id', $empresaId)->get()->sum(fn ($invoice) => $invoice->total_costs ?? 0);
             $percentualCrescimentoCustos = $faturamentoAnoAnterior > 0 ? (($custosTotais - $faturamentoAnoAnterior) / $faturamentoAnoAnterior) * 100 : 0;
-            $dailyRevenue = $this->dailyRevenue(1);
-            $previousDayRevenue = $this->previousDayRevenue();
-            $sevenpreviousDaysRevenue = $this->dailyRevenue(7);
-            $monthlyRevenue = $this->monthlyRevenue();
-            $previousMonthRevenue = $this->previousMonthRevenue();
-            $yearlyRevenue = $this->yearlyRevenue();
-            $previousYearRevenue = $this->previousYearRevenue(Carbon::now()->subYear()->year);
-            $previousYearRevenue2 = $this->previousYearRevenue(Carbon::now()->subYears(2)->year);
-            $previousYearRevenue3 = $this->previousYearRevenue(Carbon::now()->subYears(3)->year);
+            $dailyRevenue = $this->dailyRevenue($empresaId, 1);
+            $previousDayRevenue = $this->previousDayRevenue($empresaId);
+            $sevenpreviousDaysRevenue = $this->dailyRevenue($empresaId, 7);
+            $monthlyRevenue = $this->monthlyRevenue($empresaId);
+            $previousMonthRevenue = $this->previousMonthRevenue($empresaId);
+            $yearlyRevenue = $this->yearlyRevenue($empresaId);
+            $previousYearRevenue = $this->previousYearRevenue($empresaId, Carbon::now()->subYear()->year);
+            $previousYearRevenue2 = $this->previousYearRevenue($empresaId, Carbon::now()->subYears(2)->year);
+            $previousYearRevenue3 = $this->previousYearRevenue($empresaId, Carbon::now()->subYears(3)->year);
             $percentualCrescimentoAnual = ($previousYearRevenue->first()->total ?? 0) > 0
                 ? ((($yearlyRevenue->first()->total ?? 0) - ($previousYearRevenue->first()->total ?? 0)) / $previousYearRevenue->first()->total) * 100
                 : 0;
@@ -284,9 +293,13 @@ class DashboardQueryService
                 ->orderByDesc('total')
                 ->limit(5)
                 ->get();
-            $faturamentoUltimos3Meses = SalesDocTotal::where('created_at', '>=', Carbon::now()->subMonths(3))->sum('gross_total');
+            $faturamentoUltimos3Meses = $this->salesTotalsForEmpresa($empresaId)
+                ->where('sales_document_totals.created_at', '>=', Carbon::now()->subMonths(3))
+                ->sum('sales_document_totals.gross_total');
             $previsaoProximoMes = $faturamentoUltimos3Meses / 3;
-            $faturamentoUltimos3Anos = SalesDocTotal::where('created_at', '>=', Carbon::now()->subYears(3))->sum('gross_total');
+            $faturamentoUltimos3Anos = $this->salesTotalsForEmpresa($empresaId)
+                ->where('sales_document_totals.created_at', '>=', Carbon::now()->subYears(3))
+                ->sum('sales_document_totals.gross_total');
             $previsaoProximoAno = $faturamentoUltimos3Anos / 3;
             $tempos = SalesInvoice::where('empresa_id', $empresaId)
                 ->orderBy('customer_id')->orderBy('created_at')
@@ -303,8 +316,9 @@ class DashboardQueryService
                     }
                     return count($intervalos) ? array_sum($intervalos) / count($intervalos) : null;
                 })->filter()->avg();
-            $faturacaoMensal = SalesDocTotal::selectRaw('MONTH(created_at) as mes, SUM(gross_total) as total')
-                ->whereYear('created_at', $ano)
+            $faturacaoMensal = $this->salesTotalsForEmpresa($empresaId)
+                ->selectRaw('MONTH(sales_document_totals.created_at) as mes, SUM(sales_document_totals.gross_total) as total')
+                ->whereYear('sales_document_totals.created_at', $ano)
                 ->groupBy('mes')
                 ->orderBy('mes')
                 ->get()
@@ -318,8 +332,9 @@ class DashboardQueryService
             $anosDisponiveis = range($anoAtual, $anoAtual - 3);
             $dadosPorAno = [];
             foreach ($anosDisponiveis as $anoItem) {
-                $faturacaoBruta = SalesDocTotal::selectRaw('MONTH(created_at) as mes, SUM(gross_total) as total')
-                    ->whereYear('created_at', $anoItem)
+                $faturacaoBruta = $this->salesTotalsForEmpresa($empresaId)
+                    ->selectRaw('MONTH(sales_document_totals.created_at) as mes, SUM(sales_document_totals.gross_total) as total')
+                    ->whereYear('sales_document_totals.created_at', $anoItem)
                     ->groupBy('mes')
                     ->orderBy('mes')
                     ->get()
@@ -344,54 +359,67 @@ class DashboardQueryService
         });
     }
 
-    private function dailyRevenue(int $days)
+    private function dailyRevenue(int $empresaId, int $days)
     {
-        return SalesDocTotal::selectRaw('DATE(created_at) as date, SUM(gross_total) as total')
-            ->where('created_at', '>=', Carbon::today()->subDays($days - 1))
+        return $this->salesTotalsForEmpresa($empresaId)
+            ->selectRaw('DATE(sales_document_totals.created_at) as date, SUM(sales_document_totals.gross_total) as total')
+            ->where('sales_document_totals.created_at', '>=', Carbon::today()->subDays($days - 1))
             ->groupBy('date')
             ->orderBy('date')
             ->get();
     }
 
-    private function previousDayRevenue()
+    private function previousDayRevenue(int $empresaId)
     {
-        return SalesDocTotal::selectRaw('DATE(created_at) as date, SUM(gross_total) as total')
-            ->whereDate('created_at', Carbon::yesterday()->toDateString())
+        return $this->salesTotalsForEmpresa($empresaId)
+            ->selectRaw('DATE(sales_document_totals.created_at) as date, SUM(sales_document_totals.gross_total) as total')
+            ->whereDate('sales_document_totals.created_at', Carbon::yesterday()->toDateString())
             ->groupBy('date')
             ->get();
     }
 
-    private function monthlyRevenue()
+    private function monthlyRevenue(int $empresaId)
     {
-        return SalesDocTotal::selectRaw('MONTH(created_at) as month, YEAR(created_at) as year, SUM(gross_total) as total')
-            ->whereYear('created_at', Carbon::now()->year)
+        return $this->salesTotalsForEmpresa($empresaId)
+            ->selectRaw('MONTH(sales_document_totals.created_at) as month, YEAR(sales_document_totals.created_at) as year, SUM(sales_document_totals.gross_total) as total')
+            ->whereYear('sales_document_totals.created_at', Carbon::now()->year)
             ->groupBy('month', 'year')
             ->get();
     }
 
-    private function previousMonthRevenue()
+    private function previousMonthRevenue(int $empresaId)
     {
         $previousMonth = Carbon::now()->subMonth();
 
-        return SalesDocTotal::selectRaw('MONTH(created_at) as month, YEAR(created_at) as year, SUM(gross_total) as total')
-            ->whereYear('created_at', $previousMonth->year)
-            ->whereMonth('created_at', $previousMonth->month)
+        return $this->salesTotalsForEmpresa($empresaId)
+            ->selectRaw('MONTH(sales_document_totals.created_at) as month, YEAR(sales_document_totals.created_at) as year, SUM(sales_document_totals.gross_total) as total')
+            ->whereYear('sales_document_totals.created_at', $previousMonth->year)
+            ->whereMonth('sales_document_totals.created_at', $previousMonth->month)
             ->groupBy('month', 'year')
             ->get();
     }
 
-    private function yearlyRevenue()
+    private function yearlyRevenue(int $empresaId)
     {
-        return SalesDocTotal::selectRaw('YEAR(created_at) as year, SUM(gross_total) as total')
+        return $this->salesTotalsForEmpresa($empresaId)
+            ->selectRaw('YEAR(sales_document_totals.created_at) as year, SUM(sales_document_totals.gross_total) as total')
             ->groupBy('year')
             ->get();
     }
 
-    private function previousYearRevenue(int $year)
+    private function previousYearRevenue(int $empresaId, int $year)
     {
-        return SalesDocTotal::selectRaw('YEAR(created_at) as year, SUM(gross_total) as total')
-            ->whereYear('created_at', $year)
+        return $this->salesTotalsForEmpresa($empresaId)
+            ->selectRaw('YEAR(sales_document_totals.created_at) as year, SUM(sales_document_totals.gross_total) as total')
+            ->whereYear('sales_document_totals.created_at', $year)
             ->groupBy('year')
             ->get();
+    }
+
+    private function salesTotalsForEmpresa(int $empresaId)
+    {
+        return SalesDocTotal::query()
+            ->join('sales_invoice', 'sales_invoice.id', '=', 'sales_document_totals.documentoID')
+            ->where('sales_invoice.empresa_id', $empresaId);
     }
 }

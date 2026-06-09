@@ -46,8 +46,8 @@ class CheckSubscription
             }
 
             return redirect()
-                ->route('subscribe.view', ['empresa' => $empresa->id])
-                ->with('warning', 'É necessária uma subscrição ativa para acessar esta funcionalidade.');
+                ->route('billing.plans')
+                ->with('warning', 'Escolha um plano para activar o acesso à plataforma.');
         }
 
         // Verificar módulo específico

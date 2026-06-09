@@ -16,7 +16,7 @@ class LiicenciamentoShow extends Component
     {
         $this->licenciamento = $licenciamento->load([
             'cliente', 'exportador', 'estancia', 'mercadorias', 
-            'documentos', 'procLicenFaturas', 'mercadoriasAgrupadas'
+            'documentosArquivos', 'mercadoriasAgrupadas'
         ]);
     }
 

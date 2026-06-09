@@ -71,42 +71,31 @@
             </x-slot>
 
             <x-slot name="content">
-                <!-- Links do Dropdown -->
-                @foreach(auth()->user()->empresas as $empresa)
-                    <div class="block px-4 py-2 text-xs text-gray-400">
-                        {{ __($empresa->Empresa) }}
-                    </div>
-                    <x-dropdown-link href="{{ route('empresas.edit', $empresa->id) }}">
-                        {{ __('Perfil Empresa') }}
-                    </x-dropdown-link>
-                    <x-dropdown-link href="{{ route('subscribe.view', $empresa->id) }}">
-                        {{ __('Subscrição') }}
-                    </x-dropdown-link>
-                @endforeach
-                <x-dropdown-link href="{{ route('usuarios.index') }}">
-                    {{ __('Usuarios') }}
-                </x-dropdown-link>
-                <x-dropdown-link href="{{ route('profile.show') }}">
-                    {{ __('Alterar Senha') }}
-                </x-dropdown-link>
-                <x-dropdown-link href="{{ route('roles.index') }}">
-                    {{ __('Regras') }}
-                </x-dropdown-link>
-                <x-dropdown-link href="{{ route('permissions.index') }}">
-                    {{ __('Permissões') }}
-                </x-dropdown-link>
-                <x-dropdown-link href="{{ route('empresa.migracao') }}">
-                    {{ __('Migração') }}
-                </x-dropdown-link>
-                <x-dropdown-link href="{{ route('empresa.cambio') }}">
-                    {{ __('Cambio')}}
-                </x-dropdown-link>
+                @php($currentEmpresa = auth()->user()->empresas->first())
 
-                @if (Laravel\Jetstream\Jetstream::hasApiFeatures())
-                    <x-dropdown-link href="{{ route('api-tokens.index') }}">
-                        {{ __('API Tokens') }}
+                <x-dropdown-link href="{{ route('profile.show') }}">
+                    <i class="fa fa-user mr-2 text-blue-600"></i>{{ __('Minha Conta') }}
+                </x-dropdown-link>
+                @if($currentEmpresa)
+                    <x-dropdown-link href="{{ route('empresas.edit', $currentEmpresa->id) }}">
+                        <i class="fa fa-building mr-2 text-blue-600"></i>{{ __('Empresa') }}
                     </x-dropdown-link>
                 @endif
+                <x-dropdown-link href="{{ route('usuarios.index') }}">
+                    <i class="fa fa-users-gear mr-2 text-blue-600"></i>{{ __('Usuários e Permissões') }}
+                </x-dropdown-link>
+                <x-dropdown-link href="{{ route('billing.plans') }}">
+                    <i class="fa fa-credit-card mr-2 text-blue-600"></i>{{ __('Subscrição e Pagamentos') }}
+                </x-dropdown-link>
+                <x-dropdown-link href="{{ route('configuracoes.index') }}">
+                    <i class="fa fa-gear mr-2 text-blue-600"></i>{{ __('Configurações') }}
+                </x-dropdown-link>
+                <x-dropdown-link href="{{ route('logs.index') }}">
+                    <i class="fa fa-shield-halved mr-2 text-blue-600"></i>{{ __('Segurança & Auditoria') }}
+                </x-dropdown-link>
+                <x-dropdown-link href="{{ route('empresa.migracao') }}">
+                    <i class="fa fa-file-import mr-2 text-blue-600"></i>{{ __('Migrações / Importações') }}
+                </x-dropdown-link>
 
                 <!-- Divisor -->
                 <div class="border-t border-gray-200"></div>

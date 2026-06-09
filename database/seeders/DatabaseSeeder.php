@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         // DB::statement('TRUNCATE TABLE portos');
 
         $this->call([
-            TipoTransporteSeeder::class,
+          TipoTransporteSeeder::class,
             TaxTableSeeder::class,
             ProdutoSeeder::class,
             UserRoleSeeder::class,
@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             MercadoriaLocalizacaoSeeder::class,
             PlanoSeeder::class,
             PlanoModuloSeeder::class,
+            DemoOperationalDataSeeder::class,
         ]);
 
         DB::statement('SET FOREIGN_KEY_CHECKS = 1');

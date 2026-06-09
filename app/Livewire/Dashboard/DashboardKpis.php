@@ -15,12 +15,26 @@ class DashboardKpis extends Component
 
     public function mount(): void
     {
+        $this->loadWidget();
+    }
+
+    public function refreshWidget(): void
+    {
+        $this->loadWidget(true);
+    }
+
+    private function loadWidget(bool $fresh = false): void
+    {
         $empresa = Auth::user()?->empresas()->first();
 
         if (! $empresa) {
             $this->kpis = [];
 
             return;
+        }
+
+        if ($fresh) {
+            Cache::forget("dashboard.widgets.kpis.{$empresa->id}");
         }
 
         $this->kpis = Cache::remember("dashboard.widgets.kpis.{$empresa->id}", 60, function () use ($empresa) {

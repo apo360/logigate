@@ -2,165 +2,180 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\EmpresaUser;
+use App\Domains\Empresa\Queries\ObterEmpresaAtualQuery;
+use App\Domains\Usuarios\Actions\AtualizarUsuarioEmpresaAction;
+use App\Domains\Usuarios\Actions\BloquearUsuarioAction;
+use App\Domains\Usuarios\Actions\CriarUsuarioEmpresaAction;
+use App\Domains\Usuarios\Actions\DesbloquearUsuarioAction;
+use App\Domains\Usuarios\Actions\RemoverUsuarioDaEmpresaAction;
+use App\Domains\Usuarios\Actions\ResetarSenhaUsuarioAction;
+use App\Domains\Usuarios\Actions\SincronizarPermissoesUsuarioAction;
+use App\Domains\Usuarios\Data\UsuarioEmpresaData;
+use App\Domains\Usuarios\Queries\ListarPermissoesQuery;
+use App\Domains\Usuarios\Queries\ListarRolesQuery;
+use App\Domains\Usuarios\Queries\ListarUsuariosEmpresaQuery;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Auth\Access\AuthorizationException;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 
 class UserController extends AuthenticatedController
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        // Obter a empresa do usuário autenticado
-        $empresaId = Auth::user()->empresas->first()->id;
+    public function index(
+        Request $request,
+        ObterEmpresaAtualQuery $empresaAtual,
+        ListarUsuariosEmpresaQuery $query
+    ) {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
 
-        // Buscar os usuários que pertencem à empresa específica
-        $users = User::whereHas('empresas', function ($query) use ($empresaId) {
-            $query->where('empresa_id', $empresaId);
-        })->with('roles')->get();
+        $users = $query->execute($empresa, $request->query('search'));
 
-        return view('usuario.index', compact('users'));
+        return view('usuario.index', compact('empresa', 'users'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(ObterEmpresaAtualQuery $empresaAtual, ListarRolesQuery $rolesQuery)
     {
-        $roles = Role::all(); // Obter todos os papéis disponíveis
-        return view('usuario.create', compact('roles'));
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+
+        $roles = $rolesQuery->execute();
+
+        return view('usuario.create', compact('empresa', 'roles'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role' => 'required' // Papel é obrigatório
+    public function store(
+        Request $request,
+        ObterEmpresaAtualQuery $empresaAtual,
+        CriarUsuarioEmpresaAction $action
+    ) {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role' => ['required', 'string', 'exists:roles,name'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
-        // Criar o usuário
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        EmpresaUser::create([
-            'conta' => Auth::user()->empresas->first()->conta,
-            'empresa_id' => Auth::user()->empresas->first()->id,
-            'user_id' => $user->id
-        ]);
-
-        // Atribuir o papel
-        $user->assignRole($request->role);
+        $action->execute(Auth::user(), $empresa, UsuarioEmpresaData::fromArray($validated));
 
         return redirect()->route('usuarios.index')->with('success', 'Usuário cadastrado com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
+    public function show(string $id, ObterEmpresaAtualQuery $empresaAtual)
     {
-        $user = User::with('roles', 'audits')->findOrFail($id);  // Recupera o usuário com suas roles e auditorias
-        return view('usuario.show', compact('user'));
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+
+        $user = User::with('roles', 'permissions', 'audits')->findOrFail($id);
+        abort_unless($user->empresas()->where('empresas.id', $empresa->id)->exists(), 403);
+
+        return view('usuario.show', compact('empresa', 'user'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-        //
+        return redirect()->route('usuarios.show', $id);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function update(
+        Request $request,
+        string $id,
+        ObterEmpresaAtualQuery $empresaAtual,
+        AtualizarUsuarioEmpresaAction $action
+    ) {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+
+        $user = User::findOrFail($id);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'role' => ['nullable', 'string', 'exists:roles,name'],
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
+        ]);
+
+        $action->execute(Auth::user(), $empresa, $user, UsuarioEmpresaData::fromArray($validated));
+
+        return redirect()->route('usuarios.show', $user)->with('success', 'Usuário actualizado com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    public function destroy(string $id, ObterEmpresaAtualQuery $empresaAtual, RemoverUsuarioDaEmpresaAction $action)
     {
-        //
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+
+        $action->execute(Auth::user(), $empresa, User::findOrFail($id));
+
+        return redirect()->route('usuarios.index')->with('success', 'Usuário removido da empresa com sucesso!');
     }
 
-    // Formulário para adicionar permissões ao usuário
-    public function editPermissions(User $user)
-    {
-        $permissions = Permission::all(); // Obter todas as permissões
-        return view('usuario.permissions', compact('user', 'permissions'));
+    public function editPermissions(
+        User $user,
+        ObterEmpresaAtualQuery $empresaAtual,
+        ListarPermissoesQuery $permissionsQuery
+    ) {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+        abort_unless($user->empresas()->where('empresas.id', $empresa->id)->exists(), 403);
+
+        $permissions = $permissionsQuery->execute();
+
+        return view('usuario.permissions', compact('empresa', 'user', 'permissions'));
     }
 
-    // Armazenar as permissões do usuário
-    public function storePermissions(Request $request, User $user)
-    {
-        $user->syncPermissions($request->permissions); // Sincronizar permissões
+    public function storePermissions(
+        Request $request,
+        User $user,
+        ObterEmpresaAtualQuery $empresaAtual,
+        SincronizarPermissoesUsuarioAction $action
+    ) {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+
+        $validated = $request->validate([
+            'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
+        ]);
+
+        $action->execute(Auth::user(), $empresa, $user, $validated['permissions'] ?? []);
+
         return redirect()->route('usuarios.index')->with('success', 'Permissões atribuídas com sucesso!');
     }
 
-    public function block($id)
+    public function block($id, ObterEmpresaAtualQuery $empresaAtual, BloquearUsuarioAction $action)
     {
-        $user = User::findOrFail($id);
-        $this->authorizeManagedUser($user);
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
 
-        $user->is_blocked = true;
-        $user->save();
+        $action->execute(Auth::user(), $empresa, User::findOrFail($id));
 
         return redirect()->route('usuarios.index')->with('success', 'Usuário bloqueado com sucesso!');
     }
 
-    public function unblock($id)
+    public function unblock($id, ObterEmpresaAtualQuery $empresaAtual, DesbloquearUsuarioAction $action)
     {
-        $user = User::findOrFail($id);
-        $this->authorizeManagedUser($user);
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
 
-        $user->is_blocked = false;
-        $user->save();
+        $action->execute(Auth::user(), $empresa, User::findOrFail($id));
 
         return redirect()->route('usuarios.index')->with('success', 'Usuário desbloqueado com sucesso!');
     }
 
-    public function resert_pass($id){
-        $user = User::findOrFail($id);
-        $this->authorizeManagedUser($user);
-
-        // Keep the existing business behaviour intact: the reset flow is still
-        // pending, but access to the action is now explicitly authorised.
-        return redirect()->route('usuarios.index')
-            ->with('warning', 'Fluxo de reinicialização de senha ainda não está implementado.');
-    }
-
-    private function authorizeManagedUser(User $managedUser): void
+    public function resert_pass($id, ObterEmpresaAtualQuery $empresaAtual, ResetarSenhaUsuarioAction $action)
     {
-        $currentUser = Auth::user();
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
 
-        if (! $currentUser) {
-            throw new AuthorizationException();
-        }
+        $temporaryPassword = $action->execute(Auth::user(), $empresa, User::findOrFail($id));
 
-        $currentEmpresaId = $currentUser->empresas()->value('empresas.id');
-        $sameEmpresa = $managedUser->empresas()->where('empresa_id', $currentEmpresaId)->exists();
-
-        if (! $sameEmpresa || $managedUser->is($currentUser)) {
-            throw new AuthorizationException('Sem permissão para gerir este utilizador.');
-        }
+        return redirect()->route('usuarios.index')
+            ->with('success', 'Senha temporária gerada com sucesso.')
+            ->with('temporary_password', $temporaryPassword);
     }
 }

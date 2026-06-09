@@ -176,9 +176,9 @@
                                     <i class="fas fa-plus-circle"></i> Adicionar Documento
                                 </a>
                             </div>
-                            @if($licenciamento->documentos->isNotEmpty())
+                            @if($licenciamento->documentosArquivos->count() > 0)
                                 <div class="space-y-4">
-                                    @foreach($licenciamento->documentos->groupBy('tipo_documento') as $tipo => $documentos)
+                                    @foreach($licenciamento->documentosArquivos->groupBy('tipo_documento') as $tipo => $documentos)
                                         <div class="border rounded-lg overflow-hidden">
                                             <div class="bg-gray-100 px-4 py-2 font-semibold">{{ $tipo }}</div>
                                             <ul class="divide-y divide-gray-200">

@@ -14,10 +14,27 @@ class MercadoriasChart extends Component
 
     public function mount(): void
     {
+        $this->loadWidget();
+    }
+
+    public function refreshWidget(): void
+    {
+        $this->loadWidget(true);
+    }
+
+    private function loadWidget(bool $fresh = false): void
+    {
         $empresa = Auth::user()?->empresas()->first();
 
         if (! $empresa) {
+            $this->hsCodes = [];
+            $this->goodsMetrics = [];
+
             return;
+        }
+
+        if ($fresh) {
+            Cache::forget("dashboard.widgets.mercadorias.{$empresa->id}");
         }
 
         $payload = Cache::remember("dashboard.widgets.mercadorias.{$empresa->id}", 120, function () use ($empresa) {

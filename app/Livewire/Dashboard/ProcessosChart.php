@@ -14,10 +14,27 @@ class ProcessosChart extends Component
 
     public function mount(): void
     {
+        $this->loadWidget();
+    }
+
+    public function refreshWidget(): void
+    {
+        $this->loadWidget(true);
+    }
+
+    private function loadWidget(bool $fresh = false): void
+    {
         $empresa = Auth::user()?->empresas()->first();
 
         if (! $empresa) {
+            $this->statusChart = [];
+            $this->recentActivity = [];
+
             return;
+        }
+
+        if ($fresh) {
+            Cache::forget("dashboard.widgets.processos.{$empresa->id}");
         }
 
         $payload = Cache::remember("dashboard.widgets.processos.{$empresa->id}", 60, function () use ($empresa) {

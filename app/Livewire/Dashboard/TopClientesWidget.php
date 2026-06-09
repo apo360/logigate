@@ -14,10 +14,27 @@ class TopClientesWidget extends Component
 
     public function mount(): void
     {
+        $this->loadWidget();
+    }
+
+    public function refreshWidget(): void
+    {
+        $this->loadWidget(true);
+    }
+
+    private function loadWidget(bool $fresh = false): void
+    {
         $empresa = Auth::user()?->empresas()->first();
 
         if (! $empresa) {
+            $this->topClientes = [];
+            $this->clientesComDivida = [];
+
             return;
+        }
+
+        if ($fresh) {
+            Cache::forget("dashboard.widgets.top-clientes.{$empresa->id}");
         }
 
         $payload = Cache::remember("dashboard.widgets.top-clientes.{$empresa->id}", 120, function () use ($empresa) {

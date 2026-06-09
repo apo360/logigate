@@ -59,7 +59,15 @@
         </div>
 
         @if($subscricao)
-            @if($subscricao->data_expiracao && $this->diasRestantes >= 0)
+            @if($subscricao->hasStatus(\App\Models\Subscricao::STATUS_PENDENTE))
+                <div class="text-xs text-amber-600">
+                    Pagamento pendente
+                </div>
+                <button wire:click="checkout"
+                        class="mt-2 text-xs bg-logigate-primary text-white px-3 py-1 rounded-lg">
+                    Concluir pagamento
+                </button>
+            @elseif($subscricao->data_expiracao && $this->diasRestantes >= 0)
                 <div class="text-xs text-gray-500">
                     Expira {{ $subscricao->data_expiracao->format('d/m/Y') }}
                 </div>
@@ -76,8 +84,12 @@
                 </button>
             @else
                 <div class="text-xs text-gray-500">
-                    Subscrição registada. Aguardando ativação.
+                    Subscrição registada.
                 </div>
+                <button wire:click="renovar"
+                        class="mt-2 text-xs bg-logigate-primary text-white px-3 py-1 rounded-lg">
+                    Ver planos
+                </button>
             @endif
         @else
             <div class="text-xs text-gray-500">Nenhuma subscrição ativa</div>

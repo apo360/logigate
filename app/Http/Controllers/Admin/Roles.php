@@ -2,86 +2,73 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domains\Usuarios\Actions\AtualizarRoleAction;
+use App\Domains\Usuarios\Actions\CriarRoleAction;
+use App\Domains\Usuarios\Actions\ExcluirRoleAction;
+use App\Domains\Usuarios\Queries\ListarPermissoesQuery;
+use App\Domains\Usuarios\Queries\ListarRolesQuery;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 
 class Roles extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(ListarRolesQuery $query)
     {
-        $roles = Role::all();
+        $roles = $query->execute();
+
         return view('admin.roles', compact('roles'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(ListarPermissoesQuery $query)
     {
-        $permissions = Permission::all();
+        $permissions = $query->execute();
+
         return view('admin.create_role', compact('permissions'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request, CriarRoleAction $action)
     {
-        $request->validate([
-            'name' => 'required|unique:roles,name',
-            'permissions' => 'required|array'
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'unique:roles,name'],
+            'permissions' => ['required', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
-        $role = Role::create(['name' => $request->name]);
-        $role->syncPermissions($request->permissions);
+        $action->execute(Auth::user(), $validated['name'], $validated['permissions']);
 
         return redirect()->route('roles.index')->with('success', 'Papel criado com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
+        return redirect()->route('roles.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Role $role, ListarPermissoesQuery $query)
     {
-        $permissions = Permission::all();
+        $permissions = $query->execute();
+
         return view('admin.edit_role', compact('role', 'permissions'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Role $role)
+    public function update(Request $request, Role $role, AtualizarRoleAction $action)
     {
-        $request->validate([
-            'name' => 'required|unique:roles,name,' . $role->id,
-            'permissions' => 'required|array'
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'unique:roles,name,' . $role->id],
+            'permissions' => ['required', 'array'],
+            'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
-        $role->update(['name' => $request->name]);
-        $role->syncPermissions($request->permissions);
+        $action->execute(Auth::user(), $role, $validated['name'], $validated['permissions']);
 
         return redirect()->route('roles.index')->with('success', 'Papel atualizado com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Role $role)
+    public function destroy(Role $role, ExcluirRoleAction $action)
     {
-        $role->delete();
+        $action->execute(Auth::user(), $role);
 
         return redirect()->route('roles.index')->with('success', 'Papel excluído com sucesso!');
     }

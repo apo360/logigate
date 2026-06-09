@@ -13,10 +13,26 @@ class DireitosAduaneirosWidget extends Component
 
     public function mount(): void
     {
+        $this->loadWidget();
+    }
+
+    public function refreshWidget(): void
+    {
+        $this->loadWidget(true);
+    }
+
+    private function loadWidget(bool $fresh = false): void
+    {
         $empresa = Auth::user()?->empresas()->first();
 
         if (! $empresa) {
+            $this->summary = [];
+
             return;
+        }
+
+        if ($fresh) {
+            Cache::forget("dashboard.widgets.direitos.{$empresa->id}");
         }
 
         $this->summary = Cache::remember("dashboard.widgets.direitos.{$empresa->id}", 120, function () use ($empresa) {

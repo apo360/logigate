@@ -30,7 +30,16 @@ class User extends Authenticatable implements Auditable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name', 'email', 'password', 'otp', 'otp_expires_at', 'otp_verified_at',
+        'name',
+        'email',
+        'password',
+        'otp',
+        'otp_expires_at',
+        'otp_verified_at',
+        'is_active',
+        'is_blocked',
+        'password_changed',
+        'last_change_password',
     ];
 
     /**
@@ -64,6 +73,10 @@ class User extends Authenticatable implements Auditable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'is_blocked' => 'boolean',
+            'password_changed' => 'boolean',
+            'last_change_password' => 'datetime',
         ];
     }
 

@@ -13,6 +13,7 @@ class SubscriptionWidget extends Component
     public $empresa;
     public $subscricao;
     public ?int $subscricaoId = null;
+    public ?string $checkoutConta = null;
     
     protected $listeners = ['subscricaoAtualizada' => 'carregarDados'];
     
@@ -24,6 +25,7 @@ class SubscriptionWidget extends Component
     public function carregarDados()
     {
         $empresa = Auth::user()->empresas->first();
+        $this->checkoutConta = $empresa?->conta;
 
         // Always prefer the active record, but safely fall back to the latest one
         // so pending subscriptions can still render without crashing the widget.
@@ -86,7 +88,16 @@ class SubscriptionWidget extends Component
     
     public function renovar()
     {
-        return redirect()->route('subscribe.view', auth()->user()->empresas->first()->id);
+        return redirect()->route('billing.plans');
+    }
+
+    public function checkout()
+    {
+        if (! $this->checkoutConta) {
+            return redirect()->route('billing.plans');
+        }
+
+        return redirect()->route('checkout', ['conta' => $this->checkoutConta]);
     }
     
     public function render()

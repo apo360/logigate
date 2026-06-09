@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\Roles;
 use App\Http\Controllers\AgenteCarga\DashboardController as AgenteCargaDashboardController;
 use App\Http\Controllers\ArquivoController;
 use App\Http\Controllers\CedulaController;
+use App\Http\Controllers\BillingPlanController;
 use App\Http\Controllers\ContaCorrenteController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -97,6 +98,11 @@ use App\Models\Processo;
         Route::post('/usuarios/block/{id}', [UserController::class, 'block'])->name('usuarios.block');
         Route::post('/usuarios/unblock/{id}', [UserController::class, 'unblock'])->name('usuarios.unblock');
         Route::post('/usuarios/resert/{id}', [UserController::class, 'resert_pass'])->name('usuarios.resetPassword');
+
+        Route::get('/billing/plans', [BillingPlanController::class, 'index'])->name('billing.plans');
+        Route::post('/billing/plans', [BillingPlanController::class, 'start'])->name('billing.start');
+        Route::view('/configuracoes', 'empresa.configuracoes')->name('configuracoes.index');
+        Route::view('/seguranca-auditoria', 'empresa.auditoria')->name('logs.index');
 
         Route::middleware('check.subscription')->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -239,7 +245,9 @@ use App\Models\Processo;
         // Deprecated legacy flow. Keep reachable only through explicit legacy links,
         // not from the SaaS onboarding path that now ends in checkout.
         Route::get('/subscricao/{empresa}', [ModuleSubscriptionController::class, 'show'])->name('subscribe.view');
-        Route::post('/subscricao/pagamentos', [ModuleSubscriptionController::class, 'pay'])->name('payment.pay');
+        Route::post('/subscricao/pagamentos', function () {
+            abort(410, 'Fluxo legado de pagamento de módulos inativo. Use o checkout AppyPay.');
+        })->name('payment.pay');
 
         Route::get('empresa/migracao', [MigracaoController::class, 'create'])->name('empresa.migracao');
         Route::post('empresa/banco/inserir', [IbanController::class, 'insertConta'])->name('banco.inserir');

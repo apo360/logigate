@@ -19,9 +19,17 @@ class LoginResponse implements LoginResponseContract
             return redirect('/dashboard');
         }
 
-        // Keep paid signups on checkout until the webhook activates the subscription.
         if (! $user->hasActiveSubscription()) {
-            return redirect()->route('checkout', ['conta' => $empresa->conta]);
+            $pendingSubscription = $empresa->subscricoes()
+                ->pending()
+                ->latest('id')
+                ->first();
+
+            if ($pendingSubscription) {
+                return redirect()->route('checkout', ['conta' => $empresa->conta]);
+            }
+
+            return redirect()->route('billing.plans');
         }
 
         switch ($empresa->Designacao) {

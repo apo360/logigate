@@ -2,79 +2,64 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Domains\Usuarios\Actions\AtualizarPermissaoAction;
+use App\Domains\Usuarios\Actions\CriarPermissaoAction;
+use App\Domains\Usuarios\Actions\ExcluirPermissaoAction;
+use App\Domains\Usuarios\Queries\ListarPermissoesQuery;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
 
 class PermissionsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(ListarPermissoesQuery $query)
     {
-        $permissions = Permission::all();
+        $permissions = $query->execute();
+
         return view('admin.permissions', compact('permissions'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('admin.create_permission');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request, CriarPermissaoAction $action)
     {
-        $request->validate([
-            'name' => 'required|unique:permissions,name'
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'unique:permissions,name'],
         ]);
 
-        Permission::create(['name' => $request->name]);
+        $action->execute(Auth::user(), $validated['name']);
 
         return redirect()->route('permissions.index')->with('success', 'Permissão criada com sucesso!');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-        //
+        return redirect()->route('permissions.index');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
+    public function edit(Permission $permission)
     {
         return view('admin.edit_permission', compact('permission'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Permission $permission)
+    public function update(Request $request, Permission $permission, AtualizarPermissaoAction $action)
     {
-        $request->validate([
-            'name' => 'required|unique:permissions,name,' . $permission->id
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'unique:permissions,name,' . $permission->id],
         ]);
 
-        $permission->update(['name' => $request->name]);
+        $action->execute(Auth::user(), $permission, $validated['name']);
 
         return redirect()->route('permissions.index')->with('success', 'Permissão atualizada com sucesso!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Permission $permission)
+    public function destroy(Permission $permission, ExcluirPermissaoAction $action)
     {
-        $permission->delete();
+        $action->execute(Auth::user(), $permission);
 
         return redirect()->route('permissions.index')->with('success', 'Permissão excluída com sucesso!');
     }
