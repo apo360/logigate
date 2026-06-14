@@ -3,16 +3,17 @@
 namespace App\Domains\Customers\Actions;
 
 use App\Models\Customer;
+use Illuminate\Support\Facades\Schema;
 
 final class DeleteCustomerAction
 {
     public function execute(Customer $customer): void
     {
-        if ($customer->processos()->exists()) {
+        if (Schema::hasTable('processos') && $customer->processos()->exists()) {
             throw new \InvalidArgumentException('O cliente possui processos relacionados e não pode ser removido!');
         }
 
-        if ($customer->invoices()->exists()) {
+        if (Schema::hasTable('sales_invoices') && $customer->invoices()->exists()) {
             throw new \InvalidArgumentException('O cliente possui faturas relacionados e não pode ser removido!');
         }
 

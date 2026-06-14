@@ -2,6 +2,7 @@
 
 namespace App\Application\Licenciamento\DTOs;
 
+use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
 use App\Domains\Licenciamento\Enums\TipoDeclaracao;
 use App\Domains\Licenciamento\Enums\TipoTransporte;
 use App\Domains\Licenciamento\Enums\MetodoAvaliacao;
@@ -99,37 +100,7 @@ class CriarLicenciamentoDTO
 
     public static function fromRequest(Request $request, int $empresaId): self
     {
-        $validated = $request->validate([
-            'estancia_id' => 'required|exists:estancias,id',
-            'cliente_id' => 'required|exists:customers,id',
-            'exportador_id' => 'required|exists:exportadors,id',
-            'referencia_cliente' => 'required|string',
-            'factura_proforma' => 'required|string',
-            'descricao' => 'required|string',
-            'moeda' => 'required|string|size:3',
-            'tipo_declaracao' => 'required|in:11,21',
-            'tipo_transporte' => 'required|in:1,2,3,4,5,6,7,8',
-            'registo_transporte' => 'nullable|string',
-            'nacionalidade_transporte' => 'nullable|exists:pais,id',
-            'manifesto' => 'nullable|string',
-            'data_entrada' => 'nullable|date',
-            'porto_entrada' => 'nullable|string',
-            'peso_bruto' => 'nullable|numeric|min:0',
-            'adicoes' => 'nullable|integer',
-            'metodo_avaliacao' => 'required|in:GATT,Outro',
-            'codigo_volume' => 'required|in:B,F,G,L,N',
-            'qntd_volume' => 'required|integer|min:1',
-            'forma_pagamento' => 'required|string',
-            'codigo_banco' => 'nullable|string',
-            'fob_total' => 'required|numeric|min:0',
-            'frete' => 'nullable|numeric|min:0',
-            'seguro' => 'nullable|numeric|min:0',
-            'cif' => 'nullable|numeric|min:0',
-            'pais_origem' => 'nullable|exists:pais,id',
-            'porto_origem' => 'nullable|string',
-            'Nr_factura' => 'nullable|string',
-            'status_fatura' => 'nullable|string',
-        ]);
+        $validated = $request->validate(app(LicenciamentoFormSupport::class)->rules($empresaId));
 
         // Auto-calculate CIF if not provided
         if (empty($validated['cif']) && isset($validated['fob_total'])) {

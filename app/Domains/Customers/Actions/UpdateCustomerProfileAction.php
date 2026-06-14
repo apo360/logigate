@@ -5,6 +5,7 @@ namespace App\Domains\Customers\Actions;
 use App\Domains\Customers\Data\CustomerFormData;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final readonly class UpdateCustomerProfileAction
 {
@@ -34,21 +35,26 @@ final readonly class UpdateCustomerProfileAction
             ]);
             $customer->save();
 
-            $customer->endereco()->updateOrCreate(
-                ['customer_id' => $customer->id],
-                [
-                    'BuildingNumber' => $payload['BuildingNumber'] ?? null,
-                    'StreetName' => $payload['StreetName'] ?? null,
-                    'AddressDetail' => $payload['AddressDetail'] ?? null,
-                    'AddressType' => $payload['AddressType'] ?? 'Facturamento',
-                    'Province' => $payload['Province'] ?? null,
-                    'City' => $payload['City'] ?? null,
-                    'PostalCode' => $payload['PostalCode'] ?? null,
-                    'Country' => $payload['Country'] ?? 'Angola',
-                ]
-            );
+            if (Schema::hasTable('enderecos')) {
+                $customer->endereco()->updateOrCreate(
+                    ['customer_id' => $customer->id],
+                    [
+                        'BuildingNumber' => $payload['BuildingNumber'] ?? null,
+                        'StreetName' => $payload['StreetName'] ?? null,
+                        'AddressDetail' => $payload['AddressDetail'] ?? null,
+                        'AddressType' => $payload['AddressType'] ?? 'Facturamento',
+                        'Province' => $payload['Province'] ?? null,
+                        'City' => $payload['City'] ?? null,
+                        'PostalCode' => $payload['PostalCode'] ?? null,
+                        'Country' => $payload['Country'] ?? 'Angola',
+                    ]
+                );
+            }
 
-            return $customer->refresh()->load(['endereco', 'empresas']);
+            return $customer->refresh()->load(array_values(array_filter([
+                Schema::hasTable('enderecos') ? 'endereco' : null,
+                Schema::hasTable('customers_empresas') ? 'empresas' : null,
+            ])));
         });
     }
 }

@@ -9,10 +9,14 @@ use App\Models\ContaCorrente as CC;
 use App\Models\Customer;
 use App\Models\Processo;
 use App\Models\SalesInvoice;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class ContaCorrente extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     public $customerId;
@@ -74,14 +78,45 @@ class ContaCorrente extends Component
     public function mount($customerId)
     {
         $this->customerId = $customerId;
-        // Security: tenant scope on Customer ensures cross-tenant IDs are rejected.
-        $this->customer = Customer::with(['empresas', 'processos', 'contaCorrente'])->findOrFail($customerId);
+        $this->customer = $this->tenantCustomerQuery()
+            ->with($this->customerRelations())
+            ->findOrFail($customerId);
+        $this->authorize('view', $this->customer);
         
         // Set default values
         $this->form['data'] = now()->format('Y-m-d');
         
         // Calculate initial values
         $this->calculateSaldo();
+    }
+
+    private function tenantCustomerQuery()
+    {
+        $empresaId = Auth::user()?->empresas()->value('empresas.id');
+        abort_if(!$empresaId, 403);
+
+        $query = Customer::query();
+
+        if (!Schema::hasColumn('customers', 'deleted_at')) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query->where(function ($tenantQuery) use ($empresaId): void {
+            $tenantQuery->where('empresa_id', $empresaId);
+
+            if (Schema::hasTable('customers_empresas')) {
+                $tenantQuery->orWhereHas('empresas', fn ($empresaQuery) => $empresaQuery->where('empresas.id', $empresaId));
+            }
+        });
+    }
+
+    private function customerRelations(): array
+    {
+        return array_values(array_filter([
+            Schema::hasTable('customers_empresas') ? 'empresas' : null,
+            Schema::hasTable('processos') ? 'processos' : null,
+            Schema::hasTable('conta_correntes') ? 'contaCorrente' : null,
+        ]));
     }
 
     public function calculateSaldo(): void

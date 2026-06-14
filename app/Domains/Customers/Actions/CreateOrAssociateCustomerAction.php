@@ -8,6 +8,7 @@ use App\Domains\Customers\Services\CustomerCodeGenerator;
 use App\Models\Customer;
 use App\Models\Empresa;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final readonly class CreateOrAssociateCustomerAction
 {
@@ -48,32 +49,44 @@ final readonly class CreateOrAssociateCustomerAction
                 ]);
             }
 
-            $customer->empresas()->syncWithoutDetaching([
-                $empresa->id => [
-                    'codigo_cliente' => $payload['codigo_cliente'] ?? null,
-                    'status' => $payload['status'] ?? 'ativo',
-                    'data_associacao' => now(),
-                ],
-            ]);
+            if (Schema::hasTable('customers_empresas')) {
+                $customer->empresas()->syncWithoutDetaching([
+                    $empresa->id => [
+                        'codigo_cliente' => $payload['codigo_cliente'] ?? null,
+                        'status' => $payload['status'] ?? 'ativo',
+                        'data_associacao' => now(),
+                    ],
+                ]);
+            }
 
-            $customer->endereco()->updateOrCreate(
-                ['customer_id' => $customer->id],
-                [
-                    'BuildingNumber' => $payload['BuildingNumber'] ?? null,
-                    'StreetName' => $payload['StreetName'] ?? null,
-                    'AddressDetail' => $payload['AddressDetail'] ?? null,
-                    'AddressType' => $payload['AddressType'] ?? 'Facturamento',
-                    'Province' => $payload['Province'] ?? null,
-                    'City' => $payload['City'] ?? null,
-                    'PostalCode' => $payload['PostalCode'] ?? null,
-                    'Country' => $payload['Country'] ?? 'Angola',
-                ]
-            );
+            if (Schema::hasTable('enderecos')) {
+                $customer->endereco()->updateOrCreate(
+                    ['customer_id' => $customer->id],
+                    [
+                        'BuildingNumber' => $payload['BuildingNumber'] ?? null,
+                        'StreetName' => $payload['StreetName'] ?? null,
+                        'AddressDetail' => $payload['AddressDetail'] ?? null,
+                        'AddressType' => $payload['AddressType'] ?? 'Facturamento',
+                        'Province' => $payload['Province'] ?? null,
+                        'City' => $payload['City'] ?? null,
+                        'PostalCode' => $payload['PostalCode'] ?? null,
+                        'Country' => $payload['Country'] ?? 'Angola',
+                    ]
+                );
+            }
 
-            $customer = $customer->refresh()->load(['endereco', 'empresas']);
+            $customer = $customer->refresh()->load($this->relations());
             $this->criarPastaCliente->execute($customer, $empresa);
 
             return $customer;
         });
+    }
+
+    private function relations(): array
+    {
+        return array_values(array_filter([
+            Schema::hasTable('enderecos') ? 'endereco' : null,
+            Schema::hasTable('customers_empresas') ? 'empresas' : null,
+        ]));
     }
 }

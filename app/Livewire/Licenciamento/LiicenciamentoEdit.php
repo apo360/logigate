@@ -4,47 +4,38 @@ namespace App\Livewire\Licenciamento;
 
 use App\Application\Licenciamento\Actions\AtualizarLicenciamentoAction;
 use App\Application\Licenciamento\DTOs\AtualizarLicenciamentoDTO;
+use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
+use App\Models\Empresa;
 use App\Models\Licenciamento;
-use App\Domains\Licenciamento\Enums\TipoDeclaracao;
-use App\Domains\Licenciamento\Enums\TipoTransporte;
-use App\Domains\Licenciamento\Enums\MetodoAvaliacao;
 use App\Domains\Licenciamento\Services\CalcularCifLicenciamentoService;
 use App\Domains\Banco\Services\BancoListService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
-use Livewire\Attributes\Rule;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LiicenciamentoEdit extends Component
 {
+    use AuthorizesRequests;
+
     public Licenciamento $licenciamento;
 
     // Campos do formulário (mesmos do create)
-    #[Rule('required|exists:customers,id')]
     public $cliente_id;
 
-    #[Rule('required|exists:exportadors,id')]
     public $exportador_id;
 
-    #[Rule('required|exists:estancias,id')]
     public $estancia_id;
 
-    #[Rule('required|in:11,21')]
     public $tipo_declaracao;
 
-    #[Rule('required|string')]
     public $referencia_cliente;
 
-    #[Rule('required|string')]
     public $factura_proforma;
 
-    #[Rule('required|string')]
     public $descricao;
 
-    #[Rule('required|string|size:3')]
     public $moeda;
 
-    #[Rule('required|in:1,2,3,4,5,6,7,8')]
     public $tipo_transporte;
 
     public $registo_transporte;
@@ -55,27 +46,20 @@ class LiicenciamentoEdit extends Component
     public $peso_bruto;
     public $adicoes;
 
-    #[Rule('required|in:GATT,Outro')]
     public $metodo_avaliacao;
 
-    #[Rule('required|in:B,F,G,L,N')]
     public $codigo_volume;
 
-    #[Rule('required|integer|min:1')]
     public $qntd_volume;
 
-    #[Rule('required|string')]
     public $forma_pagamento;
 
     public $codigo_banco;
 
-    #[Rule('required|numeric|min:0')]
     public $fob_total;
 
-    #[Rule('numeric|min:0')]
     public $frete;
 
-    #[Rule('numeric|min:0')]
     public $seguro;
 
     public $cif; // não obrigatório, pode ser calculado
@@ -87,10 +71,17 @@ class LiicenciamentoEdit extends Component
 
     // Auxiliares
     public $listaBancos = [];
+    public $clientes = [];
+    public $exportadores = [];
+    public $estancias = [];
+    public $paises = [];
+    public $portos = [];
     public $cifManuallyChanged = false;
 
     public function mount(Licenciamento $licenciamento)
     {
+        $this->authorize('update', $licenciamento);
+
         $this->licenciamento = $licenciamento;
         
         // Preencher as propriedades com os dados atuais
@@ -124,7 +115,9 @@ class LiicenciamentoEdit extends Component
         $this->Nr_factura = $licenciamento->Nr_factura;
         $this->status_fatura = $licenciamento->status_fatura;
 
-        $this->listaBancos = BancoListService::getOptions();
+        foreach (app(LicenciamentoFormSupport::class)->options($this->empresa()) as $property => $value) {
+            $this->{$property} = $value;
+        }
     }
 
     public function updated($field)
@@ -143,6 +136,8 @@ class LiicenciamentoEdit extends Component
 
     public function update(AtualizarLicenciamentoAction $action)
     {
+        $this->authorize('update', $this->licenciamento);
+
         $this->validate();
 
         $dto = new AtualizarLicenciamentoDTO([
@@ -186,20 +181,25 @@ class LiicenciamentoEdit extends Component
 
     public function render()
     {
-        // Carregar listas para selects
-        $empresa = Auth::user()->empresas->first();
-        $clientes = $empresa->customers()->get();
-        $exportadores = $empresa->exportadors()->get();
-        $estancias = \App\Models\Estancia::all();
-        $paises = \App\Models\Pais::all();
-        $portos = \App\Models\Porto::all();
-
         return view('livewire.licenciamento.liicenciamento-edit', [
-            'clientes' => $clientes,
-            'exportadores' => $exportadores,
-            'estancias' => $estancias,
-            'paises' => $paises,
-            'portos' => $portos,
+            'clientes' => $this->clientes,
+            'exportadores' => $this->exportadores,
+            'estancias' => $this->estancias,
+            'paises' => $this->paises,
+            'portos' => $this->portos,
         ]);
+    }
+
+    public function rules(): array
+    {
+        return app(LicenciamentoFormSupport::class)->rules($this->empresa()->id);
+    }
+
+    private function empresa(): Empresa
+    {
+        $empresa = Auth::user()?->empresas()->first();
+        abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        return $empresa;
     }
 }

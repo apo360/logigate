@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
+use App\Models\Licenciamento;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class LicenciamentoRequest extends FormRequest
 {
@@ -11,7 +14,13 @@ class LicenciamentoRequest extends FormRequest
      */
     public function authorize()
     {
-        return true;
+        $licenciamento = $this->route('licenciamento');
+
+        if ($licenciamento instanceof Licenciamento) {
+            return Gate::allows('update', $licenciamento);
+        }
+
+        return Gate::allows('create', Licenciamento::class);
     }
 
     /**
@@ -21,41 +30,9 @@ class LicenciamentoRequest extends FormRequest
      */
     public function rules()
     {
-        $rules = [
-            'estancia_id' => 'required|exists:estancias,id',
-            'referencia_cliente' => 'required|string|max:50',
-            'factura_proforma' => 'required|string|max:50',
-            'descricao' => 'required|string|max:150',
-            'moeda' => 'required|string|max:5',
-            'tipo_declaracao' => 'required|integer',
-            'tipo_transporte' => 'required|integer',
-            'registo_transporte' => 'nullable|string|max:150',
-            'nacionalidade_transporte' => 'nullable|string|max:50',
-            'manifesto' => 'nullable|string|max:30',
-            'data_entrada' => 'nullable|date',
-            'porto_entrada' => 'required|string|max:10',
-            'peso_bruto' => 'nullable|numeric|min:0',
-            'adicoes' => 'nullable|integer',
-            'metodo_avaliacao' => 'required|string|max:10',
-            'codigo_volume' => 'required|string|max:3',
-            'qntd_volume' => 'nullable|integer|min:0',
-            'forma_pagamento' => 'required|string|max:5',
-            'codigo_banco' => 'required|string|max:5',
-            'fob_total' => 'nullable|numeric|min:0',
-            'frete' => 'nullable|numeric|min:0',
-            'seguro' => 'nullable|numeric|min:0',
-            'cif' => 'nullable|numeric|min:0',
-            'porto_origem' => 'required|exists:portos,sigla',
-            'pais_origem' => 'nullable|string'
-        ];
-    
-        // Campos obrigatórios somente para criação
-        if ($this->isMethod('post')) {
-            $rules['cliente_id'] = 'required|exists:customers,id';
-            $rules['exportador_id'] = 'required|exists:exportadors,id';
-        }
-    
-        return $rules;
+        $empresaId = (int) $this->user()?->empresas()->value('empresas.id');
+
+        return app(LicenciamentoFormSupport::class)->rules($empresaId);
     }
 
     /**

@@ -4,11 +4,16 @@ namespace App\Domains\Customers\Actions;
 
 use App\Models\Customer;
 use App\Models\Empresa;
+use Illuminate\Support\Facades\Schema;
 
 final readonly class UpdateCustomerAssociationAction
 {
     public function execute(Customer $customer, Empresa $empresa, array $data): Customer
     {
+        if (!Schema::hasTable('customers_empresas')) {
+            return $customer->refresh();
+        }
+
         $customer->empresas()->syncWithoutDetaching([
             $empresa->id => [
                 'codigo_cliente' => $data['codigo_cliente'] ?? null,

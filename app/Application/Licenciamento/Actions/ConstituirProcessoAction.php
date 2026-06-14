@@ -9,8 +9,10 @@ use App\Models\Licenciamento;
 use App\Models\Processo;
 use App\Models\ProcLicenFactura;
 use App\Models\Mercadoria;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class ConstituirProcessoAction
 {
@@ -26,10 +28,20 @@ class ConstituirProcessoAction
         $userId = $userId ?? Auth::id();
 
         return DB::transaction(function () use ($licenciamento, $userId) {
-            // Verificar se o licenciamento já foi constituído em algum processo
-            $existe = ProcLicenFactura::where('licenciamento_id', $licenciamento->id)->first();
-            if ($existe && $existe->processo_id) {
-                throw new \Exception('Este licenciamento já foi constituído num processo (ID: ' . $existe->processo_id . ').');
+            if (Schema::hasTable('proc_licen_sales')) {
+                $existe = ProcLicenFactura::where('licenciamento_id', $licenciamento->id)->first();
+
+                if ($existe?->processo_id) {
+                    $processoQuery = Processo::query();
+
+                    if (!Schema::hasColumn('processos', 'deleted_at')) {
+                        $processoQuery->withoutGlobalScope(SoftDeletingScope::class);
+                    }
+
+                    return $processoQuery
+                        ->where('empresa_id', $licenciamento->empresa_id)
+                        ->findOrFail((int) $existe->processo_id);
+                }
             }
 
             $processo = $this->criarProcesso->execute(CriarProcessoDTO::fromArray([
@@ -61,15 +73,20 @@ class ConstituirProcessoAction
                 'ValorAduaneiro'      => $licenciamento->cif + $licenciamento->frete + $licenciamento->seguro,
             ]));
 
-            // Associar licenciamento ao processo
-            ProcLicenFactura::updateOrCreate(
-                ['licenciamento_id' => $licenciamento->id],
-                ['processo_id' => $processo->id]
-            );
+            if (Schema::hasTable('proc_licen_sales')) {
+                ProcLicenFactura::updateOrCreate(
+                    ['licenciamento_id' => $licenciamento->id],
+                    [
+                        'empresa_id' => $licenciamento->empresa_id,
+                        'processo_id' => $processo->id,
+                    ]
+                );
+            }
 
-            // Atualizar mercadorias com o novo processo
-            Mercadoria::where('licenciamento_id', $licenciamento->id)
-                ->update(['Fk_Importacao' => $processo->id]);
+            if (Schema::hasTable('mercadorias') && Schema::hasColumn('mercadorias', 'Fk_Importacao')) {
+                Mercadoria::where('licenciamento_id', $licenciamento->id)
+                    ->update(['Fk_Importacao' => $processo->id]);
+            }
 
             return $processo;
         });

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Customer;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerPolicy
 {
@@ -18,8 +19,12 @@ class CustomerPolicy
             return false;
         }
 
-        return (int) $customer->empresa_id === (int) $empresaId
-            || $customer->empresas()->where('empresas.id', $empresaId)->exists();
+        if ((int) $customer->empresa_id === (int) $empresaId) {
+            return true;
+        }
+
+        return Schema::hasTable('customers_empresas')
+            && $customer->empresas()->where('empresas.id', $empresaId)->exists();
     }
 
     /**
@@ -55,7 +60,7 @@ class CustomerPolicy
             return false;
         }
 
-        if ($customer->invoices()->exists() || $customer->processos()->exists()) {
+        if ($this->hasBlockingRelations($customer)) {
             return false;
         }
 
@@ -71,7 +76,7 @@ class CustomerPolicy
             return false;
         }
 
-        if ($customer->invoices()->exists() || $customer->processos()->exists()) {
+        if ($this->hasBlockingRelations($customer)) {
             return false;
         }
 
@@ -92,5 +97,14 @@ class CustomerPolicy
     public function forceDelete(User $user, Customer $customer): bool
     {
         return false;
+    }
+
+    private function hasBlockingRelations(Customer $customer): bool
+    {
+        if (Schema::hasTable('sales_invoices') && $customer->invoices()->exists()) {
+            return true;
+        }
+
+        return Schema::hasTable('processos') && $customer->processos()->exists();
     }
 }

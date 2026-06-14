@@ -5,55 +5,41 @@ namespace App\Livewire\Licenciamento;
 use Livewire\Component;
 use App\Application\Licenciamento\Actions\CriarLicenciamentoAction;
 use App\Application\Licenciamento\DTOs\CriarLicenciamentoDTO;
-use App\Domains\Banco\Services\BancoListService;
-use App\Models\Customer;
-use App\Models\Exportador;
-use App\Models\Estancia;
-use App\Models\Pais;
-use App\Models\Porto;
-use App\Domains\Licenciamento\Enums\TipoDeclaracao;
-use App\Domains\Licenciamento\Enums\TipoTransporte;
-use App\Domains\Licenciamento\Enums\MetodoAvaliacao;
+use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
+use App\Models\Empresa;
+use App\Models\Licenciamento;
 use App\Domains\Licenciamento\Services\CalcularCifLicenciamentoService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Livewire\Attributes\Rule;
 
 class LiicenciamentoCreate extends Component
 {
+    use AuthorizesRequests;
+
     // customer_id vindo da URL
     public ?int $customerId = null;
 
     // Campos do formulário
-    #[Rule('required|exists:customers,id')]
     public $cliente_id;
 
-    #[Rule('required|exists:exportadors,id')]
     public $exportador_id;
 
-    #[Rule('required|exists:estancias,id')]
     public $estancia_id;
 
-    #[Rule('required|in:11,21')]
     public $tipo_declaracao = '11';
 
-    #[Rule('required|string')]
     public $referencia_cliente = '';
 
-    #[Rule('required|string')]
     public $factura_proforma = '';
 
-    #[Rule('required|string')]
     public $descricao = '';
 
-    #[Rule('required|string|size:3')]
     public $moeda = 'AOA';
 
-    #[Rule('required|string|size:3')]
     public $cambio = 'USD';
 
-    #[Rule('required|in:1,2,3,4,5,6,7,8')]
     public $tipo_transporte = '3';
 
     public $registo_transporte = '';
@@ -64,28 +50,21 @@ class LiicenciamentoCreate extends Component
     public $peso_bruto = 0;
     public $adicoes = 0;
     
-    #[Rule('required|in:GATT,Outro')]
     public $metodo_avaliacao = 'GATT';
 
-    #[Rule('required|in:B,F,G,L,N')]
     public $codigo_volume = 'B';
 
-    #[Rule('required|integer|min:1')]
     public $qntd_volume = 1;
 
-    #[Rule('required|string')]
     public $forma_pagamento = 'RD';
 
     public $listaBancos = [];
     public $codigo_banco = '';
     
-    #[Rule('required|numeric|min:0')]
     public $fob_total = 0;
 
-    #[Rule('numeric|min:0')]
     public $frete = 0;
 
-    #[Rule('numeric|min:0')]
     public $seguro = 0;
 
     public $cif = 0;
@@ -109,10 +88,16 @@ class LiicenciamentoCreate extends Component
 
     public function adicionarExportadorNaLista($exportadorId, $nome)
     {
-        $empresa = Auth::user()->empresas->first();
-        $this->exportadores = $empresa->exportadors()->get();
+        $this->exportadores = app(LicenciamentoFormSupport::class)->options($this->empresa())['exportadores'];
         $this->exportador_id = $exportadorId;
         $this->dispatch('fecharModalExportador');
+    }
+
+    public function adicionarClienteNaLista($clienteId, $nome = null)
+    {
+        $this->clientes = app(LicenciamentoFormSupport::class)->options($this->empresa())['clientes'];
+        $this->cliente_id = $clienteId;
+        $this->dispatch('fecharModalCliente');
     }
 
     // Métodos para abrir os modais
@@ -128,6 +113,8 @@ class LiicenciamentoCreate extends Component
 
     public function mount(Request $request)
     {
+        $this->authorize('create', Licenciamento::class);
+
         // apenas para debug
         Log::info('Mount executado', [
             'customer_id' => $request->query('customer_id'),
@@ -137,20 +124,17 @@ class LiicenciamentoCreate extends Component
 
         $this->customerId = $request->query('customer_id');
         
-        $empresa = Auth::user()->empresas->first(); // Ajuste conforme sua lógica
+        $empresa = $this->empresa();
+        $options = app(LicenciamentoFormSupport::class)->options($empresa);
         
         if ($this->customerId) {
+            abort_unless($options['clientes']->contains('id', (int) $this->customerId), 404);
             $this->cliente_id = $this->customerId;
-            $this->clientes = Customer::where('id', $this->customerId)->get();
-        } else {
-            $this->clientes = $empresa->customers()->get();
         }
 
-        $this->exportadores = $empresa->exportadors()->get();
-        $this->estancias = Estancia::all();
-        $this->paises = Pais::all();
-        $this->portos = Porto::all();
-        $this->listaBancos = BancoListService::getOptions();
+        foreach ($options as $property => $value) {
+            $this->{$property} = $value;
+        }
 
         // Valor padrão para nacionalidade
         $this->nacionalidade_transporte = 16; // Exemplo: Angola, ajuste conforme necessário
@@ -174,9 +158,11 @@ class LiicenciamentoCreate extends Component
 
     public function create(CriarLicenciamentoAction $action)
     {
+        $this->authorize('create', Licenciamento::class);
+
         $this->validate();
 
-        $empresaId = Auth::user()->empresas->first()->id;
+        $empresaId = $this->empresa()->id;
 
         // Montar array de dados para o DTO
         $data = [
@@ -222,5 +208,18 @@ class LiicenciamentoCreate extends Component
     public function render()
     {
         return view('livewire.licenciamento.liicenciamento-create');
+    }
+
+    public function rules(): array
+    {
+        return app(LicenciamentoFormSupport::class)->rules($this->empresa()->id);
+    }
+
+    private function empresa(): Empresa
+    {
+        $empresa = Auth::user()?->empresas()->first();
+        abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        return $empresa;
     }
 }

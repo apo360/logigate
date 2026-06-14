@@ -5,24 +5,29 @@ namespace App\Livewire\Licenciamento;
 use App\Application\Licenciamento\Actions\ConstituirProcessoAction;
 use App\Application\Licenciamento\Actions\DuplicarLicenciamentoAction;
 use App\Application\Licenciamento\Actions\GerarTxtLicenciamentoAction;
+use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
 use App\Models\Licenciamento;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 
 class LiicenciamentoShow extends Component
 {
+    use AuthorizesRequests;
+
     public Licenciamento $licenciamento;
 
     public function mount(Licenciamento $licenciamento)
     {
-        $this->licenciamento = $licenciamento->load([
-            'cliente', 'exportador', 'estancia', 'mercadorias', 
-            'documentosArquivos', 'mercadoriasAgrupadas'
-        ]);
+        $this->authorize('view', $licenciamento);
+
+        $this->licenciamento = $licenciamento->load(app(LicenciamentoFormSupport::class)->relations());
     }
 
     // Implementação do código para gerar o TXT
     public function gerarTxt(GerarTxtLicenciamentoAction $action)
     {
+        $this->authorize('generateTxt', $this->licenciamento);
+
         try {
             $result = $action->execute($this->licenciamento);
             
@@ -32,7 +37,6 @@ class LiicenciamentoShow extends Component
             }, $result['filename']);
             
         } catch (\Exception $e) {
-            dd($e->getMessage()); // mostra o erro imediatamente
             session()->flash('error', $e->getMessage());
             return redirect()->back();
         }
@@ -41,6 +45,8 @@ class LiicenciamentoShow extends Component
     // Implementação para duplicar o Licenciamento
     public function duplicar(DuplicarLicenciamentoAction $action)
     {
+        $this->authorize('duplicate', $this->licenciamento);
+
         try {
             $novo = $action->execute($this->licenciamento);
             session()->flash('success', 'Licenciamento duplicado com sucesso!');
@@ -54,6 +60,8 @@ class LiicenciamentoShow extends Component
     // Metódo para constituir o licenciamento em um processo aduaneiro
     public function constituirProcesso(ConstituirProcessoAction $action)
     {
+        $this->authorize('constituteProcesso', $this->licenciamento);
+
         try {
             $processo = $action->execute($this->licenciamento);
             session()->flash('success', 'Processo constituído com sucesso!');

@@ -328,10 +328,8 @@
                         <div class="border-b pb-2">
                             <p class="text-xs text-gray-500">Cliente</p>
                             <p class="font-medium text-gray-800">
-                                @if($customerId && isset($clientes[0]))
-                                    {{ $clientes[0]->CompanyName }}
-                                @elseif($cliente_id)
-                                    {{ \App\Models\Customer::find($cliente_id)->CompanyName ?? '—' }}
+                                @if($cliente_id && $clientes->firstWhere('id', (int) $cliente_id))
+                                    {{ $clientes->firstWhere('id', (int) $cliente_id)->CompanyName }}
                                 @else
                                     —
                                 @endif
@@ -340,8 +338,8 @@
                         <div class="border-b pb-2">
                             <p class="text-xs text-gray-500">Exportador</p>
                             <p class="font-medium text-gray-800">
-                                @if($exportador_id)
-                                    {{ \App\Models\Exportador::find($exportador_id)->Exportador ?? '—' }}
+                                @if($exportador_id && $exportadores->firstWhere('id', (int) $exportador_id))
+                                    {{ $exportadores->firstWhere('id', (int) $exportador_id)->Exportador }}
                                 @else
                                     —
                                 @endif

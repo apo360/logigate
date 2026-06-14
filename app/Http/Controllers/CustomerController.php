@@ -23,11 +23,14 @@ use App\Models\Pais;
 use App\Models\Processo;
 use App\Models\Provincia;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Validators\ValidationException;
 
 
@@ -239,7 +242,9 @@ class CustomerController extends AuthenticatedController
 
     public function index_conta(CustomerAccountStatementService $statementService)
     {
-        $clientes = Customer::all();
+        $this->authorize('viewAny', Customer::class);
+
+        $clientes = $this->tenantCustomerQuery()->get();
         $summary = $statementService->resumoPorClientes($clientes);
 
         return view('customer.index_conta_c', $summary);
@@ -247,15 +252,17 @@ class CustomerController extends AuthenticatedController
 
     public function conta($id, CustomerAccountStatementService $statementService){
 
-        $cliente = Customer::findOrFail($id);
-        $transacoes = $statementService->movimentos((int) $id);
-        $saldo = $statementService->saldo((int) $id);
+        $cliente = $this->resolveAuthorizedCustomer($id, 'view');
+        $transacoes = $statementService->movimentos((int) $cliente->id);
+        $saldo = $statementService->saldo((int) $cliente->id);
 
         return view('customer.conta_c', compact('cliente', 'transacoes', 'saldo'));
     }
 
     public function CustomerImport(Request $request)
     {
+        $this->authorize('create', Customer::class);
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv',
         ]);
@@ -295,7 +302,12 @@ class CustomerController extends AuthenticatedController
 
     // Pegar processos por cliente.
     public function getProcessoByCustomer($CustomerId, $status){
-        $processo = Processo::where('customer_id', $CustomerId)->where('Situacao', $status)->get();
+        $customer = $this->resolveAuthorizedCustomer($CustomerId, 'view');
+
+        $processo = Processo::where('empresa_id', $this->empresa->id)
+            ->where('customer_id', $customer->id)
+            ->where('Situacao', $status)
+            ->get();
         
         return response()->json(['processo' => $processo]); 
     }
@@ -303,8 +315,9 @@ class CustomerController extends AuthenticatedController
 
     public function obterUltimoClienteAdicionado()
     {
-        // Lógica para obter o ID do último cliente adicionado
-        $ultimoCliente = Customer::latest()->first();
+        $this->authorize('viewAny', Customer::class);
+
+        $ultimoCliente = $this->tenantCustomerQuery()->latest('customers.created_at')->firstOrFail();
         
         return response()->json(['cliente_id' => $ultimoCliente->id]);
     }
@@ -312,7 +325,7 @@ class CustomerController extends AuthenticatedController
     public function toggleStatus(Request $request, $id)
     {
         try {
-            $customer = Customer::findOrFail($id);
+            $customer = $this->resolveAuthorizedCustomer($id, 'update');
             app(ToggleCustomerStatusAction::class)->execute($customer, (bool) $request->is_active);
 
             return response()->json(['success' => true, 'message' => 'Status atualizado com sucesso.']);
@@ -339,7 +352,7 @@ class CustomerController extends AuthenticatedController
             'categoria' => 'nullable|string',
         ]);
 
-        $customer = Customer::findOrFail($id);
+        $customer = $this->resolveAuthorizedCustomer($id, 'view');
 
         $documento = $action->execute(new UploadDocumentoDTO(
             file: $request->file('documento'),
@@ -350,5 +363,35 @@ class CustomerController extends AuthenticatedController
         ));
 
         return response()->json(['message' => 'Documento armazenado com sucesso!', 'documento_id' => $documento->id]);
+    }
+
+    private function resolveAuthorizedCustomer(mixed $customer, string $ability): Customer
+    {
+        if (!$customer instanceof Customer) {
+            $customer = $this->tenantCustomerQuery()
+                ->whereKey($customer)
+                ->firstOrFail();
+        }
+
+        $this->authorize($ability, $customer);
+
+        return $customer;
+    }
+
+    private function tenantCustomerQuery()
+    {
+        $query = Customer::query();
+
+        if (!Schema::hasColumn('customers', 'deleted_at')) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query->where(function ($tenantQuery): void {
+            $tenantQuery->where('empresa_id', $this->empresa->id);
+
+            if (Schema::hasTable('customers_empresas')) {
+                $tenantQuery->orWhereHas('empresas', fn ($empresaQuery) => $empresaQuery->where('empresas.id', $this->empresa->id));
+            }
+        });
     }
 }

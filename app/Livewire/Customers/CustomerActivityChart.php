@@ -4,10 +4,15 @@ namespace App\Livewire\Customers;
 
 use Livewire\Component;
 use App\Models\Customer;
-use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerActivityChart extends Component
 {
+    use AuthorizesRequests;
+
    public int $customerId;
     public int $year;
 
@@ -22,8 +27,8 @@ class CustomerActivityChart extends Component
         $this->customerId = $customerId;
         $this->year = now()->year;
 
-        // Security: tenant scope blocks loading customers from other companies.
-        $this->customer = Customer::findOrFail($this->customerId);
+        $this->customer = $this->tenantCustomerQuery()->findOrFail($this->customerId);
+        $this->authorize('view', $this->customer);
 
         $this->loadData();
     }
@@ -64,5 +69,25 @@ class CustomerActivityChart extends Component
     public function render()
     {
         return view('livewire.customers.customer-activity-chart');
+    }
+
+    private function tenantCustomerQuery()
+    {
+        $empresaId = Auth::user()?->empresas()->value('empresas.id');
+        abort_if(!$empresaId, 403);
+
+        $query = Customer::query();
+
+        if (!Schema::hasColumn('customers', 'deleted_at')) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query->where(function ($tenantQuery) use ($empresaId): void {
+            $tenantQuery->where('empresa_id', $empresaId);
+
+            if (Schema::hasTable('customers_empresas')) {
+                $tenantQuery->orWhereHas('empresas', fn ($empresaQuery) => $empresaQuery->where('empresas.id', $empresaId));
+            }
+        });
     }
 }

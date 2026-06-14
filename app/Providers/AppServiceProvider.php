@@ -41,6 +41,7 @@ use App\Models\SalesInvoice;
 use App\Models\Subscricao;
 use App\Models\User;
 use App\Policies\CustomerPolicy;
+use App\Policies\LicenciamentoPolicy;
 use App\Policies\ProcessoPolicy;
 use App\Policies\ProdutoPolicy;
 use App\Policies\SalesInvoicePolicy;
@@ -82,6 +83,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Customer::class, CustomerPolicy::class);
         Gate::policy(DocumentoArquivo::class, DocumentoPolicy::class);
         Gate::policy(Empresa::class, EmpresaPolicy::class);
+        Gate::policy(Licenciamento::class, LicenciamentoPolicy::class);
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
         Gate::policy(SalesInvoice::class, SalesInvoicePolicy::class);
