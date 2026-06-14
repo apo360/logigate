@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DocumentosAduaneiros;
 use Aws\Exception\AwsException;
 use Aws\S3\Exception\S3Exception;
 use Illuminate\Http\Request;
@@ -155,23 +154,6 @@ class ArquivoController extends AuthenticatedController
             $errorMessage = $e->getAwsErrorMessage() ?: 'Erro desconhecido ao tentar criar a pasta.';
             return redirect()->back()->with('error', 'Erro ao criar a pasta: ' . $errorMessage);
         }
-    }
-
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(DocumentosAduaneiros $documentosAduaneiros)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, DocumentosAduaneiros $documentosAduaneiros)
-    {
-        //
     }
 
     /**
