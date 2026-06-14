@@ -47,7 +47,9 @@ use App\Policies\SalesInvoicePolicy;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -119,23 +121,71 @@ class AppServiceProvider extends ServiceProvider
 
         // Security: explicit tenant-aware route model binding prevents cross-tenant IDOR.
         Route::bind('customer', function ($value) {
-            return Customer::query()->whereKey($value)->firstOrFail();
+            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            abort_if(!$empresaId, 404);
+
+            $query = Customer::query();
+
+            if (!Schema::hasColumn('customers', 'deleted_at')) {
+                $query->withoutGlobalScope(SoftDeletingScope::class);
+            }
+
+            return $query
+                ->whereKey($value)
+                ->where(function ($query) use ($empresaId): void {
+                    $query->where('empresa_id', $empresaId);
+
+                    if (Schema::hasTable('customers_empresas')) {
+                        $query->orWhereHas('empresas', fn ($empresaQuery) => $empresaQuery->where('empresas.id', $empresaId));
+                    }
+                })
+                ->firstOrFail();
         });
 
         Route::bind('processo', function ($value) {
-            return Processo::query()->whereKey($value)->firstOrFail();
+            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            abort_if(!$empresaId, 404);
+
+            $query = Processo::query();
+
+            if (!Schema::hasColumn('processos', 'deleted_at')) {
+                $query->withoutGlobalScope(SoftDeletingScope::class);
+            }
+
+            return $query
+                ->whereKey($value)
+                ->where('empresa_id', $empresaId)
+                ->firstOrFail();
         });
 
         Route::bind('licenciamento', function ($value) {
-            return Licenciamento::query()->whereKey($value)->firstOrFail();
+            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            abort_if(!$empresaId, 404);
+
+            return Licenciamento::query()
+                ->whereKey($value)
+                ->where('empresa_id', $empresaId)
+                ->firstOrFail();
         });
 
         Route::bind('produto', function ($value) {
-            return Produto::query()->whereKey($value)->firstOrFail();
+            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            abort_if(!$empresaId, 404);
+
+            return Produto::query()
+                ->whereKey($value)
+                ->where('empresa_id', $empresaId)
+                ->firstOrFail();
         });
 
         Route::bind('subscricao', function ($value) {
-            return Subscricao::query()->whereKey($value)->firstOrFail();
+            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            abort_if(!$empresaId, 404);
+
+            return Subscricao::query()
+                ->whereKey($value)
+                ->where('empresa_id', $empresaId)
+                ->firstOrFail();
         });
 
         Route::bind('empresa', function ($value) {

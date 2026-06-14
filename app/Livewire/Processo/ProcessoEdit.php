@@ -6,24 +6,19 @@ namespace App\Livewire\Processo;
 
 use App\Application\Processo\Actions\AtualizarProcessoAction;
 use App\Application\Processo\DTOs\AtualizarProcessoDTO;
-use App\Domains\Banco\Services\BancoListService;
-use App\Domains\Licenciamento\Enums\TipoTransporte as TipoTransporteEnum;
+use App\Application\Processo\Support\ProcessoFormSupport;
 use App\Domains\Processo\Enums\EstadoProcessoEnum;
-use App\Domains\Processo\Enums\FormaPagamentoEnum;
-use App\Models\CondicaoPagamento;
-use App\Models\Estancia;
-use App\Models\MercadoriaLocalizacao;
-use App\Models\Pais;
-use App\Models\Porto;
+use App\Models\Empresa;
 use App\Models\Processo;
-use App\Models\RegiaoAduaneira;
 use Carbon\CarbonInterface;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 final class ProcessoEdit extends Component
 {
+    use AuthorizesRequests;
+
     public Processo $processo;
     public int $processoId;
 
@@ -89,23 +84,14 @@ final class ProcessoEdit extends Component
 
     public function mount(Processo $processo): void
     {
-        $empresa = Auth::user()?->empresas->first();
+        $this->authorize('update', $processo);
 
         $this->processo = $processo;
         $this->processoId = (int) $processo->id;
 
-        $this->clientes = $empresa?->customers()->orderBy('CompanyName')->get() ?? collect();
-        $this->exportadores = $empresa?->exportadors()->orderBy('Exportador')->get() ?? collect();
-        $this->estancias = Estancia::query()->orderBy('desc_estancia')->get();
-        $this->paises = Pais::query()->orderBy('pais')->get();
-        $this->portos = Porto::query()->orderBy('porto')->get();
-        $this->localMercadoria = MercadoriaLocalizacao::query()->orderBy('descricao')->get();
-        $this->condicaoPagamentoOptions = CondicaoPagamento::query()->orderBy('descricao')->get();
-        $this->listaBancos = BancoListService::getOptions();
-        $this->tipoProcessoOptions = RegiaoAduaneira::query()->orderBy('descricao')->get();
-        $this->EstadoOptions = EstadoProcessoEnum::cases();
-        $this->tipoTransporte = TipoTransporteEnum::cases();
-        $this->formaPagamentoOptions = FormaPagamentoEnum::cases();
+        foreach (app(ProcessoFormSupport::class)->options($this->empresa()) as $property => $value) {
+            $this->{$property} = $value;
+        }
 
         $this->fillFromProcesso($processo);
     }
@@ -123,6 +109,8 @@ final class ProcessoEdit extends Component
 
     public function update(AtualizarProcessoAction $action)
     {
+        $this->authorize('update', $this->processo);
+
         $validated = $this->validate();
         $this->recalcularValores();
 
@@ -147,50 +135,7 @@ final class ProcessoEdit extends Component
 
     public function rules(): array
     {
-        return [
-            'customer_id' => ['required', 'integer', 'exists:customers,id'],
-            'exportador_id' => ['required', 'integer', 'exists:exportadors,id'],
-            'estancia_id' => ['required', 'integer', 'exists:estancias,id'],
-            'vinheta' => ['nullable', 'string', 'max:100', Rule::unique('processos', 'vinheta')->ignore($this->processoId)],
-            'TipoProcesso' => ['required', 'exists:regiao_aduaneiras,id'],
-            'Estado' => ['required', Rule::enum(EstadoProcessoEnum::class)],
-            'RefCliente' => ['nullable', 'string', 'max:200'],
-            'Descricao' => ['nullable', 'string', 'max:200'],
-            'DataAbertura' => ['nullable', 'date'],
-            'DataPartida' => ['nullable', 'date'],
-            'DataChegada' => ['nullable', 'date'],
-            'Moeda' => ['nullable', 'string', 'max:3'],
-            'Cambio' => ['nullable', 'numeric', 'min:0'],
-            'fob_total' => ['nullable', 'numeric', 'min:0'],
-            'frete' => ['nullable', 'numeric', 'min:0'],
-            'seguro' => ['nullable', 'numeric', 'min:0'],
-            'cif' => ['nullable', 'numeric', 'min:0'],
-            'ValorAduaneiro' => ['nullable', 'numeric', 'min:0'],
-            'TipoTransporte' => ['nullable', 'string'],
-            'registo_transporte' => ['nullable', 'string', 'max:100'],
-            'nacionalidade_transporte' => ['nullable', 'exists:paises,id'],
-            'NrDU' => ['nullable', 'string', 'max:100'],
-            'NrDAR' => ['nullable', 'integer', 'min:0'],
-            'NrMarcaFiscal' => ['nullable', 'string', 'max:50'],
-            'BLC_Porte' => ['nullable', 'string', 'max:50'],
-            'Pais_origem' => ['nullable', 'exists:paises,id'],
-            'Pais_destino' => ['nullable', 'exists:paises,id'],
-            'PortoOrigem' => ['nullable', 'string', 'max:100'],
-            'porto_desembarque_id' => ['nullable', 'exists:portos,id'],
-            'localizacao_mercadoria_id' => ['nullable', 'exists:mercadoria_localizacaos,id'],
-            'forma_pagamento' => ['nullable', 'string'],
-            'codigo_banco' => ['nullable', 'string'],
-            'condicao_pagamento_id' => ['nullable', 'exists:condicao_pagamentos,id'],
-            'observacoes' => ['nullable', 'string', 'max:1000'],
-            'peso_bruto' => ['nullable', 'numeric', 'min:0'],
-            'quantidade_barris' => ['nullable', 'integer', 'min:0'],
-            'data_carregamento' => ['nullable', 'date'],
-            'valor_barril_usd' => ['nullable', 'numeric', 'min:0'],
-            'num_deslocacoes' => ['nullable', 'string', 'max:100'],
-            'rsm_num' => ['nullable', 'string', 'max:100'],
-            'certificado_origem' => ['nullable', 'string', 'max:100'],
-            'guia_exportacao' => ['nullable', 'string', 'max:100'],
-        ];
+        return app(ProcessoFormSupport::class)->rules($this->empresa()->id, $this->processoId);
     }
 
     public function render()
@@ -250,8 +195,15 @@ final class ProcessoEdit extends Component
 
     private function recalcularValores(): void
     {
-        $this->cif = (float) ($this->fob_total ?? 0) + (float) ($this->frete ?? 0) + (float) ($this->seguro ?? 0);
-        $this->ValorAduaneiro = $this->cif * (float) ($this->Cambio ?? 1);
+        $values = app(ProcessoFormSupport::class)->calculatedValues(
+            $this->fob_total,
+            $this->frete,
+            $this->seguro,
+            $this->Cambio
+        );
+
+        $this->cif = $values['cif'];
+        $this->ValorAduaneiro = $values['ValorAduaneiro'];
     }
 
     private function nullableInt(mixed $value): ?int
@@ -280,5 +232,13 @@ final class ProcessoEdit extends Component
         }
 
         return date('Y-m-d', strtotime((string) $value));
+    }
+
+    private function empresa(): Empresa
+    {
+        $empresa = Auth::user()?->empresas()->first();
+        abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        return $empresa;
     }
 }

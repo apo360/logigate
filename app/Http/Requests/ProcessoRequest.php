@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Porto;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use App\Application\Processo\Support\ProcessoFormSupport;
+use App\Models\Processo;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProcessoRequest extends FormRequest
@@ -14,9 +14,13 @@ class ProcessoRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Verifique se o usuário tem permissão para criar/atualizar processos
-        return true;
-        //return auth()->check(); // Ou implemente uma lógica de permissão personalizada
+        $processo = $this->route('processo');
+
+        if ($processo instanceof Processo) {
+            return Gate::allows('update', $processo);
+        }
+
+        return Gate::allows('create', Processo::class);
     }
 
     /**
@@ -24,6 +28,12 @@ class ProcessoRequest extends FormRequest
      */
     public function rules()
     {
+        $empresaId = (int) $this->user()?->empresas()->value('empresas.id');
+        $tenantRules = app(ProcessoFormSupport::class)->rules(
+            $empresaId,
+            $this->route('processo') instanceof Processo ? (int) $this->route('processo')->id : null
+        );
+
         // Regras gerais
         $rules = [
             'ContaDespacho' => 'nullable|string|max:150',
@@ -64,18 +74,18 @@ class ProcessoRequest extends FormRequest
             'certificado_origem' => 'nullable|string|max:100',
             'guia_exportacao' => 'nullable|string|max:100',
             // Vinheta, valor unico e nao pode ser repetido
-            'vinheta' => ['nullable', 'string', 'max:100', Rule::unique('processos', 'vinheta')->ignore($this->processo)],
+            'vinheta' => $tenantRules['vinheta'],
             'observacoes' => 'nullable|string|max:1000',
             'porto_desembarque_id' => ['nullable', 'exists:portos,id'],
             'localizacao_mercadoria_id' => ['nullable', 'exists:mercadoria_localizacaos,id'],
             'condicao_pagamento_id' => ['nullable', 'exists:condicao_pagamentos,id'],
+            'customer_id' => $tenantRules['customer_id'],
+            'exportador_id' => $tenantRules['exportador_id'],
         ];
 
         // Regras adicionais no caso de criação
         if ($this->isMethod('post')) {
             $rules['NrProcesso'] = 'nullable|string|max:100|unique:processos,NrProcesso';
-            $rules['customer_id'] = 'required|exists:customers,id';
-            $rules['exportador_id'] = 'required|exists:exportadors,id';
         }
 
         return $rules;

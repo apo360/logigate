@@ -4,25 +4,18 @@ namespace App\Livewire\Processo;
 
 use App\Application\Processo\Actions\CriarProcessoAction;
 use App\Application\Processo\DTOs\CriarProcessoDTO;
-use App\Domains\Banco\Services\BancoListService;
-use App\Domains\Licenciamento\Enums\TipoTransporte;
-use App\Domains\Processo\Enums\EstadoProcessoEnum;
-use App\Domains\Processo\Enums\FormaPagamentoEnum;
-use App\Models\Customer;
-use App\Models\Estancia;
-use App\Models\Pais;
-use App\Models\Porto;
-use App\Models\RegiaoAduaneira;
-use App\Models\CondicaoPagamento;
-use App\Models\MercadoriaLocalizacao;
+use App\Application\Processo\Support\ProcessoFormSupport;
+use App\Models\Empresa;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Rule;
 use Livewire\Component;
 
 final class ProcessoCreate extends Component
 {
+    use AuthorizesRequests;
+
     public string $mode = 'create';
 
     // customer_id vindo da URL
@@ -30,19 +23,15 @@ final class ProcessoCreate extends Component
 
     // Propriedades do formulário (todas dentro de $rules ou com validação individual)
 
-    #[Rule('required|exists:customers,id')]
     public ?int $customer_id = null;
 
-    #[Rule('required|exists:exportadors,id')]
     public ?int $exportador_id = null;
 
-    #[Rule('required|exists:estancias,id')]
     public ?int $estancia_id = null;
 
     #[Rule('required|string|max:50')]
     public ?string $vinheta = null;
 
-    #[Rule('required|exists:regiao_aduaneiras,id')]
     public string $TipoProcesso = '11';
 
     #[Rule('required|string')]
@@ -107,6 +96,9 @@ final class ProcessoCreate extends Component
 
     #[Rule('nullable|exists:paises,id')]
     public ?int $Pais_origem = null;
+
+    #[Rule('nullable|exists:paises,id')]
+    public ?int $Pais_destino = null;
 
     #[Rule('nullable|string|max:100')]
     public ?string $PortoOrigem = null;
@@ -179,16 +171,14 @@ final class ProcessoCreate extends Component
 
     public function adicionarClienteNaLista(int $clienteId, $nome = null): void
     {
-        $empresa = Auth::user()->empresas->first();
-        $this->clientes = $empresa->customers()->get();
+        $this->clientes = app(ProcessoFormSupport::class)->options($this->empresa())['clientes'];
         $this->customer_id = $clienteId;
         $this->dispatch('fecharModalCliente');
     }
 
     public function adicionarExportadorNaLista(int $exportadorId, $nome = null): void
     {
-        $empresa = Auth::user()->empresas->first();
-        $this->exportadores = $empresa->exportadors()->get();
+        $this->exportadores = app(ProcessoFormSupport::class)->options($this->empresa())['exportadores'];
         $this->exportador_id = $exportadorId;
         $this->dispatch('fecharModalExportador');
     }
@@ -205,29 +195,24 @@ final class ProcessoCreate extends Component
 
     public function mount(Request $request): void
     {
-        $this->customerId = $request->query('customer_id');
+        $this->authorize('create', \App\Models\Processo::class);
 
-        $empresa = Auth::user()->empresas->first();
+        $this->customerId = $this->customer_id ?: $request->query('customer_id');
+        $empresa = $this->empresa();
+        $options = app(ProcessoFormSupport::class)->options($empresa);
 
         if ($this->customerId) {
-            $this->customer_id = $this->customerId;
-            $this->clientes = Customer::where('id', $this->customerId)->get();
-        } else {
-            $this->clientes = $empresa->customers()->get();
+            abort_unless(
+                $options['clientes']->contains('id', (int) $this->customerId),
+                404
+            );
+
+            $this->customer_id = (int) $this->customerId;
         }
 
-        // Preencher listas
-        $this->exportadores = $empresa->exportadors()->orderBy('Exportador')->get();
-        $this->estancias = Estancia::all();
-        $this->paises = Pais::all();
-        $this->portos = Porto::all();
-        $this->listaBancos = BancoListService::getOptions();
-        $this->tipoProcessoOptions = RegiaoAduaneira::all();
-        $this->localMercadoria = MercadoriaLocalizacao::all();
-        $this->formaPagamentoOptions = FormaPagamentoEnum::cases();
-        $this->tipoTransporte = TipoTransporte::cases();
-        $this->EstadoOptions = EstadoProcessoEnum::cases();
-        $this->condicaoPagamentoOptions = CondicaoPagamento::all();
+        foreach ($options as $property => $value) {
+            $this->{$property} = $value;
+        }
 
         // Valores padrão
         $this->DataAbertura = now()->toDateString();
@@ -262,15 +247,30 @@ final class ProcessoCreate extends Component
 
     private function recalcularValorAduaneiro(): void
     {
-        $this->ValorAduaneiro = ($this->cif ?? 0) * ($this->Cambio ?? 1);
+        $values = app(ProcessoFormSupport::class)->calculatedValues(
+            $this->fob_total,
+            $this->frete,
+            $this->seguro,
+            $this->Cambio
+        );
+
+        $this->cif = $values['cif'];
+        $this->ValorAduaneiro = $values['ValorAduaneiro'];
+    }
+
+    public function rules(): array
+    {
+        return app(ProcessoFormSupport::class)->rules($this->empresa()->id);
     }
 
     public function save(CriarProcessoAction $action)
     {
+        $this->authorize('create', \App\Models\Processo::class);
+
         $validated = $this->validate();
 
         $user = Auth::user();
-        $empresa = $user->empresas->first();
+        $empresa = $this->empresa();
 
         // Preparar dados para o DTO
         $data = array_merge($validated, [
@@ -295,5 +295,13 @@ final class ProcessoCreate extends Component
     public function render()
     {
         return view('livewire.processo.processo-create');
+    }
+
+    private function empresa(): Empresa
+    {
+        $empresa = Auth::user()?->empresas()->first();
+        abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        return $empresa;
     }
 }

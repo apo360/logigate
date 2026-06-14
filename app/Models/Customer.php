@@ -7,6 +7,7 @@ use App\Traits\SharedFieldsTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 
 class Customer extends Model
 {
@@ -148,10 +149,13 @@ class Customer extends Model
     public function applyTenantConstraint($query, int $empresaId): void
     {
         $query->where(function ($tenantQuery) use ($empresaId) {
-            $tenantQuery->where('customers.empresa_id', $empresaId)
-                ->orWhereHas('empresas', function ($empresaQuery) use ($empresaId) {
+            $tenantQuery->where('customers.empresa_id', $empresaId);
+
+            if (Schema::hasTable('customers_empresas')) {
+                $tenantQuery->orWhereHas('empresas', function ($empresaQuery) use ($empresaId) {
                     $empresaQuery->where('empresas.id', $empresaId);
                 });
+            }
         });
     }
 }

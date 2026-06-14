@@ -4,13 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Empresa;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class TenantIsolationTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_tenant_cannot_access_another_tenant_customer(): void
     {
@@ -57,14 +58,14 @@ class TenantIsolationTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $processoId = DB::table('processos')->insertGetId([
+        $processoId = DB::table('processos')->insertGetId($this->onlyExistingColumns('processos', [
             'NrProcesso' => 'PR-B-0002',
             'ContaDespacho' => null,
             'RefCliente' => null,
             'Descricao' => 'Processo Tenant B',
             'DataAbertura' => now()->toDateString(),
             'DataFecho' => null,
-            'TipoProcesso' => null,
+            'TipoProcesso' => Schema::hasTable('regiao_aduaneiras') ? null : 'Importação',
             'Estado' => 'aberto',
             'customer_id' => $customerId,
             'user_id' => $tenantBUser->id,
@@ -73,7 +74,7 @@ class TenantIsolationTest extends TestCase
             'codigo_banco' => '001',
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ]));
 
         $this->actingAs($tenantAUser)
             ->postJson("/processo/finalizar/{$processoId}")
@@ -99,7 +100,7 @@ class TenantIsolationTest extends TestCase
             'email' => "tenant-" . strtolower($suffix) . "@example.com",
         ]);
 
-        $empresa = Empresa::query()->create([
+        $empresaId = DB::table('empresas')->insertGetId([
             'CodFactura' => 'CF-' . $suffix,
             'CodProcesso' => 'CP-' . $suffix,
             'Empresa' => 'Empresa ' . $suffix,
@@ -114,10 +115,13 @@ class TenantIsolationTest extends TestCase
             'Contacto_movel' => '900000000',
             'Contacto_fixo' => '222000000',
             'Sigla' => 'EMP' . strtoupper($suffix),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
+        $empresa = Empresa::query()->findOrFail($empresaId);
 
         DB::table('empresa_users')->insert([
-            'conta' => $empresa->conta,
+            'conta' => null,
             'user_id' => $user->id,
             'empresa_id' => $empresa->id,
             'created_at' => now(),
@@ -125,5 +129,10 @@ class TenantIsolationTest extends TestCase
         ]);
 
         return [$user, $empresa];
+    }
+
+    private function onlyExistingColumns(string $table, array $attributes): array
+    {
+        return array_intersect_key($attributes, array_flip(Schema::getColumnListing($table)));
     }
 }

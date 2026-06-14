@@ -11,7 +11,9 @@ use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Domains\Processo\Services\GeradorNumeroProcessoService;
 use App\Domains\Processo\Services\ProcessoLifecycleRules;
 use App\Models\Processo;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final readonly class CriarProcessoAction
 {
@@ -28,7 +30,7 @@ final readonly class CriarProcessoAction
         return DB::transaction(function () use ($dto): Processo {
             $numero = $dto->numero ?: (string) $this->geradorNumero->gerar($dto->empresaId);
 
-            if ($this->processos->findByNumero($numero) !== null) {
+            if ($this->processoQuery()->where('empresa_id', $dto->empresaId)->where('NrProcesso', $numero)->exists()) {
                 throw NumeroProcessoDuplicadoException::comNumero($numero);
             }
 
@@ -44,5 +46,16 @@ final readonly class CriarProcessoAction
 
             return $processo;
         });
+    }
+
+    private function processoQuery()
+    {
+        $query = Processo::query();
+
+        if (!Schema::hasColumn('processos', 'deleted_at')) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query;
     }
 }

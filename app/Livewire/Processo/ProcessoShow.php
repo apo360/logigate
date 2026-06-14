@@ -6,10 +6,13 @@ namespace App\Livewire\Processo;
 
 use App\Models\PautaAduaneira;
 use App\Models\Processo;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 
 final class ProcessoShow extends Component
 {
+    use AuthorizesRequests;
+
     public Processo $processo;
 
     public $pautaAduaneira = [];
@@ -19,7 +22,7 @@ final class ProcessoShow extends Component
 
     public function mount(Processo $processo): void
     {
-        $this->pautaAduaneira = PautaAduaneira::all();
+        $this->authorize('view', $processo);
 
         $this->processo = $processo->loadMissing([
             'cliente',
@@ -36,6 +39,16 @@ final class ProcessoShow extends Component
             'portoDesembarque',
             'localizacaoMercadoria',
         ]);
+
+        $codigosPautais = $this->processo->mercadorias
+            ->pluck('codigo_aduaneiro')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $this->pautaAduaneira = $codigosPautais->isEmpty()
+            ? collect()
+            : PautaAduaneira::query()->whereIn('codigo_sem_pontos', $codigosPautais)->get();
 
         $this->camposImportantes = [
             'estancia_id' => 'Estância Aduaneira',

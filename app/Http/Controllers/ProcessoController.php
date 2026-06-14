@@ -31,11 +31,13 @@ use App\Models\MercadoriaLocalizacao;
 
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use PHPJasper\PHPJasper;
@@ -46,6 +48,7 @@ class ProcessoController extends AuthenticatedController
     public function __construct()
     {
         parent::__construct();
+        $this->authorizeResource(Processo::class, 'processo');
     }
 
     function numeroParaExtenso($numero) {
@@ -142,6 +145,8 @@ class ProcessoController extends AuthenticatedController
 
     public function store(ProcessoRequest $request, CriarProcessoAction $action)
     {
+        $this->authorize('create', Processo::class);
+
         $data = $request->validated();
         $data['user_id'] = Auth::id();
         $data['empresa_id'] = $this->empresa->id;
@@ -156,6 +161,8 @@ class ProcessoController extends AuthenticatedController
      */
     public function show(Processo $processo)
     {
+        $this->authorize('view', $processo);
+
         $processo->load([
             'cliente',
             'exportador',
@@ -180,6 +187,8 @@ class ProcessoController extends AuthenticatedController
      */
     public function edit(Request $request, Processo $processo)
     {
+        $this->authorize('update', $processo);
+
         $estancias = Estancia::all();
         $regioes = RegiaoAduaneira::all();
         $portos = Porto::all();
@@ -202,6 +211,8 @@ class ProcessoController extends AuthenticatedController
 
     public function update(ProcessoRequest $request, Processo $processo, AtualizarProcessoAction $action)
     {
+        $this->authorize('update', $processo);
+
         $updated = $action->execute(AtualizarProcessoDTO::fromArray(['id' => $processo->id] + $request->validated()));
 
         return redirect()->route('processos.edit', $updated)->with('success', 'Processo atualizado com sucesso!');
@@ -213,7 +224,8 @@ class ProcessoController extends AuthenticatedController
     public function processoFinalizar($processoID, FinalizarProcessoAction $action)
     {
         try {
-            $action->execute((int) $processoID);
+            $processo = $this->resolveAuthorizedProcesso($processoID, 'finalize');
+            $action->execute((int) $processo->id);
 
             return response()->json(['message' => 'Processo finalizado com sucesso'], 200);
         } catch (\InvalidArgumentException $e) {
@@ -242,6 +254,8 @@ class ProcessoController extends AuthenticatedController
      */
     public function processosNaoFinalizados(ListarProcessosFinalizaveisQuery $query)
     {
+        $this->authorize('viewAny', Processo::class);
+
         $processos = $query->execute($this->empresa->id);
 
         return response()->json($processos, 200);
@@ -253,7 +267,8 @@ class ProcessoController extends AuthenticatedController
     public function destroy($id, ExcluirProcessoAction $action)
     {
         try {
-            $action->execute((int) $id);
+            $processo = $this->resolveAuthorizedProcesso($id, 'delete');
+            $action->execute((int) $processo->id);
 
             return redirect()->route('processos.index')->with('success', 'Processo excluído com sucesso!');
         } catch (\Throwable $e) {
@@ -265,9 +280,13 @@ class ProcessoController extends AuthenticatedController
      */
     public function tarifas()
     {
+        $this->authorize('viewAny', Processo::class);
+
         // Lógica para calcular impostos com base nos dados do formulário
         // Buscar todas as mercadorias com seus processos e códigos aduaneiros
-        $mercadorias = Mercadoria::with('processos', 'pautaAduaneira')->get();
+        $mercadorias = Mercadoria::with('processos', 'pautaAduaneira')
+            ->whereHas('processos', fn ($query) => $query->where('empresa_id', $this->empresa->id))
+            ->get();
 
         $impostos = $mercadorias->map(function ($mercadoria) {
             $pauta = $mercadoria->pautaAduaneira;
@@ -307,8 +326,8 @@ class ProcessoController extends AuthenticatedController
      */
     public function printNotaDespesa($ProcessoID){
 
-        $processo = Processo::where('id', $ProcessoID)->first();
-        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $ProcessoID)->first();
+        $processo = $this->resolveAuthorizedProcesso($ProcessoID, 'print');
+        $emolumentoTarifa = EmolumentoTarifa::where('processo_id', $processo->id)->first();
 
         // Caminho completo para o template .jasper
         $input = base_path('reports/nota_despesa.jrxml'); // Certifique-se de que este arquivo existe
@@ -428,7 +447,7 @@ class ProcessoController extends AuthenticatedController
         $output = base_path('reports');
 
         // Identificar se o Cliente e o Processos Existem
-        $processo = Processo::findOrFail($ProcessoID);
+        $processo = $this->resolveAuthorizedProcesso($ProcessoID, 'print');
         $clienteID = $processo->cliente->id;
 
         // Pegar saldo Anterior
@@ -523,7 +542,7 @@ class ProcessoController extends AuthenticatedController
 
     public function printExtratoMercadoria($ProcessoID){
 
-        $processo = Processo::where('id', $ProcessoID)->first();
+        $processo = $this->resolveAuthorizedProcesso($ProcessoID, 'print');
 
         // Caminho completo para o template .jasper
         $input = base_path('reports/extrato_mercadoria.jrxml'); // Certifique-se de que este arquivo existe
@@ -561,11 +580,8 @@ class ProcessoController extends AuthenticatedController
     public function gerarXML($ProcessoID)
     {
         // Obter informações do processo
-        $processo = Processo::with('exportador', 'mercadorias')->where('id', $ProcessoID)->first();
-
-        if (!$processo) {
-            return response()->json(['error' => 'Processo não encontrado'], 404);
-        }
+        $processo = $this->resolveAuthorizedProcesso($ProcessoID, 'exportXml')
+            ->loadMissing('exportador', 'mercadorias');
 
         // Criar o XML com cabeçalho UTF-8
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8" standalone="no"?><ASYCUDA></ASYCUDA>');
@@ -609,7 +625,7 @@ class ProcessoController extends AuthenticatedController
         // $this->adicionarContainerXML($xml, $processo);
 
         // Buscar Mercadorias Agrupadas
-        $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id', $ProcessoID)->get();
+        $mercadoriasAgrupadas = MercadoriaAgrupada::with('mercadorias')->where('processo_id', $processo->id)->get();
 
         // Verifica se existem mercadorias antes de tentar adicionar
         if ($mercadoriasAgrupadas->isEmpty()) {
@@ -634,6 +650,29 @@ class ProcessoController extends AuthenticatedController
 
         // Retornar o XML para download
         return response()->download($filePath, $fileName, ['Content-Type' => 'application/xml']);
+    }
+
+    private function resolveAuthorizedProcesso(mixed $processo, string $ability): Processo
+    {
+        if (!$processo instanceof Processo) {
+            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            abort_if(!$empresaId, 404);
+
+            $query = Processo::query();
+
+            if (!Schema::hasColumn('processos', 'deleted_at')) {
+                $query->withoutGlobalScope(SoftDeletingScope::class);
+            }
+
+            $processo = $query
+                ->whereKey($processo)
+                ->where('empresa_id', $empresaId)
+                ->firstOrFail();
+        }
+
+        $this->authorize($ability, $processo);
+
+        return $processo;
     }
 
     function adicionarIdentificacaoXML($xml, $processo)

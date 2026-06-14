@@ -7,6 +7,7 @@ use App\Models\Processo;
 use App\Support\ActorContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use OwenIt\Auditing\Models\Audit;
 
 class ProcessoObserver
@@ -17,7 +18,7 @@ class ProcessoObserver
             $processo->user_id = ActorContext::id();
         }
 
-        Audit::create([
+        $this->audit([
             'user_type' => ActorContext::primaryRole() ?? 'sem-perfil',
             'user_id' => ActorContext::id(),
             'event' => 'novo_processo',
@@ -65,7 +66,7 @@ class ProcessoObserver
             ];
         }
 
-        Audit::create([
+        $this->audit([
             'user_type' => ActorContext::primaryRole() ?? 'sem-perfil',
             'user_id' => ActorContext::id(),
             'event' => 'Actualização do Processo ' . $processo->NrProcesso,
@@ -92,6 +93,21 @@ class ProcessoObserver
             'data' => now(),
         ]);
 
-        DB::table('processos_historico')->insert($processo->toArray());
+        if (Schema::hasTable('processos_historico')) {
+            DB::table('processos_historico')->insert($processo->toArray());
+        }
+    }
+
+    private function audit(array $payload): void
+    {
+        if (!Schema::hasTable('audits')) {
+            Log::warning('Auditoria de processo ignorada: tabela audits ausente.', [
+                'event' => $payload['event'] ?? null,
+            ]);
+
+            return;
+        }
+
+        Audit::create($payload);
     }
 }

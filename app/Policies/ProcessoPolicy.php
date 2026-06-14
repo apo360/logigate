@@ -41,4 +41,24 @@ class ProcessoPolicy
     {
         return $this->sameTenant($user, $processo);
     }
+
+    public function finalize(User $user, Processo $processo): bool
+    {
+        return $this->sameTenant($user, $processo);
+    }
+
+    public function print(User $user, Processo $processo): bool
+    {
+        return $this->sameTenant($user, $processo);
+    }
+
+    public function exportXml(User $user, Processo $processo): bool
+    {
+        return $this->sameTenant($user, $processo);
+    }
+
+    public function simulate(User $user, Processo $processo): bool
+    {
+        return $this->sameTenant($user, $processo);
+    }
 }

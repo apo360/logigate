@@ -26,8 +26,8 @@ class TenantScope implements Scope
 
         $empresaId = TenantContext::empresaId();
 
-        // Security: fail closed when tenant context is missing.
         if (! $empresaId) {
+            $builder->whereRaw('1 = 0');
             return;
         }
 

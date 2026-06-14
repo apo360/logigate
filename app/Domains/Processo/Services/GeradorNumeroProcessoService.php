@@ -8,7 +8,9 @@ use App\Domains\Processo\Exceptions\NumeroProcessoDuplicadoException;
 use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Domains\Processo\ValueObjects\NumeroProcesso;
 use App\Models\Processo;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final readonly class GeradorNumeroProcessoService
 {
@@ -21,7 +23,7 @@ final readonly class GeradorNumeroProcessoService
         $year ??= (int) now()->format('Y');
 
         return DB::transaction(function () use ($empresaId, $year): NumeroProcesso {
-            $ultimoNumero = Processo::query()
+            $ultimoNumero = $this->processoQuery()
                 ->where('empresa_id', $empresaId)
                 ->where('NrProcesso', 'like', "PROC-{$year}-%")
                 ->lockForUpdate()
@@ -31,11 +33,22 @@ final readonly class GeradorNumeroProcessoService
             $sequencia = $ultimoNumero ? ((int) substr((string) $ultimoNumero, -6)) + 1 : 1;
             $numero = NumeroProcesso::generate($year, $sequencia);
 
-            if ($this->processos->findByNumero((string) $numero) !== null) {
+            if ($this->processoQuery()->where('empresa_id', $empresaId)->where('NrProcesso', (string) $numero)->exists()) {
                 throw NumeroProcessoDuplicadoException::comNumero((string) $numero);
             }
 
             return $numero;
         });
+    }
+
+    private function processoQuery()
+    {
+        $query = Processo::query();
+
+        if (!Schema::hasColumn('processos', 'deleted_at')) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query;
     }
 }

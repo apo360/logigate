@@ -32,6 +32,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ContabilidadeController;
 use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
 use App\Http\Controllers\EmolumentoTarifaController;
@@ -233,7 +234,11 @@ use App\Models\Processo;
         Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
         Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
-        Route::get('processos/{processo}/simulador-pauta', fn (Processo $processo) => redirect()->route('processos.edit', ['processo' => $processo->id, 'tab' => 'simulacao']))->name('processos.simulador-pauta');
+        Route::get('processos/{processo}/simulador-pauta', function (Processo $processo) {
+            Gate::authorize('simulate', $processo);
+
+            return redirect()->route('processos.edit', ['processo' => $processo->id, 'tab' => 'simulacao']);
+        })->name('processos.simulador-pauta');
         Route::post('/processo/finalizar/{processoID}', [ProcessoController::class, 'processoFinalizar'])->name('processo.finalizar');
         Route::get('/processo/nao-finalizados', [ProcessoController::class, 'processosNaoFinalizados']);
 
