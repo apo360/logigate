@@ -1,10 +1,35 @@
+@import 'toastr';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import 'toastr';
+html {
+    color-scheme: light;
+}
 
+html.dark {
+    color-scheme: dark;
+}
+
+body {
+    overflow-x: hidden;
+}
 
 [x-cloak] {
     display: none;
+}
+
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 0 rgba(255, 0, 0, 0);
+    }
+
+    50% {
+        box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(255, 0, 0, 0);
+    }
 }

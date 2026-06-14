@@ -22,8 +22,7 @@ final class EmpresaData
         public readonly ?string $contactoMovel = null,
         public readonly ?string $contactoFixo = null,
         public readonly ?string $sigla = null,
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {

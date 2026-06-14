@@ -18,6 +18,11 @@ final class S3PathBuilder
         return new S3Path("despachantes/{$empresaId}/");
     }
 
+    public function empresaLogotipo(int $empresaId, string $filename): S3Path
+    {
+        return new S3Path("despachantes/{$empresaId}/empresa/logotipos/{$filename}");
+    }
+
     public function folder(CriarPastaDTO $dto): S3Path
     {
         return new S3Path(match ($dto->contexto) {

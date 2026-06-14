@@ -84,6 +84,9 @@
                 <x-dropdown-link href="{{ route('usuarios.index') }}">
                     <i class="fa fa-users-gear mr-2 text-blue-600"></i>{{ __('Usuários e Permissões') }}
                 </x-dropdown-link>
+                <x-dropdown-link href="{{ route('admin.integracoes') }}">
+                    <i class="fa fa-plug mr-2 text-blue-600"></i>{{ __('Integrações') }}
+                </x-dropdown-link>
                 <x-dropdown-link href="{{ route('billing.plans') }}">
                     <i class="fa fa-credit-card mr-2 text-blue-600"></i>{{ __('Subscrição e Pagamentos') }}
                 </x-dropdown-link>

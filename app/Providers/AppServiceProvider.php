@@ -13,6 +13,10 @@ use App\Application\PautaAduaneira\IA\PautaSuggestionProviderInterface;
 use App\Domains\Empresa\Policies\EmpresaPolicy;
 use App\Domains\Empresa\Repositories\EloquentEmpresaRepository;
 use App\Domains\Empresa\Repositories\EmpresaRepositoryInterface;
+use App\Domains\FacturacaoIntegracao\Clients\HongayetuFacturacaoClientInterface;
+use App\Domains\FacturacaoIntegracao\Clients\HttpHongayetuFacturacaoClient;
+use App\Domains\Integracoes\Repositories\EloquentEmpresaIntegracaoRepository;
+use App\Domains\Integracoes\Repositories\EmpresaIntegracaoRepositoryInterface;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
 use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
 use App\Domains\Processo\Repositories\EloquentProcessoRepository;
@@ -63,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PautaSuggestionProviderInterface::class, OpenAIPautaSuggestionProvider::class);
         $this->app->bind(EmpresaRepositoryInterface::class, EloquentEmpresaRepository::class);
         $this->app->bind(UsuarioRepositoryInterface::class, EloquentUsuarioRepository::class);
+        $this->app->bind(EmpresaIntegracaoRepositoryInterface::class, EloquentEmpresaIntegracaoRepository::class);
+        $this->app->bind(HongayetuFacturacaoClientInterface::class, HttpHongayetuFacturacaoClient::class);
     }
 
     /**
@@ -101,6 +107,14 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('manageGlobalPermissions', function (User $actor, mixed ...$args): bool {
             return app(UsuarioEmpresaPolicy::class)->manageGlobalPermissions($actor);
+        });
+
+        Gate::define('manageIntegrations', function (User $user, Empresa $empresa): bool {
+            return $user->empresas()->where('empresas.id', $empresa->id)->exists()
+                && (
+                    $user->hasAnyRole(['Administrador', 'Admin', 'admin', 'Gestor', 'Super Admin'])
+                    || $user->getAllPermissions()->contains('name', 'manage integrations')
+                );
         });
 
         // Security: explicit tenant-aware route model binding prevents cross-tenant IDOR.

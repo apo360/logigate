@@ -101,6 +101,8 @@ use App\Models\Processo;
 
         Route::get('/billing/plans', [BillingPlanController::class, 'index'])->name('billing.plans');
         Route::post('/billing/plans', [BillingPlanController::class, 'start'])->name('billing.start');
+        Route::view('/admin/integracoes', 'admin.integracoes')->name('admin.integracoes');
+        Route::view('/integracoes', 'admin.integracoes')->name('integracoes.index');
         Route::view('/configuracoes', 'empresa.configuracoes')->name('configuracoes.index');
         Route::view('/seguranca-auditoria', 'empresa.auditoria')->name('logs.index');
 

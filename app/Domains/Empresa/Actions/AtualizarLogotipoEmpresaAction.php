@@ -2,6 +2,8 @@
 
 namespace App\Domains\Empresa\Actions;
 
+use App\Application\Arquivo\Services\FileStorageService;
+use App\Application\Arquivo\Services\S3PathBuilder;
 use App\Domains\Empresa\Repositories\EmpresaRepositoryInterface;
 use App\Models\Empresa;
 use App\Models\User;
@@ -14,6 +16,8 @@ final class AtualizarLogotipoEmpresaAction
 {
     public function __construct(
         private readonly EmpresaRepositoryInterface $empresas,
+        private readonly S3PathBuilder $pathBuilder,
+        private readonly FileStorageService $storage,
     ) {
     }
 
@@ -28,8 +32,9 @@ final class AtualizarLogotipoEmpresaAction
         }
 
         $name = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = $file->storeAs("empresa/{$empresa->id}/logotipos", $name, 's3');
-        $url = Storage::disk('s3')->url($path);
+        $path = $this->pathBuilder->empresaLogotipo((int) $empresa->id, $name);
+        $this->storage->put($path, $file);
+        $url = Storage::disk($this->storage->disk())->url($path->value());
 
         return $this->empresas->update($empresa, ['Logotipo' => $url]);
     }
@@ -46,6 +51,10 @@ final class AtualizarLogotipoEmpresaAction
             return ltrim(substr($url, strlen($base)), '/');
         }
 
-        return str_contains($url, 'empresa/') ? ltrim(parse_url($url, PHP_URL_PATH) ?: '', '/') : null;
+        $path = ltrim(parse_url($url, PHP_URL_PATH) ?: '', '/');
+
+        return str_contains($path, 'empresa/') || str_contains($path, 'despachantes/')
+            ? $path
+            : null;
     }
 }
