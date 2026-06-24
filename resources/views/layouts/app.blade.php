@@ -405,34 +405,30 @@
         </div>
     </div>
 
-    @livewireScripts
 
     {{-- Modal global para Quick Create --}}
     <livewire:modals.quick-create-modal />
 
-    @stack('scripts')
-
     <x-ui.toast />
 
+    @livewireScripts
+
+    @stack('scripts')
+
     <script>
-        document.addEventListener('livewire:init', () => {
+        function registerLivewireToastBridge() {
             Livewire.on('toast', ({ type, message }) => {
-                window.dispatchEvent(new CustomEvent('toast-show', {
+                window.dispatchEvent(new CustomEvent('toast', {
                     detail: { type, message }
                 }));
             });
+        }
 
-            // Debug: ver todos os eventos LiveWire
-            Livewire.hook('message.processed', (message, component) => {
-                if (message.updateQueue) {
-                    message.updateQueue.forEach(update => {
-                        if (update.type === 'fireEvent') {
-                            console.log('LiveWire Event:', update.payload);
-                        }
-                    });
-                }
-            });
-        });
+        if (window.Livewire) {
+            registerLivewireToastBridge();
+        } else {
+            document.addEventListener('livewire:init', registerLivewireToastBridge, { once: true });
+        }
     </script>
 
 </body>

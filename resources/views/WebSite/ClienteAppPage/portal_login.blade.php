@@ -12,23 +12,37 @@
     <p>Bem-vindo ao Portal do Cliente!</p>
     <p>Faça login para acessar suas informações e serviços personalizados.</p>
 
+    @if(session('status'))
+        <p>{{ session('status') }}</p>
+    @endif
+
+    @if(session('error'))
+        <p>{{ session('error') }}</p>
+    @endif
+
     <div>
-        <form action="{{ route('portal-cliente.login.submit') }}" method="POST">
+        <form action="{{ route('cliente.portal.login.submit') }}" method="POST">
             @csrf
             <div>
-                <label for="email">NIF, Nº Telefone ou Email:</label>
-                <input type="text" id="email" name="email" required>
+                <label for="login">NIF, Nº Telefone ou Email:</label>
+                <input type="text" id="login" name="login" value="{{ old('login') }}" required autofocus>
+                @error('login')
+                    <p>{{ $message }}</p>
+                @enderror
             </div>
             <div>
                 <label for="password">Senha:</label>
                 <input type="password" id="password" name="password" required>
+                @error('password')
+                    <p>{{ $message }}</p>
+                @enderror
             </div>
             <button type="submit">Entrar</button>
         </form>
     </div>
 
     <div>
-        <p>Esqueceu sua senha? <a href="#">Clique aqui para recuperar</a>.</p>
+        <p>Esqueceu sua senha? <a href="{{ route('cliente.portal.password.reset') }}">Clique aqui para recuperar</a>.</p>
         <p>Não tem uma conta? <a href="#">Contacte o seu despachante</a>.</p>
     </div>
 </body>

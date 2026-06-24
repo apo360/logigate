@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use OwenIt\Auditing\Models\Audit;
 use App\Notifications\SuspeitoLogin;
+use App\Models\User;
 use Illuminate\Support\Facades\Notification;
 
 class EventServiceProvider extends ServiceProvider
@@ -33,6 +34,10 @@ class EventServiceProvider extends ServiceProvider
 
         // Escutar o evento de login e registrar auditoria
         Event::listen(Login::class, function ($event) {
+            if (! $event->user instanceof User) {
+                return;
+            }
+
             Audit::create([
                 'user_type' => $event->user->roles->pluck('name')->first(),
                 'user_id' => $event->user->id,
@@ -82,6 +87,10 @@ class EventServiceProvider extends ServiceProvider
         });
 
         Event::listen(Logout::class, function ($event) {
+            if (! $event->user instanceof User) {
+                return;
+            }
+
             Audit::create([
                 'user_type' => $event->user->roles->pluck('name')->first(),
                 'user_id' => $event->user->id,
@@ -97,7 +106,7 @@ class EventServiceProvider extends ServiceProvider
 
         Event::listen(Failed::class, function ($event) {
             Log::warning('Falha no login', [
-                'email' => $event->credentials['email'],
+                'email' => $event->credentials['email'] ?? $event->credentials['username'] ?? $event->credentials['phone'] ?? 'N/D',
                 'ip_address' => request()->ip(),
                 'user_agent' => request()->header('User-Agent'),
             ]);

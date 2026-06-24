@@ -8,6 +8,20 @@
     <title>Logigate | Área do Cliente</title>
 </head>
 <body>
-    Lista de funcionalidades da área do cliente em desenvolvimento.
+    <h1>Área do Cliente</h1>
+    <p>Bem-vindo, {{ $customer->CompanyName ?? $portal->username ?? 'Cliente' }}.</p>
+
+    @if(session('status'))
+        <p>{{ session('status') }}</p>
+    @endif
+
+    <ul>
+        <li><a href="{{ route('cliente.portal.licenciamentos.rastreamento') }}">Consultar licenciamento</a></li>
+    </ul>
+
+    <form action="{{ route('cliente.portal.logout') }}" method="POST">
+        @csrf
+        <button type="submit">Sair</button>
+    </form>
 </body>
 </html>

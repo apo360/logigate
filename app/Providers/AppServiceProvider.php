@@ -10,6 +10,10 @@ use App\Application\Mercadoria\Repositories\EloquentMercadoriaRepository;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\PautaAduaneira\IA\OpenAIPautaSuggestionProvider;
 use App\Application\PautaAduaneira\IA\PautaSuggestionProviderInterface;
+use App\Domains\ClientePortal\Repositories\ClientePortalRepositoryInterface;
+use App\Domains\ClientePortal\Repositories\EloquentClientePortalRepository;
+use App\Domains\Customers\Repositories\CustomerRepositoryInterface;
+use App\Domains\Customers\Repositories\EloquentCustomerRepository;
 use App\Domains\Empresa\Policies\EmpresaPolicy;
 use App\Domains\Empresa\Repositories\EloquentEmpresaRepository;
 use App\Domains\Empresa\Repositories\EmpresaRepositoryInterface;
@@ -72,6 +76,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UsuarioRepositoryInterface::class, EloquentUsuarioRepository::class);
         $this->app->bind(EmpresaIntegracaoRepositoryInterface::class, EloquentEmpresaIntegracaoRepository::class);
         $this->app->bind(HongayetuFacturacaoClientInterface::class, HttpHongayetuFacturacaoClient::class);
+        $this->app->bind(CustomerRepositoryInterface::class, EloquentCustomerRepository::class);
+        $this->app->bind(ClientePortalRepositoryInterface::class, EloquentClientePortalRepository::class);
     }
 
     /**

@@ -11,9 +11,7 @@ use Illuminate\Support\Facades\Schema;
 
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes, BelongsToTenant;
-    
-    use SharedFieldsTrait;
+    use HasFactory, SoftDeletes, BelongsToTenant, SharedFieldsTrait;
 
     protected $table = 'customers';
 
@@ -44,29 +42,18 @@ class Customer extends Model
         'observacoes',
         'num_licenca',
         'validade_licenca',
-        'moeda_operacao'
+        'moeda_operacao',
     ];
 
-    protected $dates = [
-        'validade_licenca',
-        'validade_date_doc',
-        'created_at',
-        'updated_at',
-        'deleted_at'
+    protected $casts = [
+        'is_active' => 'boolean',
+        'validade_date_doc' => 'date',
+        'validade_licenca' => 'date',
+        'deleted_at' => 'datetime',
     ];
 
     public function endereco(){
         return $this->hasOne(Endereco::class, 'customer_id');
-    }
-    
-    /**
-     * Define the "invoices" relationship. Each customer can have multiple invoices.
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    
-    public function invoices()
-    {
-        return $this->hasMany(SalesInvoice::class, 'customer_id');
     }
 
     /**
@@ -80,13 +67,50 @@ class Customer extends Model
 
     public function documentosArquivos()
     {
-        return $this->hasMany(DocumentoArquivo::class, 'customer_id');
+        return $this->hasMany(DocumentoArquivo::class, 'customer_id', 'id');
+    }
+
+    public function clientePortal()
+    {
+        return $this->hasOne(ClientePortal::class, 'customer_id', 'id');
     }
 
     // Licenciamentos do cliente
     public function licenciamento()
     {
-        return $this->hasMany(Licenciamento::class, 'cliente_id', 'customer_id');
+        return $this->hasMany(Licenciamento::class, 'cliente_id');
+    }
+
+    public function licenciamentos()
+    {
+        return $this->licenciamento();
+    }
+
+    public function scopeForEmpresa($query, int $empresaId)
+    {
+        return $query->where(function ($q) use ($empresaId) {
+            $q->where('empresa_id', $empresaId)
+                ->orWhereHas('empresas', function ($pivot) use ($empresaId) {
+                    $pivot->where('empresas.id', $empresaId);
+                });
+        });
+    }
+
+    public function scopeSearch($query, ?string $search)
+    {
+        $search = trim((string) $search);
+
+        if ($search === '') {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('CompanyName', 'like', "%{$search}%")
+                ->orWhere('CustomerTaxID', 'like', "%{$search}%")
+                ->orWhere('Telephone', 'like', "%{$search}%")
+                ->orWhere('Email', 'like', "%{$search}%")
+                ->orWhere('CustomerID', 'like', "%{$search}%");
+        });
     }
 
     /**
@@ -123,7 +147,7 @@ class Customer extends Model
     }
 
     public function user(){
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
     // Scope para clientes ativos

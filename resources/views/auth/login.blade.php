@@ -123,10 +123,10 @@
                 <div class="mt-8 border-t border-gray-200 pt-6">
                     <p class="text-sm font-bold text-gray-900">Outros acessos</p>
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
-                        <a href="{{ route('portal-cliente.login') }}" class="focus-ring rounded border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-800 hover:border-blue-700 hover:text-blue-700">
+                        <a href="{{ route('cliente.portal.login') }}" class="focus-ring rounded border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-800 hover:border-blue-700 hover:text-blue-700">
                             Portal Cliente
                         </a>
-                        <a href="{{ route('portal.transitarios') }}" class="focus-ring rounded border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-800 hover:border-blue-700 hover:text-blue-700">
+                        <a href="#" class="focus-ring rounded border border-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-800 hover:border-blue-700 hover:text-blue-700">
                             Transitário
                         </a>
                     </div>

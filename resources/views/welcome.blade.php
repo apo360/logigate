@@ -569,7 +569,7 @@
                     <h3 class="font-bold">Acesso</h3>
                     <ul class="mt-4 space-y-2 text-gray-300">
                         <li><a href="{{ route('login') }}" class="focus-ring hover:text-white">Login</a></li>
-                        <li><a href="{{ route('portal-cliente.login') }}" class="focus-ring hover:text-white">Portal Cliente</a></li>
+                        <li><a href="{{ route('cliente.portal.login') }}" class="focus-ring hover:text-white">Portal Cliente</a></li>
                         <li><a href="{{ route('portal.transitarios') }}" class="focus-ring hover:text-white">Transitário</a></li>
                     </ul>
                 </div>

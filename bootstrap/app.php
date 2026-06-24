@@ -10,6 +10,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: [
             __DIR__ . '/../routes/web.php',       // Rotas normais
+            __DIR__ . '/../routes/portal.php',    // Rotas do portal do cliente
             __DIR__ . '/../routes/master.php',    // Rotas admin SEPARADAS
             __DIR__ . '/../routes/customers.php', // Rotas clientes
             __DIR__ . '/../routes/test.php',      // Rotas de teste
@@ -23,8 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
 
         $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
             'admin.master'   => \App\Http\Middleware\AdminMasterMiddleware::class,
             'customer.auth'  => \App\Http\Middleware\CustomerAuthMiddleware::class,
+            'cliente.portal.active' => \App\Http\Middleware\ClientePortalEnsureActive::class,
             'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
         ]);
 

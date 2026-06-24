@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Application\Customer\Services\CustomerTenantAccessService;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
@@ -9,30 +10,14 @@ use Illuminate\Support\Facades\Schema;
 class CustomerPolicy
 {
     /**
-     * Security: only users from the same tenant can access a customer.
-     */
-    private function belongsToTenant(User $user, Customer $customer): bool
-    {
-        $empresaId = $user->empresas()->value('empresas.id');
-
-        if (!$empresaId) {
-            return false;
-        }
-
-        if ((int) $customer->empresa_id === (int) $empresaId) {
-            return true;
-        }
-
-        return Schema::hasTable('customers_empresas')
-            && $customer->empresas()->where('empresas.id', $empresaId)->exists();
-    }
-
-    /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return (bool) $user->empresas()->value('empresas.id');
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->hasEmpresa($user)
+            && $this->can($user, 'customers.view');
     }
 
     /**
@@ -40,7 +25,8 @@ class CustomerPolicy
      */
     public function view(User $user, Customer $customer): bool
     {
-        return $this->belongsToTenant($user, $customer);
+        return app(CustomerTenantAccessService::class)
+            ->canAccess($user, $customer);
     }
 
     /**
@@ -48,7 +34,8 @@ class CustomerPolicy
      */
     public function create(User $user): bool
     {
-        return (bool) $user->empresas()->value('empresas.id');
+        return app(CustomerTenantAccessService::class)
+        ->hasEmpresa($user);
     }
 
     /**
@@ -56,15 +43,10 @@ class CustomerPolicy
      */
     public function update(User $user, Customer $customer): bool
     {
-        if (!$this->belongsToTenant($user, $customer)) {
-            return false;
-        }
+        $access = app(CustomerTenantAccessService::class);
 
-        if ($this->hasBlockingRelations($customer)) {
-            return false;
-        }
-
-        return true;
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'customers.update');
     }
 
     /**
@@ -72,15 +54,10 @@ class CustomerPolicy
      */
     public function delete(User $user, Customer $customer): bool
     {
-        if (!$this->belongsToTenant($user, $customer)) {
-            return false;
-        }
+        $access = app(CustomerTenantAccessService::class);
 
-        if ($this->hasBlockingRelations($customer)) {
-            return false;
-        }
-
-        return true;
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'customers.delete');
     }
 
     /**
@@ -88,7 +65,7 @@ class CustomerPolicy
      */
     public function restore(User $user, Customer $customer): bool
     {
-        return $this->belongsToTenant($user, $customer);
+        return app(CustomerTenantAccessService::class)->canAccess($user, $customer);
     }
 
     /**
@@ -107,4 +84,68 @@ class CustomerPolicy
 
         return Schema::hasTable('processos') && $customer->processos()->exists();
     }
+
+    public function activate(User $user, Customer $customer): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'customers.activate');
+    }
+
+    public function deactivate(User $user, Customer $customer): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'customers.deactivate');
+    }
+
+    public function managePortalCredentials(User $user, Customer $customer): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'customers.manage_portal_credentials');
+    }
+
+    public function viewProcessos(User $user, Customer $customer): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'processos.view');
+    }
+
+    public function viewLicenciamentos(User $user, Customer $customer): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'licenciamentos.view');
+    }
+
+    public function viewDocuments(User $user, Customer $customer): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        return $access->canAccess($user, $customer)
+            && $this->can($user, 'documents.view');
+    }
+
+    private function can(User $user, string $permission): bool
+    {
+        $access = app(CustomerTenantAccessService::class);
+
+        if ($access->isAdmin($user)) {
+            return true;
+        }
+
+        if (method_exists($user, 'can')) {
+            return $user->can($permission);
+        }
+
+        return false;
+    }
+
 }

@@ -2,19 +2,26 @@
 
 namespace App\Livewire\Customers;
 
-use App\Domains\Customers\Actions\CreateOrAssociateCustomerAction;
-use App\Domains\Customers\Actions\UpdateCustomerAssociationAction;
-use App\Domains\Customers\Data\CustomerFormData;
+use App\Application\Customer\Actions\AssociarCustomerEmpresaAction;
+use App\Application\Customer\Actions\CreateCustomerAction;
+use App\Application\Customer\DTOs\AssociarCustomerEmpresaDTO;
+use App\Application\Customer\DTOs\CreateCustomerDTO;
+use App\Domains\Customers\Enums\CustomerStatusEnum;
+use App\Domains\Customers\Enums\CustomerEstatutoEnum;
+use App\Domains\Customers\Enums\CustomerTipoDocumentoEnum;
+use App\Enums\MoedaEnum;
+use App\Http\Requests\CustomerRequest;
 use Livewire\Component;
 use App\Models\Customer;
 use App\Models\Pais;
 use App\Models\Provincia;
-use App\Models\Empresa;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class Form extends Component
 {
-    public $form = [
+    public array $form = [
         'CustomerTaxID' => '000000',
         'CustomerType' => '',
         'CompanyName' => '',
@@ -24,10 +31,10 @@ class Form extends Component
         'Website' => '',
         'SelfBillingIndicator' => '0',
         'metodo_pagamento' => '30',
-        'TipoCliente' => 'Importador',
+        'TipoCliente' => CustomerEstatutoEnum::IMPORTADOR->value,
         'is_active' => 1,
         'observacoes' => '',
-        'moeda_operacao' => 'AOA',
+        'moeda_operacao' => MoedaEnum::AOA->value,
         'frequencia' => null,
 
         // Campos da tabela Endereço
@@ -41,14 +48,13 @@ class Form extends Component
         
         // Campos para cliente individual
         'nacionality' => '',
-        'doc_type' => 'BI',
+        'doc_type' => CustomerTipoDocumentoEnum::BI->value,
         'doc_num' => '',
         'validade_date_doc' => '',
-        'Status' => 'Ativo',
+        'Status' => CustomerStatusEnum::ACTIVE->value,
         'Notes' => '',
     ];
 
-    public $empresas = [];
     public $paises = [];
     public $provincias = [];
     
@@ -61,61 +67,54 @@ class Form extends Component
     public $existingCustomer = null;
     public $nifSearchResult = null;
     public $nifSearchPerformed = false;
-    
-    protected $rules = [
-        'form.CustomerTaxID' => 'required|string|max:20',
-        'form.CustomerType' => 'required|in:Individual,Empresa',
-        'form.CompanyName' => 'required|string|max:255',
-        'form.Email' => 'nullable|email|max:255',
-        'form.Telephone' => 'required|string|max:20',
-        'form.PostalCode' => 'nullable|string|max:20',
-        'form.Province' => 'nullable|string|max:100',
-        'form.Fax' => 'nullable|string|max:20',
-        'form.Website' => 'nullable|url|max:255',
-        'form.SelfBillingIndicator' => 'required|in:0,1',
-        'form.metodo_pagamento' => 'nullable|in:00,15,30,45',
-        'form.Address' => 'nullable|string|max:500',
-        'form.City' => 'nullable|string|max:100',
-        'form.Country' => 'nullable|string|max:100',
-        'form.TipoCliente' => 'required|in:Importador,Exportador,Ambos',
-        'form.Status' => 'required|in:Ativo,Inativo,Suspenso',
-        
-        // Regras condicionais para cliente individual
-        'form.nacionality' => 'required_if:form.CustomerType,Individual|exists:paises,id',
-        'form.doc_type' => 'required_if:form.CustomerType,Individual|in:BI,PASS,CC,CR',
-        'form.doc_num' => 'required_if:form.CustomerType,Individual|string|max:50',
-        'form.validade_date_doc' => 'nullable|date',
-    ];
-    
-    protected $messages = [
-        'form.CustomerTaxID.unique' => 'Este NIF já está registrado para outro cliente.',
-        'form.CompanyName.required' => 'O nome da empresa é obrigatório.',
-        'form.Telephone.required' => 'O telefone é obrigatório.',
-        'form.nacionality.required_if' => 'A nacionalidade é obrigatória para clientes individuais.',
-        'form.doc_type.required_if' => 'O tipo de documento é obrigatório para clientes individuais.',
-        'form.doc_num.required_if' => 'O número do documento é obrigatório para clientes individuais.',
-    ];
+
+    public bool $isIndividual = false;
 
     public function mount()
     {
-        $this->loadDependencies();
-        
+        $this->paises = Pais::orderBy('pais')->get();
+        $this->provincias = Provincia::orderBy('Nome')->get();
+
         // Configurar valores padrão
         $this->form['nacionality'] = Pais::where('pais', 'Angola')->value('id');
         $this->form['validade_date_doc'] = now()->addYears(5)->format('Y-m-d');
     }
-
-    private function loadDependencies()
-    {
-        $this->paises = Pais::orderBy('pais')->get();
-        $this->provincias = Provincia::orderBy('Nome')->get();
-        $this->empresas = Empresa::active()->orderBy('Empresa')->get();
-    }
+        
 
     public function updatedFormCustomerTaxID($value)
     {
         if (strlen($value) >= 9) {
             $this->checkNifExists();
+        }
+    }
+
+    public function updatedFormCustomerType($value): void
+    {
+        $value = trim((string) $value);
+
+        $this->form['CustomerType'] = $value;
+
+        $this->isIndividual = $value === 'Individual';
+
+        if (!$this->isIndividual) {
+            $this->form['nacionality'] = '';
+            $this->form['doc_type'] = '';
+            $this->form['doc_num'] = '';
+            $this->form['validade_date_doc'] = '';
+        } else {
+            $this->form['doc_type'] = $this->form['doc_type'] ?: 'BI';
+        }
+    }
+
+    public function setCustomerType($value): void
+    {
+        $this->form['CustomerType'] = $value;
+        $this->showDocumentSection = $value === 'Individual';
+
+        if (!$this->showDocumentSection) {
+            $this->form['doc_type'] = CustomerTipoDocumentoEnum::BI->value;
+            $this->form['doc_num'] = '';
+            $this->form['validade_date_doc'] = now()->addYears(5)->format('Y-m-d');
         }
     }
 
@@ -169,21 +168,19 @@ class Form extends Component
         }
     }
     
-    public function associateExistingCustomer()
+    public function associateExistingCustomer(AssociarCustomerEmpresaAction $actionAssociate)
     {
         try {
-            $userEmpresaId = Auth::user()->empresas->first()->id;
-            
-            if (!$userEmpresaId) {
-                session()->flash('error', 'Usuário não está associado a uma empresa.');
-                return;
-            }
-            
+
             $empresa = Auth::user()->empresas->first();
-            app(UpdateCustomerAssociationAction::class)->execute($this->existingCustomer, $empresa, [
-                'status' => 'ativo',
-                'data_associacao' => now(),
-            ]);
+            
+            // Action para associar cliente à empresa
+            $dto = new AssociarCustomerEmpresaDTO(
+                customerId: $this->existingCustomer->id,
+                empresaId: $empresa->id,
+                pivotData: ['user_id' => Auth::id()]
+            );
+            $actionAssociate->execute($dto);
 
             
             // Fechar modal e resetar formulário
@@ -203,24 +200,14 @@ class Form extends Component
     public function updated($propertyName)
     {
         if ($propertyName === 'form.CustomerType') {
-            $this->showDocumentSection = $this->form['CustomerType'] === 'Individual';
-            
-            // Limpar campos de documento se mudar para Empresa
-            if (!$this->showDocumentSection) {
-                $this->form['doc_type'] = 'BI';
-                $this->form['doc_num'] = '';
-                $this->form['validade_date_doc'] = now()->addYears(5)->format('Y-m-d');
-            }
+            $this->setCustomerType($this->form['CustomerType']);
         }
-        
-        // Validação em tempo real do NIF
-        if ($propertyName === 'form.CustomerTaxID') {
-            $this->validateOnly('form.CustomerTaxID');
-        }
-        
-        // Validação em tempo real do email
-        if ($propertyName === 'form.Email') {
-            $this->validateOnly('form.Email');
+
+        try {
+        CustomerRequest::validateLivewire($this->form);
+            $this->resetErrorBag($propertyName);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->setErrorBag($e->validator->errors());
         }
         
         // Validação do número de documento para BI
@@ -244,51 +231,66 @@ class Form extends Component
         return true;
     }
 
-    public function save()
+    public function save(CreateCustomerAction $action)
     {
-        // 1. Validação final do BI
-        if ($this->form['CustomerType'] === 'Individual' && $this->form['doc_type'] === 'BI') {
-            if (!$this->validateDocumentNumber()) {
-                return;
-            }
-        }
-
-        // 2. Normalizar NIF
-        $cleanNif = preg_replace('/[^0-9]/', '', $this->form['CustomerTaxID']);
-
-        // 3. Verificar NIF existente
-        $existing = Customer::where('CustomerTaxID', $cleanNif)->first();
-        if ($existing) {
-            $this->existingCustomer = $existing;
-            $this->showNifExistsModal = true;
-            return;
-        }
-
-        // 4. Empresa obrigatória
-        $empresa = Auth::user()->empresas->first();
-        if (!$empresa) {
-            session()->flash('error', 'Não é possível criar cliente sem empresa associada.');
-            return;
-        }
-
-        // 5. Validação final
-        $this->validate();
+        $this->nifSearchPerformed = true;
 
         try {
-            $this->form['CustomerTaxID'] = $cleanNif;
-            $dto = CustomerFormData::fromArray($this->form);
-            $cliente = app(CreateOrAssociateCustomerAction::class)->execute($dto, $empresa);
+            $validated = CustomerRequest::validateLivewire($this->form);
 
-            $this->dispatch('toast', ['type' => 'success', 'message' => 'Cliente criado com sucesso!']);
-            
-            return redirect()->route('customers.show', $cliente->id);
+            $empresaId = $this->currentEmpresaId();
+
+            $payload = CustomerRequest::customerPayload(
+                validated: $validated,
+                empresaId: $empresaId,
+                userId: Auth::id()
+            );
+
+            $data = array_merge($validated, $payload, [
+                'user_id' => Auth::id(),
+                'empresa_id' => $empresaId,
+            ]);
+
+            $customer = $action->execute(
+                CreateCustomerDTO::fromArray($data)
+            );
+
+            session()->flash('success', 'Cliente criado com sucesso.');
+
+            $this->dispatch('toast', type: 'success', message: 'Cliente criado com sucesso!');
+
+            return redirect()->route('customers.show', $customer);
+
+        } catch (ValidationException $e) {
+            throw $e;
 
         } catch (\Throwable $e) {
             report($e);
 
+            Log::error('Erro ao criar cliente.', [
+                'message' => $e->getMessage(),
+                'form' => $this->form,
+                'user_id' => Auth::id(),
+            ]);
+
             session()->flash('error', 'Erro ao criar cliente: ' . $e->getMessage());
-            $this->dispatch('toast', ['type' => 'error', 'message' => 'Erro ao criar cliente: ' . $e->getMessage()]);
+
+            $this->dispatch('toast', type: 'error', message: 'Erro ao criar cliente: ' . $e->getMessage());
         }
+
+        return null;
+    }
+
+    private function currentEmpresaId(): int
+    {
+        $empresaId = Auth::user()->empresa_id
+            ?? Auth::user()->empresas()->value('empresas.id');
+
+        if (!$empresaId) {
+            throw new \RuntimeException('Nenhuma empresa activa foi encontrada para o utilizador autenticado.');
+        }
+
+        return (int) $empresaId;
     }
 
     public function render()

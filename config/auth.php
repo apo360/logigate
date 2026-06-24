@@ -40,9 +40,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'cliente_portal' => [
+            'driver' => 'session',
+            'provider' => 'cliente_portals',
+        ],
         'cliente' => [
             'driver' => 'session',
-            'provider' => 'clientes',
+            'provider' => 'cliente_portals',
         ],
     ],
 
@@ -69,9 +73,14 @@ return [
             'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
+        'cliente_portals' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\ClientePortal::class,
+        ],
+
         'clientes' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Customer::class,
+            'model' => App\Models\ClientePortal::class,
         ],
 
         // 'users' => [

@@ -1,5 +1,4 @@
 import './bootstrap';
-import Alpine from 'alpinejs';
 import toastr from 'toastr';
 
 window.toastr = toastr;
@@ -11,6 +10,8 @@ toastr.options = {
     "timeOut": "3000",
 };
 
-
-window.Alpine = Alpine
-Alpine.start()
+/**
+ * Livewire 3 já carrega Alpine automaticamente.
+ * Não iniciar Alpine aqui para evitar:
+ * "Detected multiple instances of Alpine running"
+ */

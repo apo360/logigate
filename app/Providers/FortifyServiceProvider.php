@@ -20,6 +20,7 @@ use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
+use App\Models\User;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -39,6 +40,10 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(Login::class, function ($event) {
+            if (! $event->user instanceof User) {
+                return;
+            }
+
             Log::info('Login successful', [
                 'email' => $event->user->email,
                 'roles' => $event->user->roles->pluck('name') // Ensure `roles` is a relationship
@@ -60,7 +65,9 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Event::listen(Failed::class, function ($event) {
-            Log::warning('Login failed', ['email' => $event->credentials['email']]);
+            Log::warning('Login failed', [
+                'email' => $event->credentials['email'] ?? $event->credentials['username'] ?? $event->credentials['phone'] ?? 'N/D',
+            ]);
         });
     }
 }

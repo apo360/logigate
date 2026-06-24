@@ -30,18 +30,14 @@ use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\RelatorioController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ContabilidadeController;
-use App\Models\Module;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
-use App\Http\Controllers\EmolumentoTarifaController;
 use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
 use App\Http\Controllers\PortoController;
-use App\Http\Controllers\ProcessoDraftController;
-use App\Http\Controllers\Transitario\DashboardController as TransitarioDashboardController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AsycudaController;
 use App\Http\Controllers\PagamentoController;
@@ -49,6 +45,7 @@ use App\Http\Controllers\SAFtController;
 use App\Http\Controllers\ScheduledTaskController;
 use App\Http\Controllers\WebPage\WelcomeController;
 use App\Http\Controllers\AppyPayWebhookController;
+use App\Http\Controllers\ClientePortalController;
 use App\Models\Plano;
 use App\Models\Processo;
 
@@ -118,44 +115,35 @@ use App\Models\Processo;
         Route::resources([
             'activated-modules' => ActivatedModuleController::class,
             'arquivos' => ArquivoController::class,
-            'customers' => CustomerController::class,
             'documentos' => DocumentoController::class,
             'empresas' => EmpresaController::class,
             'exportadors' => ExportadorController::class,
             'menus' => MenuController::class,
             'modules' => ModuleController::class,
             'permissions' => PermissionsController::class,
-            'processos' => ProcessoController::class,
             'roles' => Roles::class,
             'usuarios' => UserController::class,
             'produtos' => ProdutoController::class,
-            'licenciamentos' => LicenciamentoController::class,
             'modulos' => ModuleController::class,
             'avenca' => CustomerAvencaController::class,
-            'emolumento_tarifas' => EmolumentoTarifaController::class,
-            'processos-drafts' => ProcessoDraftController::class,
         ]);
 
         Route::get('/documentos-arquivo/{documentoArquivo}/preview', [DocumentoArquivoController::class, 'preview'])->name('documentos-arquivo.preview');
         Route::get('/documentos-arquivo/{documentoArquivo}/download', [DocumentoArquivoController::class, 'download'])->name('documentos-arquivo.download');
         Route::delete('/documentos-arquivo/{documentoArquivo}', [DocumentoArquivoController::class, 'destroy'])->name('documentos-arquivo.destroy');
 
-        Route::prefix('customers')->group(function () {
-            Route::post('/toggle-status/{id}', [CustomerController::class, 'toggleStatus']);
-            Route::post('/{id}/documents', [CustomerController::class, 'documentosStore'])->name('customers.documents.store');
-            Route::get('/export-csv', [CustomerController::class, 'exportCsv'])->name('customers.exportCsv');
-            Route::get('/export-excel', [CustomerController::class, 'exportExcel'])->name('customers.exportExcel');
-            Route::post('/import', [CustomerController::class, 'CustomerImport'])->name('customers.import');
-            Route::get('/Ficha/{id}Imprimir', [CustomerController::class, 'ImprimirFicha'])->name('customers.ficha_imprimir');
-            Route::prefix('/conta_corrente')->group(function () {
-                Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
-                Route::post('/store/{cliente_id}', [ContaCorrenteController::class, 'store'])->name('conta_corrente.store');
-                Route::get('/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
-                Route::get('/{id}/show', [CustomerController::class, 'conta'])->name('cliente.cc');
-                Route::get('/avenca/listagem', [CustomerController::class, 'avenca_list'])->name('cliente.listagem.avenca');
-                Route::get('/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
-            });
+        Route::prefix('customers/conta_corrente')->group(function () {
+            Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
+            Route::post('/store/{cliente_id}', [ContaCorrenteController::class, 'store'])->name('conta_corrente.store');
+            Route::get('/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
+            Route::get('/{id}/show', [CustomerController::class, 'conta'])->name('cliente.cc');
+            Route::get('/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
         });
+
+        Route::resource('customers', CustomerController::class)->except(['store', 'update']);
+        Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);
+        Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
+
 
         // =========================
         // Routes example (routes/api.php)
@@ -170,7 +158,7 @@ use App\Models\Processo;
         });
 
         /**
-         *  - 
+         *  
          */
         Route::get('/Tarefas', [ScheduledTaskController::class, 'index'])->name('leander.dashboard');
 
@@ -191,9 +179,6 @@ use App\Models\Processo;
 
         // Rota o Rascunho do Licenciamento
         Route::post('licenciamento/rascunho', [LicenciamentoController::class, 'storeDraft'])->name('licenciamento.rascunho.store');
-        Route::get('licenciamento/gerar-txt/{IdProcesso}', [LicenciamentoController::class, 'GerarTxT'])->name('gerar.txt');
-        Route::get('licenciamento/export-csv', [LicenciamentoController::class, 'exportCsv'])->name('licenciamentos.exportCsv');
-        Route::get('licenciamento/export-excel', [LicenciamentoController::class, 'exportExcel'])->name('licenciamentos.exportExcel');
         Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
         Route::post('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
         Route::post('licenciamentos/duplicar/{idLicenciamento}', [LicenciamentoController::class, 'DuplicarLicenciamento'])->name('licenciamentos.duplicar');
@@ -291,33 +276,6 @@ use App\Models\Processo;
         
         // API
         Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
-        Route::get('/customers/{customerId}/{status}', [CustomerController::class, 'getProcessoByCustomer']); 
-        Route::get('API/Services/GpsTraker/', [GpsTrakerController::class, 'index'])->name('gps.index');
-        // /. API
-
-        // Teste SAF-T
-        Route::get('/saft/{year}/{start}/{end}/build', [SAFtController::class, 'buildSAFT'])->name('saft.build');
 
         // ------------- /.Rotas para os despachantes ------------ //
     });
-
-    // Rotas do Transitário
-    Route::prefix('transitario')->group(function () {
-        // Login do Transitário
-        Route::get('/Acesso', function () { return view('WebSite.TransitarioPages.transitario_login'); })->name('portal.transitarios');
-        Route::middleware('check.subscription')->group(function () {
-            Route::get('/dashboard', [TransitarioDashboardController::class, 'dashboard'])->name('transitario.dashboard');
-        });
-    });
-    // ------------- /.Rotas do Transitário ------------ //
-
-    // Rotas do Portal do Cliente
-    Route::prefix('portal-cliente')->group(function () {
-        // Login do Portal do Cliente
-        Route::get('/Acesso', function () { return view('WebSite.ClienteAppPage.portal_login'); })->name('portal-cliente.login');
-        Route::middleware('check.subscription')->group(function () {
-            Route::get('/dashboard', [AgenteCargaDashboardController::class, 'dashboard'])->name('portal-cliente.dashboard');
-        });
-    });
-    // ------------- /.Rotas do Portal do Cliente ------------ //
-    

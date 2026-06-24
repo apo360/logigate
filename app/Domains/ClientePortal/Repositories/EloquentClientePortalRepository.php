@@ -3,49 +3,68 @@
 namespace App\Domains\ClientePortal\Repositories;
 
 use App\Domains\ClientePortal\DTOs\CredenciaisClienteDTO;
+use App\Models\ClientePortal;
+use App\Models\Customer;
+use App\Models\Processo;
+use Illuminate\Support\Facades\Hash;
 
-/**
- * Skeleton Eloquent repository.
- *
- * NOTA: Este ficheiro foi criado apenas para estruturar a arquitetura.
- * A implementação real depende dos Models/tabelas existentes no teu projeto.
- */
 final class EloquentClientePortalRepository implements ClientePortalRepositoryInterface
 {
     public function clientePossuiCredenciais(int|string $clienteId): bool
     {
-        // TODO: verificar no model/table real.
-        return false;
+        return ClientePortal::query()
+            ->where('customer_id', $clienteId)
+            ->exists();
     }
 
     public function criarCredenciaisCliente(int|string $clienteId, CredenciaisClienteDTO $dto): void
     {
-        // TODO: criar user/model do cliente e persistir hash.
-        // Exemplos típicos: User::create([...]);
-        // onde: password deve ser hash.
+        $customer = Customer::query()->findOrFail($clienteId);
+
+        ClientePortal::query()->create([
+            'customer_id' => $customer->id,
+            'empresa_id' => $customer->empresa_id,
+            'username' => $dto->username,
+            'email' => $dto->email,
+            'phone' => $customer->Telephone,
+            'password' => Hash::make($dto->password),
+            'is_active' => true,
+        ]);
     }
 
     public function verificarClienteVinculado(int|string $clienteId): bool
     {
-        // TODO: verificar se há vínculo com conta de acesso.
-        return true;
+        return ClientePortal::query()
+            ->where('customer_id', $clienteId)
+            ->exists();
     }
 
     public function redefinirPasswordCliente(int|string $clienteId, string $novaPassword): void
     {
-        // TODO: atualizar password (hash).
+        ClientePortal::query()
+            ->where('customer_id', $clienteId)
+            ->firstOrFail()
+            ->update([
+                'password' => Hash::make($novaPassword),
+                'password_reset_at' => now(),
+            ]);
     }
 
     public function listarProcessosCliente(int|string $clienteId, array $filtros = []): array
     {
-        // TODO: consultar processos do cliente (ex.: Process::where(...)->get()->toArray()).
-        return [];
+        return Processo::query()
+            ->where('customer_id', $clienteId)
+            ->latest('id')
+            ->get()
+            ->toArray();
     }
 
     public function getUsuarioVinculado(int|string $clienteId): ?array
     {
-        // TODO: retornar email/id do user vinculado.
-        return null;
+        $portal = ClientePortal::query()
+            ->where('customer_id', $clienteId)
+            ->first();
+
+        return $portal?->only(['id', 'customer_id', 'username', 'email']);
     }
 }
-

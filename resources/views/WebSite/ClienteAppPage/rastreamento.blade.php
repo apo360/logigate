@@ -265,12 +265,15 @@
         @endif
 
         <!-- Formulário de Consulta -->
-        <form action="{{ route('resultado.consulta') }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
+        <form action="{{ route('cliente.portal.licenciamentos.result') }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
             @csrf
 
             <div class="mb-4">
                 <label for="codigo_licenciamento" class="block text-gray-700 font-semibold">Código do Licenciamento:</label>
-                <input type="text" name="codigo_licenciamento" id="codigo_licenciamento" class="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300" placeholder="Insira o código">
+                <input type="text" name="codigo_licenciamento" id="codigo_licenciamento" value="{{ old('codigo_licenciamento') }}" class="w-full px-4 py-2 border rounded focus:ring focus:ring-blue-300" placeholder="Insira o código">
+                @error('codigo_licenciamento')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 flex items-center justify-center">

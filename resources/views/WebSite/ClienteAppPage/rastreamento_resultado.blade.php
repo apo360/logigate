@@ -94,7 +94,7 @@
 
         <!-- Botões de Ação -->
         <div class="flex justify-between mt-6">
-            <a href="{{ route('consultar.licenciamento') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Nova Consulta</a>
+            <a href="{{ route('cliente.portal.licenciamentos.rastreamento') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Nova Consulta</a>
             <button onclick="window.history.back()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Voltar</button>
         </div>
     </div>

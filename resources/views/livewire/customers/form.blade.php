@@ -15,7 +15,7 @@
                 </div>
                 
                 <!-- Formulário -->
-                <form wire:submit.prevent="save" class="p-6 space-y-6">
+                <form wire:submit="save" class="p-6 space-y-6">
                     <!-- Mensagens de alerta -->
                     @if(session()->has('success'))
                         <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
@@ -42,7 +42,7 @@
                                 <div class="flex space-x-2">
                                     <input type="text" 
                                         id="CustomerTaxID"
-                                        wire:model.debounce.500ms="form.CustomerTaxID"
+                                        wire:model.live.debounce.500ms="form.CustomerTaxID"
                                         class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 {{ $nifSearchResult && $nifSearchResult['exists'] ? 'border-yellow-500' : '' }}"
                                         placeholder="000000000">
                                     <button type="button" 
@@ -88,13 +88,15 @@
                                 <label for="CustomerType" class="block text-sm font-medium text-gray-700 mb-1">
                                     Tipo de Cliente *
                                 </label>
-                                <select id="CustomerType" 
+
+                                <select id="CustomerType"
                                         wire:model.live="form.CustomerType"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="">Selecionar</option>
                                     <option value="Individual">Individual</option>
                                     <option value="Empresa">Empresa</option>
                                 </select>
+
                                 @error('form.CustomerType') 
                                     <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
@@ -107,9 +109,7 @@
                                 <label for="CompanyName" class="block text-sm font-medium text-gray-700 mb-1">
                                     Nome/Empresa *
                                 </label>
-                                <input type="text" 
-                                       id="CompanyName"
-                                       wire:model="form.CompanyName"
+                                <input type="text" id="CompanyName" wire:model="form.CompanyName"
                                        class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                        placeholder="Nome completo ou razão social">
                                 @error('form.CompanyName') 
@@ -176,33 +176,40 @@
                     </div>
                     
                     <!-- Seção de Documentos (apenas para Individual) -->
-                    @if($showDocumentSection)
-                    <div class="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">📄 Documentação (Cliente Individual)</h3>
-                        
+                    @if($isIndividual)
+                    <div wire:key="document-section-individual" class="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                            📄 Documentação (Cliente Individual)
+                        </h3>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label for="nacionality" class="block text-sm font-medium text-gray-700 mb-1">
                                     Nacionalidade *
                                 </label>
+
                                 <select id="nacionality" 
-                                        wire:model="form.nacionality"
+                                        wire:model.defer="form.nacionality"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">Selecionar</option>
+
                                     @foreach($paises as $pais)
-                                        <option value="{{ $pais->id }}" {{ $pais->pais == 'Angola' ? 'selected' : '' }}>
+                                        <option value="{{ $pais->id }}">
                                             {{ $pais->pais }}
                                         </option>
                                     @endforeach
                                 </select>
+
                                 @error('form.nacionality') 
                                     <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
                             </div>
-                            
+
                             <div>
                                 <label for="doc_type" class="block text-sm font-medium text-gray-700 mb-1">
                                     Tipo de Documento *
                                 </label>
+
                                 <select id="doc_type" 
                                         wire:model.live="form.doc_type"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -210,42 +217,51 @@
                                     <option value="PASS">Passaporte</option>
                                     <option value="CC">Carta de Condução</option>
                                     <option value="CR">Cartão de Residência</option>
-                                    <option value="">Outro</option>
+                                    <option value="OUTRO">Outro</option>
                                 </select>
+
                                 @error('form.doc_type') 
                                     <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label for="doc_num" class="block text-sm font-medium text-gray-700 mb-1">
                                     Nº do Documento *
                                 </label>
+
                                 <input type="text" 
-                                       id="doc_num"
-                                       wire:model.lazy="form.doc_num"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                       placeholder="Ex: 123456789AB123">
+                                    id="doc_num"
+                                    wire:model.defer="form.doc_num"
+                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="Ex: 123456789AB123">
+
                                 @error('form.doc_num') 
                                     <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
-                                @if($form['doc_type'] === 'BI')
+
+                                @if(($form['doc_type'] ?? null) === 'BI')
                                     <p class="text-xs text-gray-500 mt-1">
-                                        Formato: 9 números + 2 letras + 3 números (ex: 123456789AB123)
+                                        Formato: 9 números + 2 letras + 3 números. Ex: 123456789AB123
                                     </p>
                                 @endif
                             </div>
-                            
+
                             <div>
                                 <label for="validade_date_doc" class="block text-sm font-medium text-gray-700 mb-1">
                                     Data de Validade
                                 </label>
+
                                 <input type="date" 
-                                       id="validade_date_doc"
-                                       wire:model="form.validade_date_doc"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    id="validade_date_doc"
+                                    wire:model.defer="form.validade_date_doc"
+                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+
+                                @error('form.validade_date_doc') 
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -313,9 +329,9 @@
                                 <select id="TipoCliente" 
                                         wire:model="form.TipoCliente"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="Importador">Importador</option>
-                                    <option value="Exportador">Exportador</option>
-                                    <option value="Ambos">Importador & Exportador</option>
+                                    <option value="importador">Importador</option>
+                                    <option value="exportador">Exportador</option>
+                                    <option value="ambos">Importador & Exportador</option>
                                 </select>
                             </div>
                         </div>
@@ -368,9 +384,8 @@
                                 <select id="Status" 
                                         wire:model="form.Status"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="Ativo">Ativo</option>
-                                    <option value="Inativo">Inativo</option>
-                                    <option value="Suspenso">Suspenso</option>
+                                    <option value="ativo">Activo</option>
+                                    <option value="inativo">Inactivo</option>
                                 </select>
                             </div>
                         </div>
@@ -488,7 +503,7 @@
     
     @push('scripts')
     <script>
-        document.addEventListener('livewire:load', function() {
+        function registerCustomerDocumentScripts() {
             // Validação do número do documento em tempo real
             Livewire.on('validationFailed', (field, message) => {
                 // Pode adicionar notificações aqui se necessário
@@ -496,30 +511,35 @@
             });
             
             // Feedback visual para validação de BI
-            const docNumInput = document.getElementById('doc_num');
-            if (docNumInput) {
-                docNumInput.addEventListener('blur', function() {
-                    const value = this.value;
-                    const docType = document.getElementById('doc_type').value;
+            document.addEventListener('blur', function(event) {
+                if (event.target?.id !== 'doc_num') {
+                    return;
+                }
+
+                const docType = document.getElementById('doc_type');
+                if (docType) {
+                    const value = event.target.value;
                     
-                    if (docType === 'BI' && value.length > 0) {
+                    if (docType.value === 'BI' && value.length > 0) {
                         // Formato BI: 9 números + 2 letras + 3 números
                         const biPattern = /^\d{9}[A-Z]{2}\d{3}$/;
-                        if (!biPattern.test(value)) {
-                            this.classList.add('border-red-500');
-                        } else {
-                            this.classList.remove('border-red-500');
-                        }
+                        event.target.classList.toggle('border-red-500', !biPattern.test(value));
                     }
-                });
-            }
-        });
+                }
+            }, true);
+        }
+
+        if (window.Livewire) {
+            registerCustomerDocumentScripts();
+        } else {
+            document.addEventListener('livewire:init', registerCustomerDocumentScripts, { once: true });
+        }
     </script>
     @endpush
 
     @push('scripts')
         <script>
-            document.addEventListener('livewire:load', function() {
+            function registerCustomerNifScripts() {
                 // Auto-focus no campo NIF
                 const nifInput = document.getElementById('CustomerTaxID');
                 if (nifInput) {
@@ -543,7 +563,13 @@
                     // Pode preencher automaticamente alguns campos se o usuário quiser
                     console.log('Cliente encontrado:', customer);
                 });
-            });
+            }
+
+            if (window.Livewire) {
+                registerCustomerNifScripts();
+            } else {
+                document.addEventListener('livewire:init', registerCustomerNifScripts, { once: true });
+            }
         </script>
     @endpush
 </div>

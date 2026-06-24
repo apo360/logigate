@@ -4,33 +4,25 @@ namespace App\Http\Controllers;
 
 use App\Application\Arquivo\Actions\UploadDocumentoAction;
 use App\Application\Arquivo\DTOs\UploadDocumentoDTO;
+use App\Application\Customer\Queries\BuscarCustomerQuery;
 use App\Domains\Arquivo\Enums\DocumentoCategoriaEnum;
 use App\Domains\Arquivo\Enums\DocumentoContextoEnum;
-use App\Domains\Customers\Actions\CreateOrAssociateCustomerAction;
 use App\Domains\Customers\Actions\DeleteCustomerAction;
 use App\Domains\Customers\Actions\ToggleCustomerStatusAction;
-use App\Domains\Customers\Actions\UpdateCustomerAssociationAction;
-use App\Domains\Customers\Actions\UpdateCustomerProfileAction;
-use App\Domains\Customers\Data\CustomerFormData;
 use App\Domains\Customers\Services\CustomerAccountStatementService;
 use App\Exports\CustomersExport;
-use App\Helpers\DatabaseErrorHandler;
-use App\Http\Requests\CustomerRequest;
 use App\Imports\CustomersImport;
 use App\Models\Customer;
-use App\Models\Municipio;
-use App\Models\Pais;
 use App\Models\Processo;
-use App\Models\Provincia;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Database\QueryException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\View\View;
 use Maatwebsite\Excel\Validators\ValidationException;
 
 
@@ -48,6 +40,7 @@ class CustomerController extends AuthenticatedController
      */
     public function index()
     {
+        $this->authorize('viewAny', Customer::class);
         $customers = $this->empresa->customers()->get();
         return view('customer.customer_pesquisar', compact('customers'));
     }
@@ -55,53 +48,11 @@ class CustomerController extends AuthenticatedController
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
-        $provincias = Provincia::all();
-        $paises = Pais::all();
-        return view('customer.create', compact('provincias', 'paises'));
-    }
+        $this->authorize('create', Customer::class);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(CustomerRequest $request)
-    {
-        $formType = $request->get('formType'); 
-
-        try {
-            $empresa = Auth::user()->empresas->first();
-            $customer = app(CreateOrAssociateCustomerAction::class)->execute(
-                CustomerFormData::fromArray($request->validated() + $request->only([
-                    'BuildingNumber',
-                    'StreetName',
-                    'AddressDetail',
-                    'Province',
-                    'City',
-                    'PostalCode',
-                    'Country',
-                    'AddressType',
-                    'codigo_cliente',
-                    'status',
-                ])),
-                $empresa
-            );
-
-            if ($formType === 'modal') {
-                return response()->json([
-                    'message' => 'Cliente adicionado com sucesso!',
-                    'cliente_id' => $customer->id,
-                    'codCli' => $customer->CustomerTaxID,
-                ], 200);
-            }
-
-            return redirect()->route('customers.edit', $customer->id)
-                ->with('success', 'Cliente inserido com sucesso!');
-
-        } catch (QueryException $e) {
-            DB::rollBack();
-            return DatabaseErrorHandler::handle($e, $request);
-        }
+        return view('customer.create');
     }
 
 
@@ -147,96 +98,34 @@ class CustomerController extends AuthenticatedController
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Customer $customer)
+
+    public function edit(Customer $customer, BuscarCustomerQuery $query): View
     {
-        $paises = Pais::all();
-        $provincias = Provincia::all();
-        $municipios = Municipio::all();
-        $typeContacts = '';
-        $paymentModes = '';
-        $ivaExercises = '';
-        return view('customer.customer_edit', compact('customer', 'paises', 'provincias', 'municipios', 'typeContacts', 'paymentModes', 'ivaExercises'));
-    }
+        $model = $query->execute($customer->id);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(CustomerRequest $request, Customer $customer)
-    {
+        $this->authorize('update', $model);
 
-        try {
-            $user = Auth::user();
-            $empresa = $user->empresas->first();
-            $dadosValidados = $request->validated();
-            $escopo = $request->get('escopo', 'local'); // padrão: local
-
-            if ($escopo === 'global') {
-                if ($user->hasRole('admin') || $user->can('update-global-customer')) {
-                    app(UpdateCustomerProfileAction::class)->execute(
-                        $customer,
-                        CustomerFormData::fromArray($dadosValidados + $request->only([
-                            'BuildingNumber',
-                            'StreetName',
-                            'AddressDetail',
-                            'Province',
-                            'City',
-                            'PostalCode',
-                            'Country',
-                            'AddressType',
-                        ]))
-                    );
-                } else {
-                    throw new \Exception('Sem permissão para atualização global.');
-                }
-            } else {
-                app(UpdateCustomerAssociationAction::class)->execute($customer, $empresa, $dadosValidados);
-            }
-
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $escopo === 'global'
-                        ? 'Cliente atualizado globalmente com sucesso!'
-                        : 'Cliente atualizado localmente com sucesso!',
-                ]);
-            }
-
-            // Redirecionamento normal
-            return redirect()
-                ->route('customers.edit', $customer->id)
-                ->with('success', $escopo === 'global'
-                    ? 'Cliente atualizado globalmente com sucesso!'
-                    : 'Cliente atualizado localmente com sucesso!');
-
-        } catch (\Exception $e) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Erro: ' . $e->getMessage(),
-                ], 500);
-            }
-
-            return back()->withErrors('Erro: ' . $e->getMessage());
-        }
+        return view('customer.customer_edit', [
+            'customer' => $model,
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request, Customer $customer)
+    public function destroy(int $customer, DeleteCustomerAction $action): RedirectResponse
     {
         try {
-            app(DeleteCustomerAction::class)->execute($customer);
+            $model = Customer::query()->findOrFail($customer);
 
-            return redirect()->route('customers.index')->with('success', 'Cliente removido com sucesso!');
+            $this->authorize('delete', $model);
 
-        } catch (\InvalidArgumentException $e) {
-            return redirect()->route('customers.index')->with('error', $e->getMessage());
-        } catch (QueryException $e) {
-            return DatabaseErrorHandler::handle($e, $request);
+            $action->execute($customer);
+
+            return redirect()->route('customers.index')->with('success', 'Cliente eliminado com sucesso.');
+        } catch (\Throwable $e) {
+
+            return back()->with('error', $e->getMessage());
         }
     }
 
@@ -293,52 +182,6 @@ class CustomerController extends AuthenticatedController
                 'error' => $e->getMessage(),
             ], 500);
         }
-    }
-
-    public function export()
-    {
-        return Excel::download(new CustomersExport, 'customers.xlsx');
-    }
-
-    // Pegar processos por cliente.
-    public function getProcessoByCustomer($CustomerId, $status){
-        $customer = $this->resolveAuthorizedCustomer($CustomerId, 'view');
-
-        $processo = Processo::where('empresa_id', $this->empresa->id)
-            ->where('customer_id', $customer->id)
-            ->where('Situacao', $status)
-            ->get();
-        
-        return response()->json(['processo' => $processo]); 
-    }
-
-
-    public function obterUltimoClienteAdicionado()
-    {
-        $this->authorize('viewAny', Customer::class);
-
-        $ultimoCliente = $this->tenantCustomerQuery()->latest('customers.created_at')->firstOrFail();
-        
-        return response()->json(['cliente_id' => $ultimoCliente->id]);
-    }
-
-    public function toggleStatus(Request $request, $id)
-    {
-        try {
-            $customer = $this->resolveAuthorizedCustomer($id, 'update');
-            app(ToggleCustomerStatusAction::class)->execute($customer, (bool) $request->is_active);
-
-            return response()->json(['success' => true, 'message' => 'Status atualizado com sucesso.']);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(['success' => false, 'message' => 'Cliente não encontrado.'], 404);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Erro ao atualizar o status.'], 500);
-        }
-    }
-
-    public function ImprimirFicha($id){
-
-        return '';
     }
 
     /**
