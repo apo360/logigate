@@ -1,4 +1,9 @@
 <div>
+    @php
+        $cliente = $licenciamento->cliente;
+        $exportador = $licenciamento->exportador;
+    @endphp
+
     <!-- Grid principal: 2 colunas (conteúdo + sidebar) -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- COLUNA PRINCIPAL (3/4) -->
@@ -14,28 +19,6 @@
                         <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
                             <i class="fas fa-edit"></i> Editar
                         </a>
-                        <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
-                                <i class="fas fa-filter"></i> Opções
-                            </button>
-                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                                <a href="{{ route('licenciamentos.edit', ['licenciamento' => $licenciamento->id, 'tab' => 'mercadoria']) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-plus-circle"></i> Adicionar Mercadoria
-                                </a>
-                                <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-file-invoice"></i> Emitir Factura
-                                </a>
-                                <a href="{{ route('gerar.txt', ['IdProcesso' => $licenciamento->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-file-download"></i> Licenciamento (TXT)
-                                </a>
-                                <form action="{{ route('gerar.processo', ['idLicenciamento' => $licenciamento->id]) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <i class="fas fa-file-download"></i> Constituir Processo
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -80,17 +63,31 @@
                                     </div>
                                     <div>
                                         <span class="text-sm text-gray-500">Cliente</span>
-                                        <p class="font-medium">{{ $licenciamento->cliente->CompanyName ?? '—' }}
-                                            <a href="{{ route('customers.edit', $licenciamento->cliente->id) }}" class="text-blue-600 hover:underline ml-2">Editar</a>
+                                        <p class="font-medium">{{ $cliente->CompanyName ?? 'Sem cliente associado' }}
+                                            @if($cliente)
+                                                <a href="{{ route('customers.edit', $cliente) }}" class="text-blue-600 hover:underline ml-2">Editar</a>
+                                            @endif
                                         </p>
-                                        <p class="text-sm text-gray-600">NIF: {{ $licenciamento->cliente->CustomerTaxID ?? '—' }}</p>
+                                        <p class="text-sm text-gray-600">NIF: {{ $cliente->CustomerTaxID ?? '—' }}</p>
                                     </div>
                                     <div>
                                         <span class="text-sm text-gray-500">Contactos do Cliente</span>
                                         <ul class="mt-1 space-y-1 text-sm">
-                                            <li><i class="fas fa-phone-alt text-blue-500 w-5"></i> {{ $licenciamento->cliente->Telephone ?? '—' }}</li>
-                                            <li><i class="fas fa-envelope text-green-500 w-5"></i> <a href="mailto:{{ $licenciamento->cliente->Email }}" class="text-blue-600">{{ $licenciamento->cliente->Email ?? '—' }}</a></li>
-                                            <li><i class="fas fa-globe text-indigo-500 w-5"></i> <a href="{{ $licenciamento->cliente->Website }}" target="_blank">{{ $licenciamento->cliente->Website ?? '—' }}</a></li>
+                                            <li><i class="fas fa-phone-alt text-blue-500 w-5"></i> {{ $cliente->Telephone ?? '—' }}</li>
+                                            <li><i class="fas fa-envelope text-green-500 w-5"></i>
+                                                @if($cliente?->Email)
+                                                    <a href="mailto:{{ $cliente->Email }}" class="text-blue-600">{{ $cliente->Email }}</a>
+                                                @else
+                                                    —
+                                                @endif
+                                            </li>
+                                            <li><i class="fas fa-globe text-indigo-500 w-5"></i>
+                                                @if($cliente?->Website)
+                                                    <a href="{{ $cliente->Website }}" target="_blank">{{ $cliente->Website }}</a>
+                                                @else
+                                                    —
+                                                @endif
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
@@ -99,8 +96,10 @@
                                 <div class="space-y-4">
                                     <div>
                                         <span class="text-sm text-gray-500">Exportador</span>
-                                        <p class="font-medium">{{ $licenciamento->exportador->Exportador ?? '—' }}
-                                            <a href="{{ route('exportadors.edit', $licenciamento->exportador->id) }}" class="text-blue-600 hover:underline ml-2">Editar</a>
+                                        <p class="font-medium">{{ $exportador->Exportador ?? 'Sem exportador associado' }}
+                                            @if($exportador)
+                                                <a href="{{ route('exportadors.edit', $exportador) }}" class="text-blue-600 hover:underline ml-2">Editar</a>
+                                            @endif
                                         </p>
                                     </div>
                                     <div>
@@ -171,11 +170,6 @@
 
                         <!-- Aba: Documentos -->
                         <div x-show="tab === 'documentos'" x-cloak>
-                            <div class="flex justify-end mb-3">
-                                <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">
-                                    <i class="fas fa-plus-circle"></i> Adicionar Documento
-                                </a>
-                            </div>
                             @if($licenciamento->documentosArquivos->count() > 0)
                                 <div class="space-y-4">
                                     @foreach($licenciamento->documentosArquivos->groupBy('tipo_documento') as $tipo => $documentos)
@@ -263,30 +257,9 @@
                     <h3 class="font-semibold text-gray-700"><i class="fas fa-hand-point-right"></i> Ações Rápidas</h3>
                 </div>
                 <div class="p-4 space-y-2">
-                    <a href="{{ route('licenciamentos.edit', ['licenciamento' => $licenciamento->id, 'tab' => 'mercadoria']) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-plus-circle text-green-500 w-5"></i> <span>Adicionar Mercadoria</span>
+                    <a href="{{ route('licenciamentos.edit', $licenciamento) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
+                        <i class="fas fa-edit text-blue-500 w-5"></i> <span>Editar Licenciamento</span>
                     </a>
-                    <a href="{{ route('documentos.create', ['licenciamento_id' => $licenciamento->id]) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-invoice text-blue-500 w-5"></i> <span>Emitir Factura</span>
-                    </a>
-                    <button wire:click="gerarTxt" wire:loading.attr="disabled"
-                        class="w-full flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-download text-purple-500 w-5"></i>
-                        <span>Gerar TXT</span>
-                        <span wire:loading class="ml-2 text-xs">Processando...</span>
-                    </button>
-                    <button wire:click="duplicar" 
-                            wire:confirm="Tem certeza que deseja duplicar este licenciamento? Será criada uma nova cópia."
-                            class="w-full flex items-center space-x-2 text-sm text-gray-700 hover:text-green-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-copy text-green-500 w-5"></i>
-                        <span>Duplicar Licenciamento</span>
-                    </button>
-                    <button wire:click="constituirProcesso" 
-                            wire:confirm="Tem certeza que deseja constituir um processo a partir deste licenciamento? Isso criará um novo processo associado."
-                            class="w-full flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-alt text-blue-500 w-5"></i>
-                        <span>Constituir Processo</span>
-                    </button>
                 </div>
             </div>
 

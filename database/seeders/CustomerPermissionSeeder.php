@@ -22,6 +22,10 @@ class CustomerPermissionSeeder extends Seeder
              * Permissões principais do módulo Customer.
              */
             $customerPermissions = [
+                'users.view',
+                'users.create',
+                'users.update',
+                'users.delete',
                 'customers.view',
                 'customers.create',
                 'customers.update',
@@ -41,9 +45,13 @@ class CustomerPermissionSeeder extends Seeder
             $relatedPermissions = [
                 'processos.view',
                 'processos.create',
+                'processos.update',
+                'processos.delete',
 
                 'licenciamentos.view',
                 'licenciamentos.create',
+                'licenciamentos.update',
+                'licenciamentos.delete',
 
                 'documents.view',
                 'documents.create',
@@ -79,12 +87,12 @@ class CustomerPermissionSeeder extends Seeder
             $role->syncPermissions($permissions);
 
             /**
-             * Dar permissões ao User 221.
+             * Dar permissões ao User 1.
              */
-            $user = User::query()->find(221);
+            $user = User::query()->find(1);
 
             if (!$user) {
-                $this->command?->error('User 201 não encontrado.');
+                $this->command?->error('User 1 não encontrado.');
                 return;
             }
 

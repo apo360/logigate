@@ -9,7 +9,7 @@
         <div class="bg-white rounded-lg shadow p-4">
             <div class="text-sm text-gray-500">Total Licenciamentos</div>
             <div class="text-2xl font-bold text-gray-900">
-                {{ $this->Stats->total ?? 0 }}
+                {{ $this->stats->total ?? 0 }}
             </div>
         </div>
 
@@ -17,7 +17,7 @@
         <div class="bg-white rounded-lg shadow p-4">
             <div class="text-sm text-gray-500">TXT Gerado</div>
             <div class="text-2xl font-bold text-green-600">
-                {{ $this->Stats->txt_gerado ?? 0 }}
+                {{ $this->stats->txt_gerado ?? 0 }}
             </div>
         </div>
 
@@ -25,7 +25,7 @@
         <div class="bg-white rounded-lg shadow p-4">
             <div class="text-sm text-gray-500">Pendentes</div>
             <div class="text-2xl font-bold text-yellow-600">
-                {{ $this->Stats->pendentes ?? 0 }}
+                {{ $this->stats->pendentes ?? 0 }}
             </div>
         </div>
 
@@ -33,7 +33,7 @@
         <div class="bg-white rounded-lg shadow p-4">
             <div class="text-sm text-gray-500">Processados</div>
             <div class="text-2xl font-bold text-blue-600">
-                {{ $stats->processados ?? 0 }}
+                {{ $this->stats->processados ?? 0 }}
             </div>
         </div>
 
@@ -88,17 +88,6 @@
             {{-- Actions --}}
             <div class="flex gap-2">
 
-                <button wire:click="$set('showImportModal', true)" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
-                    Importar
-                </button>
-
-                <button
-                    wire:click="exportPdf"
-                    class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                >
-                    PDF
-                </button>
-
                 <a
                     href="{{ route('licenciamentos.create') }}"
                     class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -137,11 +126,6 @@
 
                 <thead class="bg-gray-50">
                     <tr>
-                        {{-- Checkbox para selecionar todos --}}
-                        <th class="px-4 py-3 w-8">
-                            <input type="checkbox" wire:model.live="selectAll" class="rounded border-gray-300">
-                        </th>
-
                         <th wire:click="sortBy('cliente')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">
                             Cliente
                         </th>
@@ -182,11 +166,6 @@
 
                         <tr class="hover:bg-gray-50 {{ in_array($l->id, $selectedLicenciamentos) ? 'bg-indigo-50' : '' }}">
 
-                            {{-- Checkbox individual --}}
-                            <td class="px-4 py-4">
-                                <input type="checkbox" wire:model.live="selectedLicenciamentos" value="{{ $l->id }}" class="rounded border-gray-300">
-                            </td>
-
                             {{-- Cliente com código do licenciamento --}}
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
@@ -197,9 +176,13 @@
                                     </div>
                                     <div class="ml-3">
                                         <div class="text-sm font-semibold text-gray-900">
-                                            <a href="{{ route('customers.show', $l->cliente?->id) }}" class="hover:text-indigo-600">
+                                            @if($l->cliente)
+                                            <a href="{{ route('customers.show', $l->cliente) }}" class="hover:text-indigo-600">
                                                 {{ $l->cliente->CompanyName ?? '—' }}
                                             </a>
+                                            @else
+                                                <span>Sem cliente associado</span>
+                                            @endif
                                         </div>
                                         <div class="text-xs text-gray-500">
                                             {{ $l->codigo_licenciamento }}
@@ -258,9 +241,6 @@
                                     <a href="{{ route('licenciamentos.edit', $l->id) }}" class="text-blue-600" title="Editar">
                                         ✏
                                     </a>
-                                    <button wire:click="confirmDelete({{ $l->id }})" class="text-red-600" title="Eliminar">
-                                        🗑
-                                    </button>
                                 </div>
                             </td>
 
@@ -269,7 +249,7 @@
                     @empty
 
                         <tr>
-                            <td colspan="9" class="px-6 py-10 text-center text-gray-500">
+                            <td colspan="8" class="px-6 py-10 text-center text-gray-500">
                                 Nenhum licenciamento encontrado.
                             </td>
                         </tr>
@@ -282,47 +262,10 @@
 
         </div>
 
-        {{-- Bulk actions row (quando há itens selecionados) --}}
-        @if(count($selectedLicenciamentos))
-            <div class="px-6 py-3 bg-gray-50 border-t flex justify-between items-center">
-                <span class="text-sm text-gray-600">
-                    {{ count($selectedLicenciamentos) }} licenciamento(s) selecionado(s)
-                </span>
-                <div class="flex gap-2">
-                    <button wire:click="exportarSelecionados" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md">
-                        Exportar selecionados
-                    </button>
-                    <button wire:click="limparSelecao" class="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded-md">
-                        Limpar
-                    </button>
-                </div>
-            </div>
-        @endif
-
         {{-- Pagination --}}
         <div class="px-6 py-4 border-t">
             {{ $licenciamentos->links() }}
         </div>
 
     </div>
-
-    @if($showImportModal)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 w-full max-w-md">
-                <h3 class="text-lg font-semibold mb-4">Importar Licenciamentos</h3>
-                <form wire:submit.prevent="import">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium">Ficheiro (CSV, Excel ou TXT)</label>
-                        <input type="file" wire:model="importFile" class="mt-1 w-full">
-                        @error('importFile') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        <div wire:loading wire:target="importFile" class="text-sm text-gray-500">A enviar...</div>
-                    </div>
-                    <div class="flex justify-end gap-2">
-                        <button type="button" wire:click="$set('showImportModal', false)" class="px-4 py-2 bg-gray-300 rounded-md">Cancelar</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md">Importar</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endif
 </div>

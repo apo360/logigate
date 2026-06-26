@@ -1,4 +1,8 @@
 <div>
+    @php
+        $cliente = $licenciamento->cliente;
+    @endphp
+
     <div class="grid gap-6 md:grid-cols-4 sm:grid-cols-1">
         <!-- COLUNA PRINCIPAL (FORMULÁRIO 75%) -->
         <div class="md:col-span-3 space-y-6">
@@ -32,12 +36,6 @@
                             <button @click="tab = 'info'" :class="{ 'border-blue-500 text-blue-600': tab === 'info', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'info' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                                 <i class="fas fa-info-circle"></i> Informações Gerais
                             </button>
-                            <button @click="tab = 'mercadoria'" :class="{ 'border-blue-500 text-blue-600': tab === 'mercadoria', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'mercadoria' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                                <i class="fas fa-box"></i> Mercadorias
-                            </button>
-                            <button @click="tab = 'docs'" :class="{ 'border-blue-500 text-blue-600': tab === 'docs', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'docs' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                                <i class="fas fa-paperclip"></i> Documentos Aduaneiros
-                            </button>
                         </nav>
                     </div>
 
@@ -48,12 +46,14 @@
                             <div class="mb-6 p-4 bg-gray-50 rounded-lg flex justify-between items-center">
                                 <div>
                                     <p class="text-sm text-gray-500">Cliente</p>
-                                    <p class="font-semibold">{{ $licenciamento->cliente->CompanyName }}</p>
-                                    <p class="text-sm">{{ $licenciamento->cliente->Email }} | {{ $licenciamento->cliente->Telephone }}</p>
+                                    <p class="font-semibold">{{ $cliente->CompanyName ?? 'Sem cliente associado' }}</p>
+                                    <p class="text-sm">{{ $cliente->Email ?? '—' }} | {{ $cliente->Telephone ?? '—' }}</p>
                                 </div>
-                                <a href="{{ route('customers.show', $licenciamento->cliente->id) }}" class="text-blue-600 text-sm hover:underline">
+                                @if($cliente)
+                                <a href="{{ route('customers.show', $cliente) }}" class="text-blue-600 text-sm hover:underline">
                                     <i class="fas fa-eye"></i> Ver perfil
                                 </a>
+                                @endif
                             </div>
 
                             <!-- Campos agrupados -->
@@ -281,15 +281,6 @@
                             </div>
                         </div>
 
-                        <!-- ABA: MERCADORIAS -->
-                        <div x-show="tab === 'mercadoria'" x-cloak>
-                            <livewire:mercadorias.index context="licenciamento" parentId="{{ $licenciamento->id }}" />
-                        </div>
-
-                        <!-- ABA: DOCUMENTOS -->
-                        <div x-show="tab === 'docs'" x-cloak>
-                            <livewire:arquivo.documentos-manager contexto="licenciamento" :entidade-id="$licenciamento->id" />
-                        </div>
                     </div>
                 </div>
             </form>

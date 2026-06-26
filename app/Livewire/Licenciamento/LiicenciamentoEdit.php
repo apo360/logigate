@@ -8,7 +8,6 @@ use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
 use App\Models\Empresa;
 use App\Models\Licenciamento;
 use App\Domains\Licenciamento\Services\CalcularCifLicenciamentoService;
-use App\Domains\Banco\Services\BancoListService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +19,8 @@ class LiicenciamentoEdit extends Component
     public Licenciamento $licenciamento;
 
     // Campos do formulário (mesmos do create)
+    public $codigo_licenciamento;
+
     public $cliente_id;
 
     public $exportador_id;
@@ -82,9 +83,14 @@ class LiicenciamentoEdit extends Component
     {
         $this->authorize('update', $licenciamento);
 
-        $this->licenciamento = $licenciamento;
+        $this->licenciamento = $licenciamento->loadMissing('cliente');
+
+        foreach (app(LicenciamentoFormSupport::class)->options($this->empresa()) as $property => $value) {
+            $this->{$property} = $value;
+        }
         
         // Preencher as propriedades com os dados atuais
+        $this->codigo_licenciamento = $licenciamento->codigo_licenciamento;
         $this->cliente_id = $licenciamento->cliente_id;
         $this->exportador_id = $licenciamento->exportador_id;
         $this->estancia_id = $licenciamento->estancia_id;
@@ -97,7 +103,7 @@ class LiicenciamentoEdit extends Component
         $this->registo_transporte = $licenciamento->registo_transporte;
         $this->nacionalidade_transporte = $licenciamento->nacionalidade_transporte;
         $this->manifesto = $licenciamento->manifesto;
-        $this->data_entrada = $licenciamento->data_entrada;
+        $this->data_entrada = $licenciamento->data_entrada?->format('Y-m-d');
         $this->porto_entrada = $licenciamento->porto_entrada;
         $this->peso_bruto = $licenciamento->peso_bruto;
         $this->adicoes = $licenciamento->adicoes;
@@ -115,9 +121,6 @@ class LiicenciamentoEdit extends Component
         $this->Nr_factura = $licenciamento->Nr_factura;
         $this->status_fatura = $licenciamento->status_fatura;
 
-        foreach (app(LicenciamentoFormSupport::class)->options($this->empresa()) as $property => $value) {
-            $this->{$property} = $value;
-        }
     }
 
     public function updated($field)
@@ -154,7 +157,7 @@ class LiicenciamentoEdit extends Component
             'registo_transporte' => $this->registo_transporte,
             'nacionalidade_transporte' => $this->nacionalidade_transporte,
             'manifesto' => $this->manifesto,
-            'data_entrada' => $this->data_entrada,
+            'data_entrada' => $this->blankToNull($this->data_entrada),
             'porto_entrada' => $this->porto_entrada,
             'peso_bruto' => $this->peso_bruto,
             'adicoes' => $this->adicoes,
@@ -192,7 +195,20 @@ class LiicenciamentoEdit extends Component
 
     public function rules(): array
     {
-        return app(LicenciamentoFormSupport::class)->rules($this->empresa()->id);
+        return app(LicenciamentoFormSupport::class)->rules(
+            $this->empresa()->id,
+            $this->licenciamento->id
+        );
+    }
+
+    public function messages(): array
+    {
+        return app(LicenciamentoFormSupport::class)->messages();
+    }
+
+    public function validationAttributes(): array
+    {
+        return app(LicenciamentoFormSupport::class)->attributes();
     }
 
     private function empresa(): Empresa
@@ -201,5 +217,10 @@ class LiicenciamentoEdit extends Component
         abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return $empresa;
+    }
+
+    private function blankToNull(mixed $value): mixed
+    {
+        return $value === '' ? null : $value;
     }
 }

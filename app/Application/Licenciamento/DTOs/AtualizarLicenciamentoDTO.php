@@ -113,7 +113,7 @@ class AtualizarLicenciamentoDTO
 
     public function toArray(): array
     {
-        return [
+        $data = [
             'estancia_id' => $this->estancia_id,
             'cliente_id' => $this->cliente_id,
             'exportador_id' => $this->exportador_id,
@@ -141,9 +141,14 @@ class AtualizarLicenciamentoDTO
             'cif' => $this->cif->getValor(),
             'pais_origem' => $this->pais_origem,
             'porto_origem' => $this->porto_origem,
-            'txt_gerado' => $this->txt_gerado,
             'Nr_factura' => $this->Nr_factura,
             'status_fatura' => $this->status_fatura,
         ];
+
+        if ($this->txt_gerado !== null) {
+            $data['txt_gerado'] = $this->txt_gerado;
+        }
+
+        return $data;
     }
 }

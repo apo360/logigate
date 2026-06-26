@@ -3,15 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Application\Licenciamento\Actions\ConstituirProcessoAction;
-use App\Application\Licenciamento\Actions\AtualizarLicenciamentoAction;
-use App\Application\Licenciamento\Actions\CriarLicenciamentoAction;
 use App\Application\Licenciamento\Actions\DuplicarLicenciamentoAction;
 use App\Application\Licenciamento\Actions\ExcluirLicenciamentoAction;
 use App\Application\Licenciamento\Actions\Export\ExportLicenciamentosToCsvAction;
 use App\Application\Licenciamento\Actions\Export\ExportLicenciamentosToExcelAction;
 use App\Application\Licenciamento\Actions\GerarTxtLicenciamentoAction;
-use App\Application\Licenciamento\DTOs\AtualizarLicenciamentoDTO;
-use App\Application\Licenciamento\DTOs\CriarLicenciamentoDTO;
 use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
 use App\Helpers\DatabaseErrorHandler;
 use App\Domains\Licenciamento\Services\LicenciamentoImportExportService;
@@ -49,13 +45,6 @@ class LicenciamentoController extends AuthenticatedController
             ]);
     }
 
-    public function store(Request $request, CriarLicenciamentoAction $action)
-    {
-        $licenciamento = $action->execute(CriarLicenciamentoDTO::fromRequest($request, $this->empresa->id));
-
-        return redirect()->route('licenciamentos.show', $licenciamento)->with('success', 'Licenciamento criado com sucesso!');
-    }
-
     public function storeDraft(Request $request){
         $this->authorize('create', Licenciamento::class);
 
@@ -85,13 +74,6 @@ class LicenciamentoController extends AuthenticatedController
     {
         // Continue com o processo de edição
         return view('Licenciamento.edit', compact('licenciamento'));
-    }
-
-    public function update(Request $request, Licenciamento $licenciamento, AtualizarLicenciamentoAction $action)
-    {
-        $updated = $action->execute(AtualizarLicenciamentoDTO::fromRequest($request, $this->empresa->id));
-
-        return redirect()->route('licenciamentos.show', $updated)->with('success', 'Licenciamento atualizado com sucesso!');
     }
 
     /**

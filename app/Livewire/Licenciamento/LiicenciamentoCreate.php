@@ -6,13 +6,14 @@ use Livewire\Component;
 use App\Application\Licenciamento\Actions\CriarLicenciamentoAction;
 use App\Application\Licenciamento\DTOs\CriarLicenciamentoDTO;
 use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
+use App\Domains\Licenciamento\Enums\TipoDeclaracao;
+use App\Domains\Licenciamento\Enums\TipoTransporte;
 use App\Models\Empresa;
 use App\Models\Licenciamento;
 use App\Domains\Licenciamento\Services\CalcularCifLicenciamentoService;
+use App\Enums\MoedaEnum;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class LiicenciamentoCreate extends Component
 {
@@ -22,13 +23,15 @@ class LiicenciamentoCreate extends Component
     public ?int $customerId = null;
 
     // Campos do formulário
+    public $codigo_licenciamento = null;
+
     public $cliente_id;
 
     public $exportador_id;
 
     public $estancia_id;
 
-    public $tipo_declaracao = '11';
+    public $tipo_declaracao = TipoDeclaracao::IMPORTACAO->value;
 
     public $referencia_cliente = '';
 
@@ -36,11 +39,11 @@ class LiicenciamentoCreate extends Component
 
     public $descricao = '';
 
-    public $moeda = 'AOA';
+    public $moeda = MoedaEnum::USD->value;
 
     public $cambio = 'USD';
 
-    public $tipo_transporte = '3';
+    public $tipo_transporte = TipoTransporte::MARÍTIMO->value;
 
     public $registo_transporte = '';
     public $nacionalidade_transporte;
@@ -111,33 +114,27 @@ class LiicenciamentoCreate extends Component
         $this->dispatch('abrirModalExportador');
     }
 
-    public function mount(Request $request)
+    public function mount(?int $customer_id = null)
     {
         $this->authorize('create', Licenciamento::class);
 
-        // apenas para debug
-        Log::info('Mount executado', [
-            'customer_id' => $request->query('customer_id'),
-            'user_id' => Auth::id(),
-            'empresa' => Auth::user()->empresas->first()->id ?? null,
-        ]);
+        $this->customerId = $customer_id;
 
-        $this->customerId = $request->query('customer_id');
-        
         $empresa = $this->empresa();
         $options = app(LicenciamentoFormSupport::class)->options($empresa);
-        
-        if ($this->customerId) {
-            abort_unless($options['clientes']->contains('id', (int) $this->customerId), 404);
-            $this->cliente_id = $this->customerId;
-        }
 
         foreach ($options as $property => $value) {
             $this->{$property} = $value;
         }
 
-        // Valor padrão para nacionalidade
-        $this->nacionalidade_transporte = 16; // Exemplo: Angola, ajuste conforme necessário
+        if ($this->customerId !== null) {
+            abort_unless($this->clientes->contains('id', (int) $this->customerId), 404);
+            $this->cliente_id = (int) $this->customerId;
+        }
+
+        $this->nacionalidade_transporte = $this->paises->firstWhere('pais', 'Angola')?->id
+            ?? $this->paises->first()?->id
+            ?? null;
     }
 
     public function updated($field)
@@ -167,6 +164,7 @@ class LiicenciamentoCreate extends Component
         // Montar array de dados para o DTO
         $data = [
             'estancia_id' => $this->estancia_id,
+            'codigo_licenciamento' => $this->codigo_licenciamento,
             'cliente_id' => $this->cliente_id,
             'exportador_id' => $this->exportador_id,
             'empresa_id' => $empresaId,
@@ -179,7 +177,7 @@ class LiicenciamentoCreate extends Component
             'registo_transporte' => $this->registo_transporte,
             'nacionalidade_transporte' => $this->nacionalidade_transporte,
             'manifesto' => $this->manifesto,
-            'data_entrada' => $this->data_entrada,
+            'data_entrada' => $this->blankToNull($this->data_entrada),
             'porto_entrada' => $this->porto_entrada,
             'peso_bruto' => $this->peso_bruto,
             'adicoes' => $this->adicoes,
@@ -215,11 +213,26 @@ class LiicenciamentoCreate extends Component
         return app(LicenciamentoFormSupport::class)->rules($this->empresa()->id);
     }
 
+    public function messages(): array
+    {
+        return app(LicenciamentoFormSupport::class)->messages();
+    }
+
+    public function validationAttributes(): array
+    {
+        return app(LicenciamentoFormSupport::class)->attributes();
+    }
+
     private function empresa(): Empresa
     {
         $empresa = Auth::user()?->empresas()->first();
         abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return $empresa;
+    }
+
+    private function blankToNull(mixed $value): mixed
+    {
+        return $value === '' ? null : $value;
     }
 }

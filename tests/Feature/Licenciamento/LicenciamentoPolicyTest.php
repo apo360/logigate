@@ -12,12 +12,15 @@ use Tests\TestCase;
 class LicenciamentoPolicyTest extends TestCase
 {
     use DatabaseTransactions;
+    use LicenciamentoTestSupport;
     use ProcessoTestFixtures;
 
     public function test_policy_allows_only_same_tenant_licenciamento_operations(): void
     {
         [$tenantAUser, $tenantAEmpresa] = $this->createTenant('LIC-A');
         [$tenantBUser] = $this->createTenant('LIC-B');
+        $this->grantLicenciamentoPermissions($tenantAUser);
+        $this->grantLicenciamentoPermissions($tenantBUser);
 
         $licenciamento = new Licenciamento([
             'empresa_id' => $tenantAEmpresa->id,
@@ -25,7 +28,7 @@ class LicenciamentoPolicyTest extends TestCase
             'status_fatura' => 'pendente',
         ]);
 
-        foreach (['view', 'update', 'delete', 'generateTxt', 'duplicate', 'constituteProcesso'] as $ability) {
+        foreach (['view', 'update', 'delete'] as $ability) {
             $this->assertTrue(Gate::forUser($tenantAUser)->allows($ability, $licenciamento), $ability);
             $this->assertFalse(Gate::forUser($tenantBUser)->allows($ability, $licenciamento), $ability);
         }

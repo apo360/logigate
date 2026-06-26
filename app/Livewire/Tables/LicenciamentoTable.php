@@ -4,16 +4,15 @@ namespace App\Livewire\Tables;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Application\Licenciamento\Services\LicenciamentoTenantAccessService;
 use App\Models\Licenciamento;
 use App\Models\Estancia;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
-use App\Application\Licenciamento\Actions\Export\ExportLicenciamentosToCsvAction;
-use App\Application\Licenciamento\Actions\Export\ExportLicenciamentosToExcelAction;
-use App\Domains\Licenciamento\Services\LicenciamentoImportExportService;
-use Livewire\WithFileUploads;
 
 class LicenciamentoTable extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     // --- FILTROS ---
@@ -30,9 +29,6 @@ class LicenciamentoTable extends Component
     public $selectedLicenciamentos = [];
     public $selectAll = false;
 
-    public $importFile;
-    public $showImportModal = false;
-
     // --- QUERY STRING (persiste filtros na URL) ---
     protected $queryString = [
         'search' => ['except' => ''],
@@ -48,9 +44,18 @@ class LicenciamentoTable extends Component
     // --- LISTENERS para eventos (opcional) ---
     protected $listeners = ['refreshTable' => '$refresh'];
 
+    public function mount()
+    {
+        $this->authorize('viewAny', Licenciamento::class);
+    }
+
     // --- ORDENAÇÃO ---
     public function sortBy($field)
     {
+        if (! array_key_exists($field, $this->sortableColumns())) {
+            return;
+        }
+
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -107,8 +112,12 @@ class LicenciamentoTable extends Component
         $query = $this->getLicenciamentosQuery(); // reutiliza a mesma lógica de filtros
         return (object) [
             'total' => $query->count(),
-            'txt_gerado' => (clone $query)->whereNotNull('txt_gerado')->count(),
+            'txt_gerado' => (clone $query)->where('licenciamentos.txt_gerado', 1)->count(),
             'pendentes' => (clone $query)->where('status_fatura', 'pendente')->count(),
+            'processados' => (clone $query)
+                ->where('licenciamentos.txt_gerado', 1)
+                ->whereHas('procLicenFaturas', fn ($query) => $query->where('status_fatura', 'paga'))
+                ->count(),
         ];
     }
 
@@ -141,42 +150,6 @@ class LicenciamentoTable extends Component
         $this->selectAll = false;
     }
 
-    // --- EXPORTAÇÃO SIMPLES (sem filtro de seleção) ---
-    public function exportCsv()
-    {
-        $ids = $this->selectedLicenciamentos ?: [];
-        return app(ExportLicenciamentosToCsvAction::class)->execute($ids);
-    }
-
-    public function exportExcel()
-    {
-        $ids = $this->selectedLicenciamentos ?: [];
-        return app(ExportLicenciamentosToExcelAction::class)->execute($ids);
-    }
-
-    public function exportPdf()
-    {
-        // Implementar PDF se necessário
-        $this->dispatch('toast', type: 'info', message: 'PDF em desenvolvimento.');
-    }
-
-    public function import()
-    {
-        $this->validate([
-            'importFile' => 'required|file|mimes:csv,xlsx,xls,txt|max:10240',
-        ]);
-
-        try {
-            $service = app(LicenciamentoImportExportService::class);
-            $licenciamento = $service->import($this->importFile, Auth::user()->empresas->first()->id, auth()->id());
-            $this->reset('importFile', 'showImportModal');
-            $this->dispatch('toast', type: 'success', message: 'Importação concluída!');
-            return redirect()->route('licenciamentos.show', $licenciamento);
-        } catch (\Exception $e) {
-            $this->dispatch('toast', type: 'error', message: $e->getMessage());
-        }
-    }
-
     // --- EXPORTAÇÃO DOS SELECIONADOS (chamada pelo botão "Exportar") ---
     public function exportarSelecionados()
     {
@@ -190,16 +163,11 @@ class LicenciamentoTable extends Component
         $this->dispatch('toast', type: 'success', message: count($this->selectedLicenciamentos) . ' licenciamento(s) exportado(s).');
     }
 
-    // --- CONFIRMAÇÃO DE ELIMINAÇÃO (chamado pelo componente td-actions) ---
-    public function confirmDelete(int $id)
-    {
-        $this->dispatch('confirm-delete', id: $id);
-    }
-
     // --- MÉTODO AUXILIAR PARA REUTILIZAR A QUERY ---
     private function getLicenciamentosQuery()
     {
-        return Licenciamento::query()
+        $query = Licenciamento::query()
+            ->with(['cliente', 'procLicenFaturas'])
             ->leftJoin('customers', 'licenciamentos.cliente_id', '=', 'customers.id')
             ->select('licenciamentos.*') // evitar conflito de colunas
             ->when($this->search, function ($q) {
@@ -212,12 +180,12 @@ class LicenciamentoTable extends Component
             })
             ->when($this->status, function ($q): void {
                 match ($this->status) {
-                    'Por licenciar' => $q->where(function ($query): void {
+                    'pendente' => $q->where(function ($query): void {
                         $query->whereNull('licenciamentos.txt_gerado')->orWhere('licenciamentos.txt_gerado', 0);
                     }),
-                    'Licenciado' => $q->where('licenciamentos.txt_gerado', 1)
+                    'processado' => $q->where('licenciamentos.txt_gerado', 1)
                         ->whereHas('procLicenFaturas', fn ($query) => $query->where('status_fatura', 'paga')),
-                    'Em licenciamento' => $q->where('licenciamentos.txt_gerado', 1)
+                    'gerado' => $q->where('licenciamentos.txt_gerado', 1)
                         ->whereDoesntHave('procLicenFaturas', fn ($query) => $query->where('status_fatura', 'paga')),
                     default => null,
                 };
@@ -225,7 +193,22 @@ class LicenciamentoTable extends Component
             ->when($this->estancia_id, fn($q) => $q->where('licenciamentos.estancia_id', $this->estancia_id))
             ->when($this->data_inicio, fn($q) => $q->whereDate('licenciamentos.created_at', '>=', $this->data_inicio))
             ->when($this->data_fim, fn($q) => $q->whereDate('licenciamentos.created_at', '<=', $this->data_fim))
-            ->orderBy($this->sortField, $this->sortDirection);
+            ->orderBy($this->sortableColumns()[$this->sortField] ?? 'licenciamentos.created_at', $this->sortDirection);
+
+        return app(LicenciamentoTenantAccessService::class)->scopeForUser($query, Auth::user());
+    }
+
+    private function sortableColumns(): array
+    {
+        return [
+            'created_at' => 'licenciamentos.created_at',
+            'cliente' => 'customers.CompanyName',
+            'descricao' => 'licenciamentos.descricao',
+            'peso_bruto' => 'licenciamentos.peso_bruto',
+            'porto_origem' => 'licenciamentos.porto_origem',
+            'estado_licenciamento' => 'licenciamentos.txt_gerado',
+            'cif' => 'licenciamentos.cif',
+        ];
     }
 
     // --- RENDER PRINCIPAL ---

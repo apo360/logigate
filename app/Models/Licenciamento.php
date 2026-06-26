@@ -123,11 +123,6 @@ class Licenciamento extends Model
         return $this->hasMany(MercadoriaAgrupada::class, 'licenciamento_id');
     }
 
-    public function documentos()
-    {
-        return $this->hasMany(DocumentosAduaneiros::class, 'licenciamento_id');
-    }
-
     public function documentosArquivos()
     {
         return $this->hasMany(DocumentoArquivo::class, 'licenciamento_id');

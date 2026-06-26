@@ -84,7 +84,7 @@
                             <!-- Para cliente -->
                             <div class="flex gap-2">
                                 @if($customerId)
-                                    <input type="text" class="flex-1 rounded-md bg-gray-100 border-gray-300" value="{{ $clientes->first()->CompanyName ?? '' }}" disabled>
+                                    <input type="text" class="flex-1 rounded-md bg-gray-100 border-gray-300" value="{{ $clientes->firstWhere('id', (int) $cliente_id)?->CompanyName ?? '' }}" disabled>
                                     <input type="hidden" wire:model="cliente_id">
                                 @else
                                     <input wire:model="cliente_id" list="cliente_list" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">

@@ -29,6 +29,10 @@ class AtualizarLicenciamentoAction
             $this->faturamentoRules->assertMoedaPodeSerAlterada($licenciamento, $dto->moeda);
 
             $payload = $dto->toArray();
+            if ($dto->txt_gerado === null) {
+                unset($payload['txt_gerado']);
+            }
+
             if ($dto->cif->getValor() == 0 && $dto->fob_total->getValor() > 0) {
                 $payload['cif'] = $this->calcularCif
                     ->calcular($dto->fob_total, $dto->frete, $dto->seguro)

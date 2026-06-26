@@ -93,7 +93,7 @@ class CriarLicenciamentoDTO
             : new ValorMonetario($data['cif'] ?? 0);
         $this->pais_origem = $data['pais_origem'] ?? null;
         $this->porto_origem = $data['porto_origem'] ?? null;
-        $this->txt_gerado = $data['txt_gerado'] ?? null;
+        $this->txt_gerado = $data['txt_gerado'] ?? 0;
         $this->Nr_factura = $data['Nr_factura'] ?? null;
         $this->status_fatura = $data['status_fatura'] ?? null;
     }

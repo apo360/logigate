@@ -1,58 +1,54 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Policies;
 
+use App\Application\Licenciamento\Services\LicenciamentoTenantAccessService;
 use App\Models\Licenciamento;
 use App\Models\User;
 
-final class LicenciamentoPolicy
+class LicenciamentoPolicy
 {
-    private function sameTenant(User $user, Licenciamento $licenciamento): bool
-    {
-        $empresaId = $user->empresas()->value('empresas.id');
-
-        return $empresaId !== null && (int) $licenciamento->empresa_id === (int) $empresaId;
+    public function __construct(
+        private readonly LicenciamentoTenantAccessService $tenantAccess
+    ) {
     }
 
     public function viewAny(User $user): bool
     {
-        return (bool) $user->empresas()->value('empresas.id');
+        return $this->tenantAccess->userHasEmpresa($user)
+            && $this->can($user, 'licenciamentos.view');
     }
 
     public function view(User $user, Licenciamento $licenciamento): bool
     {
-        return $this->sameTenant($user, $licenciamento);
+        return $this->tenantAccess->canAccess($user, $licenciamento)
+            && $this->can($user, 'licenciamentos.view');
     }
 
     public function create(User $user): bool
     {
-        return (bool) $user->empresas()->value('empresas.id');
+        return $this->tenantAccess->userHasEmpresa($user)
+            && $this->can($user, 'licenciamentos.create');
     }
 
     public function update(User $user, Licenciamento $licenciamento): bool
     {
-        return $this->sameTenant($user, $licenciamento) && $licenciamento->podeSerEditado();
+        return $this->tenantAccess->canAccess($user, $licenciamento)
+            && $this->can($user, 'licenciamentos.update');
     }
 
     public function delete(User $user, Licenciamento $licenciamento): bool
     {
-        return $this->sameTenant($user, $licenciamento) && $licenciamento->podeSerEditado();
+        return $this->tenantAccess->canAccess($user, $licenciamento)
+            && $this->can($user, 'licenciamentos.delete');
     }
 
-    public function generateTxt(User $user, Licenciamento $licenciamento): bool
+    private function can(User $user, string $permission): bool
     {
-        return $this->sameTenant($user, $licenciamento);
-    }
+        if (method_exists($user, 'hasPermissionTo')) {
+            return $user->hasPermissionTo($permission);
+        }
 
-    public function duplicate(User $user, Licenciamento $licenciamento): bool
-    {
-        return $this->sameTenant($user, $licenciamento);
-    }
-
-    public function constituteProcesso(User $user, Licenciamento $licenciamento): bool
-    {
-        return $this->sameTenant($user, $licenciamento);
+        return true;
     }
 }

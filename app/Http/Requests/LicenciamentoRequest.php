@@ -2,65 +2,129 @@
 
 namespace App\Http\Requests;
 
+use App\Application\Licenciamento\Services\LicenciamentoTenantAccessService;
 use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
 use App\Models\Licenciamento;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class LicenciamentoRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize()
+   public function authorize(): bool
+    {
+        $licenciamento = $this->licenciamentoFromRoute();
+
+        if ($licenciamento instanceof Licenciamento) {
+            return $this->user()?->can('update', $licenciamento) ?? false;
+        }
+
+        return $this->user()?->can('create', Licenciamento::class) ?? false;
+    }
+
+    public function rules(): array
+    {
+        return app(LicenciamentoFormSupport::class)->rules(
+            empresaId: $this->empresaId(),
+            licenciamentoId: $this->licenciamentoId()
+        );
+    }
+
+    public function messages(): array
+    {
+        return app(LicenciamentoFormSupport::class)->messages();
+    }
+
+    public function attributes(): array
+    {
+        return app(LicenciamentoFormSupport::class)->attributes();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'empresa_id' => $this->empresaId(),
+            'peso_bruto' => $this->normalizeDecimal($this->input('peso_bruto')),
+            'fob_total' => $this->normalizeDecimal($this->input('fob_total')),
+            'frete' => $this->normalizeDecimal($this->input('frete')),
+            'seguro' => $this->normalizeDecimal($this->input('seguro')),
+            'cif' => $this->normalizeDecimal($this->input('cif')),
+        ]);
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator): void {
+            $this->validateCifConsistency($validator);
+        });
+    }
+
+    private function validateCifConsistency($validator): void
+    {
+        $fob = (float) ($this->input('fob_total') ?? 0);
+        $frete = (float) ($this->input('frete') ?? 0);
+        $seguro = (float) ($this->input('seguro') ?? 0);
+        $cif = (float) ($this->input('cif') ?? 0);
+
+        if ($fob <= 0 && $frete <= 0 && $seguro <= 0 && $cif <= 0) {
+            return;
+        }
+
+        $expectedCif = app(LicenciamentoFormSupport::class)
+            ->calculatedValues($fob, $frete, $seguro)['cif'];
+
+        if (round($cif, 2) !== round($expectedCif, 2)) {
+            $validator->errors()->add(
+                'cif',
+                'O CIF deve ser igual à soma do FOB, Frete e Seguro.'
+            );
+        }
+    }
+
+    private function empresaId(): int
+    {
+        $empresaId = app(LicenciamentoTenantAccessService::class)
+            ->empresaIdFor($this->user());
+
+        abort_if(! $empresaId, 403, 'Empresa activa não encontrada.');
+
+        return (int) $empresaId;
+    }
+
+    private function licenciamentoId(): ?int
+    {
+        return $this->licenciamentoFromRoute()?->id;
+    }
+
+    private function licenciamentoFromRoute(): ?Licenciamento
     {
         $licenciamento = $this->route('licenciamento');
 
         if ($licenciamento instanceof Licenciamento) {
-            return Gate::allows('update', $licenciamento);
+            return $licenciamento;
         }
 
-        return Gate::allows('create', Licenciamento::class);
+        if (is_numeric($licenciamento)) {
+            return Licenciamento::query()->find((int) $licenciamento);
+        }
+
+        return null;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules()
+    private function normalizeDecimal(mixed $value): mixed
     {
-        $empresaId = (int) $this->user()?->empresas()->value('empresas.id');
+        if ($value === null || $value === '') {
+            return null;
+        }
 
-        return app(LicenciamentoFormSupport::class)->rules($empresaId);
-    }
+        if (is_numeric($value)) {
+            return $value;
+        }
 
-    /**
-     * Mensagens personalizadas para erros de validação.
-     */
-    public function messages()
-    {
-        return [
-            'cliente_id.required' => 'O campo Cliente é obrigatório.',
-            'cliente_id.exists' => 'O cliente selecionado não é válido.',
-            'exportador_id.required' => 'O campo Exportador é obrigatório.',
-            'exportador_id.exists' => 'O exportador selecionado não é válido.',
-            'referencia_cliente.required' => 'A referência do cliente é obrigatória.',
-            'factura_proforma.required' => 'A factura proforma é obrigatória.',
-            'descricao.required' => 'A descrição é obrigatória.',
-            'moeda.required' => 'O campo Moeda é obrigatório.',
-            'tipo_declaracao.required' => 'O tipo de declaração é obrigatório.',
-            'peso_bruto.required' => 'O campo Peso Bruto é obrigatório.',
-            'peso_bruto.numeric' => 'O peso bruto deve ser um valor numérico.',
-            'adicoes.required' => 'O campo Adições é obrigatório.',
-            'metodo_avaliacao.required' => 'O campo Método de Avaliação é obrigatório.',
-            'codigo_volume.required' => 'O código do volume é obrigatório.',
-            'forma_pagamento.required' => 'O campo Forma de Pagamento é obrigatório.',
-            'codigo_banco.required' => 'O campo Código do Banco é obrigatório.',
-            'fob_total.required' => 'O campo FOB Total é obrigatório.',
-            'frete.required' => 'O campo Frete é obrigatório.',
-            'seguro.required' => 'O campo Seguro é obrigatório.',
-            'cif.required' => 'O campo CIF é obrigatório.',
-        ];
+        $value = str_replace(' ', '', (string) $value);
+        $value = str_replace('.', '', $value);
+        $value = str_replace(',', '.', $value);
+
+        return is_numeric($value) ? $value : null;
     }
 }
