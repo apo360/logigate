@@ -9,7 +9,6 @@
     <div class="absolute inset-0 bg-black/40" @click="open = false"> </div>
 
     {{-- MODAL --}}
-    {{-- MODAL --}}
     <div 
         x-show="open"
         x-transition:enter="transition ease-out duration-300"
@@ -22,7 +21,6 @@
         @click.away="open = false"
         class="relative bg-white w-full max-w-4xl mx-4 my-8 rounded-xl shadow-xl"
     >
-        {{-- HEADER --}}
         {{-- HEADER --}}
 <div class="px-6 py-4 border-b flex justify-between items-center">
     <h3 class="text-lg font-semibold text-gray-800">
@@ -39,7 +37,6 @@
     </button>
 </div>
 
-        {{-- BODY --}}
         {{-- BODY --}}
 <div class="p-6 space-y-6">
     {{-- Linha 1: Subcategoria e Código --}}
@@ -117,36 +114,6 @@
                 </p>
             @endif
 
-            <div class="mt-3">
-                <button
-                    type="button"
-                    wire:click="suggestCodigoPautal"
-                    wire:loading.attr="disabled"
-                    wire:target="suggestCodigoPautal"
-                    class="inline-flex items-center rounded-md border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50"
-                >
-                    <span wire:loading.remove wire:target="suggestCodigoPautal">Sugerir código com IA</span>
-                    <span wire:loading wire:target="suggestCodigoPautal">A sugerir...</span>
-                </button>
-            </div>
-
-            @if(count($pautaSuggestions) > 0)
-                <div class="mt-3 space-y-2 rounded-lg border border-blue-100 bg-blue-50 p-3">
-                    <p class="text-xs font-semibold uppercase text-blue-800">Sugestões</p>
-                    @foreach($pautaSuggestions as $suggestion)
-                        <button
-                            type="button"
-                            wire:click="applyPautaSuggestion({{ $suggestion['pauta_aduaneira_id'] }})"
-                            class="block w-full rounded-md bg-white p-2 text-left text-xs hover:bg-blue-100"
-                        >
-                            <span class="font-semibold text-gray-900">{{ $suggestion['codigo'] }}</span>
-                            <span class="ml-2 text-blue-700">{{ $suggestion['confidence'] }}%</span>
-                            <span class="block text-gray-600">{{ $suggestion['descricao'] }}</span>
-                            <span class="block text-gray-500">{{ $suggestion['reason'] }}</span>
-                        </button>
-                    @endforeach
-                </div>
-            @endif
         </div>
     </div>
 
@@ -221,7 +188,7 @@
                 <option value="maq">Máquina</option>
                 <option value="equip">Equipamento</option>
                 <option value="outro">Outro</option>
-            </select> 254107094757
+            </select>
         </div>
     </div>
     @endif
@@ -238,17 +205,8 @@
                 required
             >
                 <option value="">Selecione</option>
-                <option value="UN">UN - Unidade</option>
-                <option value="KG">KG - Quilograma</option>
-                <option value="LT">LT - Litro</option>
-                <option value="M">M - Metro</option>
-                <option value="PC">PC - Peça</option>
-                <option value="CX">CX - Caixa</option>
-                <option value="TM">TM - Tonelada Métrica</option>
-                <option value="M2">M2 - Metro Quadrado</option>
-                <option value="M3">M3 - Metro Cúbico</option>
-                <option value="PAR">PAR - Par</option>
-                <option value="SAC">SAC - Saco</option>
+                <option value="Kg">Kg - Quilograma</option>
+                <option value="Ton">Ton - Tonelada</option>
             </select>
             @error('form.unidade')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -429,7 +387,6 @@
     @endif
 </div>
 
-        {{-- FOOTER --}}
         {{-- FOOTER --}}
 <div class="px-6 py-4 border-t flex justify-between items-center bg-gray-50 rounded-b-xl">
     @if($mode === 'edit')

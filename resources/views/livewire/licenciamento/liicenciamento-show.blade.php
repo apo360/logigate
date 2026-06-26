@@ -198,51 +198,7 @@
 
                         <!-- Aba: Mercadorias -->
                         <div x-show="tab === 'mercadorias'" x-cloak>
-                            <!-- Resumo Geral -->
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-                                <div><span class="text-sm text-gray-500">Nº de Adições</span><p class="font-semibold">{{ $licenciamento->adicoes ?? 0 }}</p></div>
-                                <div><span class="text-sm text-gray-500">Peso Bruto (kg)</span><p class="font-semibold">{{ number_format($licenciamento->peso_bruto, 2) }}</p></div>
-                                <div><span class="text-sm text-gray-500">Código Volume</span><p class="font-semibold">{{ $licenciamento->codigo_volume }}</p></div>
-                                <div><span class="text-sm text-gray-500">Quantidade Volumes</span><p class="font-semibold">{{ $licenciamento->qntd_volume }}</p></div>
-                            </div>
-
-                            <!-- Filtro de pesquisa -->
-                            <div class="mb-4">
-                                <input type="text" id="searchMercadorias" placeholder="Pesquise por descrição..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            </div>
-
-                            @if($licenciamento->mercadorias->count() > 0)
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
-                                            <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qtd</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Valor Unit.</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="mercadoriasTableBody" class="bg-white divide-y divide-gray-200">
-                                            @foreach($licenciamento->mercadorias as $merc)
-                                                <tr class="mercadoria-row">
-                                                    <td class="px-4 py-2">{{ $loop->iteration }}</td>
-                                                    <td class="px-4 py-2 description">{{ $merc->Descricao }}</td>
-                                                    <td class="px-4 py-2">{{ $merc->Quantidade }}</td>
-                                                    <td class="px-4 py-2">{{ number_format($merc->preco_unitario, 2, ',', '.') }}</td>
-                                                    <td class="px-4 py-2">{{ number_format($merc->preco_total, 2, ',', '.') }}</td>
-                                                    <td class="px-4 py-2 space-x-1">
-                                                        <a href="{{ route('licenciamentos.edit', ['licenciamento' => $licenciamento->id, 'tab' => 'mercadoria']) }}" class="text-yellow-600 hover:text-yellow-800"><i class="fas fa-edit"></i></a>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @else
-                                <div class="text-center py-10 text-gray-500">Não há mercadorias associadas a este licenciamento.</div>
-                            @endif
+                            <livewire:mercadorias.index context="licenciamento" :parent-id="$licenciamento->id" />
                         </div>
                     </div>
                 </div>
@@ -261,6 +217,10 @@
                         <i class="fas fa-edit text-blue-500 w-5"></i> <span>Editar Licenciamento</span>
                     </a>
                 </div>
+                <!-- 
+                 Btt.Gerar-Txt
+                 Btt.Constituir-Processo
+                 -->
             </div>
 
             <!-- Card: Documentos Relacionados (Faturas) -->
@@ -288,7 +248,7 @@
         </div>
     </div>
 
-    <!-- Scripts: ApexCharts + filtro de mercadorias -->
+    <!-- Scripts: ApexCharts -->
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
@@ -308,18 +268,6 @@
             var chart = new ApexCharts(document.querySelector("#financeChartApex"), options);
             chart.render();
 
-            // Filtro de mercadorias
-            const searchInput = document.getElementById('searchMercadorias');
-            if (searchInput) {
-                searchInput.addEventListener('keyup', function () {
-                    const filter = this.value.toLowerCase();
-                    const rows = document.querySelectorAll('#mercadoriasTableBody tr');
-                    rows.forEach(row => {
-                        const desc = row.querySelector('.description')?.innerText.toLowerCase() || '';
-                        row.style.display = desc.includes(filter) ? '' : 'none';
-                    });
-                });
-            }
         });
     </script>
     @endpush

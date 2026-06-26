@@ -12,6 +12,8 @@ return new class extends Migration
      */
     public function up()
     {
+        DB::unprepared('DROP PROCEDURE IF EXISTS AgruparMercadorias');
+
         DB::unprepared('
             CREATE PROCEDURE AgruparMercadorias(p_licenciamento_id BIGINT unsigned)
             BEGIN

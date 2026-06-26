@@ -4,6 +4,8 @@ namespace App\Livewire\Mercadorias;
 
 use App\Application\Mercadoria\Actions\ExcluirMercadoriaAction;
 use App\Application\Mercadoria\Queries\ListarMercadoriasQuery;
+use App\Application\Mercadoria\Services\MercadoriaTenantAccessService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Index extends Component
@@ -32,7 +34,6 @@ class Index extends Component
         'mercadoriaUpdated' => 'reload',
         'mercadoriaDeleted' => 'reload',
         'open-edit-mercadoria' => 'handleEdit',
-        'close-modal' => 'closeModal',
     ];
 
     public function handleEdit(int $id): void
@@ -42,24 +43,18 @@ class Index extends Component
              ->to('mercadorias.create-form');
     }
 
-    public function closeModal(): void
-    {
-        $this->dispatchBrowserEvent('close-modal', ['modal' => 'edit-mercadoria']);
-        $this->editingId = null;
-        $this->editingFields = [];
-    }
-
     public function mount(string $context, int $parentId)
     {
         $this->context = $context;
         $this->parentId = $parentId;
+        app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), $context, $parentId, 'mercadorias.view');
         $this->reload();
     }
 
 
     public function reload(): void
     {
-        $result = app(ListarMercadoriasQuery::class)->execute($this->context, $this->parentId);
+        $result = app(ListarMercadoriasQuery::class)->execute($this->context, $this->parentId, Auth::user());
 
         $this->mercadorias = $result['mercadorias'];
         $this->agrupadas = $result['agrupadas'];

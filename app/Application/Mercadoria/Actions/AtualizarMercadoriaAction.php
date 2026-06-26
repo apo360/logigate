@@ -7,10 +7,12 @@ use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaAgrupamentoService;
 use App\Application\Mercadoria\Services\MercadoriaParentTotalsService;
 use App\Application\Mercadoria\Services\MercadoriaRules;
+use App\Application\Mercadoria\Services\MercadoriaTenantAccessService;
 use App\Application\PautaAduaneira\Actions\AssociarPautaMercadoriaAction;
 use App\Application\PautaAduaneira\Actions\ConsultarCodigoPautalAction;
 use App\Models\Mercadoria;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 final class AtualizarMercadoriaAction
 {
@@ -21,6 +23,7 @@ final class AtualizarMercadoriaAction
         private readonly MercadoriaParentTotalsService $parentTotals,
         private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
         private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
+        private readonly MercadoriaTenantAccessService $tenantAccess,
     ) {
     }
 
@@ -33,6 +36,7 @@ final class AtualizarMercadoriaAction
                 throw new \InvalidArgumentException('ID da mercadoria é obrigatório para atualização.');
             }
 
+            $this->tenantAccess->authorizeMercadoria(Auth::user(), $data->id, $data->context, $data->parentId, 'mercadorias.update');
             $pauta = $this->consultarCodigoPautal->execute($data->codigoAduaneiro);
             $mercadoria = $this->mercadorias->findInContext($data->id, $data->context, $data->parentId);
             $before = clone $mercadoria;

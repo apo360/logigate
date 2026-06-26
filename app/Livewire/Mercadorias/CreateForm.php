@@ -8,9 +8,9 @@ use App\Application\Mercadoria\Actions\ExcluirMercadoriaAction;
 use App\Application\Mercadoria\DTOs\MercadoriaData;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaRules;
+use App\Application\Mercadoria\Services\MercadoriaTenantAccessService;
 use App\Application\Mercadoria\Services\PautaAduaneiraLookupService;
-use App\Application\PautaAduaneira\IA\PautaSuggestionDTO;
-use App\Application\PautaAduaneira\IA\SugerirCodigoPautalAction;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\Subcategoria;
 use Livewire\Attributes\On;
@@ -35,10 +35,6 @@ class CreateForm extends Component
 
     public ?string $originalCodigoAduaneiro = null;
 
-    public array $pautaSuggestions = [];
-
-    public bool $suggestingPauta = false;
-
     /** FORM */
     public array $form = [
         'subcategoria_id' => null,
@@ -46,7 +42,7 @@ class CreateForm extends Component
         'descricao'       => '',
         'quantidade'      => 1,
         'peso'            => 0,
-        'unidade'         => 'UN',
+        'unidade'         => 'Kg',
         'ncm_hs'          => '',
         'ncm_hs_numero'   => '',
         'qualificacao'    => '',
@@ -123,8 +119,11 @@ class CreateForm extends Component
         ];
     }
 
-    public function mount()
+    public function mount(string $context, int $parentId)
     {
+        $this->context = $context;
+        $this->parentId = $parentId;
+        app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), $context, $parentId, 'mercadorias.view');
         $this->subCategorias = SubCategoria::all()->toArray();
     }
 
@@ -134,7 +133,7 @@ class CreateForm extends Component
         $this->mode = 'create';
         $this->mercadoriaId = null;
         $this->originalCodigoAduaneiro = null;
-        $this->pautaSuggestions = [];
+        app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), $this->context, $this->parentId, 'mercadorias.create');
         $this->open = true;
     }
 
@@ -142,6 +141,7 @@ class CreateForm extends Component
     public function openEditModal(int $id): void
     {
         $this->resetValidation();
+        app(MercadoriaTenantAccessService::class)->authorizeMercadoria(Auth::user(), $id, $this->context, $this->parentId, 'mercadorias.update');
         $m = app(MercadoriaRepositoryInterface::class)->findInContext($id, $this->context, $this->parentId);
 
         $this->mercadoriaId = $id;
@@ -185,8 +185,6 @@ class CreateForm extends Component
         $this->showMaquinas = false;
         $this->pautas = [];
         $this->originalCodigoAduaneiro = null;
-        $this->pautaSuggestions = [];
-        $this->suggestingPauta = false;
     }
 
     // Atualizar closeModal para usar resetForm
@@ -239,7 +237,6 @@ class CreateForm extends Component
         $this->showMaquinas = false;
         $this->codigoStatus = 'idle';
         $this->codigoMessage = '';
-        $this->pautaSuggestions = [];
 
         if ($this->mode === 'edit' && $this->codigoPautalChanged() && ($this->form['pauta_change_source'] ?? 'manual') !== 'ai_suggestion') {
             $this->form['pauta_change_source'] = 'manual';
@@ -282,58 +279,6 @@ class CreateForm extends Component
 
         $this->codigoStatus = 'invalid';
         $this->codigoMessage = 'Código inválido. Escolha um da lista.';
-    }
-
-    public function suggestCodigoPautal(): void
-    {
-        $this->suggestingPauta = true;
-        $this->pautaSuggestions = [];
-
-        try {
-            $this->pautaSuggestions = app(SugerirCodigoPautalAction::class)->execute(PautaSuggestionDTO::fromArray([
-                'descricao' => $this->form['descricao'] ?? null,
-                'subcategoria_id' => $this->form['subcategoria_id'] ?? null,
-                'marca' => $this->form['marca'] ?? null,
-                'modelo' => $this->form['modelo'] ?? null,
-                'chassis' => $this->form['chassis'] ?? null,
-                'codigo_aduaneiro' => $this->form['codigo_aduaneiro'] ?? null,
-                'limit' => 5,
-            ]));
-
-            if ($this->pautaSuggestions === []) {
-                $this->dispatch('toast', type: 'warning', message: 'Nenhuma sugestão encontrada para esta mercadoria.');
-            }
-        } catch (\Throwable $e) {
-            $this->dispatch('toast', type: 'error', message: 'Erro ao sugerir código pautal: ' . $e->getMessage());
-        } finally {
-            $this->suggestingPauta = false;
-        }
-    }
-
-    public function applyPautaSuggestion(int $pautaId): void
-    {
-        $suggestion = collect($this->pautaSuggestions)->firstWhere('pauta_aduaneira_id', $pautaId);
-
-        if (! $suggestion) {
-            return;
-        }
-
-        $this->form['codigo_aduaneiro'] = $suggestion['codigo'];
-        $this->form['pauta_change_source'] = 'ai_suggestion';
-
-        if (! collect($this->pautas)->contains(fn ($pauta) => $pauta->codigo === $suggestion['codigo'])) {
-            $this->pautas[] = (object) [
-                'codigo' => $suggestion['codigo'],
-                'descricao' => $suggestion['descricao'],
-            ];
-        }
-
-        if ($this->mode === 'edit' && $this->codigoPautalChanged() && empty($this->form['pauta_change_reason'])) {
-            $this->form['pauta_change_reason'] = 'Sugestão de IA aplicada: ' . ($suggestion['reason'] ?? 'código pautal sugerido.');
-        }
-
-        $this->updatedFormCodigoAduaneiro($suggestion['codigo']);
-        $this->dispatch('pautaSuggestionSelected', pauta_aduaneira_id: $pautaId, codigo: $suggestion['codigo']);
     }
 
 
