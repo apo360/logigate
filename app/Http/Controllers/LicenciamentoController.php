@@ -92,32 +92,6 @@ class LicenciamentoController extends AuthenticatedController
         }
     }
 
-    public function GerarTxT($IdProcesso, GerarTxtLicenciamentoAction $action)
-    {
-        $licenciamento = $this->resolveAuthorizedLicenciamento($IdProcesso, 'generateTxt');
-        $result = $action->execute($licenciamento);
-
-        return response()->streamDownload(function () use ($result): void {
-            echo $result['content'];
-        }, $result['filename']);
-    }
-
-    public function ConstituirProcesso($idLicenciamento, ConstituirProcessoAction $action)
-    {
-        $licenciamento = $this->resolveAuthorizedLicenciamento($idLicenciamento, 'constituteProcesso');
-        $processo = $action->execute($licenciamento);
-
-        return redirect()->route('processos.edit', $processo)->with('success', 'Processo constituído com sucesso!');
-    }
-
-    public function DuplicarLicenciamento($idLicenciamento, DuplicarLicenciamentoAction $action)
-    {
-        $licenciamento = $this->resolveAuthorizedLicenciamento($idLicenciamento, 'duplicate');
-        $novo = $action->execute($licenciamento);
-
-        return redirect()->route('licenciamentos.show', $novo)->with('success', 'Licenciamento duplicado com sucesso!');
-    }
-
     public function exportCsv(ExportLicenciamentosToCsvAction $action)
     {
         $this->authorize('viewAny', Licenciamento::class);
@@ -154,22 +128,5 @@ class LicenciamentoController extends AuthenticatedController
         $this->authorize('viewAny', Licenciamento::class);
 
         return view('Licenciamento.index');
-    }
-
-    private function resolveAuthorizedLicenciamento(mixed $licenciamento, string $ability): Licenciamento
-    {
-        if (!$licenciamento instanceof Licenciamento) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
-            abort_if(!$empresaId, 404);
-
-            $licenciamento = Licenciamento::query()
-                ->whereKey($licenciamento)
-                ->where('empresa_id', $empresaId)
-                ->firstOrFail();
-        }
-
-        $this->authorize($ability, $licenciamento);
-
-        return $licenciamento->load(app(LicenciamentoFormSupport::class)->relations());
     }
 }

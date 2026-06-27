@@ -31,7 +31,8 @@ class LicenciamentoTenantIsolationTest extends TestCase
         $this->actingAs($user)
             ->get(route('licenciamentos.show', $licenciamento))
             ->assertOk()
-            ->assertSee('Nova Mercadoria');
+            ->assertSee('Ações Rápidas')
+            ->assertSee('Gerir Mercadorias');
 
         $this->actingAs($user)
             ->get(route('licenciamentos.edit', $licenciamento))

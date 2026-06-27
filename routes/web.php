@@ -180,8 +180,6 @@ use App\Models\Processo;
         // Rota o Rascunho do Licenciamento
         Route::post('licenciamento/rascunho', [LicenciamentoController::class, 'storeDraft'])->name('licenciamento.rascunho.store');
         Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
-        Route::post('licenciamentos/gerarProcesso/{idLicenciamento}', [LicenciamentoController::class, 'ConstituirProcesso'])->name('gerar.processo');
-        Route::post('licenciamentos/duplicar/{idLicenciamento}', [LicenciamentoController::class, 'DuplicarLicenciamento'])->name('licenciamentos.duplicar');
         Route::get('licenciamentos/listas/pice', [LicenciamentoController::class, 'pice'])->name('licenciamentos.pice');
 
 

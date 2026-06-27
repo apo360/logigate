@@ -65,7 +65,6 @@ class ConstituirProcessoAction
                 'TipoTransporte'      => $licenciamento->tipo_transporte,
                 'registo_transporte'  => $licenciamento->registo_transporte,
                 'nacionalidade_transporte' => $licenciamento->nacionalidade_transporte,
-                'DataChegada'         => $licenciamento->data_entrada,
                 'Moeda'               => $licenciamento->moeda,
                 'Cambio'              => 1.0,
                 'ValorTotal'          => $licenciamento->cif,

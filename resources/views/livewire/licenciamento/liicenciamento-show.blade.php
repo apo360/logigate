@@ -2,12 +2,136 @@
     @php
         $cliente = $licenciamento->cliente;
         $exportador = $licenciamento->exportador;
+        $hasDocumentosShow = \Illuminate\Support\Facades\Route::has('documentos.show');
+        $hasProcessosShow = \Illuminate\Support\Facades\Route::has('processos.show');
+        $hasCustomersEdit = \Illuminate\Support\Facades\Route::has('customers.edit');
+        $hasExportadorsEdit = \Illuminate\Support\Facades\Route::has('exportadors.edit');
+        $statusClasses = [
+            'success' => 'border-green-200 bg-green-50 text-green-800',
+            'warning' => 'border-yellow-200 bg-yellow-50 text-yellow-800',
+            'danger' => 'border-red-200 bg-red-50 text-red-800',
+            'info' => 'border-blue-200 bg-blue-50 text-blue-800',
+        ];
+        $statusDots = [
+            'success' => 'bg-green-500',
+            'warning' => 'bg-yellow-500',
+            'danger' => 'bg-red-500',
+            'info' => 'bg-blue-500',
+        ];
     @endphp
+
+    @if (session('success'))
+        <div class="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <!-- Grid principal: 2 colunas (conteúdo + sidebar) -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- COLUNA PRINCIPAL (3/4) -->
         <div class="lg:col-span-3 space-y-6">
+            <!-- Prontidão operacional -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-semibold text-gray-800">Prontidão do Licenciamento</h3>
+                        <p class="text-sm text-gray-500">Validação operacional para TXT e constituição de processo.</p>
+                    </div>
+                    <button
+                        type="button"
+                        wire:click="validarLicenciamento"
+                        wire:loading.attr="disabled"
+                        wire:target="validarLicenciamento"
+                        class="px-3 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                        Validar agora
+                    </button>
+                </div>
+
+                <div class="p-6 space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="md:col-span-1">
+                            <div class="text-sm text-gray-500">Prontidão geral</div>
+                            <div class="mt-1 text-3xl font-bold text-gray-900">{{ $scoreProntidao }}%</div>
+                            <div class="mt-3 h-2 rounded-full bg-gray-200 overflow-hidden">
+                                <div class="h-full rounded-full bg-blue-600" style="width: {{ max(0, min(100, $scoreProntidao)) }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border {{ $prontoParaTxt ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50' }} p-4">
+                            <div class="text-sm text-gray-600">Pronto para TXT</div>
+                            <div class="mt-1 font-semibold {{ $prontoParaTxt ? 'text-green-800' : 'text-yellow-800' }}">
+                                {{ $prontoParaTxt ? 'Sim' : 'Não' }}
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg border {{ $prontoParaProcesso ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50' }} p-4">
+                            <div class="text-sm text-gray-600">Pronto para Processo</div>
+                            <div class="mt-1 font-semibold {{ $prontoParaProcesso ? 'text-green-800' : 'text-yellow-800' }}">
+                                {{ $prontoParaProcesso ? 'Sim' : 'Não' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Checklist operacional</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            @foreach($checklist as $item)
+                                <div class="rounded-md border px-3 py-2 text-sm {{ $statusClasses[$item['severity']] ?? $statusClasses['info'] }}">
+                                    <div class="flex items-start gap-2">
+                                        <span class="mt-1 h-2 w-2 rounded-full {{ $statusDots[$item['severity']] ?? $statusDots['info'] }}"></span>
+                                        <div>
+                                            <div class="font-medium">{{ $item['label'] }}</div>
+                                            <div class="text-xs opacity-80">{{ $item['message'] }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas operacionais -->
+            @if(!empty($alertasOperacionais))
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-800">Alertas operacionais</h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        @foreach($alertasOperacionais as $alerta)
+                            <div class="rounded-md border px-4 py-3 text-sm {{ $statusClasses[$alerta['type']] ?? $statusClasses['info'] }}">
+                                <div class="font-semibold">{{ $alerta['title'] }}</div>
+                                <div class="mt-1 text-xs opacity-80">{{ $alerta['message'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <!-- Resumo financeiro e aduaneiro -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <h3 class="font-semibold text-gray-800">Resumo financeiro e aduaneiro</h3>
+                </div>
+                <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div><span class="text-sm text-gray-500">FOB</span><p class="font-semibold">{{ number_format($resumoFinanceiro['fob_total'] ?? 0, 2) }} {{ $resumoFinanceiro['moeda'] ?? $licenciamento->moeda }}</p></div>
+                    <div><span class="text-sm text-gray-500">Frete</span><p class="font-semibold">{{ number_format($resumoFinanceiro['frete'] ?? 0, 2) }} {{ $resumoFinanceiro['moeda'] ?? $licenciamento->moeda }}</p></div>
+                    <div><span class="text-sm text-gray-500">Seguro</span><p class="font-semibold">{{ number_format($resumoFinanceiro['seguro'] ?? 0, 2) }} {{ $resumoFinanceiro['moeda'] ?? $licenciamento->moeda }}</p></div>
+                    <div><span class="text-sm text-gray-500">CIF</span><p class="font-semibold text-blue-700">{{ number_format($resumoFinanceiro['cif'] ?? 0, 2) }} {{ $resumoFinanceiro['moeda'] ?? $licenciamento->moeda }}</p></div>
+                    <div><span class="text-sm text-gray-500">Peso bruto</span><p class="font-semibold">{{ number_format($resumoFinanceiro['peso_bruto'] ?? 0, 2) }} kg</p></div>
+                    <div><span class="text-sm text-gray-500">Mercadorias</span><p class="font-semibold">{{ $resumoFinanceiro['mercadorias_count'] ?? 0 }}</p></div>
+                    <div><span class="text-sm text-gray-500">Volumes</span><p class="font-semibold">{{ number_format($resumoFinanceiro['volumes_total'] ?? 0, 0) }}</p></div>
+                    <div><span class="text-sm text-gray-500">Códigos aduaneiros</span><p class="font-semibold">{{ $resumoFinanceiro['codigos_aduaneiros_distintos'] ?? 0 }}</p></div>
+                </div>
+            </div>
+
             <!-- Card com cabeçalho e ações -->
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex flex-wrap justify-between items-center">
@@ -16,14 +140,19 @@
                         <h2 class="text-2xl font-bold text-gray-800">{{ $licenciamento->codigo_licenciamento }}</h2>
                     </div>
                     <div class="flex space-x-2">
-                        <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
+                        @can('update', $licenciamento)
+                            <a href="{{ route('licenciamentos.edit', $licenciamento->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                        @endcan
                     </div>
                 </div>
 
                 <!-- Abas (Tailwind + Alpine.js) -->
-                <div x-data="{ tab: 'detalhes' }">
+                <div
+                    x-data="{ tab: @js($mostrarMercadorias ? 'mercadorias' : 'detalhes') }"
+                    x-on:licenciamento-show-tab.window="tab = $event.detail.tab"
+                >
                     <div class="border-b border-gray-200 px-6">
                         <nav class="flex space-x-6">
                             <button @click="tab = 'detalhes'" :class="{ 'border-blue-500 text-blue-600': tab === 'detalhes', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'detalhes' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
@@ -35,7 +164,7 @@
                             <button @click="tab = 'documentos'" :class="{ 'border-blue-500 text-blue-600': tab === 'documentos', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'documentos' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                                 📎 Documentos
                             </button>
-                            <button @click="tab = 'mercadorias'" :class="{ 'border-blue-500 text-blue-600': tab === 'mercadorias', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'mercadorias' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                            <button wire:click="abrirMercadorias" @click="tab = 'mercadorias'" :class="{ 'border-blue-500 text-blue-600': tab === 'mercadorias', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'mercadorias' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                                 📦 Mercadorias
                             </button>
                         </nav>
@@ -64,7 +193,7 @@
                                     <div>
                                         <span class="text-sm text-gray-500">Cliente</span>
                                         <p class="font-medium">{{ $cliente->CompanyName ?? 'Sem cliente associado' }}
-                                            @if($cliente)
+                                            @if($cliente && $hasCustomersEdit)
                                                 <a href="{{ route('customers.edit', $cliente) }}" class="text-blue-600 hover:underline ml-2">Editar</a>
                                             @endif
                                         </p>
@@ -97,7 +226,7 @@
                                     <div>
                                         <span class="text-sm text-gray-500">Exportador</span>
                                         <p class="font-medium">{{ $exportador->Exportador ?? 'Sem exportador associado' }}
-                                            @if($exportador)
+                                            @if($exportador && $hasExportadorsEdit)
                                                 <a href="{{ route('exportadors.edit', $exportador) }}" class="text-blue-600 hover:underline ml-2">Editar</a>
                                             @endif
                                         </p>
@@ -150,8 +279,15 @@
                                         <span class="text-sm text-gray-500">Status de Pagamento</span>
                                         <p class="font-medium">
                                             @if($licenciamento->procLicenFaturas->isNotEmpty())
-                                                {{ ucfirst($licenciamento->procLicenFaturas->last()->status_fatura) }}<br>
-                                                <a href="{{ route('documentos.show', $licenciamento->procLicenFaturas->last()->fatura_id) }}" class="text-blue-600 text-sm">{{ $licenciamento->Nr_factura }}</a>
+                                                @php($ultimaFatura = $licenciamento->procLicenFaturas->last())
+                                                {{ ucfirst($ultimaFatura->status_fatura ?? 'Não informada') }}<br>
+                                                @if($hasDocumentosShow && $ultimaFatura?->fatura_id)
+                                                    <a href="{{ route('documentos.show', $ultimaFatura->fatura_id) }}" class="text-blue-600 text-sm">
+                                                        {{ $licenciamento->Nr_factura ?: 'Ver documento' }}
+                                                    </a>
+                                                @else
+                                                    <span class="text-gray-500 text-sm">{{ $licenciamento->Nr_factura ?: 'Não informada' }}</span>
+                                                @endif
                                             @else
                                                 Sem Factura
                                             @endif
@@ -178,9 +314,15 @@
                                             <ul class="divide-y divide-gray-200">
                                                 @foreach($documentos as $doc)
                                                     <li class="px-4 py-2 hover:bg-gray-50">
-                                                        <a href="{{ route('documentos.show', $doc->id) }}" class="text-blue-600 hover:underline">
-                                                            <i class="fas fa-file-alt text-gray-500 mr-2"></i> {{ $doc->tipo_documento }} - {{ $doc->numero }}
-                                                        </a>
+                                                        @if($hasDocumentosShow)
+                                                            <a href="{{ route('documentos.show', $doc->id) }}" class="text-blue-600 hover:underline">
+                                                                <i class="fas fa-file-alt text-gray-500 mr-2"></i> {{ $doc->tipo_documento }} - {{ $doc->numero }}
+                                                            </a>
+                                                        @else
+                                                            <span>
+                                                                <i class="fas fa-file-alt text-gray-500 mr-2"></i> {{ $doc->tipo_documento }} - {{ $doc->numero }}
+                                                            </span>
+                                                        @endif
                                                         <span class="text-xs text-gray-400 ml-2">(Emitido: {{ $doc->created_at->format('d/m/Y') }})</span>
                                                     </li>
                                                 @endforeach
@@ -198,7 +340,13 @@
 
                         <!-- Aba: Mercadorias -->
                         <div x-show="tab === 'mercadorias'" x-cloak>
-                            <livewire:mercadorias.index context="licenciamento" :parent-id="$licenciamento->id" />
+                            @if($mostrarMercadorias)
+                                <livewire:mercadorias.index context="licenciamento" :parent-id="$licenciamento->id" />
+                            @else
+                                <div class="text-center py-10 text-gray-500">
+                                    <p>Use “Gerir Mercadorias” para carregar as mercadorias deste licenciamento.</p>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -213,14 +361,85 @@
                     <h3 class="font-semibold text-gray-700"><i class="fas fa-hand-point-right"></i> Ações Rápidas</h3>
                 </div>
                 <div class="p-4 space-y-2">
-                    <a href="{{ route('licenciamentos.edit', $licenciamento) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-edit text-blue-500 w-5"></i> <span>Editar Licenciamento</span>
-                    </a>
+                    @can('update', $licenciamento)
+                        <a href="{{ route('licenciamentos.edit', $licenciamento) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
+                            <i class="fas fa-edit text-blue-500 w-5"></i> <span>Editar Licenciamento</span>
+                        </a>
+                    @endcan
+
+                    <button
+                        type="button"
+                        wire:click="abrirMercadorias"
+                        wire:loading.attr="disabled"
+                        wire:target="abrirMercadorias"
+                        class="flex w-full items-center space-x-2 text-left text-sm text-gray-700 hover:text-emerald-700 p-2 rounded hover:bg-gray-50 disabled:opacity-60"
+                    >
+                        <i class="fas fa-boxes text-emerald-500 w-5"></i>
+                        <span>Gerir Mercadorias</span>
+                    </button>
+
+                    @can('update', $licenciamento)
+                        <button
+                            type="button"
+                            wire:click="gerarTxt"
+                            wire:loading.attr="disabled"
+                            wire:target="gerarTxt"
+                            @disabled(! $prontoParaTxt)
+                            class="flex w-full items-center space-x-2 text-left text-sm p-2 rounded disabled:opacity-60 {{ $prontoParaTxt ? 'text-gray-700 hover:text-indigo-700 hover:bg-gray-50' : 'text-gray-400 cursor-not-allowed bg-gray-50' }}"
+                        >
+                            <i class="fas fa-file-code text-indigo-500 w-5"></i>
+                            <span wire:loading.remove wire:target="gerarTxt">Gerar TXT</span>
+                            <span wire:loading wire:target="gerarTxt">A gerar...</span>
+                        </button>
+                        @if(! $prontoParaTxt && ! empty($motivosBloqueioTxt))
+                            <div class="rounded-md bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs text-yellow-800">
+                                <div class="font-semibold mb-1">Não está pronto para Gerar TXT:</div>
+                                <ul class="list-disc pl-4 space-y-1">
+                                    @foreach($motivosBloqueioTxt as $motivo)
+                                        <li>{{ $motivo }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <button
+                            type="button"
+                            wire:click="constituirProcesso"
+                            wire:loading.attr="disabled"
+                            wire:target="constituirProcesso"
+                            @disabled(! $prontoParaProcesso)
+                            class="flex w-full items-center space-x-2 text-left text-sm p-2 rounded disabled:opacity-60 {{ $prontoParaProcesso ? 'text-gray-700 hover:text-amber-700 hover:bg-gray-50' : 'text-gray-400 cursor-not-allowed bg-gray-50' }}"
+                        >
+                            <i class="fas fa-folder-plus text-amber-500 w-5"></i>
+                            <span wire:loading.remove wire:target="constituirProcesso">Constituir Processo</span>
+                            <span wire:loading wire:target="constituirProcesso">A constituir...</span>
+                        </button>
+                        @if(! $prontoParaProcesso && ! empty($motivosBloqueioProcesso))
+                            <div class="rounded-md bg-yellow-50 border border-yellow-200 px-3 py-2 text-xs text-yellow-800">
+                                <div class="font-semibold mb-1">Não está pronto para Constituir Processo:</div>
+                                <ul class="list-disc pl-4 space-y-1">
+                                    @foreach($motivosBloqueioProcesso as $motivo)
+                                        <li>{{ $motivo }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    @endcan
+
+                    @can('create', \App\Models\Licenciamento::class)
+                        <button
+                            type="button"
+                            wire:click="duplicarLicenciamento"
+                            wire:loading.attr="disabled"
+                            wire:target="duplicarLicenciamento"
+                            class="flex w-full items-center space-x-2 text-left text-sm text-gray-700 hover:text-purple-700 p-2 rounded hover:bg-gray-50 disabled:opacity-60"
+                        >
+                            <i class="fas fa-copy text-purple-500 w-5"></i>
+                            <span wire:loading.remove wire:target="duplicarLicenciamento">Duplicar Licenciamento</span>
+                            <span wire:loading wire:target="duplicarLicenciamento">A duplicar...</span>
+                        </button>
+                    @endcan
                 </div>
-                <!-- 
-                 Btt.Gerar-Txt
-                 Btt.Constituir-Processo
-                 -->
             </div>
 
             <!-- Card: Documentos Relacionados (Faturas) -->
@@ -232,17 +451,61 @@
                     @if($licenciamento->procLicenFaturas->isNotEmpty())
                         @foreach($licenciamento->procLicenFaturas as $fatura)
                             <div class="border rounded p-2 text-sm">
-                                <div><strong>Fatura:</strong> <a href="{{ route('documentos.show', $fatura->fatura_id) }}" class="text-blue-600">{{ $licenciamento->Nr_factura }}</a></div>
-                                <div><strong>Status:</strong> {{ ucfirst($fatura->status_fatura) }}</div>
-                                <div><strong>Valor:</strong> {{ number_format($fatura->valor_total, 2) }} {{ $licenciamento->moeda }}</div>
+                                <div>
+                                    <strong>Fatura:</strong>
+                                    @if($hasDocumentosShow && $fatura->fatura_id)
+                                        <a href="{{ route('documentos.show', $fatura->fatura_id) }}" class="text-blue-600">
+                                            {{ $licenciamento->Nr_factura ?: 'Ver documento' }}
+                                        </a>
+                                    @else
+                                        <span>{{ $licenciamento->Nr_factura ?: 'Não informada' }}</span>
+                                    @endif
+                                </div>
+                                <div><strong>Status:</strong> {{ ucfirst($fatura->status_fatura ?? 'Não informada') }}</div>
+                                <div>
+                                    <strong>Valor:</strong>
+                                    @if($fatura->fatura)
+                                        {{ number_format((float) $fatura->fatura->gross_total, 2) }} {{ $licenciamento->moeda }}
+                                    @else
+                                        Não informada
+                                    @endif
+                                </div>
                                 @if($fatura->processo_id)
-                                    <div><strong>Processo:</strong> <a href="{{ route('processos.show', $fatura->processo_id) }}" class="text-blue-600">{{ $fatura->processo->NrProcesso ?? '—' }}</a></div>
+                                    <div>
+                                        <strong>Processo:</strong>
+                                        @if($hasProcessosShow && $fatura->processo)
+                                            <a href="{{ route('processos.show', $fatura->processo_id) }}" class="text-blue-600">
+                                                {{ $fatura->processo->NrProcesso ?? 'Ver processo' }}
+                                            </a>
+                                        @else
+                                            <span>{{ $fatura->processo->NrProcesso ?? 'Não informada' }}</span>
+                                        @endif
+                                    </div>
                                 @endif
                             </div>
                         @endforeach
                     @else
                         <p class="text-gray-500 text-sm">Sem faturas associadas.</p>
                     @endif
+                </div>
+            </div>
+
+            <!-- Card: Timeline operacional -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h3 class="font-semibold text-gray-700">Timeline</h3>
+                </div>
+                <div class="p-4 space-y-4">
+                    @forelse($timeline as $evento)
+                        <div class="relative pl-5 text-sm">
+                            <span class="absolute left-0 top-1.5 h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                            <div class="font-semibold text-gray-800">{{ $evento['title'] }}</div>
+                            <div class="text-xs text-gray-500">{{ $evento['date'] }}</div>
+                            <div class="mt-1 text-gray-600">{{ $evento['message'] }}</div>
+                        </div>
+                    @empty
+                        <p class="text-gray-500 text-sm">Sem eventos disponíveis.</p>
+                    @endforelse
                 </div>
             </div>
         </div>
