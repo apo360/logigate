@@ -4,8 +4,11 @@ namespace App\Livewire\Processo;
 
 use App\Application\Processo\Actions\CriarProcessoAction;
 use App\Application\Processo\DTOs\CriarProcessoDTO;
+use App\Application\Processo\Services\ProcessoTenantAccessService;
 use App\Application\Processo\Support\ProcessoFormSupport;
+use App\Domains\Licenciamento\Enums\TipoDeclaracao;
 use App\Models\Empresa;
+use App\Models\Processo;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -193,11 +196,12 @@ final class ProcessoCreate extends Component
         $this->dispatch('abrirModalExportador');
     }
 
-    public function mount(Request $request): void
+    public function mount(?int $customer_id = null): void
     {
-        $this->authorize('create', \App\Models\Processo::class);
+        $this->authorize('create', Processo::class);
 
-        $this->customerId = $this->customer_id ?: $request->query('customer_id');
+        $this->customerId = $customer_id;
+
         $empresa = $this->empresa();
         $options = app(ProcessoFormSupport::class)->options($empresa);
 
@@ -223,7 +227,11 @@ final class ProcessoCreate extends Component
         $this->seguro = 0;
         $this->cif = 0;
         $this->ValorAduaneiro = 0;
-        $this->showCrudExportFields = ($this->TipoProcesso === '21'); // 21 = Exportação
+        $this->showCrudExportFields = ($this->TipoProcesso === TipoDeclaracao::EXPORTACAO->value); // 21 = Exportação
+
+        $this->nacionalidade_transporte = $this->paises->firstWhere('pais', 'Angola')?->id
+            ?? $this->paises->first()?->id
+            ?? null;
     }
 
     public function updated($field, $value): void
@@ -263,9 +271,19 @@ final class ProcessoCreate extends Component
         return app(ProcessoFormSupport::class)->rules($this->empresa()->id);
     }
 
+    public function messages(): array
+    {
+        return app(ProcessoFormSupport::class)->messages();
+    }
+
+    public function validationAttributes(): array
+    {
+        return app(ProcessoFormSupport::class)->attributes();
+    }
+
     public function save(CriarProcessoAction $action)
     {
-        $this->authorize('create', \App\Models\Processo::class);
+        $this->authorize('create', Processo::class);
 
         $validated = $this->validate();
 
@@ -299,7 +317,13 @@ final class ProcessoCreate extends Component
 
     private function empresa(): Empresa
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $user = Auth::user();
+        abort_if(! $user, 403, 'Usuário autenticado não encontrado.');
+
+        $empresaId = app(ProcessoTenantAccessService::class)->empresaIdFor($user);
+        abort_if(! $empresaId, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        $empresa = $user->empresas()->where('empresas.id', $empresaId)->first();
         abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return $empresa;

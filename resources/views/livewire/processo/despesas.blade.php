@@ -4,7 +4,8 @@
         <div>
             <h2 class="text-xl font-bold text-gray-900">Despesas do Processo</h2>
             <p class="text-sm text-gray-600">
-                Processo: {{ $processo->numero }} • Valor Aduaneiro: 
+                
+                • Valor Aduaneiro: 
                 <span class="font-semibold">
                     {{ number_format($processo->ValorAduaneiro ?? 0, 2, ',', '.') }} 
                 </span>
@@ -68,68 +69,83 @@
     </div>
 
     {{-- Formulário de Despesas --}}
-    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden">
-        <div class="px-6 py-4 border-b bg-gray-50">
-            <h3 class="text-lg font-semibold text-gray-800">Detalhamento das Despesas</h3>
-        </div>
-        
-        <div class="p-6">
-            @php
-                $groupedSchema = collect($schemaDespesas)->groupBy('category');
-                $categoryLabels = [
-                    'portuarias' => 'Taxas Portuárias',
-                    'transporte' => 'Transporte e Logística',
-                    'aduaneiras' => 'Taxas Aduaneiras',
-                    'inspecoes' => 'Inspeções e Certificações',
-                    'servicos' => 'Serviços Profissionais',
-                    'impostos' => 'Impostos e Taxas',
-                ];
-            @endphp
-            
-            @foreach($groupedSchema as $category => $fields)
-            <div class="mb-8 last:mb-0">
-                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b">
-                    {{ $categoryLabels[$category] ?? ucfirst($category) }}
-                </h4>
-                
-                <div class="grid grid-cols-12 gap-4">
-                    @foreach($fields as $field => $config)
-                    <div class="{{ $config['col'] ?? 'col-span-12 md:col-span-6' }}">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ $config['label'] }}
-                            @if(!($config['readonly'] ?? false))
-                                <span class="text-red-500">*</span>
-                            @endif
-                        </label>
-                        
-                        <div class="relative">
-                            <input
-                                type="text"
-                                wire:model.lazy="form.{{ $field }}"
-                                @if($config['readonly'] ?? false) readonly @endif
-                                class="w-full px-3 py-2 border {{ $config['readonly'] ?? false ? 'bg-gray-50 text-gray-500' : 'border-gray-300' }} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                placeholder="{{ $config['placeholder'] ?? '0,00' }}"
-                                @if(!($config['readonly'] ?? false))
-                                    x-mask:dynamic="$money($input, '.', ',', 2)"
-                                @endif
-                            >
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500">$</span>
-                            </div>
-                        </div>
-                        
-                        @error("form.{$field}")
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    @endforeach
-                </div>
+    <div class="space-y-6">
+        <section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">Taxas Portuárias</h3>
             </div>
-            @endforeach
-        </div>
-        
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'porto', 'label' => 'Taxa de Porto'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'terminal', 'label' => 'Taxa de Terminal'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'carga_descarga', 'label' => 'Carga e Descarga'])
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">Transporte e Logística</h3>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'frete', 'label' => 'Frete Internacional'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'navegacao', 'label' => 'Taxa de Navegação'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'deslocacao', 'label' => 'Deslocação'])
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">Taxas Aduaneiras</h3>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'direitos', 'label' => 'Direitos Aduaneiros'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'iec', 'label' => 'IEC'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'selos', 'label' => 'Selos'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'emolumentos', 'label' => 'Emolumentos'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'juros_mora', 'label' => 'Juros de Mora'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'multas', 'label' => 'Multas'])
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">Inspeções e Certificações</h3>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'lmc', 'label' => 'LMC'])
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">Serviços Profissionais</h3>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'honorario', 'label' => 'Honorário do Despachante'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'inerentes', 'label' => 'Despesas Inerentes'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'caucao', 'label' => 'Caução'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'orgaos_ofiais', 'label' => 'Órgãos Oficiais'])
+            </div>
+        </section>
+
+        <section class="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            <div class="px-6 py-4 border-b bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-800">Impostos e Taxas</h3>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'iva_aduaneiro', 'label' => 'IVA Aduaneiro'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'impostoEstatistico', 'label' => 'Imposto Estatístico'])
+                @include('livewire.processo.partials.despesa-money-input', ['field' => 'honorario_iva', 'label' => 'IVA sobre Honorário'])
+            </div>
+        </section>
+
         {{-- Rodapé do Formulário --}}
-        <div class="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
+        <div class="px-6 py-4 border bg-gray-50 rounded-xl flex justify-between items-center">
             <div>
                 <p class="text-sm text-gray-600">Última atualização:</p>
                 <p class="text-sm font-medium text-gray-900">
@@ -186,7 +202,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('livewire:initialized', () => {
-        const ctx = document.getElementById('despesasChart').getContext('2d');
+        const canvas = document.getElementById('despesasChart');
+
+        if (!canvas) {
+            return;
+        }
+
+        const ctx = canvas.getContext('2d');
         let chart = null;
         
         Livewire.on('despesas-atualizadas', () => {

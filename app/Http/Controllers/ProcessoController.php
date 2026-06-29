@@ -4,42 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Application\Processo\Actions\ExcluirProcessoAction;
 use App\Application\Processo\Actions\FinalizarProcessoAction;
-use App\Application\Processo\Actions\AtualizarProcessoAction;
-use App\Application\Processo\Actions\CriarProcessoAction;
-use App\Application\Processo\DTOs\AtualizarProcessoDTO;
-use App\Application\Processo\DTOs\CriarProcessoDTO;
 use App\Application\Processo\Queries\ListarProcessosFinalizaveisQuery;
 use App\Domains\Banco\Services\BancoListService;
-use App\Helpers\DatabaseErrorHandler;
-use App\Helpers\PdfHelper;
-use App\Http\Requests\ProcessoRequest;
 use App\Models\ContaCorrente;
 use App\Models\Estancia;
 use App\Models\Mercadoria;
 use App\Models\Pais;
-use App\Models\PautaAduaneira;
 use App\Models\Porto;
 use App\Models\Processo;
 use App\Models\MercadoriaAgrupada;
-use App\Models\ProcessosDraft;
-use App\Models\views\ProcessosView;
 use App\Models\RegiaoAduaneira;
 use App\Models\TipoTransporte;
-use App\Models\CondicaoPagamento;
 use App\Models\EmolumentoTarifa;
 use App\Models\MercadoriaLocalizacao;
 
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use PHPJasper\PHPJasper;
 use SimpleXMLElement;
 
@@ -137,23 +123,12 @@ class ProcessoController extends AuthenticatedController
      */
     public function create(Request $request)
     {
+        $this->authorize('create', Processo::class);
+
         // Retornar uma view com o formulário para criar um novo processo
         return view('processos.create', [
             'customer_id' => $request->query('customer_id')
         ]);
-    }
-
-    public function store(ProcessoRequest $request, CriarProcessoAction $action)
-    {
-        $this->authorize('create', Processo::class);
-
-        $data = $request->validated();
-        $data['user_id'] = Auth::id();
-        $data['empresa_id'] = $this->empresa->id;
-
-        $processo = $action->execute(CriarProcessoDTO::fromArray($data));
-
-        return redirect()->route('processos.edit', $processo)->with('success', 'Processo criado com sucesso!');
     }
 
     /**
@@ -207,15 +182,6 @@ class ProcessoController extends AuthenticatedController
             'ibans',
             'tipoTransp',
             'emolumentoTarifa', 'clientes', 'localizacoes'));
-    }
-
-    public function update(ProcessoRequest $request, Processo $processo, AtualizarProcessoAction $action)
-    {
-        $this->authorize('update', $processo);
-
-        $updated = $action->execute(AtualizarProcessoDTO::fromArray(['id' => $processo->id] + $request->validated()));
-
-        return redirect()->route('processos.edit', $updated)->with('success', 'Processo atualizado com sucesso!');
     }
 
     /**

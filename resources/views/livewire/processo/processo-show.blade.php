@@ -35,6 +35,9 @@
                         <button @click="tab = 'documentos'" :class="{ 'border-blue-500 text-blue-600': tab === 'documentos', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'documentos' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                             📎 Documentos
                         </button>
+                        <button @click="tab = 'resumo'" :class="{ 'border-blue-500 text-blue-600': tab === 'resumo', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'resumo' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                            📎 Resumo
+                        </button>
                     </nav>
                 </div>
 
@@ -285,8 +288,8 @@
                                                                             <td class="px-2">{{ $mercadoria->Peso }}</td>
                                                                             <td class="px-2">{{ number_format($mercadoria->preco_total, 2, ',', '.') }}</td>
                                                                             <td class="px-2">
-                                                                                <a href="#" class="text-blue-600 mr-2"><i class="fas fa-edit"></i></a>
-                                                                                <a href="#" class="text-red-600"><i class="fas fa-trash"></i></a>
+                                                                                <span class="text-gray-400 mr-2 cursor-not-allowed" title="Edição de mercadoria em fase futura"><i class="fas fa-edit"></i></span>
+                                                                                <span class="text-gray-400 cursor-not-allowed" title="Eliminação de mercadoria em fase futura"><i class="fas fa-trash"></i></span>
                                                                             </td>
                                                                         </tr>
                                                                     @endforeach
@@ -305,7 +308,7 @@
                         </div>
                     </div>
 
-                    {{-- ABA DOCUMENTOS --}}
+                    {{-- ABA SIMULAÇÃO --}}
                     <div x-show="tab === 'simulacao'" x-cloak>
                         <livewire:pauta-aduaneira.simulador-processo :processo-id="$processo->id" />
                     </div>
@@ -314,6 +317,12 @@
                     <div x-show="tab === 'documentos'" x-cloak>
                         <livewire:arquivo.documentos-manager contexto="processo" :entidade-id="$processo->id" />
                     </div>
+
+                    {{-- ABA RESUMO --}}
+                    <div x-show="tab === 'resumo'" x-cloak>
+                        <livewire:processo.resumo-asys :processo="$processo" />
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -329,28 +338,29 @@
                     <a href="{{ route('processos.edit', ['processo' => $processo->id, 'tab' => 'mercadoria']) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
                         <i class="fas fa-plus-circle text-green-500 w-5"></i> Adicionar Mercadoria
                     </a>
-                    <a href="{{ route('processos.print', $processo->id) }}" target="_blank" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-print text-blue-500 w-5"></i> Notas de Despesas
-                    </a>
-                    <button class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50 w-full text-left" data-bs-toggle="modal" data-bs-target="#cartaDiversaModal">
-                        <i class="fas fa-print text-yellow-500 w-5"></i> Carta Diversa
-                    </button>
-                    <a href="{{ route('processos.Extrato_mercadoria', $processo->id) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-download text-purple-500 w-5"></i> Extrato Mercadorias
-                    </a>
-                    <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-invoice text-red-500 w-5"></i> Emitir Factura
-                    </a>
-                    <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-download text-orange-500 w-5"></i> DU (XML)
-                    </a>
-                    <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
-                        <i class="fas fa-file-download text-gray-500 w-5"></i> Licenciamento (TXT)
-                    </a>
+                    @can('exportXml', $processo)
+                        <button type="button" wire:click="gerarTxt" wire:loading.attr="disabled" wire:target="gerarTxt" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50 w-full text-left disabled:opacity-50">
+                            <i class="fas fa-file-download text-orange-500 w-5"></i>
+                            <span wire:loading.remove wire:target="gerarTxt">Gerar TXT</span>
+                            <span wire:loading wire:target="gerarTxt">A gerar TXT...</span>
+                        </button>
+                    @endcan
+                    @can('print', $processo)
+                        <button type="button" wire:click="emitirNotaDespesa" wire:loading.attr="disabled" wire:target="emitirNotaDespesa" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50 w-full text-left disabled:opacity-50">
+                            <i class="fas fa-print text-blue-500 w-5"></i>
+                            <span wire:loading.remove wire:target="emitirNotaDespesa">Emitir Nota de Despesa</span>
+                            <span wire:loading wire:target="emitirNotaDespesa">A emitir...</span>
+                        </button>
+                        <button type="button" wire:click="gerarExtratoMercadoria" wire:loading.attr="disabled" wire:target="gerarExtratoMercadoria" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50 w-full text-left disabled:opacity-50">
+                            <i class="fas fa-file-download text-purple-500 w-5"></i>
+                            <span wire:loading.remove wire:target="gerarExtratoMercadoria">Gerar Extrato de Mercadoria</span>
+                            <span wire:loading wire:target="gerarExtratoMercadoria">A gerar...</span>
+                        </button>
+                    @endcan
                     <hr>
-                    <a href="#" class="flex items-center text-sm text-white bg-red-600 p-2 rounded hover:bg-red-700">
+                    <span class="flex items-center text-sm text-white bg-red-300 p-2 rounded cursor-not-allowed">
                         <i class="fas fa-file-pdf mr-2"></i> Suspender Processo
-                    </a>
+                    </span>
                 </div>
 
                 @if($processo->procLicenFaturas->isNotEmpty())

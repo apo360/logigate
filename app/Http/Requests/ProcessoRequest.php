@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Application\Processo\Services\ProcessoTenantAccessService;
 use App\Application\Processo\Support\ProcessoFormSupport;
 use App\Models\Processo;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Http\FormRequest;
 
 class ProcessoRequest extends FormRequest
@@ -14,112 +14,103 @@ class ProcessoRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        $processo = $this->route('processo');
+        $processo = $this->processoFromRoute();
 
         if ($processo instanceof Processo) {
-            return Gate::allows('update', $processo);
+            return $this->user()?->can('update', $processo) ?? false;
         }
 
-        return Gate::allows('create', Processo::class);
+        return $this->user()?->can('create', Processo::class) ?? false;
     }
 
     /**
      * Regras de validação para a solicitação.
      */
-    public function rules()
+    public function rules(): array
     {
-        $empresaId = (int) $this->user()?->empresas()->value('empresas.id');
-        $tenantRules = app(ProcessoFormSupport::class)->rules(
-            $empresaId,
-            $this->route('processo') instanceof Processo ? (int) $this->route('processo')->id : null
+        return app(ProcessoFormSupport::class)->rules(
+            empresaId: $this->empresaId(),
+            processoId: $this->processoId()
         );
-
-        // Regras gerais
-        $rules = [
-            'ContaDespacho' => 'nullable|string|max:150',
-            'RefCliente' => 'nullable|string|max:200',
-            'estancia_id' => 'required|exists:estancias,id',
-            'Descricao' => 'nullable|string|max:200',
-            'DataAbertura' => 'nullable|date|before_or_equal:today',
-            'DataFecho' => 'nullable|date|after:DataAbertura',
-            'Estado' => 'required|string',
-            'TipoProcesso' => 'required|exists:regiao_aduaneiras,id', // Deve existir na tabela `tipo_processos`
-            'NrDU' => 'nullable|string|max:100',
-            'N_Dar' => 'nullable|integer|min:0',
-            'MarcaFiscal' => 'nullable|string|max:50',
-            'BLC_Porte' => 'nullable|string|max:50',
-            'Pais_origem' => 'nullable|exists:paises,id',
-            'Pais_destino' => 'nullable|exists:paises,id',
-            'PortoOrigem' => 'nullable',
-            'DataChegada' => 'nullable|date',
-            'TipoTransporte' => 'nullable|exists:tipo_transportes,id',
-            'registo_transporte' => 'nullable|string|max:100',
-            'nacionalidade_transporte' => 'nullable|string|max:50',
-            'forma_pagamento' => 'required|string',
-            'codigo_banco' => 'required|string',
-            'Moeda' => 'nullable|string',
-            'Cambio' => 'nullable|numeric|min:0',
-            'ValorTotal' => 'nullable|numeric|min:0',
-            'ValorAduaneiro' => 'nullable|numeric|min:0',
-            'fob_total' => 'nullable|numeric|min:0',
-            'frete' => 'nullable|numeric|min:0|max:99999999.99',
-            'seguro' => 'nullable|numeric|min:0|max:99999999.99',
-            'cif' => 'nullable|numeric|min:0|max:99999999.99',
-            'peso_bruto' => 'nullable|numeric|min:0|max:99999999.99',
-            'quantidade_barris' => 'nullable|integer|min:0',
-            'data_carregamento' => 'nullable|date|after:DataAbertura',
-            'valor_barril_usd' => 'nullable|numeric|min:0',
-            'num_deslocacoes' => 'nullable|string|max:100',
-            'rsm_num' => 'nullable|string|max:100',
-            'certificado_origem' => 'nullable|string|max:100',
-            'guia_exportacao' => 'nullable|string|max:100',
-            // Vinheta, valor unico e nao pode ser repetido
-            'vinheta' => $tenantRules['vinheta'],
-            'observacoes' => 'nullable|string|max:1000',
-            'porto_desembarque_id' => ['nullable', 'exists:portos,id'],
-            'localizacao_mercadoria_id' => ['nullable', 'exists:mercadoria_localizacaos,id'],
-            'condicao_pagamento_id' => ['nullable', 'exists:condicao_pagamentos,id'],
-            'customer_id' => $tenantRules['customer_id'],
-            'exportador_id' => $tenantRules['exportador_id'],
-        ];
-
-        // Regras adicionais no caso de criação
-        if ($this->isMethod('post')) {
-            $rules['NrProcesso'] = 'nullable|string|max:100|unique:processos,NrProcesso';
-        }
-
-        return $rules;
     }
 
     /**
      * Mensagens de erro personalizadas para validação.
      */
-
-    public function messages()
+    public function messages(): array
     {
-        return [
-            'Estado.in' => 'O estado deve ser um dos seguintes valores: Aberto, Em processamento, Concluído ou Cancelado.',
-            'PortoOrigem.in' => 'O (Aero)Porto de Origem selecionado é inválido.',
-            'required' => 'O campo :attribute é obrigatório.',
-            'max' => 'O campo :attribute não pode ter mais de :max caracteres.',
-            'string' => 'O campo :attribute deve ser uma string.',
-            'date' => 'O campo :attribute deve ser uma data válida.',
-            'integer' => 'O campo :attribute deve ser um número inteiro.',
-            'unique' => 'O campo :attribute de ser Único.',
-            'exists' => 'O campo :attribute selecionado não é válido.',
-            'numeric' => 'O campo :attribute deve ser um número.',
-            'min' => 'O campo :attribute deve ser no mínimo :min.',
-        ];
+        return app(ProcessoFormSupport::class)->messages();
+    }
+
+    public function attributes(): array
+    {
+        return app(ProcessoFormSupport::class)->attributes();
     }
 
     /**
      * Filtra e sanitiza os dados antes da validação.
      */
-    protected function prepareForValidation()
+    protected function prepareForValidation(): void
     {
         $this->merge([
-            'Estado' => $this->Estado ?? 'Aberto', // Define um estado padrão caso não seja fornecido
-            'DataAbertura' => $this->DataAbertura ?? now()->format('Y-m-d'),
+            'Estado' => $this->Estado ?? 'Aberto',
+            'DataAbertura' => $this->DataAbertura ?? now()->toDateString(),
+            'Cambio' => $this->normalizeDecimal($this->input('Cambio')),
+            'ValorAduaneiro' => $this->normalizeDecimal($this->input('ValorAduaneiro')),
+            'fob_total' => $this->normalizeDecimal($this->input('fob_total')),
+            'frete' => $this->normalizeDecimal($this->input('frete')),
+            'seguro' => $this->normalizeDecimal($this->input('seguro')),
+            'cif' => $this->normalizeDecimal($this->input('cif')),
+            'peso_bruto' => $this->normalizeDecimal($this->input('peso_bruto')),
         ]);
+    }
+
+    private function empresaId(): int
+    {
+        $user = $this->user();
+        abort_if(! $user, 403, 'Utilizador autenticado não encontrado.');
+
+        $empresaId = app(ProcessoTenantAccessService::class)->empresaIdFor($user);
+
+        abort_if(! $empresaId, 403, 'Empresa activa não encontrada.');
+
+        return (int) $empresaId;
+    }
+
+    private function processoId(): ?int
+    {
+        return $this->processoFromRoute()?->id;
+    }
+
+    private function processoFromRoute(): ?Processo
+    {
+        $processo = $this->route('processo');
+
+        if ($processo instanceof Processo) {
+            return $processo;
+        }
+
+        if (is_numeric($processo)) {
+            return Processo::query()->find((int) $processo);
+        }
+
+        return null;
+    }
+
+    private function normalizeDecimal(mixed $value): mixed
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        $value = str_replace(' ', '', (string) $value);
+        $value = str_replace('.', '', $value);
+        $value = str_replace(',', '.', $value);
+
+        return is_numeric($value) ? $value : null;
     }
 }

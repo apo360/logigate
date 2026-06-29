@@ -3,12 +3,18 @@
 namespace App\Livewire\Tables;
 
 use App\Application\Processo\Actions\ExcluirProcessoAction;
+use App\Application\Processo\Services\ProcessoTenantAccessService;
+use App\Domains\Processo\Enums\EstadoProcessoEnum;
+use App\Models\Processo;
+use App\Models\User;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Models\Processo;
 
 class ProcessosTable extends Component
 {
+    use AuthorizesRequests;
     use WithPagination;
 
     protected $paginationTheme = 'tailwind';
@@ -25,10 +31,6 @@ class ProcessosTable extends Component
     public $notifications = [];
     public $showNotifications = true;
 
-    protected $listeners = [
-        'deleteProcessoConfirmed' => 'deleteProcesso',
-    ];
-
     protected $queryString = [
         'search'        => ['except' => ''],
         'searchDate'    => ['except' => null],
@@ -41,6 +43,7 @@ class ProcessosTable extends Component
 
     public function mount()
     {
+        $this->authorize('viewAny', Processo::class);
         $this->loadNotifications();
     }
 
@@ -66,9 +69,11 @@ class ProcessosTable extends Component
 
     public function loadNotifications(): void
     {
-        // Ajusta a tua lógica real de "não finalizados"
-        $this->notifications = Processo::query()
-            ->where('Estado', '!=', \App\Domains\Processo\Enums\EstadoProcessoEnum::FINALIZADO->value)
+        $this->authorize('viewAny', Processo::class);
+
+        $this->notifications = app(ProcessoTenantAccessService::class)
+            ->scopeForUser(Processo::query(), $this->user())
+            ->where('Estado', '!=', EstadoProcessoEnum::FINALIZADO->value)
             ->orderByDesc('updated_at')
             ->limit(10)
             ->get();
@@ -79,15 +84,14 @@ class ProcessosTable extends Component
         $this->showNotifications = ! $this->showNotifications;
     }
 
-    public function confirmDelete(int $id): void
-    {
-        $this->dispatch('confirmDeleteProcesso', id: $id);
-    }
-
     public function deleteProcesso(int $id): void
     {
         try {
-            app(ExcluirProcessoAction::class)->execute($id);
+            $processo = app(ProcessoTenantAccessService::class)->findForUserOrFail($this->user(), $id);
+
+            $this->authorize('delete', $processo);
+
+            app(ExcluirProcessoAction::class)->execute((int) $processo->id);
             $this->resetPage();
             $this->loadNotifications();
             $this->dispatch('toast', type: 'success', message: 'Processo eliminado com sucesso.');
@@ -98,7 +102,12 @@ class ProcessosTable extends Component
 
     public function render()
     {
-        $query = Processo::with(['cliente', 'tipoDeclaracao', 'paisOrigem', 'procLicenFaturas']);
+        $this->authorize('viewAny', Processo::class);
+
+        $query = app(ProcessoTenantAccessService::class)->scopeForUser(
+            Processo::query()->with(['cliente', 'tipoDeclaracao', 'paisOrigem', 'procLicenFaturas']),
+            $this->user()
+        );
 
         if (!empty($this->search)) {
             $search = '%' . $this->search . '%';
@@ -119,16 +128,32 @@ class ProcessosTable extends Component
             $query->where('Estado', $this->status);
         }
 
-        if (in_array($this->sortField, ['NrProcesso', 'DataAbertura', 'Situacao'])) {
-            $query->orderBy($this->sortField, $this->sortDirection);
-        } else {
-            $query->orderBy('DataAbertura', 'desc');
-        }
+        $sortFields = [
+            'NrProcesso' => 'NrProcesso',
+            'TipoProcesso' => 'TipoProcesso',
+            'Estado' => 'Estado',
+            'ValorAduaneiro' => 'ValorAduaneiro',
+            'DataAbertura' => 'DataAbertura',
+        ];
+
+        $direction = in_array(strtolower((string) $this->sortDirection), ['asc', 'desc'], true)
+            ? strtolower((string) $this->sortDirection)
+            : 'desc';
+
+        $query->orderBy($sortFields[$this->sortField] ?? 'DataAbertura', $direction);
 
         $processos = $query->paginate($this->perPage);
 
         return view('livewire.tables.processos-table', [
             'processos' => $processos,
         ]);
+    }
+
+    private function user(): User
+    {
+        $user = Auth::user();
+        abort_if(! $user, 403, 'Usuário autenticado não encontrado.');
+
+        return $user;
     }
 }

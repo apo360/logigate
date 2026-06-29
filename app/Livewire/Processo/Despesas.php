@@ -10,9 +10,8 @@ class Despesas extends Component
 {
     public Processo $processo;
     public EmolumentoTarifa $tarifa;
-    public array $schemaDespesas = [];
     public array $form = [];
-    public array $totais = []; // ADICIONE ESTA LINHA
+    public array $totais = [];
     public float $totalGeral = 0;
 
     protected function rules(): array
@@ -34,6 +33,10 @@ class Despesas extends Component
             'form.iva_aduaneiro' => 'nullable|numeric|min:0',
             'form.impostoEstatistico' => 'nullable|numeric|min:0',
             'form.honorario_iva' => 'nullable|numeric|min:0',
+            'form.emolumentos' => 'nullable|numeric|min:0',
+            'form.juros_mora' => 'nullable|numeric|min:0',
+            'form.multas' => 'nullable|numeric|min:0',
+            'form.orgaos_ofiais' => 'nullable|numeric|min:0',
         ];
     }
 
@@ -45,211 +48,123 @@ class Despesas extends Component
             'processo_id' => $processo->id
         ]);
 
-        $this->buildSchemaDespesas();
         $this->loadFormData();
         $this->recalcular();
     }
 
-    protected function buildSchemaDespesas(): void
+    private function fields(): array
     {
-        $this->schemaDespesas = [
-            // Taxas Portuárias
-            'porto' => [
-                'type' => 'money', 
-                'label' => 'Taxa de Porto', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6 lg:col-span-4',
-                'category' => 'portuarias'
-            ],
-            'terminal' => [
-                'type' => 'money', 
-                'label' => 'Taxa de Terminal', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6 lg:col-span-4',
-                'category' => 'portuarias'
-            ],
-            'carga_descarga' => [
-                'type' => 'money', 
-                'label' => 'Carga e Descarga', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6 lg:col-span-4',
-                'category' => 'portuarias'
-            ],
-            
-            // Transporte
-            'frete' => [
-                'type' => 'money', 
-                'label' => 'Frete Internacional', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'transporte'
-            ],
-            'navegacao' => [
-                'type' => 'money', 
-                'label' => 'Taxa de Navegação', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'transporte'
-            ],
-            'deslocacao' => [
-                'type' => 'money', 
-                'label' => 'Deslocação', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'transporte'
-            ],
-            
-            // Taxas Aduaneiras
-            'direitos' => [
-                'type' => 'money', 
-                'label' => 'Direitos Aduaneiros', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6 lg:col-span-4',
-                'category' => 'aduaneiras'
-            ],
-            'iec' => [
-                'type' => 'money', 
-                'label' => 'IEC (Import Entry Charge)', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6 lg:col-span-4',
-                'category' => 'aduaneiras'
-            ],
-            'selos' => [
-                'type' => 'money', 
-                'label' => 'Selos', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6 lg:col-span-4',
-                'category' => 'aduaneiras'
-            ],
-            
-            // Inspeções e Certificações
-            'lmc' => [
-                'type' => 'money', 
-                'label' => 'LMC (Licença Marítima e Consular)', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'inspecoes'
-            ],
-            
-            // Serviços Profissionais
-            'honorario' => [
-                'type' => 'money', 
-                'label' => 'Honorário do Despachante', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'servicos'
-            ],
-            'inerentes' => [
-                'type' => 'money', 
-                'label' => 'Despesas Inerentes', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'servicos'
-            ],
-            'caucao' => [
-                'type' => 'money', 
-                'label' => 'Caução', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'servicos'
-            ],
-            
-            // Impostos Calculados (readonly)
-            'iva_aduaneiro' => [
-                'type' => 'money', 
-                'label' => 'IVA Aduaneiro (14%)', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'impostos',
-                'readonly' => true
-            ],
-            'impostoEstatistico' => [
-                'type' => 'money', 
-                'label' => 'Imposto Estatístico (10%)', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'impostos',
-                'readonly' => true
-            ],
-            'honorario_iva' => [
-                'type' => 'money', 
-                'label' => 'IVA sobre Honorário (14%)', 
-                'placeholder' => '0,00', 
-                'col' => 'col-span-12 md:col-span-6',
-                'category' => 'impostos',
-                'readonly' => true
-            ],
+        return [
+            'porto',
+            'terminal',
+            'carga_descarga',
+            'frete',
+            'navegacao',
+            'deslocacao',
+            'direitos',
+            'iec',
+            'selos',
+            'lmc',
+            'honorario',
+            'inerentes',
+            'caucao',
+            'iva_aduaneiro',
+            'impostoEstatistico',
+            'honorario_iva',
+            'emolumentos',
+            'juros_mora',
+            'multas',
+            'orgaos_ofiais',
         ];
     }
 
     protected function loadFormData(): void
     {
-        // Inicializar o array de totais
         $this->totais = [
-            'portuarias' => 0,
-            'transporte' => 0,
-            'aduaneiras' => 0,
-            'inspecoes' => 0,
-            'servicos' => 0,
-            'impostos' => 0,
+            'portuarias' => 0.0,
+            'transporte' => 0.0,
+            'aduaneiras' => 0.0,
+            'inspecoes' => 0.0,
+            'servicos' => 0.0,
+            'impostos' => 0.0,
         ];
-        
-        $this->form = $this->tarifa->exists 
-            ? $this->tarifa->toArray()
-            : array_fill_keys(array_keys($this->schemaDespesas), 0);
+
+        $this->form = [];
+
+        foreach ($this->fields() as $field) {
+            $this->form[$field] = $this->tarifa->exists
+                ? (float) ($this->tarifa->{$field} ?? 0)
+                : 0.0;
+        }
+    }
+
+    private function normalizeMoney(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        $value = trim((string) $value);
+        $value = str_replace(' ', '', $value);
+        $value = str_replace('.', '', $value);
+        $value = str_replace(',', '.', $value);
+
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 
     public function updatedForm($value, $field): void
     {
-        // Garantir que o valor seja numérico
-        $this->form[$field] = is_numeric($value) ? floatval($value) : 0;
-        
-        // Recalcular valores derivados
-        $this->recalcular();
+        if (! in_array($field, $this->fields(), true)) {
+            return;
+        }
+
+        $this->form[$field] = $this->normalizeMoney($value);
+
+        $this->calculateTotals();
+    }
+
+    private function normalizeFormMoneyValues(): void
+    {
+        foreach ($this->fields() as $field) {
+            $this->form[$field] = $this->normalizeMoney($this->form[$field] ?? 0);
+        }
     }
 
     public function recalcular(): void
     {
-        $valorAduaneiro = floatval($this->processo->ValorAduaneiro ?? 0);
-        
-        // Calcular impostos automáticos
-        $this->form['iva_aduaneiro'] = $valorAduaneiro * 0.14;
-        $this->form['impostoEstatistico'] = $valorAduaneiro * 0.10;
-        $this->form['honorario_iva'] = (floatval($this->form['honorario'] ?? 0)) * 0.14;
-        
-        // Calcular totais por categoria
         $this->calculateTotals();
     }
 
     protected function calculateTotals(): void
     {
-        // Definir categorias e seus campos
         $categories = [
             'portuarias' => ['porto', 'terminal', 'carga_descarga'],
             'transporte' => ['frete', 'navegacao', 'deslocacao'],
-            'aduaneiras' => ['direitos', 'iec', 'selos'],
+            'aduaneiras' => ['direitos', 'iec', 'selos', 'emolumentos', 'juros_mora', 'multas'],
             'inspecoes' => ['lmc'],
-            'servicos' => ['honorario', 'inerentes', 'caucao'],
+            'servicos' => ['honorario', 'inerentes', 'caucao', 'orgaos_ofiais'],
             'impostos' => ['iva_aduaneiro', 'impostoEstatistico', 'honorario_iva'],
         ];
         
-        // Calcular totais por categoria
         foreach ($categories as $category => $fields) {
-            $this->totais[$category] = 0;
+            $this->totais[$category] = 0.0;
+
             foreach ($fields as $field) {
-                $this->totais[$category] += floatval($this->form[$field] ?? 0);
+                if (in_array($field, $this->fields(), true)) {
+                    $this->totais[$category] += (float) ($this->form[$field] ?? 0);
+                }
             }
         }
         
-        // Calcular total geral
-        $this->totalGeral = 0;
-        foreach ($this->form as $value) {
-            if (is_numeric($value)) {
-                $this->totalGeral += floatval($value);
-            }
+        $this->totalGeral = 0.0;
+
+        foreach ($this->fields() as $field) {
+            $this->totalGeral += (float) ($this->form[$field] ?? 0);
         }
-        
-        $this->form['TOTALGERAL'] = $this->totalGeral;
     }
 
     public function getTotaisPorCategoriaProperty(): array
@@ -294,12 +209,14 @@ class Despesas extends Component
 
     public function save(): void
     {
+        $this->normalizeFormMoneyValues();
+        $this->calculateTotals();
         $this->validate();
         
         try {
-            // Remover TOTALGERAL antes de salvar
-            $dataToSave = $this->form;
-            unset($dataToSave['TOTALGERAL']);
+            $dataToSave = collect($this->form)
+                ->only($this->fields())
+                ->toArray();
             
             $this->tarifa->fill($dataToSave);
             $this->tarifa->processo_id = $this->processo->id;
@@ -312,18 +229,23 @@ class Despesas extends Component
                 message: 'Despesas atualizadas com sucesso!'
             );
             
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            report($e);
+
             $this->dispatch('toast',
                 type: 'error',
-                message: 'Erro ao salvar despesas: ' . $e->getMessage()
+                message: 'Erro ao salvar despesas.'
             );
         }
     }
 
     public function resetToDefaults(): void
     {
-        $this->form = array_fill_keys(array_keys($this->schemaDespesas), 0);
-        $this->recalcular();
+        foreach ($this->fields() as $field) {
+            $this->form[$field] = 0.0;
+        }
+
+        $this->calculateTotals();
         
         $this->dispatch('toast',
             type: 'info',

@@ -7,7 +7,7 @@
         ['name' => 'Editar Processo']
     ]"/>
 
-    <div class="py-6 max-w-7xl mx-auto" x-data="{ tab: @js(request('tab', 'info')) }">
+    <div class="py-6 max-w-8xl mx-auto" x-data="{ tab: @js(request('tab', 'info')) }">
 
         {{-- CABEÇALHO DE AÇÕES --}}
         <div class="flex items-center justify-between mb-6">
@@ -35,9 +35,6 @@
                             @csrf
                             <button type="submit" class="dropdown-item text-left w-full">Requisição PDF</button>
                         </form>
-
-                        <a href="{{ route('gerar.txt', ['IdProcesso' => $processo->id]) }}"
-                           target="_blank" class="dropdown-item">Licenciamento TXT</a>
                     </div>
                 </div>
             </div>
@@ -49,9 +46,7 @@
             <button @click="tab='info'"       :class="tab==='info' ? 'tab-active' : 'tab'">Página Info</button>
             <button @click="tab='mercadoria'" :class="tab==='mercadoria' ? 'tab-active' : 'tab'">Mercadorias</button>
             <button @click="tab='despesas'"   :class="tab==='despesas' ? 'tab-active' : 'tab'">Despesas & Imposições</button>
-            <button @click="tab='simulacao'"   :class="tab==='simulacao' ? 'tab-active' : 'tab'">Simulação Aduaneira</button>
             <button @click="tab='docs'"       :class="tab==='docs' ? 'tab-active' : 'tab'">Documentos</button>
-            <button @click="tab='resumo'"     :class="tab==='resumo' ? 'tab-active' : 'tab'">Resumo</button>
         </div>
 
         {{-- CONTEÚDO DAS TABS --}}
@@ -73,19 +68,9 @@
             <livewire:processo.despesas :processo="$processo" />
         </div>
 
-        {{-- TAB 4 — SIMULAÇÃO ADUANEIRA --}}
-        <div x-show="tab === 'simulacao'" x-cloak>
-            <livewire:pauta-aduaneira.simulador-processo :processo-id="$processo->id" />
-        </div>
-
         {{-- TAB 5 — DOCUMENTOS --}}
         <div x-show="tab === 'docs'" x-cloak>
             <livewire:arquivo.documentos-manager contexto="processo" :entidade-id="$processo->id" />
-        </div>
-
-        {{-- TAB 6 — RESUMO --}}
-        <div x-show="tab === 'resumo'" x-cloak>
-            <livewire:processo.resumo-asys :processo="$processo" />
         </div>
 
     </div>

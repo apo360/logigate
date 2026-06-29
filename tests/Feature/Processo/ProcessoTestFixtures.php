@@ -153,7 +153,9 @@ trait ProcessoTestFixtures
             'ValorAduaneiro' => 115,
         ], $overrides);
 
-        return Processo::query()->create($this->onlyExistingColumns('processos', $attributes));
+        return Processo::withoutEvents(
+            fn () => Processo::query()->create($this->onlyExistingColumns('processos', $attributes))
+        );
     }
 
     private function onlyExistingColumns(string $table, array $attributes): array

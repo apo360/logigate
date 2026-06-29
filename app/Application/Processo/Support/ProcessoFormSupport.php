@@ -91,15 +91,15 @@ final class ProcessoFormSupport
             'Estado' => ['required', Rule::enum(EstadoProcessoEnum::class)],
             'RefCliente' => ['nullable', 'string', 'max:200'],
             'Descricao' => ['nullable', 'string', 'max:1000'],
-            'DataAbertura' => ['nullable', 'date'],
+            'DataAbertura' => ['nullable', 'date', 'before_or_equal:today'],
             'DataPartida' => ['nullable', 'date'],
             'DataChegada' => ['nullable', 'date'],
             'Moeda' => ['nullable', 'string', 'size:3'],
             'Cambio' => ['nullable', 'numeric', 'min:0'],
             'fob_total' => ['nullable', 'numeric', 'min:0'],
-            'frete' => ['nullable', 'numeric', 'min:0'],
-            'seguro' => ['nullable', 'numeric', 'min:0'],
-            'cif' => ['nullable', 'numeric', 'min:0'],
+            'frete' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'seguro' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
+            'cif' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'ValorAduaneiro' => ['nullable', 'numeric', 'min:0'],
             'TipoTransporte' => Schema::hasTable('tipo_transportes')
                 ? ['nullable', 'integer', 'exists:tipo_transportes,id']
@@ -119,20 +119,87 @@ final class ProcessoFormSupport
             'localizacao_mercadoria_id' => Schema::hasTable('mercadoria_localizacaos')
                 ? ['nullable', 'exists:mercadoria_localizacaos,id']
                 : ['nullable'],
-            'forma_pagamento' => ['nullable', 'string'],
-            'codigo_banco' => ['nullable', 'string', 'max:10'],
+            'forma_pagamento' => ['nullable', Rule::enum(FormaPagamentoEnum::class)],
+            'codigo_banco' => ['nullable', 'string', Rule::in(array_keys(BancoListService::getOptions()))],
             'condicao_pagamento_id' => Schema::hasTable('condicao_pagamentos')
                 ? ['nullable', 'exists:condicao_pagamentos,id']
                 : ['nullable'],
             'observacoes' => ['nullable', 'string', 'max:1000'],
-            'peso_bruto' => ['nullable', 'numeric', 'min:0'],
+            'peso_bruto' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
             'quantidade_barris' => ['nullable', 'integer', 'min:0'],
-            'data_carregamento' => ['nullable', 'date'],
+            'data_carregamento' => ['nullable', 'date', 'after_or_equal:DataAbertura'],
             'valor_barril_usd' => ['nullable', 'numeric', 'min:0'],
             'num_deslocacoes' => ['nullable', 'string', 'max:100'],
             'rsm_num' => ['nullable', 'string', 'max:100'],
             'certificado_origem' => ['nullable', 'string', 'max:100'],
             'guia_exportacao' => ['nullable', 'string', 'max:100'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required' => 'O campo :attribute é obrigatório.',
+            'string' => 'O campo :attribute deve ser texto.',
+            'integer' => 'O campo :attribute deve ser um número inteiro.',
+            'numeric' => 'O campo :attribute deve ser numérico.',
+            'date' => 'O campo :attribute deve ser uma data válida.',
+            'exists' => 'O campo :attribute selecionado não é válido.',
+            'unique' => 'O campo :attribute deve ser único.',
+            'max' => 'O campo :attribute não pode ser superior a :max.',
+            'min' => 'O campo :attribute deve ser no mínimo :min.',
+            'before_or_equal' => 'O campo :attribute não pode ser posterior a hoje.',
+            'after_or_equal' => 'O campo :attribute deve ser igual ou posterior à data de abertura.',
+            'enum' => 'O campo :attribute selecionado não é válido.',
+            'in' => 'O campo :attribute selecionado não é válido.',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'customer_id' => 'cliente',
+            'exportador_id' => 'exportador',
+            'estancia_id' => 'estância aduaneira',
+            'vinheta' => 'vinheta',
+            'TipoProcesso' => 'tipo de processo',
+            'Estado' => 'estado',
+            'RefCliente' => 'referência do cliente',
+            'Descricao' => 'descrição',
+            'DataAbertura' => 'data de abertura',
+            'DataPartida' => 'data de partida',
+            'DataChegada' => 'data de chegada',
+            'Moeda' => 'moeda',
+            'Cambio' => 'câmbio',
+            'fob_total' => 'FOB total',
+            'frete' => 'frete',
+            'seguro' => 'seguro',
+            'cif' => 'CIF',
+            'ValorAduaneiro' => 'valor aduaneiro',
+            'TipoTransporte' => 'tipo de transporte',
+            'registo_transporte' => 'registo do transporte',
+            'nacionalidade_transporte' => 'nacionalidade do transporte',
+            'NrDU' => 'número DU',
+            'NrDAR' => 'número DAR',
+            'NrMarcaFiscal' => 'marca fiscal',
+            'BLC_Porte' => 'B/L ou carta de porte',
+            'Pais_origem' => 'país de origem',
+            'Pais_destino' => 'país de destino',
+            'PortoOrigem' => 'porto de origem',
+            'porto_desembarque_id' => 'porto de desembarque',
+            'localizacao_mercadoria_id' => 'localização da mercadoria',
+            'forma_pagamento' => 'forma de pagamento',
+            'codigo_banco' => 'banco',
+            'condicao_pagamento_id' => 'condição de pagamento',
+            'observacoes' => 'observações',
+            'peso_bruto' => 'peso bruto',
+            'quantidade_barris' => 'quantidade de barris',
+            'data_carregamento' => 'data de carregamento',
+            'valor_barril_usd' => 'valor do barril em USD',
+            'num_deslocacoes' => 'número de deslocações',
+            'rsm_num' => 'número RSM',
+            'certificado_origem' => 'certificado de origem',
+            'guia_exportacao' => 'guia de exportação',
         ];
     }
 

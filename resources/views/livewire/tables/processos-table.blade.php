@@ -46,10 +46,8 @@
                     <a href="{{ route('licenciamentos.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">+ Licenciamento</a>
                 </div>
             </div>
-            <div class="mt-4 flex justify-end gap-2 border-t pt-3">
-                <button wire:click="exportCsv" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md">CSV</button>
-                <button wire:click="exportExcel" class="px-3 py-1 bg-blue-600 text-white text-sm rounded-md">Excel</button>
-                <button wire:click="exportPdf" class="px-3 py-1 bg-red-600 text-white text-sm rounded-md">PDF</button>
+            <div class="mt-4 flex justify-end border-t pt-3">
+                <span class="text-xs text-gray-400">Exportação em fase futura</span>
             </div>
         </div>
 
@@ -60,8 +58,8 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th wire:click="sortBy('NrProcesso')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Processo</th>
-                            <th wire:click="sortBy('Tipo')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Tipo</th>
-                            <th wire:click="sortBy('Situacao')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Estado</th>
+                            <th wire:click="sortBy('TipoProcesso')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Tipo</th>
+                            <th wire:click="sortBy('Estado')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Estado</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Origem</th>
                             <th wire:click="sortBy('ValorAduaneiro')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Valor Aduaneiro</th>
                             <th wire:click="sortBy('DataAbertura')" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer">Abertura</th>
@@ -85,16 +83,21 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $p->tipoDeclaracao->descricao ?? '—' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-1 text-xs rounded-full
-                                        {{ $p->Situacao == 'Finalizado' ? 'bg-green-100 text-green-700' : ($p->Situacao == 'Aberto' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700') }}">
-                                        {{ $p->Situacao }}
+                                        {{ $p->Estado == 'Finalizado' ? 'bg-green-100 text-green-700' : ($p->Estado == 'Aberto' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700') }}">
+                                        {{ $p->Estado }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $p->paisOrigem->pais ?? '—' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{{ number_format($p->ValorAduaneiro ?? 0, 2) }} Kz</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ \Carbon\Carbon::parse($p->DataAbertura)->format('d/m/Y') }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ $p->DataAbertura ? \Carbon\Carbon::parse($p->DataAbertura)->format('d/m/Y') : '—' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    @if($p->procLicenFaturas->isNotEmpty())
-                                        <a href="{{ route('documentos.show', $p->facturas->last()->id) }}" class="text-indigo-600 hover:underline">Emitida</a>
+                                    @php
+                                        $faturaId = $p->procLicenFaturas->last()?->fatura_id;
+                                    @endphp
+                                    @if($faturaId)
+                                        <a href="{{ route('documentos.show', $faturaId) }}" class="text-indigo-600 hover:underline">Emitida</a>
+                                    @elseif($p->procLicenFaturas->isNotEmpty())
+                                        <span class="text-indigo-600">Emitida</span>
                                     @else
                                         <span class="text-gray-400">Não emitida</span>
                                     @endif
@@ -109,7 +112,7 @@
                                                 <a href="{{ route('documentos.create', ['processo_id' => $p->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Facturar Processo</a>
                                                 <a href="{{ route('gerar.xml', ['IdProcesso' => $p->id]) }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gerar XML</a>
                                                 <hr class="my-1">
-                                                <button wire:click="confirmDelete({{ $p->id }})" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</button>
+                                                <button wire:confirm="Tem certeza que deseja eliminar este processo?" wire:click="deleteProcesso({{ $p->id }})" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</button>
                                             </div>
                                         </div>
                                     </div>

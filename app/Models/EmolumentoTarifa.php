@@ -45,15 +45,6 @@ class EmolumentoTarifa extends Model
         return $this->belongsTo(Processo::class, 'processo_id');
     }
 
-    /**
-     * Boot the model.
-     */
-    protected static function booted()
-    {
-        static::saving(fn($tarifa) => $tarifa->atualizarValores());
-        static::deleting(fn($tarifa) => $tarifa->verificarExclusao());
-    }
-
     public function atualizarValores()
     {
         $processo = $this->processo()->first();
@@ -73,10 +64,30 @@ class EmolumentoTarifa extends Model
         $this->guia_fiscal = $this->calcularGuiaFiscal();
     }
 
-    public function verificarExclusao()
+    // 
+    private function calcularGuiaFiscal(): float
     {
-        if ($this->honorario > 10000) {
-            throw new \Exception('Não é permitido excluir tarifas com honorários acima de 10.000.');
-        }
+        return array_sum([
+            (float) $this->direitos,
+            (float) $this->emolumentos,
+            (float) $this->porto,
+            (float) $this->terminal,
+            (float) $this->lmc,
+            (float) $this->navegacao,
+            (float) $this->inerentes,
+            (float) $this->frete,
+            (float) $this->carga_descarga,
+            (float) $this->deslocacao,
+            (float) $this->selos,
+            (float) $this->iva_aduaneiro,
+            (float) $this->iec,
+            (float) $this->impostoEstatistico,
+            (float) $this->juros_mora,
+            (float) $this->multas,
+            (float) $this->caucao,
+            (float) $this->honorario,
+            (float) $this->honorario_iva,
+            (float) $this->orgaos_ofiais,
+        ]);
     }
 }

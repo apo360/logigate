@@ -166,14 +166,6 @@ class Processo extends Model implements Auditable
     }
 
     /**
-     * Relacionamento com a Mercadorias.
-     */
-    public function procLicenMercadorias()
-    {
-        return $this->hasMany(ProcessoLicenciamentoMercadoria::class, 'processo_id');
-    }
-
-    /**
      * Relacionamento com as Tarifas e Emolumentos
      */
 

@@ -8,7 +8,6 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ActivatedModuleController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\Roles;
-use App\Http\Controllers\AgenteCarga\DashboardController as AgenteCargaDashboardController;
 use App\Http\Controllers\ArquivoController;
 use App\Http\Controllers\CedulaController;
 use App\Http\Controllers\BillingPlanController;
@@ -34,19 +33,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CustomerAvencaController;
-use App\Http\Controllers\GpsTrakerController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
 use App\Http\Controllers\PortoController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AsycudaController;
 use App\Http\Controllers\PagamentoController;
-use App\Http\Controllers\SAFtController;
 use App\Http\Controllers\ScheduledTaskController;
 use App\Http\Controllers\WebPage\WelcomeController;
 use App\Http\Controllers\AppyPayWebhookController;
-use App\Http\Controllers\ClientePortalController;
-use App\Models\Plano;
 use App\Models\Processo;
 
     /** Rotas WEB */
@@ -140,11 +135,6 @@ use App\Models\Processo;
             Route::get('/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
         });
 
-        Route::resource('customers', CustomerController::class)->except(['store', 'update']);
-        Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);
-        Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
-
-
         // =========================
         // Routes example (routes/api.php)
         // =========================
@@ -214,8 +204,6 @@ use App\Models\Processo;
         Route::post('processo/DU-Electronico/validar', [AsycudaController::class, 'validateFile'])->name('asycuda.validate.post');
         Route::get('processo/DU-Electronico/analisar/{file}', [AsycudaController::class, 'analisarDeclaracao'])->name('xmls.analisar');
 
-        Route::post('processo/buscar', [ProcessoController::class, 'buscarProcesso'])->name('processos.buscar');
-        Route::post('processo/atualizar-codigo-aduaneiro', [ProcessoController::class, 'atualizarCodigoAduaneiro'])->name('processos.atualizarCodigoAduaneiro');
         Route::get('processo/gerar-xml/{IdProcesso}', [ProcessoController::class, 'GerarXml'])->name('gerar.xml');
         Route::get('processos/{processo}/simulador-pauta', function (Processo $processo) {
             Gate::authorize('simulate', $processo);
@@ -271,9 +259,11 @@ use App\Models\Processo;
         Route::get('documentos/filtrar', [DocumentoController::class, 'filtrar'])->name('faturas.filtrar');
         // Documentos (Recibo)
         Route::get('documentos/recibos', [DocumentoController::class, ''])->name('documentos.emitir.recibo');
-        
-        // API
-        Route::get('/processos/{customerId}/{status}', [ProcessoController::class, 'getProcessesByIdAndStatus']);
-
         // ------------- /.Rotas para os despachantes ------------ //
+
+
+        Route::resource('customers', CustomerController::class)->except(['store', 'update']);
+        Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);
+        Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
+
     });

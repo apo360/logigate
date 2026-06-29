@@ -6,6 +6,7 @@ namespace App\Livewire\Processo;
 
 use App\Application\Processo\Actions\AtualizarProcessoAction;
 use App\Application\Processo\DTOs\AtualizarProcessoDTO;
+use App\Application\Processo\Services\ProcessoTenantAccessService;
 use App\Application\Processo\Support\ProcessoFormSupport;
 use App\Domains\Processo\Enums\EstadoProcessoEnum;
 use App\Models\Empresa;
@@ -138,6 +139,16 @@ final class ProcessoEdit extends Component
         return app(ProcessoFormSupport::class)->rules($this->empresa()->id, $this->processoId);
     }
 
+    public function messages(): array
+    {
+        return app(ProcessoFormSupport::class)->messages();
+    }
+
+    public function validationAttributes(): array
+    {
+        return app(ProcessoFormSupport::class)->attributes();
+    }
+
     public function render()
     {
         return view('livewire.processo.processo-edit');
@@ -236,7 +247,13 @@ final class ProcessoEdit extends Component
 
     private function empresa(): Empresa
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $user = Auth::user();
+        abort_if(! $user, 403, 'Usuário autenticado não encontrado.');
+
+        $empresaId = app(ProcessoTenantAccessService::class)->empresaIdFor($user);
+        abort_if(! $empresaId, 403, 'Nenhuma empresa associada ao usuário autenticado.');
+
+        $empresa = $user->empresas()->where('empresas.id', $empresaId)->first();
         abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return $empresa;
