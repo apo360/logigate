@@ -23,23 +23,30 @@ class DocumentoArquivo extends Model implements Auditable
         'licenciamento_id',
         'documentable_type',
         'documentable_id',
+        'folder_id',
         'contexto',
         'categoria',
         'visibilidade',
+        'status',
         'storage_disk',
         'bucket',
         'storage_key',
+        'stored_name',
         'nome_original',
         'mime_type',
         'extension',
         'size_bytes',
         'sha256_hash',
+        'metadata',
+        'is_confidential',
         'uploaded_by',
         'deleted_by',
         'retention_until',
     ];
 
     protected $casts = [
+        'metadata' => 'array',
+        'is_confidential' => 'boolean',
         'retention_until' => 'datetime',
         'deleted_at' => 'datetime',
     ];
@@ -47,6 +54,11 @@ class DocumentoArquivo extends Model implements Auditable
     public function empresa(): BelongsTo
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function pasta(): BelongsTo
+    {
+        return $this->belongsTo(ArquivoPasta::class, 'folder_id');
     }
 
     public function customer(): BelongsTo

@@ -6,6 +6,7 @@ use App\Application\Arquivo\Repositories\DocumentoRepositoryInterface;
 use App\Application\Arquivo\Services\FileAccessService;
 use App\Models\DocumentoArquivo;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 
 final readonly class DeleteDocumentoAction
 {
@@ -19,6 +20,7 @@ final readonly class DeleteDocumentoAction
     {
         $documento = $this->documentos->findOrFail($documentoId);
         $this->access->assertCanView($user, $documento);
+        Gate::forUser($user)->authorize('delete', $documento);
 
         $documento->deleted_by = $user->id;
         $documento->retention_until = now()->addDays(90);

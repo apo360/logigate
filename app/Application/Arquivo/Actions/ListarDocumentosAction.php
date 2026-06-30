@@ -16,10 +16,10 @@ final readonly class ListarDocumentosAction
     ) {
     }
 
-    public function execute(DocumentoContextoEnum $contexto, int $entidadeId, int $empresaId, User $user): Collection
+    public function execute(DocumentoContextoEnum $contexto, int $entidadeId, int $empresaId, User $user, array $filters = []): Collection
     {
         $this->access->assertUserCanAccessEmpresa($user, $empresaId);
 
-        return $this->documentos->listByContext($contexto, $entidadeId, $empresaId);
+        return $this->documentos->listByContext($contexto, $entidadeId, $empresaId, $filters);
     }
 }

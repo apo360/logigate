@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domains\Arquivo\Support\HasDocumentos;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use OwenIt\Auditing\Contracts\Auditable;
 
 class Processo extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, BelongsToTenant;
+    use HasFactory, SoftDeletes, BelongsToTenant, HasDocumentos;
     use \OwenIt\Auditing\Auditable;
 
     /**

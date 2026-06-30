@@ -32,7 +32,7 @@ final class AtualizarLogotipoEmpresaAction
         }
 
         $name = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $path = $this->pathBuilder->empresaLogotipo((int) $empresa->id, $name);
+        $path = $this->pathBuilder->empresaLogotipo($empresa, $name);
         $this->storage->put($path, $file);
         $url = Storage::disk($this->storage->disk())->url($path->value());
 
@@ -53,7 +53,7 @@ final class AtualizarLogotipoEmpresaAction
 
         $path = ltrim(parse_url($url, PHP_URL_PATH) ?: '', '/');
 
-        return str_contains($path, 'empresa/') || str_contains($path, 'despachantes/')
+        return str_contains($path, 'empresa/') || str_contains($path, 'despachantes/') || str_contains($path, 'logigate/empresas/')
             ? $path
             : null;
     }

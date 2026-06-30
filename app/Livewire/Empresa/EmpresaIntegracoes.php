@@ -7,6 +7,9 @@ use App\Application\Integracoes\Actions\ActualizarCredenciaisIntegracaoAction;
 use App\Application\Integracoes\Actions\DesactivarIntegracaoAction;
 use App\Application\Integracoes\Actions\TestarIntegracaoAction;
 use App\Application\Integracoes\DTOs\IntegracaoConfigDTO;
+use App\Application\Arquivo\Actions\CriarPastaEmpresaAction;
+use App\Application\Arquivo\DTOs\StorageStatusDTO;
+use App\Application\Arquivo\Services\ArquivoStorageService;
 use App\Domains\Integracoes\Enums\EstadoIntegracaoEnum;
 use App\Domains\Integracoes\Enums\ProvedorIntegracaoEnum;
 use App\Domains\Integracoes\Enums\TipoIntegracaoEnum;
@@ -29,6 +32,8 @@ class EmpresaIntegracoes extends Component
     public ?string $selectedTipo = null;
 
     public ?string $selectedProvedor = null;
+
+    public ?array $lastStorageCheck = null;
 
     public function mount(): void
     {
@@ -110,6 +115,43 @@ class EmpresaIntegracoes extends Component
         $this->dispatch('toast', type: $result->success ? 'success' : 'error', message: $result->message);
     }
 
+    public function verifyStorage(ArquivoStorageService $storage): void
+    {
+        $this->authorizeManageIntegrations();
+
+        $status = $storage->checkConnection($this->empresa);
+        $this->lastStorageCheck = [
+            'connected' => $status->connected,
+            'root_exists' => $status->rootExists,
+            'checked_at' => $status->checkedAt,
+            'message' => $status->message,
+        ];
+
+        $this->dispatch('toast', type: $status->connected ? 'success' : 'error', message: $status->message ?? 'Verificação concluída.');
+    }
+
+    public function repairStorageRoot(CriarPastaEmpresaAction $action, ArquivoStorageService $storage): void
+    {
+        $this->authorizeManageIntegrations();
+
+        if (! $storage->isConfigured()) {
+            $this->dispatch('toast', type: 'error', message: 'S3 não configurado. Defina credenciais, região e bucket antes de criar a pasta raiz.');
+            return;
+        }
+
+        $action->execute($this->empresa);
+
+        $status = $storage->checkConnection($this->empresa);
+        $this->lastStorageCheck = [
+            'connected' => $status->connected,
+            'root_exists' => $status->rootExists,
+            'checked_at' => $status->checkedAt,
+            'message' => $status->message,
+        ];
+
+        $this->dispatch('toast', type: $status->connected ? 'success' : 'error', message: $status->message ?? 'Pasta raiz verificada.');
+    }
+
     public function cards(): array
     {
         return [
@@ -132,6 +174,27 @@ class EmpresaIntegracoes extends Component
             ->where('empresa_id', $this->empresa->id)
             ->get()
             ->keyBy(fn (EmpresaIntegracao $integration) => $integration->tipo->value . ':' . $integration->provedor->value);
+    }
+
+    public function storageStatus(): StorageStatusDTO
+    {
+        $status = app(ArquivoStorageService::class)->configurationStatus($this->empresa);
+
+        if (! $this->lastStorageCheck) {
+            return $status;
+        }
+
+        return new StorageStatusDTO(
+            configured: $status->configured,
+            connected: (bool) $this->lastStorageCheck['connected'],
+            rootExists: (bool) $this->lastStorageCheck['root_exists'],
+            disk: $status->disk,
+            bucket: $status->bucket,
+            region: $status->region,
+            rootPath: $status->rootPath,
+            checkedAt: $this->lastStorageCheck['checked_at'],
+            message: $this->lastStorageCheck['message'],
+        );
     }
 
     private function rules(): array
@@ -222,6 +285,7 @@ class EmpresaIntegracoes extends Component
         return view('livewire.empresa.empresa-integracoes', [
             'cards' => $this->cards(),
             'integrations' => $this->integrations(),
+            'storageStatus' => $this->storageStatus(),
         ]);
     }
 }

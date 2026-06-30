@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domains\Arquivo\Support\HasDocumentos;
 use App\Models\Concerns\BelongsToTenant;
 use App\Traits\SharedFieldsTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
 
 class Customer extends Model
 {
-    use HasFactory, SoftDeletes, BelongsToTenant, SharedFieldsTrait;
+    use HasFactory, SoftDeletes, BelongsToTenant, SharedFieldsTrait, HasDocumentos;
 
     protected $table = 'customers';
 

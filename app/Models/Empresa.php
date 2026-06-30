@@ -100,6 +100,11 @@ class Empresa extends Model implements Auditable
         return $this->hasMany(EmpresaIntegracao::class, 'empresa_id', 'id');
     }
 
+    public function documentosArquivos(): HasMany
+    {
+        return $this->hasMany(DocumentoArquivo::class, 'empresa_id', 'id');
+    }
+
     public function provincia()
     {
         return $this->belongsTo(Provincia::class, 'Provincia', 'id');

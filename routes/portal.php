@@ -35,6 +35,7 @@ Route::prefix('portal-cliente')
             Route::post('/rastreamento', [ClientePortalLicenciamentoController::class, 'result'])->name('licenciamentos.result');
 
             Route::get('/documentos', [ClientePortalDocumentoController::class, 'index'])->name('documentos.index');
+            Route::post('/documentos', [ClientePortalDocumentoController::class, 'upload'])->name('documentos.upload');
             Route::get('/documentos/{documentoId}/download', [ClientePortalDocumentoController::class, 'download'])
                 ->whereNumber('documentoId')
                 ->name('documentos.download');

@@ -20,9 +20,9 @@ final class FileAccessService
     private const DEFAULT_MAX_SIZE = 10 * 1024 * 1024;
 
     private const ALLOWED_EXTENSIONS = [
-        'documentos' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
-        'mercadorias' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
-        'despesas' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
+        'documentos' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip', 'jpg', 'jpeg', 'png'],
+        'mercadorias' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip', 'jpg', 'jpeg', 'png'],
+        'despesas' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip', 'jpg', 'jpeg', 'png'],
         'comprovativos' => ['pdf', 'jpg', 'jpeg', 'png'],
         'relatorios' => ['pdf'],
         'xml' => ['xml'],
@@ -32,8 +32,10 @@ final class FileAccessService
         'comprovativos_pagamento' => ['pdf', 'jpg', 'jpeg', 'png'],
         'documentos_identificacao' => ['pdf', 'jpg', 'jpeg', 'png'],
         'contratos' => ['pdf', 'doc', 'docx'],
-        'outros' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png'],
+        'outros' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt', 'zip', 'jpg', 'jpeg', 'png'],
     ];
+
+    private const BLOCKED_EXTENSIONS = ['exe', 'bat', 'cmd', 'com', 'sh', 'bash', 'php', 'phtml', 'js', 'mjs', 'html', 'htm'];
 
     public function assertUserCanAccessEmpresa(User $user, int $empresaId): void
     {
@@ -53,6 +55,10 @@ final class FileAccessService
     {
         $extension = strtolower((string) $file->getClientOriginalExtension());
         $allowed = self::ALLOWED_EXTENSIONS[$categoria->value] ?? self::ALLOWED_EXTENSIONS['outros'];
+
+        if (in_array($extension, self::BLOCKED_EXTENSIONS, true)) {
+            throw new UploadDocumentoInvalidoException('Extensão de documento bloqueada por segurança.');
+        }
 
         if (! in_array($extension, $allowed, true)) {
             throw new UploadDocumentoInvalidoException('Extensão de documento não permitida para esta categoria.');

@@ -16,6 +16,12 @@ final readonly class UploadDocumentoDTO
         public int $entidadeId,
         public int $uploadedBy,
         public DocumentoVisibilidadeEnum $visibilidade = DocumentoVisibilidadeEnum::PRIVADO,
+        public ?string $observacao = null,
+        public bool $confidencial = false,
+        public bool $portalVisible = false,
+        public string $uploadedFrom = 'admin',
+        public ?int $empresaId = null,
+        public ?int $folderId = null,
     ) {
     }
 }

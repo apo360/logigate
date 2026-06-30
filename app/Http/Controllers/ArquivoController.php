@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Arquivo\Actions\UploadDocumentoAction;
+use App\Application\Arquivo\DTOs\UploadDocumentoDTO;
+use App\Domains\Arquivo\Enums\DocumentoCategoriaEnum;
+use App\Domains\Arquivo\Enums\DocumentoContextoEnum;
 use Aws\Exception\AwsException;
 use Aws\S3\Exception\S3Exception;
 use Illuminate\Http\Request;
@@ -40,19 +44,28 @@ class ArquivoController extends AuthenticatedController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, UploadDocumentoAction $uploadDocumento)
     {
         $request->validate([
-            'files' => 'required',
-            'pasta_raiz' => 'nullable|string'
+            'files' => ['required', 'array', 'min:1'],
+            'files.*' => ['file', 'max:10240'],
+            'categoria' => ['nullable', 'string'],
         ]);
 
         try {
-            $this->fileService->uploadFiles(
-                $this->resolveEmpresaId(),
-                $request->file('files'),
-                $request->input('pasta_raiz')
-            );
+            $empresaId = $this->resolveEmpresaId();
+            $categoria = DocumentoCategoriaEnum::tryFrom((string) $request->input('categoria', DocumentoCategoriaEnum::DOCUMENTOS->value))
+                ?? DocumentoCategoriaEnum::DOCUMENTOS;
+
+            foreach ($request->file('files', []) as $file) {
+                $uploadDocumento->execute(new UploadDocumentoDTO(
+                    file: $file,
+                    contexto: DocumentoContextoEnum::EMPRESA,
+                    categoria: $categoria,
+                    entidadeId: $empresaId,
+                    uploadedBy: (int) Auth::id(),
+                ));
+            }
         } catch (\Exception $e) {
             return response()->json(['error' => 'Erro ao fazer upload: ' . $e->getMessage()], 500);
         }

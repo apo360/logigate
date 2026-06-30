@@ -70,7 +70,7 @@
 
         {{-- TAB 5 — DOCUMENTOS --}}
         <div x-show="tab === 'docs'" x-cloak>
-            <livewire:arquivo.documentos-manager contexto="processo" :entidade-id="$processo->id" />
+            <livewire:arquivo.documentos-do-modulo contexto="processo" :entidade-id="$processo->id" />
         </div>
 
     </div>

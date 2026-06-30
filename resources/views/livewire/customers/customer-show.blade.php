@@ -294,11 +294,20 @@
                     </button>
 
                     <button
+                        @click="tab = 'documentos'"
+                        :class="tab === 'documentos'
+                            ? 'px-6 py-4 text-sm font-medium text-blue-600 border-b-2 border-blue-600'
+                            : 'px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent'"
+                        data-tab="4">
+                        📎 Documentos
+                    </button>
+
+                    <button
                         @click="tab = 'portal'"
                         :class="tab === 'portal' 
                             ? 'px-6 py-4 text-sm font-medium text-blue-600 border-b-2 border-blue-600'
                             : 'px-6 py-4 text-sm font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent'"
-                        data-tab="4">
+                        data-tab="5">
                         <i class="fas fa-user mr-2 text-blue-400"> </i> Cliente Portal
                     </button>
                 </nav>
@@ -489,7 +498,12 @@
                     </div>
                 </div>
 
-                <!-- Tab 5: Portal Cliente -->
+                <!-- Tab 5: Documentos -->
+                <div x-show="tab === 'documentos'" x-cloak>
+                    <livewire:arquivo.documentos-do-modulo contexto="customer" :entidade-id="$customer->id" :key="'customer-documentos-'.$customer->id" />
+                </div>
+
+                <!-- Tab 6: Portal Cliente -->
                 <div x-show="tab === 'portal'" x-cloak>
 
                 <div class="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">

@@ -5,7 +5,6 @@ namespace App\Livewire\Processo;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Processo;
-use App\Models\ProcessoDocumento;
 use Illuminate\Validation\ValidationException;
 
 class Documentos extends Component
@@ -24,42 +23,15 @@ class Documentos extends Component
         $this->validate();
 
         throw ValidationException::withMessages([
-            'files' => 'Upload de documentos do processo está temporariamente bloqueado até migração para S3 privado com autorização por documento.',
+            'files' => 'Use a aba Documentos integrada ao Arquivo central para anexar documentos privados ao processo.',
         ]);
-
-        foreach ($this->files as $file) {
-
-            $path = $file->store('processos/documentos', 'public');
-
-            ProcessoDocumento::create([
-                'processo_id'    => $this->processo->id,
-                'nome_original'  => $file->getClientOriginalName(),
-                'ficheiro'       => $path,
-                'tipo'           => $file->getClientOriginalExtension(),
-                'tamanho'        => $file->getSize(),
-            ]);
-        }
-
-        $this->reset('files');
-
-        $this->dispatch('toast',
-            type: 'success',
-            message: 'Documentos carregados com sucesso!'
-        );
     }
 
     public function remove($id)
     {
         throw ValidationException::withMessages([
-            'documento' => 'Remoção de documentos do processo está temporariamente bloqueada até migração para S3 privado com autorização por documento.',
+            'documento' => 'Use a aba Documentos integrada ao Arquivo central para remover anexos do processo.',
         ]);
-
-        ProcessoDocumento::findOrFail($id)->delete();
-
-        $this->dispatch('toast',
-            type: 'success',
-            message: 'Documento removido!'
-        );
     }
 
     public function render()

@@ -12,7 +12,9 @@ interface DocumentoRepositoryInterface
 
     public function findOrFail(int $id): DocumentoArquivo;
 
-    public function listByContext(DocumentoContextoEnum $contexto, int $entidadeId, int $empresaId): Collection;
+    public function listByContext(DocumentoContextoEnum $contexto, int $entidadeId, int $empresaId, array $filters = []): Collection;
+
+    public function listForEmpresa(int $empresaId, array $filters = []): Collection;
 
     public function save(DocumentoArquivo $documento): DocumentoArquivo;
 }

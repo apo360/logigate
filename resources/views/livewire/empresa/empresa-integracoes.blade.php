@@ -1,3 +1,9 @@
+@php
+    $storageStatus = $storageStatus ?? app(\App\Application\Arquivo\Services\ArquivoStorageService::class)
+        ->configurationStatus($empresa ?? \Illuminate\Support\Facades\Auth::user()?->empresaAtiva());
+    $lastStorageCheck = $lastStorageCheck ?? null;
+@endphp
+
 <div class="mx-auto max-w-7xl space-y-5">
     <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Empresa</p>
@@ -17,8 +23,11 @@
         @foreach($cards as $card)
             @php
                 $integration = $integrations->get($card['tipo'] . ':' . $card['provedor']);
-                $estado = $integration?->estado?->label() ?? 'Não configurada';
-                $isActive = $integration?->estado?->value === 'activo';
+                $isStorage = $card['tipo'] === 'storage';
+                $estado = $isStorage
+                    ? ($storageStatus->configured ? (($lastStorageCheck ?? null) && ! $storageStatus->connected ? 'S3 com falha' : 'S3 configurado') : 'S3 não configurado')
+                    : ($integration?->estado?->label() ?? 'Não configurada');
+                $isActive = $isStorage ? $storageStatus->configured && (! ($lastStorageCheck ?? null) || $storageStatus->connected) : ($integration?->estado?->value === 'activo');
                 $iconClass = str_starts_with($card['icon'], 'fa-brands') ? $card['icon'] : 'fa ' . $card['icon'];
             @endphp
 
@@ -40,34 +49,73 @@
                 </div>
 
                 <dl class="mt-5 space-y-2 text-sm">
-                    <div class="flex justify-between gap-4">
-                        <dt class="text-slate-500 dark:text-slate-400">Provider</dt>
-                        <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $integration?->provedor?->label() ?? 'Por configurar' }}</dd>
-                    </div>
-                    <div class="flex justify-between gap-4">
-                        <dt class="text-slate-500 dark:text-slate-400">Último teste</dt>
-                        <dd class="font-medium text-slate-800 dark:text-slate-200">
-                            {{ $integration?->ultimo_teste_em?->format('d/m/Y H:i') ?? 'Nunca' }}
-                        </dd>
-                    </div>
-                    @if($integration?->ultimo_teste_status)
+                    @if($isStorage)
                         <div class="flex justify-between gap-4">
-                            <dt class="text-slate-500 dark:text-slate-400">Estado do teste</dt>
-                            <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $integration->ultimo_teste_status }}</dd>
+                            <dt class="text-slate-500 dark:text-slate-400">Disk</dt>
+                            <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $storageStatus->disk }}</dd>
                         </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500 dark:text-slate-400">Bucket</dt>
+                            <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $storageStatus->bucket ?? 'Não definido' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500 dark:text-slate-400">Região</dt>
+                            <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $storageStatus->region ?? 'Não definida' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500 dark:text-slate-400">Pasta raiz</dt>
+                            <dd class="max-w-[13rem] truncate text-right font-medium text-slate-800 dark:text-slate-200" title="{{ $storageStatus->rootPath }}">{{ $storageStatus->rootPath ?? 'Indisponível' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500 dark:text-slate-400">Última verificação</dt>
+                            <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $lastStorageCheck['checked_at'] ?? $storageStatus->checkedAt ?? 'Nunca' }}</dd>
+                        </div>
+                    @else
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500 dark:text-slate-400">Provider</dt>
+                            <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $integration?->provedor?->label() ?? 'Por configurar' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-slate-500 dark:text-slate-400">Último teste</dt>
+                            <dd class="font-medium text-slate-800 dark:text-slate-200">
+                                {{ $integration?->ultimo_teste_em?->format('d/m/Y H:i') ?? 'Nunca' }}
+                            </dd>
+                        </div>
+                        @if($integration?->ultimo_teste_status)
+                            <div class="flex justify-between gap-4">
+                                <dt class="text-slate-500 dark:text-slate-400">Estado do teste</dt>
+                                <dd class="font-medium text-slate-800 dark:text-slate-200">{{ $integration->ultimo_teste_status }}</dd>
+                            </div>
+                        @endif
                     @endif
                 </dl>
 
-                @if($integration?->ultimo_erro)
+                @if($isStorage && ($lastStorageCheck['message'] ?? $storageStatus->message))
+                    <p class="mt-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-200">{{ $lastStorageCheck['message'] ?? $storageStatus->message }}</p>
+                @elseif($integration?->ultimo_erro)
                     <p class="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">{{ $integration->ultimo_erro }}</p>
                 @endif
 
                 <div class="mt-5 flex flex-wrap gap-2">
-                    <button type="button" wire:click="openConfigure('{{ $card['tipo'] }}', '{{ $card['provedor'] }}')" wire:loading.attr="disabled" wire:target="openConfigure" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
-                        Configurar
-                    </button>
+                    @if($isStorage)
+                        <button type="button" wire:click="verifyStorage" wire:loading.attr="disabled" wire:target="verifyStorage" class="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-70 dark:border-blue-900/70 dark:text-blue-300 dark:hover:bg-blue-950/40">
+                            <span wire:loading.remove wire:target="verifyStorage">Verificar ligação</span>
+                            <span wire:loading wire:target="verifyStorage">A verificar...</span>
+                        </button>
+                        <button type="button" wire:click="repairStorageRoot" wire:loading.attr="disabled" wire:target="repairStorageRoot" class="rounded-lg border border-green-300 px-3 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 disabled:opacity-70 dark:border-green-900/70 dark:text-green-300 dark:hover:bg-green-950/40">
+                            <span wire:loading.remove wire:target="repairStorageRoot">Criar/Reparar raiz</span>
+                            <span wire:loading wire:target="repairStorageRoot">A reparar...</span>
+                        </button>
+                        <a href="{{ route('arquivos.index') }}" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                            Abrir Arquivo
+                        </a>
+                    @else
+                        <button type="button" wire:click="openConfigure('{{ $card['tipo'] }}', '{{ $card['provedor'] }}')" wire:loading.attr="disabled" wire:target="openConfigure" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                            Configurar
+                        </button>
+                    @endif
 
-                    @if($integration)
+                    @if(!$isStorage && $integration)
                         <button type="button" wire:click="test({{ $integration->id }})" wire:loading.attr="disabled" wire:target="test" class="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-70 dark:border-blue-900/70 dark:text-blue-300 dark:hover:bg-blue-950/40">
                             <span wire:loading.remove wire:target="test">Testar</span>
                             <span wire:loading wire:target="test">A testar...</span>

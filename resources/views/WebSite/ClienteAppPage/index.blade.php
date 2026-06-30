@@ -17,6 +17,7 @@
 
     <ul>
         <li><a href="{{ route('cliente.portal.licenciamentos.rastreamento') }}">Consultar licenciamento</a></li>
+        <li><a href="{{ route('cliente.portal.documentos.index') }}">Documentos{{ isset($documentosCount) ? ' ('.$documentosCount.')' : '' }}</a></li>
     </ul>
 
     <form action="{{ route('cliente.portal.logout') }}" method="POST">

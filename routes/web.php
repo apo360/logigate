@@ -109,7 +109,6 @@ use App\Models\Processo;
 
         Route::resources([
             'activated-modules' => ActivatedModuleController::class,
-            'arquivos' => ArquivoController::class,
             'documentos' => DocumentoController::class,
             'empresas' => EmpresaController::class,
             'exportadors' => ExportadorController::class,
@@ -122,6 +121,9 @@ use App\Models\Processo;
             'modulos' => ModuleController::class,
             'avenca' => CustomerAvencaController::class,
         ]);
+
+        Route::view('/arquivos', 'arquivo.index')->name('arquivos.index');
+        Route::resource('arquivos', ArquivoController::class)->except(['index']);
 
         Route::get('/documentos-arquivo/{documentoArquivo}/preview', [DocumentoArquivoController::class, 'preview'])->name('documentos-arquivo.preview');
         Route::get('/documentos-arquivo/{documentoArquivo}/download', [DocumentoArquivoController::class, 'download'])->name('documentos-arquivo.download');

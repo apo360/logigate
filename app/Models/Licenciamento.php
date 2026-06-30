@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domains\Arquivo\Support\HasDocumentos;
 use App\Domains\Licenciamento\Services\EstadoLicenciamentoService;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Licenciamento extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, BelongsToTenant, HasDocumentos;
 
     //
     protected $table = "licenciamentos";

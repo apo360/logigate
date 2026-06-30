@@ -315,7 +315,7 @@
 
                     {{-- ABA DOCUMENTOS --}}
                     <div x-show="tab === 'documentos'" x-cloak>
-                        <livewire:arquivo.documentos-manager contexto="processo" :entidade-id="$processo->id" />
+                        <livewire:arquivo.documentos-do-modulo contexto="processo" :entidade-id="$processo->id" />
                     </div>
 
                     {{-- ABA RESUMO --}}
