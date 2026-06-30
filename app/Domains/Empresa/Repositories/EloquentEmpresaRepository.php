@@ -20,7 +20,7 @@ final class EloquentEmpresaRepository implements EmpresaRepositoryInterface
 
     public function currentForUser(User $user): ?Empresa
     {
-        return $user->empresas()->first();
+        return $user->empresaAtiva();
     }
 
     public function listForUser(User $user): Collection

@@ -13,6 +13,10 @@ class UsuarioEmpresaPolicy
             return false;
         }
 
+        if ($managedUser->hasRole('Super Admin') && ! $actor->hasRole('Super Admin')) {
+            return false;
+        }
+
         $actorInEmpresa = $actor->empresas()->where('empresas.id', $empresa->id)->exists();
         $managedInEmpresa = $managedUser->empresas()->where('empresas.id', $empresa->id)->exists();
 
@@ -20,13 +24,13 @@ class UsuarioEmpresaPolicy
             return false;
         }
 
-        return $actor->hasAnyRole(['Administrador', 'Admin', 'admin', 'Gestor'])
+        return $actor->hasAnyRole(['Administrador', 'Despachante', 'Financeiro'])
             || $actor->can('manage users');
     }
 
     public function manageGlobalPermissions(User $actor): bool
     {
-        return $actor->hasAnyRole(['Administrador', 'Admin', 'admin', 'Super Admin'])
+        return $actor->hasAnyRole(['Administrador', 'Despachante', 'Financeiro'])
             || $actor->can('manage permissions');
     }
 }

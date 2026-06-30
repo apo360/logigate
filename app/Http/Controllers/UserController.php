@@ -12,35 +12,29 @@ use App\Domains\Usuarios\Actions\ResetarSenhaUsuarioAction;
 use App\Domains\Usuarios\Actions\SincronizarPermissoesUsuarioAction;
 use App\Domains\Usuarios\Data\UsuarioEmpresaData;
 use App\Domains\Usuarios\Queries\ListarPermissoesQuery;
-use App\Domains\Usuarios\Queries\ListarRolesQuery;
-use App\Domains\Usuarios\Queries\ListarUsuariosEmpresaQuery;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class UserController extends AuthenticatedController
 {
-    public function index(
-        Request $request,
-        ObterEmpresaAtualQuery $empresaAtual,
-        ListarUsuariosEmpresaQuery $query
-    ) {
-        $empresa = $empresaAtual->execute(Auth::user());
-        abort_unless($empresa, 403);
-
-        $users = $query->execute($empresa, $request->query('search'));
-
-        return view('usuario.index', compact('empresa', 'users'));
-    }
-
-    public function create(ObterEmpresaAtualQuery $empresaAtual, ListarRolesQuery $rolesQuery)
+    public function index(ObterEmpresaAtualQuery $empresaAtual)
     {
         $empresa = $empresaAtual->execute(Auth::user());
         abort_unless($empresa, 403);
+        Gate::forUser(Auth::user())->authorize('manageUsers', $empresa);
 
-        $roles = $rolesQuery->execute();
+        return view('usuario.index', compact('empresa'));
+    }
 
-        return view('usuario.create', compact('empresa', 'roles'));
+    public function create(ObterEmpresaAtualQuery $empresaAtual)
+    {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+        Gate::forUser(Auth::user())->authorize('manageUsers', $empresa);
+
+        return view('usuario.create', compact('empresa'));
     }
 
     public function store(
@@ -50,6 +44,7 @@ class UserController extends AuthenticatedController
     ) {
         $empresa = $empresaAtual->execute(Auth::user());
         abort_unless($empresa, 403);
+        Gate::forUser(Auth::user())->authorize('manageUsers', $empresa);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -71,7 +66,7 @@ class UserController extends AuthenticatedController
         abort_unless($empresa, 403);
 
         $user = User::with('roles', 'permissions', 'audits')->findOrFail($id);
-        abort_unless($user->empresas()->where('empresas.id', $empresa->id)->exists(), 403);
+        Gate::forUser(Auth::user())->authorize('manageUser', [$empresa, $user]);
 
         return view('usuario.show', compact('empresa', 'user'));
     }
@@ -94,9 +89,6 @@ class UserController extends AuthenticatedController
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['nullable', 'string', 'exists:roles,name'],
-            'permissions' => ['nullable', 'array'],
-            'permissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
         $action->execute(Auth::user(), $empresa, $user, UsuarioEmpresaData::fromArray($validated));
@@ -121,7 +113,7 @@ class UserController extends AuthenticatedController
     ) {
         $empresa = $empresaAtual->execute(Auth::user());
         abort_unless($empresa, 403);
-        abort_unless($user->empresas()->where('empresas.id', $empresa->id)->exists(), 403);
+        Gate::forUser(Auth::user())->authorize('manageUser', [$empresa, $user]);
 
         $permissions = $permissionsQuery->execute();
 

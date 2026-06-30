@@ -4,6 +4,7 @@ namespace App\Domains\Usuarios\Repositories;
 
 use App\Models\Empresa;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 interface UsuarioRepositoryInterface
@@ -11,6 +12,8 @@ interface UsuarioRepositoryInterface
     public function find(int $id): ?User;
 
     public function findOrFail(int $id): User;
+
+    public function queryForEmpresa(Empresa $empresa): Builder;
 
     public function listForEmpresa(Empresa $empresa, ?string $search = null): Collection;
 

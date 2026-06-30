@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class UserRoleController extends Controller
 {
@@ -61,10 +62,14 @@ class UserRoleController extends Controller
         return redirect()->back()->with('success', 'Papel removido com sucesso!');
     }
 
-    public function showAssignRoleForm(User $user, ListarRolesQuery $query)
+    public function showAssignRoleForm(User $user, ListarRolesQuery $query, ObterEmpresaAtualQuery $empresaAtual)
     {
+        $empresa = $empresaAtual->execute(Auth::user());
+        abort_unless($empresa, 403);
+        Gate::forUser(Auth::user())->authorize('manageUser', [$empresa, $user]);
+
         $roles = $query->execute();
 
-        return view('admin.assign_role', compact('user', 'roles'));
+        return view('admin.assign_role', compact('empresa', 'user', 'roles'));
     }
 }

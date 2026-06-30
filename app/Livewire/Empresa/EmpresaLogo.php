@@ -4,6 +4,7 @@ namespace App\Livewire\Empresa;
 
 use App\Domains\Empresa\Actions\AtualizarLogotipoEmpresaAction;
 use App\Models\Empresa;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -18,11 +19,13 @@ class EmpresaLogo extends Component
 
     public function mount(Empresa $empresa): void
     {
-        $this->empresa = $empresa;
+        $this->empresa = $this->resolveEmpresaAtiva($empresa);
     }
 
     public function save(): void
     {
+        $this->empresa = $this->resolveEmpresaAtiva($this->empresa);
+
         $this->validate([
             'logotipo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ]);
@@ -36,5 +39,15 @@ class EmpresaLogo extends Component
     public function render()
     {
         return view('livewire.empresa.empresa-logo');
+    }
+
+    private function resolveEmpresaAtiva(Empresa $empresa): Empresa
+    {
+        $activeEmpresa = auth()->user()?->empresaAtiva();
+
+        abort_unless($activeEmpresa && (int) $activeEmpresa->id === (int) $empresa->id, 403);
+        Gate::forUser(auth()->user())->authorize('update', $activeEmpresa);
+
+        return $activeEmpresa->refresh();
     }
 }

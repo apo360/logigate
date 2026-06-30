@@ -4,6 +4,7 @@ namespace App\Domains\Usuarios\Repositories;
 
 use App\Models\Empresa;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 final class EloquentUsuarioRepository implements UsuarioRepositoryInterface
@@ -18,18 +19,22 @@ final class EloquentUsuarioRepository implements UsuarioRepositoryInterface
         return User::findOrFail($id);
     }
 
+    public function queryForEmpresa(Empresa $empresa): Builder
+    {
+        return $empresa->users()->select('users.*')->getQuery();
+    }
+
     public function listForEmpresa(Empresa $empresa, ?string $search = null): Collection
     {
-        return User::query()
-            ->whereHas('empresas', fn ($query) => $query->where('empresas.id', $empresa->id))
+        return $this->queryForEmpresa($empresa)
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
+                    $query->where('users.name', 'like', "%{$search}%")
+                        ->orWhere('users.email', 'like', "%{$search}%");
                 });
             })
             ->with('roles', 'permissions')
-            ->orderBy('name')
+            ->orderBy('users.name')
             ->get();
     }
 

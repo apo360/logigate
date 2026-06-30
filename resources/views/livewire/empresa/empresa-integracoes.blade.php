@@ -22,10 +22,10 @@
                 $iconClass = str_starts_with($card['icon'], 'fa-brands') ? $card['icon'] : 'fa ' . $card['icon'];
             @endphp
 
-            <article class="rounded-lg border {{ $card['featured'] ? 'border-blue-300 ring-2 ring-blue-100' : 'border-slate-200' }} bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <article class="rounded-lg border {{ $card['featured'] ? 'border-blue-300 ring-2 ring-blue-100 dark:border-blue-800 dark:ring-blue-950' : 'border-slate-200 dark:border-slate-700' }} bg-white p-5 shadow-sm dark:bg-slate-900">
                 <div class="flex items-start justify-between gap-4">
                     <div class="flex items-center gap-3">
-                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-lg {{ $card['featured'] ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700' }}">
+                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-lg {{ $card['featured'] ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' }}">
                             <i class="{{ $iconClass }}"></i>
                         </span>
                         <div>
@@ -34,7 +34,7 @@
                         </div>
                     </div>
 
-                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $isActive ? 'bg-green-50 text-green-700' : 'bg-slate-100 text-slate-700' }}">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $isActive ? 'bg-green-50 text-green-700 dark:bg-green-950/50 dark:text-green-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' }}">
                         {{ $estado }}
                     </span>
                 </div>
@@ -59,25 +59,26 @@
                 </dl>
 
                 @if($integration?->ultimo_erro)
-                    <p class="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-700">{{ $integration->ultimo_erro }}</p>
+                    <p class="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">{{ $integration->ultimo_erro }}</p>
                 @endif
 
                 <div class="mt-5 flex flex-wrap gap-2">
-                    <button type="button" wire:click="openConfigure('{{ $card['tipo'] }}', '{{ $card['provedor'] }}')" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    <button type="button" wire:click="openConfigure('{{ $card['tipo'] }}', '{{ $card['provedor'] }}')" wire:loading.attr="disabled" wire:target="openConfigure" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                         Configurar
                     </button>
 
                     @if($integration)
-                        <button type="button" wire:click="test({{ $integration->id }})" class="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50">
-                            Testar
+                        <button type="button" wire:click="test({{ $integration->id }})" wire:loading.attr="disabled" wire:target="test" class="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:opacity-70 dark:border-blue-900/70 dark:text-blue-300 dark:hover:bg-blue-950/40">
+                            <span wire:loading.remove wire:target="test">Testar</span>
+                            <span wire:loading wire:target="test">A testar...</span>
                         </button>
 
                         @if($isActive)
-                            <button type="button" wire:click="deactivate({{ $integration->id }})" class="rounded-lg border border-amber-300 px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50">
+                            <button type="button" wire:click="deactivate({{ $integration->id }})" wire:loading.attr="disabled" wire:target="deactivate" class="rounded-lg border border-amber-300 px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-70 dark:border-amber-900/70 dark:text-amber-300 dark:hover:bg-amber-950/40">
                                 Desactivar
                             </button>
                         @else
-                            <button type="button" wire:click="activate({{ $integration->id }})" class="rounded-lg border border-green-300 px-3 py-2 text-sm font-semibold text-green-700 hover:bg-green-50">
+                            <button type="button" wire:click="activate({{ $integration->id }})" wire:loading.attr="disabled" wire:target="activate" class="rounded-lg border border-green-300 px-3 py-2 text-sm font-semibold text-green-700 hover:bg-green-50 disabled:opacity-70 dark:border-green-900/70 dark:text-green-300 dark:hover:bg-green-950/40">
                                 Activar
                             </button>
                         @endif
@@ -89,6 +90,9 @@
 
     <x-ui.modal id="empresa-integracao-config" title="Configurar integração">
         <form wire:submit.prevent="save" class="space-y-4">
+            <div class="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/40 dark:text-blue-200">
+                Credenciais sensíveis são guardadas cifradas e aparecem apenas mascaradas depois de salvas.
+            </div>
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">API URL</label>
@@ -174,11 +178,13 @@
             </div>
 
             <div class="flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-                <button type="button" x-on:click="open = false" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                <button type="button" x-on:click="open = false" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                     Cancelar
                 </button>
-                <button type="submit" class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800">
-                    Guardar
+                <button type="submit" wire:loading.attr="disabled" wire:target="save" class="inline-flex min-h-10 items-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-70">
+                    <i class="fas fa-spinner fa-pulse" wire:loading wire:target="save"></i>
+                    <span wire:loading.remove wire:target="save">Guardar</span>
+                    <span wire:loading wire:target="save">A guardar...</span>
                 </button>
             </div>
         </form>

@@ -96,9 +96,14 @@ class User extends Authenticatable implements Auditable
         return $this->belongsToMany(Empresa::class, 'empresa_users');
     }
 
+    public function empresaAtiva(): ?Empresa
+    {
+        return $this->empresas()->first();
+    }
+
     public function hasActiveSubscription(): bool
     {
-        $empresa = $this->empresas()->first();
+        $empresa = $this->empresaAtiva();
 
         if (! $empresa) {
             return false;

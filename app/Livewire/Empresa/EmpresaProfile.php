@@ -6,6 +6,7 @@ use App\Domains\Empresa\Actions\AtualizarEmpresaAction;
 use App\Domains\Empresa\Data\EmpresaData;
 use App\Models\Empresa;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -32,28 +33,15 @@ class EmpresaProfile extends Component
 
     public function mount(Empresa $empresa): void
     {
-        $this->empresa = $empresa;
+        $this->empresa = $this->resolveEmpresaAtiva($empresa);
 
-        $this->Empresa = $empresa->Empresa;
-        $this->ActividadeComercial = $empresa->ActividadeComercial;
-        $this->Designacao = $empresa->Designacao;
-        $this->Slogan = $empresa->Slogan;
-        $this->Provincia = $empresa->Provincia;
-        $this->Cidade = $empresa->Cidade;
-        $this->Dominio = $empresa->Dominio;
-        $this->NIF = $empresa->NIF;
-        $this->Cedula = $empresa->Cedula;
-        $this->Endereco_completo = $empresa->Endereco_completo;
-        $this->Email = $empresa->Email;
-        $this->Contacto_movel = $empresa->Contacto_movel;
-        $this->Contacto_fixo = $empresa->Contacto_fixo;
-        $this->Fax = $empresa->Fax;
-        $this->CodFactura = $empresa->CodFactura;
-        $this->CodProcesso = $empresa->CodProcesso;
+        $this->fillFromEmpresa();
     }
 
     public function update(AtualizarEmpresaAction $action): void
     {
+        $this->empresa = $this->resolveEmpresaAtiva($this->empresa);
+
         $validated = $this->validate();
 
         $data = [
@@ -78,6 +66,7 @@ class EmpresaProfile extends Component
         $dto = EmpresaData::fromArray($data);
 
         $this->empresa = $action->execute(Auth::user(), $this->empresa, $dto);
+        $this->fillFromEmpresa();
 
         $this->dispatch('toast', type: 'success', message: 'Empresa atualizada com sucesso.');
     }
@@ -107,5 +96,35 @@ class EmpresaProfile extends Component
     public function render()
     {
         return view('livewire.empresa.empresa-profile');
+    }
+
+    private function resolveEmpresaAtiva(Empresa $empresa): Empresa
+    {
+        $activeEmpresa = Auth::user()?->empresaAtiva();
+
+        abort_unless($activeEmpresa && (int) $activeEmpresa->id === (int) $empresa->id, 403);
+        Gate::forUser(Auth::user())->authorize('update', $activeEmpresa);
+
+        return $activeEmpresa->refresh();
+    }
+
+    private function fillFromEmpresa(): void
+    {
+        $this->Empresa = $this->empresa->Empresa;
+        $this->ActividadeComercial = $this->empresa->ActividadeComercial;
+        $this->Designacao = $this->empresa->Designacao;
+        $this->Slogan = $this->empresa->Slogan;
+        $this->Provincia = $this->empresa->Provincia;
+        $this->Cidade = $this->empresa->Cidade;
+        $this->Dominio = $this->empresa->Dominio;
+        $this->NIF = $this->empresa->NIF;
+        $this->Cedula = $this->empresa->Cedula;
+        $this->Endereco_completo = $this->empresa->Endereco_completo;
+        $this->Email = $this->empresa->Email;
+        $this->Contacto_movel = $this->empresa->Contacto_movel;
+        $this->Contacto_fixo = $this->empresa->Contacto_fixo;
+        $this->Fax = $this->empresa->Fax;
+        $this->CodFactura = $this->empresa->CodFactura;
+        $this->CodProcesso = $this->empresa->CodProcesso;
     }
 }

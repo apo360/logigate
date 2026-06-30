@@ -32,7 +32,7 @@ class EmpresaIntegracoes extends Component
 
     public function mount(): void
     {
-        $this->empresa = Auth::user()?->empresas()->first();
+        $this->empresa = Auth::user()?->empresaAtiva();
         abort_unless($this->empresa, 403);
         Gate::forUser(Auth::user())->authorize('manageIntegrations', $this->empresa);
 
@@ -41,6 +41,11 @@ class EmpresaIntegracoes extends Component
 
     public function openConfigure(string $tipo, string $provedor): void
     {
+        $this->authorizeManageIntegrations();
+
+        TipoIntegracaoEnum::from($tipo);
+        ProvedorIntegracaoEnum::from($provedor);
+
         $this->selectedTipo = $tipo;
         $this->selectedProvedor = $provedor;
 
@@ -58,6 +63,7 @@ class EmpresaIntegracoes extends Component
 
     public function save(ActualizarCredenciaisIntegracaoAction $action): void
     {
+        $this->authorizeManageIntegrations();
         $this->ensureSchemaReady();
 
         $validated = $this->validate($this->rules());
@@ -73,12 +79,16 @@ class EmpresaIntegracoes extends Component
             credentials: $validated['form']['credentials'] ?? [],
         ));
 
+        $this->form['credentials'] = [];
+        $this->form['masked_credentials'] = $this->findIntegration($tipo->value, $provedor->value)?->maskedCredentials() ?? [];
+
         $this->dispatch('close-modal', id: 'empresa-integracao-config');
         $this->dispatch('toast', type: 'success', message: 'Integração guardada com sucesso.');
     }
 
     public function activate(int $integrationId, ActivarIntegracaoAction $action): void
     {
+        $this->authorizeManageIntegrations();
         $this->ensureSchemaReady();
         $action->execute(Auth::user(), $this->empresa, $this->integrationForEmpresa($integrationId));
         $this->dispatch('toast', type: 'success', message: 'Integração activada.');
@@ -86,6 +96,7 @@ class EmpresaIntegracoes extends Component
 
     public function deactivate(int $integrationId, DesactivarIntegracaoAction $action): void
     {
+        $this->authorizeManageIntegrations();
         $this->ensureSchemaReady();
         $action->execute(Auth::user(), $this->empresa, $this->integrationForEmpresa($integrationId));
         $this->dispatch('toast', type: 'success', message: 'Integração desactivada.');
@@ -93,6 +104,7 @@ class EmpresaIntegracoes extends Component
 
     public function test(int $integrationId, TestarIntegracaoAction $action): void
     {
+        $this->authorizeManageIntegrations();
         $this->ensureSchemaReady();
         $result = $action->execute(Auth::user(), $this->empresa, $this->integrationForEmpresa($integrationId));
         $this->dispatch('toast', type: $result->success ? 'success' : 'error', message: $result->message);
@@ -193,6 +205,16 @@ class EmpresaIntegracoes extends Component
     private function ensureSchemaReady(): void
     {
         abort_unless($this->schemaReady, 503, 'Execute a migration empresa_integracoes antes de gerir integrações.');
+    }
+
+    private function authorizeManageIntegrations(): void
+    {
+        $activeEmpresa = Auth::user()?->empresaAtiva();
+
+        abort_unless($activeEmpresa && $this->empresa && (int) $activeEmpresa->id === (int) $this->empresa->id, 403);
+        Gate::forUser(Auth::user())->authorize('manageIntegrations', $activeEmpresa);
+
+        $this->empresa = $activeEmpresa->refresh();
     }
 
     public function render()

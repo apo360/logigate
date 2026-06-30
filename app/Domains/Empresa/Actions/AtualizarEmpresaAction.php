@@ -17,7 +17,7 @@ final class AtualizarEmpresaAction
 
     public function execute(User $actor, Empresa $empresa, EmpresaData $data): Empresa
     {
-        // Gate::forUser($actor)->authorize('update', $empresa);
+        Gate::forUser($actor)->authorize('update', $empresa);
 
         return $this->empresas->update($empresa, $data->toAttributes());
     }

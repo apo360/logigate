@@ -7,7 +7,6 @@ use App\Domains\Empresa\Actions\AtualizarLogotipoEmpresaAction;
 use App\Domains\Empresa\Actions\CriarEmpresaAction;
 use App\Domains\Empresa\Actions\ExcluirEmpresaAction;
 use App\Domains\Empresa\Data\EmpresaData;
-use App\Domains\Empresa\Queries\ListarEmpresasDoUsuarioQuery;
 use App\Helpers\DatabaseErrorHandler;
 use App\Http\Requests\EmpresaRequest;
 use App\Models\Empresa;
@@ -19,11 +18,13 @@ use App\Domains\Banco\Services\BancoListService;
 
 class EmpresaController extends AuthenticatedController
 {
-    public function index(ListarEmpresasDoUsuarioQuery $query)
+    public function index()
     {
-        $empresas = $query->execute(Auth::user());
+        $empresa = Auth::user()?->empresaAtiva();
 
-        return view('empresa.index', compact('empresas'));
+        abort_unless($empresa, 403);
+
+        return redirect()->route('empresas.edit', $empresa);
     }
 
     public function create()
@@ -48,7 +49,7 @@ class EmpresaController extends AuthenticatedController
             'logotipo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ]);
 
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = Auth::user()?->empresaAtiva();
         abort_unless($empresa, 403);
 
         if (! $request->hasFile('logotipo')) {

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use App\Domains\Empresa\Services\GeradorCodigoContaEmpresaService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -112,14 +112,10 @@ class Empresa extends Model implements Auditable
 
         // Criar um evento de "created" para a empresa
         static::creating(function ($empresa) {
-            // // Gerar o código da conta da empresa Ex: HYSS00224
-            $currentYear = Carbon::now()->year;
-            // Buscar o total de Empresas
-            $totalEmpresas = Empresa::count();
-            // Gerar o código da empresa
-            $codEmpresa = 'HYLGA' . str_pad($totalEmpresas + 1, 5, '0', STR_PAD_LEFT).$currentYear;
-            // Inserir o código da empresa na empresa
-            $empresa->conta = $codEmpresa;
+            // TODO: remover este fallback quando todos os fluxos criarem empresa via CriarEmpresaAction.
+            if (! $empresa->conta) {
+                $empresa->conta = app(GeradorCodigoContaEmpresaService::class)->gerar();
+            }
         });
 
         // Criar um evento de "deleting" para a empresa

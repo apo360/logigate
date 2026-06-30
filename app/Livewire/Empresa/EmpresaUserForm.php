@@ -9,6 +9,7 @@ use App\Domains\Usuarios\Data\UsuarioEmpresaData;
 use App\Domains\Usuarios\Queries\ListarRolesQuery;
 use App\Models\Empresa;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -36,21 +37,29 @@ class EmpresaUserForm extends Component
     public function mount(Empresa $empresa): void
     {
         $this->empresa = $empresa;
+        $this->authorizeEmpresaAccess();
     }
 
     public function create(): void
     {
+        $this->authorizeEmpresaAccess();
+
         $this->editing = false;
         $this->editingUserId = null;
         $this->resetForm();
         $this->dispatch('open-modal', id: 'empresa-user-form');
     }
 
+    public function openCreate(): void
+    {
+        $this->create();
+    }
+
     public function edit(int $userId): void
     {
         $user = User::with('roles')->findOrFail($userId);
 
-        abort_unless($user->empresas()->where('empresas.id', $this->empresa->id)->exists(), 403);
+        Gate::forUser(auth()->user())->authorize('manageUser', [$this->empresa, $user]);
 
         $this->editing = true;
         $this->editingUserId = $user->id;
@@ -66,11 +75,18 @@ class EmpresaUserForm extends Component
         $this->dispatch('open-modal', id: 'empresa-user-form');
     }
 
+    public function cancelEdit(): void
+    {
+        $this->close();
+    }
+
     public function save(): void
     {
+        $this->authorizeEmpresaAccess();
+
         $rules = [
             'form.name' => ['required', 'string', 'max:255'],
-            'form.role' => ['required', 'exists:roles,name'],
+            'form.role' => ['required', Rule::in($this->assignableRoleNames())],
         ];
 
         if ($this->editing) {
@@ -93,6 +109,7 @@ class EmpresaUserForm extends Component
 
         if ($this->editing) {
             $managedUser = User::findOrFail($this->editingUserId);
+            Gate::forUser(auth()->user())->authorize('manageUser', [$this->empresa, $managedUser]);
             app(AtualizarUsuarioEmpresaAction::class)->execute(auth()->user(), $this->empresa, $managedUser, $data);
             app(SincronizarRolesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $managedUser, [$data->role]);
 
@@ -131,8 +148,28 @@ class EmpresaUserForm extends Component
 
     public function render()
     {
+        $this->authorizeEmpresaAccess();
+
         return view('livewire.empresa.empresa-user-form', [
-            'roles' => app(ListarRolesQuery::class)->execute(),
+            'roles' => app(ListarRolesQuery::class)->execute()
+                ->whereIn('name', $this->assignableRoleNames()),
         ]);
+    }
+
+    private function authorizeEmpresaAccess(): void
+    {
+        $activeEmpresa = auth()->user()?->empresaAtiva();
+
+        abort_unless($activeEmpresa && $activeEmpresa->is($this->empresa), 403);
+        Gate::forUser(auth()->user())->authorize('manageUsers', $this->empresa);
+    }
+
+    private function assignableRoleNames(): array
+    {
+        if (Gate::forUser(auth()->user())->allows('manageGlobalPermissions', User::class)) {
+            return app(ListarRolesQuery::class)->execute()->pluck('name')->all();
+        }
+
+        return auth()->user()?->roles->pluck('name')->all() ?? [];
     }
 }
