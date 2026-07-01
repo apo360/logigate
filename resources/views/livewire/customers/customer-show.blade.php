@@ -53,15 +53,19 @@
                             <div x-show="open" @click.outside="open = false" x-transition
                                 class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50"
                             >
-                                <a href="{{ route('cliente.cc', $customer->id) }}" 
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <button type="button"
+                                wire:click="setPanel('conta-corrente')"
+                                @click="open = false"
+                                class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
                                     💰 Conta Corrente
-                                </a>
+                                </button>
 
-                                <a href="{{ route('cliente.avenca', $customer->id) }}" 
-                                class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                <button type="button"
+                                wire:click="setPanel('avencas')"
+                                @click="open = false"
+                                class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
                                     📋 Avenças
-                                </a>
+                                </button>
 
                                 <button type="button" wire:click="openPortalCredentialsModal"
                                         class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
@@ -205,19 +209,20 @@
                     </div>
                 </div>
                 @php
-                    $saldo = $customer->contaCorrente()->orderBy('created_at', 'desc')->value('valor') ?? 0;
+                    $saldo = $saldoContaCorrente ?? 0;
                     $saldoCor = $saldo >= 0 ? 'text-green-600' : 'text-red-600';
                 @endphp
                 <div class="text-3xl font-bold {{ $saldoCor }} mb-2">
                     {{ number_format($saldo, 2, ',', '.') }} Kz
                 </div>
                 <div class="text-sm text-gray-500 mb-2">
-                    Última atualização: {{ $customer->contaCorrente()->latest()->first()?->updated_at->format('d/m/Y H:i') ?? 'Nunca' }}
+                    Última atualização: {{ $ultimoMovimentoContaCorrente?->updated_at?->format('d/m/Y H:i') ?? 'Nunca' }}
                 </div>
-                <a href="{{ route('cliente.cc', $customer->id) }}" 
+                <button type="button"
+                   wire:click="setPanel('conta-corrente')"
                    class="inline-block mt-2 text-purple-600 hover:text-purple-800 text-sm font-medium">
                     Ver extrato completo →
-                </a>
+                </button>
             </div>
             
             <!-- Licenciamentos -->
@@ -253,7 +258,45 @@
         </div>
         </div>
 
+        <div class="bg-white rounded-xl shadow-lg mb-6">
+            <div class="border-b px-6 py-4">
+                <div class="flex flex-wrap gap-2">
+                    <button type="button"
+                            wire:click="setPanel('overview')"
+                            class="rounded-lg px-4 py-2 text-sm font-semibold {{ $activePanel === 'overview' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                        Visão geral
+                    </button>
+                    <button type="button"
+                            wire:click="setPanel('conta-corrente')"
+                            class="rounded-lg px-4 py-2 text-sm font-semibold {{ $activePanel === 'conta-corrente' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                        Conta Corrente
+                    </button>
+                    <button type="button"
+                            wire:click="setPanel('avencas')"
+                            class="rounded-lg px-4 py-2 text-sm font-semibold {{ $activePanel === 'avencas' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' }}">
+                        Avenças
+                    </button>
+                    <button type="button"
+                            disabled
+                            class="rounded-lg bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-400">
+                        Contratos em estruturação
+                    </button>
+                </div>
+            </div>
+
+            @if($activePanel === 'conta-corrente')
+                <div class="p-6">
+                    <livewire:customers.conta-corrente :customer="$customer" :key="'customer-conta-corrente-'.$customer->id" />
+                </div>
+            @elseif($activePanel === 'avencas')
+                <div class="p-6">
+                    <livewire:customers.avencas :customer="$customer" :key="'customer-avencas-'.$customer->id" />
+                </div>
+            @endif
+        </div>
+
         <!-- Abas Principais -->
+        @if($activePanel === 'overview')
         <div class="bg-white rounded-xl shadow-lg mb-6" x-data="{ tab: 'processos' }">
             <div class="border-b">
                 <nav class="flex -mb-px">
@@ -398,10 +441,11 @@
                 <div x-show="tab === 'faturas'" x-cloak >
                     <div class="mb-6 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-gray-900">Faturas do Cliente</h3>
-                        <a href="{{ route('cliente.cc', $customer->id) }}" 
+                        <button type="button"
+                            wire:click="setPanel('conta-corrente')"
                             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                             💰 Conta Corrente
-                        </a>
+                        </button>
                         <a href="{{ route('documentos.create', ['customer_id' => $customer->id]) }}" 
                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
                             ➕ Emitir Fatura
@@ -523,6 +567,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Informações Adicionais -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

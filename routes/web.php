@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin\Roles;
 use App\Http\Controllers\ArquivoController;
 use App\Http\Controllers\CedulaController;
 use App\Http\Controllers\BillingPlanController;
-use App\Http\Controllers\ContaCorrenteController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentoController;
@@ -32,7 +31,6 @@ use App\Http\Controllers\ContabilidadeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Controllers\Auth\PasswordController;
-use App\Http\Controllers\CustomerAvencaController;
 use App\Http\Controllers\WebPage\RastreamentoController;
 use App\Http\Controllers\PautaAduaneiraController;
 use App\Http\Controllers\PortoController;
@@ -42,6 +40,7 @@ use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\ScheduledTaskController;
 use App\Http\Controllers\WebPage\WelcomeController;
 use App\Http\Controllers\AppyPayWebhookController;
+use App\Models\Customer;
 use App\Models\Processo;
 
     /** Rotas WEB */
@@ -119,7 +118,6 @@ use App\Models\Processo;
             'usuarios' => UserController::class,
             'produtos' => ProdutoController::class,
             'modulos' => ModuleController::class,
-            'avenca' => CustomerAvencaController::class,
         ]);
 
         Route::view('/arquivos', 'arquivo.index')->name('arquivos.index');
@@ -130,11 +128,10 @@ use App\Models\Processo;
         Route::delete('/documentos-arquivo/{documentoArquivo}', [DocumentoArquivoController::class, 'destroy'])->name('documentos-arquivo.destroy');
 
         Route::prefix('customers/conta_corrente')->group(function () {
-            Route::get('/create/{cliente_id}', [ContaCorrenteController::class, 'create'])->name('conta_corrente.create');
-            Route::post('/store/{cliente_id}', [ContaCorrenteController::class, 'store'])->name('conta_corrente.store');
-            Route::get('/Listagem', [CustomerController::class, 'index_conta'])->name('customers.listagem_cc');
-            Route::get('/{id}/show', [CustomerController::class, 'conta'])->name('cliente.cc');
-            Route::get('/{id}/avenca', [CustomerController::class, 'avenca'])->name('cliente.avenca');
+            Route::get('/create/{customer}', fn (Customer $customer) => redirect()->route('customers.show', $customer))->name('conta_corrente.create');
+            Route::get('/Listagem', fn () => redirect()->route('customers.index'))->name('customers.listagem_cc');
+            Route::get('/{customer}/show', fn (Customer $customer) => redirect()->route('customers.show', $customer))->name('cliente.cc');
+            Route::get('/{customer}/avenca', fn (Customer $customer) => redirect()->route('customers.show', $customer))->name('cliente.avenca');
         });
 
         // =========================

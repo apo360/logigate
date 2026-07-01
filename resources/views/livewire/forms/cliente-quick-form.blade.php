@@ -35,7 +35,7 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Método de Pagamento</label>
                                         <select wire:model="pagamento" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                            <option value="">Pronto Pagamento</option>
+                                            <option value="00">Pronto Pagamento</option>
                                             <option value="15">Pagamento 15 dias</option>
                                             <option value="30">Pagamento 30 dias</option>
                                             <option value="45">Pagamento 45 dias</option>

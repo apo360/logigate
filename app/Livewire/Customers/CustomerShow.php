@@ -3,6 +3,7 @@
 namespace App\Livewire\Customers;
 
 use App\Application\Customer\Queries\CustomerDetailsQuery;
+use App\Domains\Customers\Services\CustomerAccountStatementService;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Livewire\Component;
@@ -20,6 +21,8 @@ class CustomerShow extends Component
         'licenciamentos' => [],
     ];
 
+    public string $activePanel = 'overview';
+
     public function mount(int|Customer $customer, CustomerDetailsQuery $query): void
     {
         $id = $customer instanceof Customer ? $customer->id : (int) $customer;
@@ -36,6 +39,13 @@ class CustomerShow extends Component
             'open-customer-portal-credentials-modal',
             customerId: $this->customer->id
         );
+    }
+
+    public function setPanel(string $panel): void
+    {
+        abort_unless(in_array($panel, ['overview', 'conta-corrente', 'avencas'], true), 404);
+
+        $this->activePanel = $panel;
     }
 
     // Activar e desativar User
@@ -76,9 +86,19 @@ class CustomerShow extends Component
 
     public function render()
     {
+        $empresaId = auth()->user()?->empresa_id
+            ?? auth()->user()?->empresas()->value('empresas.id');
+
+        $statementService = app(CustomerAccountStatementService::class);
+        $ultimoMovimentoContaCorrente = $statementService
+            ->movimentosRecentes($this->customer->id, $empresaId ? (int) $empresaId : null, 1)
+            ->first();
+
         return view('livewire.customers.customer-show', [
             'labels' => $this->labels,
             'atividadeMes' => $this->atividadeMes,
+            'saldoContaCorrente' => $statementService->saldo($this->customer->id, $empresaId ? (int) $empresaId : null),
+            'ultimoMovimentoContaCorrente' => $ultimoMovimentoContaCorrente,
         ]);
     }
 }

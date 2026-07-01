@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Forms;
 
-use App\Domains\Customers\Actions\CreateOrAssociateCustomerAction;
-use App\Domains\Customers\Data\CustomerFormData;
+use App\Application\Customer\Actions\CreateCustomerAction;
+use App\Application\Customer\DTOs\CreateCustomerDTO;
+use App\Http\Requests\CustomerRequest;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ClienteQuickForm extends Component
 {
@@ -15,7 +18,7 @@ class ClienteQuickForm extends Component
     public $CompanyName = '';
     public $Telephone = '';
     public $Email = '';
-    public $pagamento = '';
+    public $pagamento = '00';
     
     protected $rules = [
         'CustomerTaxID' => 'required|string',
@@ -39,28 +42,85 @@ class ClienteQuickForm extends Component
         $this->showModal = false;
     }
     
-    public function save()
+    public function save(CreateCustomerAction $action)
     {
-        $this->validate();
-        
-        $empresa = Auth::user()->empresas->first(); // ajuste conforme sua lógica
-        
-        $cliente = app(CreateOrAssociateCustomerAction::class)->execute(CustomerFormData::fromArray([
-            'CustomerTaxID' => $this->CustomerTaxID,
-            'CustomerType' => 'Empresa',
-            'CompanyName' => $this->CompanyName,
-            'Telephone' => $this->Telephone,
-            'Email' => $this->Email,
-            'metodo_pagamento' => $this->pagamento,
-            'TipoCliente' => 'Importador',
-            'Status' => 'Ativo',
-        ]), $empresa);
-        
-        // Dispara evento para o formulário principal atualizar a lista e selecionar o novo cliente
-        $this->dispatch('clienteCriado', clienteId: $cliente->id, nome: $cliente->CompanyName);
-        
-        $this->close();
-        session()->flash('message', 'Cliente criado com sucesso!');
+        try {
+            $this->validate();
+
+            $validated = CustomerRequest::normalize([
+                'CustomerTaxID' => $this->CustomerTaxID,
+                'CustomerType' => 'Empresa',
+                'CompanyName' => $this->CompanyName,
+                'Telephone' => $this->Telephone,
+                'Email' => $this->Email,
+                'SelfBillingIndicator' => '0',
+                'metodo_pagamento' => $this->pagamento ?: '00',
+                'TipoCliente' => 'importador',
+                'Status' => 'ativo',
+            ]);
+
+            $empresaId = $this->currentEmpresaId();
+
+            $payload = CustomerRequest::customerPayload(
+                validated: $validated,
+                empresaId: $empresaId,
+                userId: Auth::id()
+            );
+
+            $data = array_merge($validated, $payload, [
+                'user_id' => Auth::id(),
+                'empresa_id' => $empresaId,
+            ]);
+            
+            $customer = $action->execute(CreateCustomerDTO::fromArray($data));
+            
+            session()->flash('success', 'Cliente criado com sucesso.');
+
+            $this->dispatch('clienteCriado', clienteId: $customer->id, nome: $customer->CompanyName);
+            $this->dispatch('toast', type: 'success', message: 'Cliente criado com sucesso!');
+
+            $this->close();
+            $this->reset(['CustomerTaxID', 'CompanyName', 'Telephone', 'Email']);
+            $this->pagamento = '00';
+
+            return null;
+
+        } catch (ValidationException $e) {
+            throw $e;
+
+        } catch (\Throwable $e) {
+            report($e);
+
+            Log::error('Erro ao criar cliente.', [
+                'message' => $e->getMessage(),
+                'form' => [
+                    'CustomerTaxID' => $this->CustomerTaxID,
+                    'CompanyName' => $this->CompanyName,
+                    'Telephone' => $this->Telephone,
+                    'Email' => $this->Email,
+                    'pagamento' => $this->pagamento,
+                ],
+                'user_id' => Auth::id(),
+            ]);
+
+            session()->flash('error', 'Erro ao criar cliente: ' . $e->getMessage());
+
+            $this->dispatch('toast', type: 'error', message: 'Erro ao criar cliente: ' . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    private function currentEmpresaId(): int
+    {
+        $empresaId = Auth::user()->empresa_id
+            ?? Auth::user()->empresas()->value('empresas.id');
+
+        if (!$empresaId) {
+            throw new \RuntimeException('Nenhuma empresa activa foi encontrada para o utilizador autenticado.');
+        }
+
+        return (int) $empresaId;
     }
     
     public function render()

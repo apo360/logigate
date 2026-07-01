@@ -36,6 +36,8 @@ use App\Domains\Usuarios\Repositories\EloquentUsuarioRepository;
 use App\Domains\Usuarios\Repositories\UsuarioRepositoryInterface;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
+use App\Models\CustomerAvenca;
+use App\Models\ContaCorrente;
 use App\Models\DocumentoArquivo;
 use App\Models\Empresa;
 use App\Models\Licenciamento;
@@ -45,6 +47,8 @@ use App\Models\SalesInvoice;
 use App\Models\Subscricao;
 use App\Models\User;
 use App\Policies\CustomerPolicy;
+use App\Policies\CustomerAvencaPolicy;
+use App\Policies\ContaCorrentePolicy;
 use App\Policies\LicenciamentoPolicy;
 use App\Policies\ProcessoPolicy;
 use App\Policies\ProdutoPolicy;
@@ -87,6 +91,8 @@ class AppServiceProvider extends ServiceProvider
     {
         // Security: register tenant-aware policies for core domain models.
         Gate::policy(Customer::class, CustomerPolicy::class);
+        Gate::policy(CustomerAvenca::class, CustomerAvencaPolicy::class);
+        Gate::policy(ContaCorrente::class, ContaCorrentePolicy::class);
         Gate::policy(DocumentoArquivo::class, DocumentoPolicy::class);
         Gate::policy(Empresa::class, EmpresaPolicy::class);
         Gate::policy(Licenciamento::class, LicenciamentoPolicy::class);

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domains\Arquivo\Support\HasDocumentos;
+use App\Domains\Customers\Services\CustomerAccountStatementService;
 use App\Models\Concerns\BelongsToTenant;
 use App\Traits\SharedFieldsTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -124,23 +125,14 @@ class Customer extends Model
                     ->withTimestamps();
     }
 
-    public function contaCorrente(){
-        return $this->belongsTo(ContaCorrente::class, 'cliente_id');
+    public function contaCorrente()
+    {
+        return $this->hasMany(ContaCorrente::class, 'cliente_id');
     }
 
     public function getSaldoAttribute()
     {
-        $creditos = ContaCorrente::query()
-            ->where('cliente_id', $this->id)
-            ->where('tipo', 'credito')
-            ->sum('valor');
-
-        $debitos = ContaCorrente::query()
-            ->where('cliente_id', $this->id)
-            ->where('tipo', 'debito')
-            ->sum('valor');
-
-        return $creditos - $debitos;
+        return app(CustomerAccountStatementService::class)->saldo((int) $this->id);
     }
 
     public function avencas(){
