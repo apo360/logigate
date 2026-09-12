@@ -5,72 +5,57 @@ namespace App\Application\FacturacaoIntegracao\Clients;
 use App\Application\FacturacaoIntegracao\DTOs\FacturaEmitidaDTO;
 use App\Application\FacturacaoIntegracao\DTOs\SolicitarFacturaDTO;
 use App\Application\Integracoes\DTOs\ResultadoTesteIntegracaoDTO;
-use App\Domains\Integracoes\Exceptions\CredenciaisIntegracaoInvalidasException;
+use App\Domains\FacturacaoIntegracao\Clients\HongayetuFacturacaoClientInterface;
+use App\Domains\FacturacaoIntegracao\Exceptions\CredenciaisFacturacaoInvalidasException;
+use App\Domains\FacturacaoIntegracao\Exceptions\FacturacaoIntegracaoException;
 use App\Models\EmpresaIntegracao;
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
+use App\Infrastructure\FacturacaoIntegracao\Hongayetu\HttpHongayetuFacturacaoClient as OfficialHongayetuFacturacaoClient;
 
 class HongayetuFacturacaoClient
 {
+    public function __construct(private ?HongayetuFacturacaoClientInterface $client = null)
+    {
+    }
+
     public function test(EmpresaIntegracao $integracao): ResultadoTesteIntegracaoDTO
     {
-        $response = $this->http($integracao)->get($this->url($integracao, '/api/integrations/health'));
+        try {
+            $result = $this->client()->verificarCredenciais($integracao->config ?? [], $integracao->credentials());
 
-        if ($response->successful()) {
             return ResultadoTesteIntegracaoDTO::success('Ligação com Hongayetu Facturação validada.', [
-                'status' => $response->status(),
+                'resultado' => $result,
+            ]);
+        } catch (CredenciaisFacturacaoInvalidasException $exception) {
+            throw $exception;
+        } catch (FacturacaoIntegracaoException $exception) {
+            return ResultadoTesteIntegracaoDTO::failure('Falha ao validar a ligação com Hongayetu Facturação.', [
+                'erro' => $exception->context(),
             ]);
         }
-
-        return ResultadoTesteIntegracaoDTO::failure('Falha ao validar a ligação com Hongayetu Facturação.', [
-            'status' => $response->status(),
-        ]);
     }
 
     public function emitirFactura(EmpresaIntegracao $integracao, SolicitarFacturaDTO $data): FacturaEmitidaDTO
     {
-        $response = $this->http($integracao)
-            ->withHeaders(['Idempotency-Key' => $data->idempotencyKey])
-            ->post($this->url($integracao, '/api/invoices'), [
-                'empresa_id' => $data->empresaId,
-                'source_user_id' => $data->sourceUserId,
-                'payload' => $data->payload,
-            ]);
+        $result = $this->client()->emitirFactura([
+            'empresa_id' => $data->empresaId,
+            'source_user_id' => $data->sourceUserId,
+            'idempotency_key' => $data->idempotencyKey,
+            'payload' => $data->payload,
+        ], $integracao->config ?? [], $integracao->credentials());
 
-        $response->throw();
-
-        return FacturaEmitidaDTO::fromArray($response->json() ?? [], $integracao->provedor->value);
+        return FacturaEmitidaDTO::fromArray($result['data'] ?? $result, $integracao->provedor->value);
     }
 
-    private function http(EmpresaIntegracao $integracao): PendingRequest
+    private function client(): HongayetuFacturacaoClientInterface
     {
-        $credentials = $integracao->credentials();
-        $token = $credentials['api_token'] ?? $credentials['api_key'] ?? null;
-
-        if (! $token) {
-            throw new CredenciaisIntegracaoInvalidasException('Token/API key da integração de facturação não configurado.');
+        if ($this->client) {
+            return $this->client;
         }
 
-        $config = $integracao->config ?? [];
-        $timeout = max(1, (int) ($config['timeout'] ?? 15));
-        $retries = max(0, (int) ($config['retry_attempts'] ?? 1));
-        $retrySleep = max(0, (int) ($config['retry_sleep'] ?? 250));
+        $this->client = app()->bound(HongayetuFacturacaoClientInterface::class)
+            ? app(HongayetuFacturacaoClientInterface::class)
+            : new OfficialHongayetuFacturacaoClient();
 
-        return Http::acceptJson()
-            ->asJson()
-            ->withToken((string) $token)
-            ->timeout($timeout)
-            ->retry($retries, $retrySleep, throw: false);
-    }
-
-    private function url(EmpresaIntegracao $integracao, string $path): string
-    {
-        $baseUrl = rtrim((string) data_get($integracao->config, 'api_url'), '/');
-
-        if ($baseUrl === '') {
-            throw new CredenciaisIntegracaoInvalidasException('URL da API de facturação não configurada.');
-        }
-
-        return $baseUrl . $path;
+        return $this->client;
     }
 }

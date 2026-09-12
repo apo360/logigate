@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'customer.auth'  => \App\Http\Middleware\CustomerAuthMiddleware::class,
             'cliente.portal.active' => \App\Http\Middleware\ClientePortalEnsureActive::class,
             'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'facturacao.hongayetu.active' => \App\Http\Middleware\EnsureFacturacaoHongayetuActiva::class,
         ]);
 
         /**

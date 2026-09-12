@@ -33,9 +33,4 @@ class ProcLicenFactura extends Model
     {
         return $this->belongsTo(Processo::class);
     }
-
-    public function fatura()
-    {
-        return $this->belongsTo(SalesInvoice::class, 'fatura_id');
-    }
 }

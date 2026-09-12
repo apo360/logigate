@@ -113,6 +113,11 @@
                         <button type="button" wire:click="openConfigure('{{ $card['tipo'] }}', '{{ $card['provedor'] }}')" wire:loading.attr="disabled" wire:target="openConfigure" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-70 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                             Configurar
                         </button>
+                        @if($card['tipo'] === 'facturacao' && $card['provedor'] === 'hongayetu_facturacao')
+                            <a href="{{ route('integracoes.facturacao-hongayetu') }}" class="rounded-lg border border-blue-300 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 dark:border-blue-900/70 dark:text-blue-300 dark:hover:bg-blue-950/40">
+                                Abrir painel
+                            </a>
+                        @endif
                     @endif
 
                     @if(!$isStorage && $integration)

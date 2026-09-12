@@ -6,15 +6,21 @@ use App\Application\Customer\Actions\AssociarCustomerEmpresaAction;
 use App\Application\Customer\Actions\CreateCustomerAction;
 use App\Application\Customer\DTOs\AssociarCustomerEmpresaDTO;
 use App\Application\Customer\DTOs\CreateCustomerDTO;
+use App\Application\FacturacaoIntegracao\Actions\SincronizarClienteFacturacaoAction;
+use App\Application\FacturacaoIntegracao\DTOs\SincronizarClienteFacturacaoDTO;
+use App\Application\Integracoes\Services\IntegracaoResolverService;
 use App\Domains\Customers\Enums\CustomerStatusEnum;
 use App\Domains\Customers\Enums\CustomerEstatutoEnum;
 use App\Domains\Customers\Enums\CustomerTipoDocumentoEnum;
+use App\Domains\Integracoes\Enums\ProvedorIntegracaoEnum;
+use App\Domains\Integracoes\Enums\TipoIntegracaoEnum;
 use App\Enums\MoedaEnum;
 use App\Http\Requests\CustomerRequest;
 use Livewire\Component;
 use App\Models\Customer;
 use App\Models\Pais;
 use App\Models\Provincia;
+use App\Models\EmpresaIntegracao;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -231,7 +237,7 @@ class Form extends Component
         return true;
     }
 
-    public function save(CreateCustomerAction $action)
+    public function save(CreateCustomerAction $action, SincronizarClienteFacturacaoAction $syncAction)
     {
         $this->nifSearchPerformed = true;
 
@@ -255,7 +261,13 @@ class Form extends Component
                 CreateCustomerDTO::fromArray($data)
             );
 
+            $syncWarning = $this->syncHongayetuIfActive($customer, $empresaId, $syncAction);
+
             session()->flash('success', 'Cliente criado com sucesso.');
+
+            if ($syncWarning) {
+                session()->flash('warning', $syncWarning);
+            }
 
             $this->dispatch('toast', type: 'success', message: 'Cliente criado com sucesso!');
 
@@ -291,6 +303,86 @@ class Form extends Component
         }
 
         return (int) $empresaId;
+    }
+
+    private function syncHongayetuIfActive(Customer $customer, int $empresaId, SincronizarClienteFacturacaoAction $syncAction): ?string
+    {
+        $resolver = app(IntegracaoResolverService::class);
+
+        if (! $resolver->isFacturacaoHongayetuActiva($empresaId)) {
+            return null;
+        }
+
+        try {
+            $integracao = $resolver->resolveForEmpresaId(
+                $empresaId,
+                TipoIntegracaoEnum::Facturacao,
+                ProvedorIntegracaoEnum::HongayetuFacturacao,
+            );
+
+            $syncAction->execute($this->syncDto($customer->fresh(), $empresaId, $integracao));
+
+            return null;
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Log::warning('Cliente local criado, mas a sincronização Hongayetu falhou.', [
+                'customer_id' => $customer->id,
+                'empresa_id' => $empresaId,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return 'Cliente criado localmente, mas não foi possível sincronizar com a Facturação Hongayetu.';
+        }
+    }
+
+    private function syncDto(Customer $customer, int $empresaId, EmpresaIntegracao $integracao): SincronizarClienteFacturacaoDTO
+    {
+        return new SincronizarClienteFacturacaoDTO(
+            empresaId: $empresaId,
+            empresaIntegracaoId: $integracao->id,
+            customerId: $customer->id,
+            nome: $customer->CompanyName,
+            tipo: $this->hongayetuCustomerType($customer->CustomerType),
+            nif: $customer->CustomerTaxID,
+            telefone: $customer->Telephone,
+            email: $customer->Email,
+            endereco: $this->form['AddressDetail'] ?? $this->form['Address'] ?? null,
+            provinciaId: $this->hongayetuProvinceId($this->form['Province'] ?? null),
+            grupoId: $this->configuredDefaultGroupId(),
+        );
+    }
+
+    private function hongayetuCustomerType(?string $type): int
+    {
+        $normalized = str($type ?? '')->lower()->trim()->toString();
+
+        return in_array($normalized, ['individual', 'singular', 'pessoa singular', '0'], true) ? 0 : 1;
+    }
+
+    private function hongayetuProvinceId(?string $province): ?int
+    {
+        $province = trim((string) $province);
+
+        if ($province === '') {
+            return null;
+        }
+
+        if (is_numeric($province)) {
+            return (int) $province;
+        }
+
+        return Provincia::query()
+            ->where('Nome', $province)
+            ->value('id');
+    }
+
+    private function configuredDefaultGroupId(): ?int
+    {
+        $groupId = config('hongayetu_facturacao.default_customer_group_id')
+            ?? config('hongayetu_facturacao.grupo_id_padrao');
+
+        return is_numeric($groupId) ? (int) $groupId : null;
     }
 
     public function render()

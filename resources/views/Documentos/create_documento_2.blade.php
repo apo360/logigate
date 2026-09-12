@@ -1,4 +1,4 @@
-
+<!-- /var/www/logigate/resources/views/Documentos/create_documento_2.blade.php -->
 <x-app-layout>
     <head>
         <style>
@@ -44,6 +44,7 @@
 
         </style>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
     </head>
     
     <form action="{{ route('documentos.store') }}" method="POST">

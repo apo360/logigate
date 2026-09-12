@@ -25,12 +25,12 @@ class DashboardForecastService extends BaseDashboardService
             })
             ->sum('ValorTotal');
 
-        $mediaMensal = (float) SalesInvoice::query()
+        $mediaMensal = 0 /*(float) SalesInvoice::query()
             ->join('sales_document_totals', 'sales_document_totals.documentoID', '=', 'sales_invoice.id')
             ->where('sales_invoice.empresa_id', $empresaId)
             ->whereDate('sales_invoice.invoice_date', '>=', now()->startOfMonth()->subMonths(5))
             ->selectRaw('AVG(sales_document_totals.gross_total) as media')
-            ->value('media');
+            ->value('media')*/;
 
         return [
             'receita_prevista' => round($receitaAberta, 2),

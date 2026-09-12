@@ -8,11 +8,13 @@ use App\Models\Menu;
 use App\Models\Subscricao;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use App\Application\Integracoes\Services\IntegracaoResolverService;
 
 class MenuDinamico extends Component
 {
     public $modulosAtivos = [];
     public $menusPrincipais = [];
+    public $facturacaoHongayetuActiva = false;
 
     public function mount()
     {
@@ -73,6 +75,12 @@ class MenuDinamico extends Component
         // 6) Atribuir ao componente
         $this->menusPrincipais = $tree;
 
+        // 7) Menus dinâmicos com integração Hongayetu Facturação
+        $this->facturacaoHongayetuActiva = app(IntegracaoResolverService::class)->isFacturacaoHongayetuActiva($empresa?->id);
+
+        // 7) Cache para otimização de desempenho
+
+
         //
         $cacheKey = 'menus_user_' . Auth::id();
 
@@ -95,6 +103,8 @@ class MenuDinamico extends Component
 
     public function render()
     {
-        return view('livewire.menu-dinamico');
+        return view('livewire.menu-dinamico', [
+            'facturacaoHongayetuActiva' => $this->facturacaoHongayetuActiva,
+        ]);
     }
 }

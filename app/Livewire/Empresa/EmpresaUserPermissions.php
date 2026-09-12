@@ -117,7 +117,7 @@ class EmpresaUserPermissions extends Component
         if (Gate::forUser(auth()->user())->allows('manageGlobalPermissions', User::class)) {
             return app(ListarPermissoesQuery::class)->execute()->pluck('name')->all();
         }
-
+        
         return auth()->user()?->getAllPermissions()->pluck('name')->all() ?? [];
     }
 

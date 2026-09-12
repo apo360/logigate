@@ -41,8 +41,8 @@ class FinanceChart extends Component
             $service = new DashboardFinancialService($empresa);
 
             return [
-                'revenue' => $service->getRevenueLast12Months(),
-                'summary' => $service->getPaymentsSummary(),
+                'revenue' => 0,//$service->getRevenueLast12Months() ?? 0.00,
+                'summary' => 0,//$service->getPaymentsSummary() ?? 0.00,
             ];
         });
 

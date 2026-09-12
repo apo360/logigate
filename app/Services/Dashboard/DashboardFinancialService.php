@@ -9,7 +9,7 @@ use App\Models\SalesInvoice;
 
 class DashboardFinancialService extends BaseDashboardService
 {
-    public function getFinancialKpis(): array
+    /*public function getFinancialKpis(): array
     {
         $empresaId = $this->empresaId();
         $monthStart = now()->startOfMonth();
@@ -78,7 +78,7 @@ class DashboardFinancialService extends BaseDashboardService
                 'total' => round((float) $row->total, 2),
             ])
             ->all();
-    }
+    }*/
 
     public function getClientesComDivida(int $limit = 5): array
     {
@@ -99,7 +99,7 @@ class DashboardFinancialService extends BaseDashboardService
             ->all();
     }
 
-    public function getPaymentsSummary(): array
+    /*public function getPaymentsSummary(): array
     {
         $empresaId = $this->empresaId();
 
@@ -110,5 +110,5 @@ class DashboardFinancialService extends BaseDashboardService
                 ->where('sales_invoice.empresa_id', $empresaId)
                 ->sum('sales_document_totals.gross_total'),
         ];
-    }
+    }*/
 }

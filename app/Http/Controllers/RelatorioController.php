@@ -34,19 +34,6 @@ class RelatorioController extends AuthenticatedController
 
         return response()->file($file);
     }
-    
-    public function generateInvoices($invoiceNo){
-
-        $invoices = SalesInvoice::findOrFail($invoiceNo);
-        $file = $this->reportService->renderInvoiceReport($invoices, Auth::user()->name);
-
-        if (!file_exists($file)) {
-            abort(404);
-        }
-
-        return response()->file($file);
-
-    }
 
     public function SelecionarRelatorio(Request $request)
     {

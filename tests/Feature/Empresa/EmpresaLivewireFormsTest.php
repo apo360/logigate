@@ -267,7 +267,7 @@ class EmpresaLivewireFormsTest extends TestCase
         $this->assertSame('activo', $integration->fresh()->estado->value);
 
         Http::fake([
-            'https://facturacao.internal/api/integrations/health' => Http::response(['ok' => true], 200),
+            'https://facturacao.internal/auth/verificar' => Http::response(['ok' => true], 200),
         ]);
 
         Livewire::test(EmpresaIntegracoes::class)

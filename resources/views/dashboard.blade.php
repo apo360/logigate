@@ -19,7 +19,7 @@
         ['name' => 'Dashboard', 'url' => route('dashboard')]
     ]" separator="/" />
 
-    <div class="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:px-6 lg:px-0">
+    <div class="mx-auto max-w-8xl space-y-6 px-4 py-4 sm:px-6 lg:px-0">
         <!-- Painel de boas-vindas + ações -->
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
             <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -144,10 +144,10 @@
                 </a>
             </div>
             <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                <livewire:dashboard.finance-chart />
+                
             </div>
             <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                <livewire:dashboard.top-clientes-widget />
+                
             </div>
         </section>
 

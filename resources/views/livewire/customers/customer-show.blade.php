@@ -2,6 +2,24 @@
     {{-- resources/views/livewire/customers/customer-show.blade.php --}}
 
     <div class="py-6">
+        @if(session()->has('success'))
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session()->has('warning'))
+            <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                {{ session('warning') }}
+            </div>
+        @endif
+
+        @if(session()->has('error'))
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- Cabeçalho do Cliente -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 p-6">
@@ -358,6 +376,54 @@
             
             <!-- Conteúdo das Abas -->
             <div class="p-6">
+                @if($hongayetuActiva)
+                    <div class="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                        <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900">Integração Facturação Hongayetu</h3>
+
+                                @if($hongayetuMapping)
+                                    <div class="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                                        <span class="rounded-full bg-green-100 px-2 py-1 font-medium text-green-700">
+                                            Sincronizado
+                                        </span>
+                                        <span class="text-slate-600">
+                                            ID externo: {{ $hongayetuMapping->external_customer_id }}
+                                        </span>
+                                        <span class="text-slate-500">
+                                            Última sincronização:
+                                            {{ $hongayetuMapping->synced_at?->format('d/m/Y H:i') ?? 'não registada' }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <p class="mt-2 text-sm text-slate-600">Ainda não sincronizado.</p>
+                                @endif
+
+                                @if($hongayetuSyncMessage)
+                                    <p class="mt-2 text-sm text-green-700">{{ $hongayetuSyncMessage }}</p>
+                                @endif
+
+                                @if($hongayetuSyncError)
+                                    <p class="mt-2 text-sm text-red-700">Erro ao sincronizar: {{ $hongayetuSyncError }}</p>
+                                @elseif($hongayetuMapping?->last_error)
+                                    <p class="mt-2 text-sm text-amber-700">Última tentativa de sincronização falhou: {{ $hongayetuMapping->last_error }}</p>
+                                @endif
+                            </div>
+
+                            @unless($hongayetuMapping)
+                                <button type="button"
+                                        wire:click="sincronizarHongayetu"
+                                        wire:loading.attr="disabled"
+                                        wire:target="sincronizarHongayetu"
+                                        class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">
+                                    <span wire:loading.remove wire:target="sincronizarHongayetu">Sincronizar com Hongayetu</span>
+                                    <span wire:loading wire:target="sincronizarHongayetu">A sincronizar...</span>
+                                </button>
+                            @endunless
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Tab 1: Processos -->
                 <div x-show="tab === 'processos'" x-cloak>
                     <div class="flex justify-between items-center mb-6">
@@ -446,7 +512,7 @@
                             class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
                             💰 Conta Corrente
                         </button>
-                        <a href="{{ route('documentos.create', ['customer_id' => $customer->id]) }}" 
+                        <a href="#" 
                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
                             ➕ Emitir Fatura
                         </a>

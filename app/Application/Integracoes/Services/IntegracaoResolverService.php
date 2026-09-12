@@ -39,4 +39,20 @@ final readonly class IntegracaoResolverService
 
         return $this->resolve($empresa, $tipo, $provedor);
     }
+
+    public function isFacturacaoHongayetuActiva(?int $empresaId): bool
+    {
+        if (! $empresaId) {
+            return false;
+        }
+
+        $empresa = new Empresa();
+        $empresa->id = $empresaId;
+
+        return $this->integracoes->activeForEmpresa(
+            $empresa,
+            TipoIntegracaoEnum::Facturacao,
+            ProvedorIntegracaoEnum::HongayetuFacturacao,
+        ) !== null;
+    }
 }

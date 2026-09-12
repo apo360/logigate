@@ -44,7 +44,7 @@ class DashboardKpis extends Component
 
             return [
                 ...$operational->getOperationalKpis(),
-                ...$financial->getFinancialKpis(),
+                //...$financial->getFinancialKpis(),
                 ...$customs->getCustomsKpis(),
             ];
         });

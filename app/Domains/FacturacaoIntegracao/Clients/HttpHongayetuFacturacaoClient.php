@@ -4,17 +4,20 @@ namespace App\Domains\FacturacaoIntegracao\Clients;
 
 use App\Application\Integracoes\DTOs\ResultadoTesteIntegracaoDTO;
 use App\Application\Integracoes\Services\IntegracaoResolverService;
+use App\Domains\FacturacaoIntegracao\Exceptions\FacturacaoIntegracaoException;
 use App\Domains\Integracoes\Enums\ProvedorIntegracaoEnum;
 use App\Domains\Integracoes\Enums\TipoIntegracaoEnum;
-use App\Domains\Integracoes\Exceptions\CredenciaisIntegracaoInvalidasException;
-use App\Models\EmpresaIntegracao;
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Facades\Http;
+use App\Infrastructure\FacturacaoIntegracao\Hongayetu\HttpHongayetuFacturacaoClient as OfficialHongayetuFacturacaoClient;
 
 class HttpHongayetuFacturacaoClient implements HongayetuFacturacaoClientInterface
 {
-    public function __construct(private readonly IntegracaoResolverService $resolver)
-    {
+    private readonly OfficialHongayetuFacturacaoClient $client;
+
+    public function __construct(
+        private readonly IntegracaoResolverService $resolver,
+        ?OfficialHongayetuFacturacaoClient $client = null,
+    ) {
+        $this->client = $client ?? new OfficialHongayetuFacturacaoClient();
     }
 
     public function testConnection(int $empresaId): ResultadoTesteIntegracaoDTO
@@ -25,63 +28,72 @@ class HttpHongayetuFacturacaoClient implements HongayetuFacturacaoClientInterfac
             ProvedorIntegracaoEnum::HongayetuFacturacao,
         );
 
-        $response = $this->http($integracao)->get($this->url($integracao, '/api/integrations/health'));
+        try {
+            $result = $this->client->verificarCredenciais($integracao->config ?? [], $integracao->credentials());
 
-        if ($response->successful()) {
             return ResultadoTesteIntegracaoDTO::success('Ligação com Hongayetu Facturação validada.', [
-                'status' => $response->status(),
+                'resultado' => $result,
+            ]);
+        } catch (FacturacaoIntegracaoException $exception) {
+            return ResultadoTesteIntegracaoDTO::failure('Falha ao validar a ligação com Hongayetu Facturação.', [
+                'status' => $exception->getCode(),
+                'erro' => $exception->context(),
             ]);
         }
-
-        return ResultadoTesteIntegracaoDTO::failure('Falha ao validar a ligação com Hongayetu Facturação.', [
-            'status' => $response->status(),
-        ]);
     }
 
-    public function emitirFactura(array $payload): never
+    public function verificarCredenciais(array $config, array $credenciais): array
     {
-        throw new \BadMethodCallException('Emissão fiscal via API ainda não implementada. Aguardar contrato da API interna.');
+        return $this->client->verificarCredenciais($config, $credenciais);
     }
 
-    public function consultarFactura(string $referencia): never
+    public function listarClientes(array $query = [], array $config = [], array $credenciais = []): array
     {
-        throw new \BadMethodCallException('Consulta de factura via API ainda não implementada. Aguardar contrato da API interna.');
+        return $this->client->listarClientes($query, $config, $credenciais);
     }
 
-    public function cancelarFactura(string $referencia, string $motivo): never
+    public function criarCliente(array $payload, array $config = [], array $credenciais = []): array
     {
-        throw new \BadMethodCallException('Cancelamento de factura via API ainda não implementado. Aguardar contrato da API interna.');
+        return $this->client->criarCliente($payload, $config, $credenciais);
     }
 
-    private function http(EmpresaIntegracao $integracao): PendingRequest
+    public function actualizarCliente(int $id, array $payload, array $config = [], array $credenciais = []): array
     {
-        $credentials = $integracao->credentials();
-        $token = $credentials['api_token'] ?? $credentials['api_key'] ?? null;
-
-        if (! $token) {
-            throw new CredenciaisIntegracaoInvalidasException('Token/API key da integração de facturação não configurado.');
-        }
-
-        $config = $integracao->config ?? [];
-        $timeout = max(1, (int) ($config['timeout'] ?? 15));
-        $retries = max(0, (int) ($config['retry_attempts'] ?? 1));
-        $retrySleep = max(0, (int) ($config['retry_sleep'] ?? 250));
-
-        return Http::acceptJson()
-            ->asJson()
-            ->withToken((string) $token)
-            ->timeout($timeout)
-            ->retry($retries, $retrySleep, throw: false);
+        return $this->client->actualizarCliente($id, $payload, $config, $credenciais);
     }
 
-    private function url(EmpresaIntegracao $integracao, string $path): string
+    public function listarFacturas(array $query = [], array $config = [], array $credenciais = []): array
     {
-        $baseUrl = rtrim((string) data_get($integracao->config, 'api_url'), '/');
+        return $this->client->listarFacturas($query, $config, $credenciais);
+    }
 
-        if ($baseUrl === '') {
-            throw new CredenciaisIntegracaoInvalidasException('URL da API de facturação não configurada.');
-        }
+    public function consultarFactura(int $id, array $config = [], array $credenciais = []): array
+    {
+        return $this->client->consultarFactura($id, $config, $credenciais);
+    }
 
-        return $baseUrl . $path;
+    public function emitirFactura(array $payload, array $config = [], array $credenciais = []): array
+    {
+        return $this->client->emitirFactura($payload, $config, $credenciais);
+    }
+
+    public function obterPdfFactura(int $id, bool $base64 = true, array $config = [], array $credenciais = []): array|string
+    {
+        return $this->client->obterPdfFactura($id, $base64, $config, $credenciais);
+    }
+
+    public function anularFactura(int $id, array $payload, array $config = [], array $credenciais = []): array
+    {
+        return $this->client->anularFactura($id, $payload, $config, $credenciais);
+    }
+
+    public function listarBancos(array $query = [], array $config = [], array $credenciais = []): array
+    {
+        return $this->client->listarBancos($query, $config, $credenciais);
+    }
+
+    public function listarEstabelecimentos(array $query = [], array $config = [], array $credenciais = []): array
+    {
+        return $this->client->listarEstabelecimentos($query, $config, $credenciais);
     }
 }

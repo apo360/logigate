@@ -13,7 +13,6 @@ use App\Http\Controllers\CedulaController;
 use App\Http\Controllers\BillingPlanController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DocumentoController;
 use App\Http\Controllers\DocumentoArquivoController;
 use App\Http\Controllers\ExportadorController;
 use App\Http\Controllers\IbanController;
@@ -95,6 +94,11 @@ use App\Models\Processo;
         Route::post('/billing/plans', [BillingPlanController::class, 'start'])->name('billing.start');
         Route::view('/admin/integracoes', 'admin.integracoes')->name('admin.integracoes');
         Route::view('/integracoes', 'admin.integracoes')->name('integracoes.index');
+        Route::view('/integracoes/facturacao-hongayetu', 'integracoes.facturacao-hongayetu')->name('integracoes.facturacao-hongayetu');
+        Route::middleware('facturacao.hongayetu.active')->group(function () {
+            Route::view('/integracoes/facturacao-hongayetu/facturas', 'integracoes.facturacao-hongayetu-facturas')->name('integracoes.facturacao-hongayetu.facturas');
+            Route::view('/integracoes/facturacao-hongayetu/emitir-ft', 'integracoes.facturacao-hongayetu-emitir-ft')->name('integracoes.facturacao-hongayetu.emitir-ft');
+        });
         Route::view('/configuracoes', 'empresa.configuracoes')->name('configuracoes.index');
         Route::view('/seguranca-auditoria', 'empresa.auditoria')->name('logs.index');
 
@@ -108,7 +112,6 @@ use App\Models\Processo;
 
         Route::resources([
             'activated-modules' => ActivatedModuleController::class,
-            'documentos' => DocumentoController::class,
             'empresas' => EmpresaController::class,
             'exportadors' => ExportadorController::class,
             'menus' => MenuController::class,
@@ -248,18 +251,6 @@ use App\Models\Processo;
         Route::get('contabilidade/plano-contas', [ContabilidadeController::class, 'planoContas'])->name('contabilidade.plano_contas');
         Route::get('contabilidade/mapa', [ContabilidadeController::class, 'mapa'])->name('contabilidade.mapa');
         Route::get('contabilidade/balanco', [ContabilidadeController::class, 'balanco'])->name('contabilidade.balancete');
-
-        // Documentos
-        Route::get('documentos/facturas/{invoiceNo}/visualizar', [RelatorioController::class, 'generateInvoices'])->name('documento.print');
-        Route::get('documentos/facturas/{invoiceNo}/download', [DocumentoController::class, 'DownloadDocumento'])->name('documento.download');
-        Route::post('documentos/facturas/{invoiceNo}/{destinatario}/email', [DocumentoController::class, 'EnviarPorEmail'])->name('documento.email');
-        Route::get('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'ViewPagamento'])->name('documento.ViewPagamento');
-        Route::post('documentos/efetuar-pagamento/{id}', [PagamentoController::class, 'efetuarPagamento'])->name('documento.efetuarPagamento');
-        Route::get('documentos/filtrar', [DocumentoController::class, 'filtrar'])->name('faturas.filtrar');
-        // Documentos (Recibo)
-        Route::get('documentos/recibos', [DocumentoController::class, ''])->name('documentos.emitir.recibo');
-        // ------------- /.Rotas para os despachantes ------------ //
-
 
         Route::resource('customers', CustomerController::class)->except(['store', 'update']);
         Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);

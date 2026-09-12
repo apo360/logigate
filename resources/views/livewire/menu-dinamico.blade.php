@@ -86,6 +86,30 @@
     <!-- SEPARADOR -->
     <hr class="border-white/10 my-4">
 
+                @if($facturacaoHongayetuActiva)
+                
+                    <li x-data="{ open: {{ request()->routeIs('integracoes.facturacao-hongayetu.*') ? 'true' : 'false' }} }">
+                        <a href="#" @click.prevent="open = !open" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.*') ? 'bg-gray-700' : '' }}">
+                            <i class="fas fa-file-invoice-dollar text-gray-400"></i>
+                            <span class="ml-3">Facturação Hongayetu</span>
+                            <i :class="open ? 'fas fa-angle-down' : 'fas fa-angle-left'" class="ml-auto text-gray-400 transition-all duration-200"></i>
+                        </a>
+                        <ul x-show="open" x-transition class="ml-6 mt-2 space-y-2">
+                            <li>
+                                <a href="{{ route('integracoes.facturacao-hongayetu.facturas') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.facturas') ? 'bg-gray-700' : '' }}">
+                                    <i class="fas fa-file-invoice text-gray-400"></i>
+                                    <span class="ml-3">Facturas</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('integracoes.facturacao-hongayetu.emitir-ft') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.emitir-ft') ? 'bg-gray-700' : '' }}">
+                                    <i class="fas fa-plus-circle text-gray-400"></i>
+                                    <span class="ml-3">Emitir FT Manual</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endif
     <!-- RELATÓRIOS -->
     <a href="{{ route('relatorio.licenciamento') }}"
        class="flex items-center p-2 rounded-lg text-white/80 hover:bg-white/10">

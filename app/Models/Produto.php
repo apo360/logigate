@@ -72,12 +72,4 @@ class Produto extends Model
     {
         return $this->hasMany(ProductDiscounst::class, 'product_id');
     }
-
-    /**
-     * Relacionamento com Vendas (SalesInvoiceLines)
-     */
-    public function salesLines()
-    {
-        return $this->hasMany(SalesLine::class, 'productID');
-    }
 }

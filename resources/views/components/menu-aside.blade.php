@@ -30,7 +30,9 @@
                     use App\Models\Menu;
                     use App\Models\Subscricao;
 
-                    $empresa = auth()->user()->empresas->first(); // Empresa associada ao usuário autenticado
+                    $empresa = auth()->user()?->empresaAtiva(); // Empresa associada ao usuário autenticado
+                    $facturacaoHongayetuActiva = app(\App\Application\Integracoes\Services\IntegracaoResolverService::class)
+                        ->isFacturacaoHongayetuActiva($empresa?->id);
 
                     // Buscar planos ativos dessa empresa
                     $planosAtivos = $empresa->subscricoes()
@@ -173,6 +175,30 @@
 
                 <!-- Divisor -->
                 <hr class="border-gray-700 my-4">
+
+                @if($facturacaoHongayetuActiva)
+                    <li x-data="{ open: {{ request()->routeIs('integracoes.facturacao-hongayetu.*') ? 'true' : 'false' }} }">
+                        <a href="#" @click.prevent="open = !open" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.*') ? 'bg-gray-700' : '' }}">
+                            <i class="fas fa-file-invoice-dollar text-gray-400"></i>
+                            <span class="ml-3">Facturação Hongayetu</span>
+                            <i :class="open ? 'fas fa-angle-down' : 'fas fa-angle-left'" class="ml-auto text-gray-400 transition-all duration-200"></i>
+                        </a>
+                        <ul x-show="open" x-transition class="ml-6 mt-2 space-y-2">
+                            <li>
+                                <a href="{{ route('integracoes.facturacao-hongayetu.facturas') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.facturas') ? 'bg-gray-700' : '' }}">
+                                    <i class="fas fa-file-invoice text-gray-400"></i>
+                                    <span class="ml-3">Facturas</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ route('integracoes.facturacao-hongayetu.emitir-ft') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.emitir-ft') ? 'bg-gray-700' : '' }}">
+                                    <i class="fas fa-plus-circle text-gray-400"></i>
+                                    <span class="ml-3">Emitir FT Manual</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                @endif
 
                 <!-- APIs -->
                 <li x-data="{ open: false }">

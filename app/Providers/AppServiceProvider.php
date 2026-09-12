@@ -18,7 +18,6 @@ use App\Domains\Empresa\Policies\EmpresaPolicy;
 use App\Domains\Empresa\Repositories\EloquentEmpresaRepository;
 use App\Domains\Empresa\Repositories\EmpresaRepositoryInterface;
 use App\Domains\FacturacaoIntegracao\Clients\HongayetuFacturacaoClientInterface;
-use App\Domains\FacturacaoIntegracao\Clients\HttpHongayetuFacturacaoClient;
 use App\Domains\Integracoes\Repositories\EloquentEmpresaIntegracaoRepository;
 use App\Domains\Integracoes\Repositories\EmpresaIntegracaoRepositoryInterface;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
@@ -34,6 +33,7 @@ use App\Domains\PautaAduaneira\Repositories\PautaAduaneiraRepositoryInterface;
 use App\Domains\Usuarios\Policies\UsuarioEmpresaPolicy;
 use App\Domains\Usuarios\Repositories\EloquentUsuarioRepository;
 use App\Domains\Usuarios\Repositories\UsuarioRepositoryInterface;
+use App\Infrastructure\FacturacaoIntegracao\Hongayetu\HttpHongayetuFacturacaoClient;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
 use App\Models\Customer;
 use App\Models\CustomerAvenca;
@@ -43,7 +43,6 @@ use App\Models\Empresa;
 use App\Models\Licenciamento;
 use App\Models\Processo;
 use App\Models\Produto;
-use App\Models\SalesInvoice;
 use App\Models\Subscricao;
 use App\Models\User;
 use App\Policies\CustomerPolicy;
@@ -52,7 +51,6 @@ use App\Policies\ContaCorrentePolicy;
 use App\Policies\LicenciamentoPolicy;
 use App\Policies\ProcessoPolicy;
 use App\Policies\ProdutoPolicy;
-use App\Policies\SalesInvoicePolicy;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -98,7 +96,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Licenciamento::class, LicenciamentoPolicy::class);
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
-        Gate::policy(SalesInvoice::class, SalesInvoicePolicy::class);
 
         // Restrict log access to privileged administrators only.
         Gate::define('viewLogs', function (User $user): bool {
@@ -217,11 +214,9 @@ class AppServiceProvider extends ServiceProvider
 
         \App\Models\ProductPrice::observe(\App\Observers\ProductPriceObserver::class);
         \App\Models\Produto::observe(\App\Observers\ProductObserver::class);
-        \App\Models\SalesInvoice::observe(\App\Observers\DocumentoObserver::class);
         \App\Models\ContaCorrente::observe(\App\Observers\ContaCorrenteObserver::class);
         \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
         \App\Models\Exportador::observe(\App\Observers\ExportadorObserver::class);
         \App\Models\Processo::observe(\App\Observers\ProcessoObserver::class);
-        \App\Models\Recibo::observe(\App\Observers\ReciboObserver::class);
     }
 }
