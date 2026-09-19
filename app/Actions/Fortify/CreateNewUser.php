@@ -2,22 +2,20 @@
 
 namespace App\Actions\Fortify;
 
-use App\Mail\ConfirmationMail;
-use App\Models\Empresa;
+use App\Domains\Empresa\Actions\CriarEmpresaAction;
+use App\Domains\Empresa\Data\EmpresaData;
 use App\Models\User;
 use App\Models\EmpresaUser;
-use App\Models\Plano;
 use App\Models\Subscricao;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
 use Spatie\Permission\Models\Role;
-use Illuminate\Validation\ValidationException;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -30,62 +28,80 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input)
     {
-        // Validação dos dados de entrada
+        // 1) Validação FORA do try — para que erros de validação
+        //    cheguem ao utilizador com a mensagem real.
         $validator = Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'plano_id' => ['required', 'exists:planos,id'],
-            'password' => $this->passwordRules(),
-            'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : ['nullable'],
+            'name'                 => ['required', 'string', 'max:255'],
+            'empresa'              => ['required', 'string', 'max:255', 'unique:empresas,Empresa'],
+            'nif'                  => ['required', 'string', 'max:255', 'unique:empresas,NIF'],
+            'email'                => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'plano_id'             => ['required', 'exists:planos,id'],
+            'modalidade_pagamento' => ['required', 'string', 'in:monthly,yearly'],
+            'password'             => $this->passwordRules(),
+            'terms'                => Jetstream::hasTermsAndPrivacyPolicyFeature()
+                ? ['accepted', 'required']
+                : ['nullable'],
         ]);
 
-        try {
-            // Lançar exceção se a validação falhar
-            $validator->validate();
+        // Lança ValidationException automaticamente se falhar
+        $validator->validate();
 
-            // Iniciar a transação
+        try {
             DB::beginTransaction();
 
-            // Criar dados do Usuário
-            $user = User::create(['name' => $input['name'], 'email' => $input['email'], 'password' => Hash::make($input['password']),]);
-
-            // Criar empresa diretamente
-            $empresa = Empresa::create(['Empresa' => 'ContaDemo'.Empresa::lastId()+1, 'Designacao' => 'Despachante Oficial',]);
-
-            // Dados do Relacionamento Empresa, Usuario e Conta
-            EmpresaUser::create(['empresa_id' => $empresa->id, 'user_id' => $user->id, 'conta' => $empresa->conta]);
-
-            // Cria a subscrição Pendente
-            Subscricao::create([
-                'empresa_id' => $empresa->id,
-                'plano_id' => $input['plano_id'],
-                'modalidade_pagamento' => $input['modalidade_pagamento'],
-                'data_subscricao' => Carbon::now(),
-                'status' => 'pendente',
+            // 2) Criar utilizador
+            $user = User::create([
+                'name'     => $input['name'],
+                'email'    => $input['email'],
+                'password' => Hash::make($input['password']),
             ]);
 
-            // Atribuir permissões de Administrador
-            $role = Role::findOrCreate('Administrador');
-            
+            // 3) Criar empresa via Action (DTO com ::from agora existente)
+            $empresa = app(CriarEmpresaAction::class)->execute(
+                EmpresaData::from([
+                    'Empresa'    => $input['empresa'],
+                    'Designacao' => $input['designacao'] ?? 'Despachante Oficial',
+                    'NIF'        => $input['nif'],
+                ])
+            );
+
+            // 4) Relacionamento empresa <-> utilizador
+            EmpresaUser::create([
+                'empresa_id' => $empresa->id,
+                'user_id'    => $user->id,
+                'conta'      => $empresa->conta,
+            ]);
+
+            // 5) Subscrição pendente
+            Subscricao::create([
+                'empresa_id'            => $empresa->id,
+                'plano_id'              => $input['plano_id'],
+                'modalidade_pagamento'  => $input['modalidade_pagamento'],
+                'data_subscricao'       => Carbon::now(),
+                'status'                => 'pendente',
+            ]);
+
+            // 6) Atribuir role de Administrador (guard explícito)
+            $role = Role::findOrCreate('Administrador', 'web');
             $user->assignRole($role);
 
-            // Confirmar a transação
             DB::commit();
 
             return $user;
-            
+
         } catch (\Throwable $th) {
-            // Reverter a transação em caso de erro
             DB::rollBack();
 
-            // Registra o erro no log
+            // Não logues a password em claro
+            $safeInput = $input;
+            unset($safeInput['password'], $safeInput['password_confirmation']);
+
             Log::error('Erro ao criar empresa e usuário.', [
                 'error' => $th->getMessage(),
-                'input' => $input,
+                'input' => $safeInput,
                 'trace' => $th->getTraceAsString(),
             ]);
 
-            // Lançar exceção para o usuário com uma mensagem genérica
             throw ValidationException::withMessages([
                 'error' => 'Ocorreu um erro ao criar a empresa. Tente novamente mais tarde.',
             ]);

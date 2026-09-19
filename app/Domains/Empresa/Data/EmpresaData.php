@@ -13,7 +13,7 @@ final class EmpresaData
         public readonly ?string $nif = null,
         public readonly ?string $cedula = null,
         public readonly ?string $slogan = null,
-        public readonly ?string $enderecoCompleto = null,
+        public readonly ?string $enderecoCompleto = 'Desconhecido',
         public readonly ?string $provincia = null,
         public readonly ?string $cidade = null,
         public readonly ?string $dominio = null,
@@ -35,7 +35,7 @@ final class EmpresaData
             nif: self::nullableString($data['NIF'] ?? null),
             cedula: self::nullableString($data['Cedula'] ?? null),
             slogan: self::nullableString($data['Slogan'] ?? null),
-            enderecoCompleto: self::nullableString($data['Endereco_completo'] ?? null),
+            enderecoCompleto: self::nullableString($data['Endereco_completo'] ?? 'Desconhecido'),
             provincia: self::nullableString($data['Provincia'] ?? null),
             cidade: self::nullableString($data['Cidade'] ?? null),
             dominio: self::nullableString($data['Dominio'] ?? null),
@@ -70,6 +70,31 @@ final class EmpresaData
         ], fn ($value) => $value !== null);
     }
 
+    // Função From para criar uma instância de EmpresaData a partir de um array
+    public static function from(array $data): self
+    {
+        return self::fromArray([
+            'CodFactura' => $data['CodFactura'] ?? null,
+            'CodProcesso' => $data['CodProcesso'] ?? null,
+            'Empresa' => $data['Empresa'] ?? null,
+            'ActividadeComercial' => $data['ActividadeComercial'] ?? null,
+            'Designacao' => $data['Designacao'] ?? null,
+            'NIF' => $data['NIF'] ?? null,
+            'Cedula' => $data['Cedula'] ?? null,
+            'Slogan' => $data['Slogan'] ?? null,
+            'Endereco_completo' => $data['Endereco_completo'] ?? 'Desconhecido',
+            'Provincia' => $data['Provincia'] ?? null,
+            'Cidade' => $data['Cidade'] ?? null,
+            'Dominio' => $data['Dominio'] ?? null,
+            'Email' => $data['Email'] ?? null,
+            'Fax' => $data['Fax'] ?? null,
+            'Contacto_movel' => $data['Contacto_movel'] ?? null,
+            'Contacto_fixo' => $data['Contacto_fixo'] ?? null,
+            'Sigla' => $data['Sigla'] ?? null,
+        ]);
+    }
+
+    // Função auxiliar para tratar valores nulos e strings vazias
     private static function nullableString(mixed $value): ?string
     {
         if ($value === null) {

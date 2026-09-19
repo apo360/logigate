@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Domains\Empresa\Services\GeradorCodigoContaEmpresaService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Contracts\Auditable;
 use App\Models\ActivatedModule;
 use App\Models\Subscricao;
-use App\Models\EmpresaUser;
 
 class Empresa extends Model implements Auditable
 {
@@ -115,14 +113,6 @@ class Empresa extends Model implements Auditable
     {
         parent::boot();
 
-        // Criar um evento de "created" para a empresa
-        static::creating(function ($empresa) {
-            // TODO: remover este fallback quando todos os fluxos criarem empresa via CriarEmpresaAction.
-            if (! $empresa->conta) {
-                $empresa->conta = app(GeradorCodigoContaEmpresaService::class)->gerar();
-            }
-        });
-
         // Criar um evento de "deleting" para a empresa
         static::deleting(function ($empresa) {
             // Excluir os usuários associados à empresa
@@ -159,14 +149,6 @@ class Empresa extends Model implements Auditable
     }
 
     /**
-     * Relação 1:N - Uma empresa pode ter vários processos rascunhos
-     */
-    public function processosRascunhos()
-    {
-        return $this->hasMany(ProcessosDraft::class, 'empresa_id')->where('status', 'RASCUNHO');
-    }
-
-    /**
      * Relação 1:N — Uma empresa pode ter vários licenciaments
      */
     public function licenciaments()
@@ -174,11 +156,4 @@ class Empresa extends Model implements Auditable
         return $this->hasMany(Licenciamento::class, 'empresa_id');
     }
 
-    /**
-     * Relação 1:N — Uma empresa pode ter vários documentos de Vendas
-     */
-    public function Facturas()
-    {
-        return $this->hasMany(SalesInvoice::class, 'empresa_id');
-    }
 }

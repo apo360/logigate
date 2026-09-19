@@ -328,10 +328,10 @@
                         <!-- Modalidade Hidden -->
                         <input type="hidden" id="modalidade_pagamento" name="modalidade_pagamento" value="{{$modalidade}}">
                         
-                        <!-- Nome -->
+                        <!-- Administrador -->
                         <div>
                             <label class="block text-gray-700 mb-2 font-medium">
-                                Nome <span class="text-red-500">*</span>
+                                Administrador/Representante <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -348,6 +348,49 @@
                             </div>
                             <div id="name" class="text-red-500 text-sm mt-1 hidden"></div>
                         </div>
+
+                        <!-- Empresa -->
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium">
+                                Empresa <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-building text-gray-400"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="empresa"
+                                    name="empresa"
+                                    required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                    placeholder="Nome da Empresa / Razão Social"
+                                >
+                            </div>
+                            <div id="empresaError" class="text-red-500 text-sm mt-1 hidden"></div>
+                        </div>
+
+                        <!-- NIF -->
+                        <div>
+                            <label class="block text-gray-700 mb-2 font-medium">
+                                NIF <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-id-card text-gray-400"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="nif"
+                                    name="nif"
+                                    required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                    placeholder="Número de Identificação Fiscal"
+                                >
+                            </div>
+                            <div id="nifError" class="text-red-500 text-sm mt-1 hidden"></div>
+                        </div>
+
                         <!-- Email -->
                         <div>
                             <label class="block text-gray-700 mb-2 font-medium">

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Module extends Model
 {
@@ -42,6 +43,13 @@ class Module extends Model
         return $this->hasMany(Module::class, 'parent_id')->orderBy('order_priority');
     }
 
+    //Inverso de Menu::module()
+    public function menus(): HasMany
+    {
+        return $this->hasMany(Menu::class, 'module_id')
+                    ->orderBy('order_priority');
+    }
+
     public function planos()
     {
         return $this->belongsToMany(Plano::class, 'plano_modulo', 'module_id', 'plano_id')
@@ -51,8 +59,8 @@ class Module extends Model
     public function activatedForEmpresa($empresaId)
     {
         return $this->hasOne(ActivatedModule::class, 'module_id')
-                    ->where('empresa_id', $empresaId)
-                    ->where('active', true);
+                ->where('empresa_id', $empresaId)
+                ->where('active', true);
     }
 
     public function isAddon()

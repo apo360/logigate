@@ -29,9 +29,9 @@ class ModuloAtivacaoService
                     [
                         'empresa_id' => $empresa_id,
                         'module_id' => $modulo->id,
-                        'menu_id' => $menu_id,
                     ],
                     [
+                        'menu_id' => $menu_id,
                         'active' => true,
                         'activation_date' => now(),
                     ]
@@ -45,6 +45,8 @@ class ModuloAtivacaoService
                 'plano_id' => $plano_id,
                 'trace' => $th->getTraceAsString(),
             ]);
+
+            throw $th; // Re-throw para que o chamador possa lidar com o erro
         }
     }
 }

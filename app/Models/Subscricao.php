@@ -193,6 +193,7 @@ class Subscricao extends Model
                 [
                     'empresa_id' => $this->empresa_id,
                     'module_id' => $modulo['module_id'],
+                    'menu_id'    => $this->menu_id,
                     'subscricao_id' => $this->id
                 ],
                 [

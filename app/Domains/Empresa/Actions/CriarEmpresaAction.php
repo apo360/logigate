@@ -20,7 +20,9 @@ final class CriarEmpresaAction
     public function execute(EmpresaData $data): Empresa
     {
         return DB::transaction(function () use ($data): Empresa {
+            
             $attributes = $data->toAttributes();
+
             $attributes['conta'] ??= $this->gerarConta->execute();
 
             $empresa = $this->empresas->create($attributes);

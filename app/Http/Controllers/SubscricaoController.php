@@ -88,10 +88,6 @@ class SubscricaoController extends AuthenticatedController
     }
 
     /**
-     * Ativar menus e submenus de um módulo
-     */
-
-    /**
      * Desativar subscrições expiradas (CRON JOB diário)
      */
     public function checkExpiradas()
