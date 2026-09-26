@@ -16,20 +16,14 @@ use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules;
 
-    /**
-     * Validate and create a newly registered user.
-     *
-     * @param  array<string, string>  $input
-     */
     public function create(array $input)
     {
-        // 1) Validação FORA do try — para que erros de validação
-        //    cheguem ao utilizador com a mensagem real.
         $validator = Validator::make($input, [
             'name'                 => ['required', 'string', 'max:255'],
             'empresa'              => ['required', 'string', 'max:255', 'unique:empresas,Empresa'],
@@ -43,20 +37,19 @@ class CreateNewUser implements CreatesNewUsers
                 : ['nullable'],
         ]);
 
-        // Lança ValidationException automaticamente se falhar
         $validator->validate();
 
         try {
             DB::beginTransaction();
 
-            // 2) Criar utilizador
+            // 1) Utilizador
             $user = User::create([
                 'name'     => $input['name'],
                 'email'    => $input['email'],
                 'password' => Hash::make($input['password']),
             ]);
 
-            // 3) Criar empresa via Action (DTO com ::from agora existente)
+            // 2) Empresa
             $empresa = app(CriarEmpresaAction::class)->execute(
                 EmpresaData::from([
                     'Empresa'    => $input['empresa'],
@@ -65,25 +58,25 @@ class CreateNewUser implements CreatesNewUsers
                 ])
             );
 
-            // 4) Relacionamento empresa <-> utilizador
+            // 3) Vínculo User ↔ Empresa (role de contexto)
             EmpresaUser::create([
                 'empresa_id' => $empresa->id,
                 'user_id'    => $user->id,
                 'conta'      => $empresa->conta,
+                'role'       => 'Administrador',   // ✅ primeiro user é Administrador do sistema que por sua vez pode ser o Gestor ou criar um user como gestor DA EMPRESA
             ]);
 
-            // 5) Subscrição pendente
+            // 4) Role Spatie (autorização) — NUNCA Administrador
+            $this->assignInitialRole($user);
+
+            // 5) Subscrição
             Subscricao::create([
-                'empresa_id'            => $empresa->id,
-                'plano_id'              => $input['plano_id'],
-                'modalidade_pagamento'  => $input['modalidade_pagamento'],
-                'data_subscricao'       => Carbon::now(),
-                'status'                => 'pendente',
+                'empresa_id'           => $empresa->id,
+                'plano_id'             => $input['plano_id'],
+                'modalidade_pagamento' => $input['modalidade_pagamento'],
+                'data_subscricao'      => Carbon::now(),
+                'status'               => 'pendente',
             ]);
-
-            // 6) Atribuir role de Administrador (guard explícito)
-            $role = Role::findOrCreate('Administrador', 'web');
-            $user->assignRole($role);
 
             DB::commit();
 
@@ -92,7 +85,6 @@ class CreateNewUser implements CreatesNewUsers
         } catch (\Throwable $th) {
             DB::rollBack();
 
-            // Não logues a password em claro
             $safeInput = $input;
             unset($safeInput['password'], $safeInput['password_confirmation']);
 
@@ -106,5 +98,23 @@ class CreateNewUser implements CreatesNewUsers
                 'error' => 'Ocorreu um erro ao criar a empresa. Tente novamente mais tarde.',
             ]);
         }
+    }
+
+    /**
+     * O primeiro utilizador de uma empresa é Gestor — não Administrador global.
+     */
+    private function assignInitialRole(User $user): void
+    {
+        $guard = 'web';
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $gestorRole = Role::where('name', 'Administrador')
+            ->where('guard_name', $guard)
+            ->firstOrFail();
+
+        $user->assignRole($gestorRole);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

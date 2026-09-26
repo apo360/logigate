@@ -32,9 +32,11 @@ class EmpresaUserPermissions extends Component
     public function mount(Empresa $empresa, User $user): void
     {
         $this->empresa = $empresa;
+
         $this->managedUser = $user;
 
         $this->authorizeManagedUser();
+
         $this->fillFromUser();
     }
 
@@ -218,17 +220,18 @@ class EmpresaUserPermissions extends Component
             'usuario' => ['Usuários', 'Contas, segurança e acessos dos usuários.'],
             'usuarios' => ['Usuários', 'Contas, segurança e acessos dos usuários.'],
             'empresa' => ['Empresa', 'Dados, bancos, integrações e gestão da empresa.'],
-            'customer' => ['Clientes', 'Clientes, contactos e dados comerciais.'],
-            'cliente' => ['Clientes', 'Clientes, contactos e dados comerciais.'],
+            'customers' => ['Clientes', 'Clientes, contactos e dados comerciais.'],
             'clientes' => ['Clientes', 'Clientes, contactos e dados comerciais.'],
             'processo' => ['Processo', 'Processos aduaneiros e operações relacionadas.'],
             'processos' => ['Processo', 'Processos aduaneiros e operações relacionadas.'],
             'licenciamento' => ['Licenciamento', 'Licenciamentos, TXT e documentos associados.'],
+            'licenciamentos' => ['Licenciamento', 'Licenciamentos, TXT e documentos associados.'],
             'mercadoria' => ['Mercadoria', 'Mercadorias, pauta e agrupamentos.'],
             'mercadorias' => ['Mercadoria', 'Mercadorias, pauta e agrupamentos.'],
-            'financeiro' => ['Financeiro', 'Faturação, pagamentos e relatórios financeiros.'],
-            'billing' => ['Financeiro', 'Faturação, pagamentos e relatórios financeiros.'],
+            'invoices' => ['Gestor Financeiro', 'Faturação, pagamentos e relatórios financeiros.'],
+            'payments' => ['Gestor Financeiro', 'Faturação, pagamentos e relatórios financeiros.'],
             'saft' => ['SAFT', 'Exportação fiscal e ficheiros SAFT.'],
+            'arquivo' => ['Gestão de Arquivos (S3)', 'Gestão de Arquivos em Clouds'],
         ];
 
         [$label, $description] = $map[$firstToken] ?? ['Administração', 'Permissões administrativas sem prefixo de módulo.'];
@@ -262,6 +265,8 @@ class EmpresaUserPermissions extends Component
             'upload' => 'Enviar',
             'export' => 'Exportar',
             'import' => 'Importar',
+            'Customer' => 'Cliente',
+            'Customers' => 'Clientes',
         ];
 
         $parts = preg_split('/[.\s_-]+/', $permission) ?: [];

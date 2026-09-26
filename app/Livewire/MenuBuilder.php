@@ -41,7 +41,7 @@ class MenuBuilder extends Component
     protected function authorizeUser()
     {
         // Ajusta conforme teu sistema de roles:
-        if (!Auth::user()->can('manage menus')) {
+        if (!Auth::user()->can('menus.manage')) {
             abort(403);
         }
     }

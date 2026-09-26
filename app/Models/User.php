@@ -80,25 +80,44 @@ class User extends Authenticatable implements Auditable
         ];
     }
 
-    /**
-     * Verifica se o usuário possui uma ou mais permissões específicas.
-     *
-     * @param string|array $permissions
-     * @return bool
-     */
-    public function hasAnyPermission($permissions)
+    public function hasAnyAppPermission($permissions): bool
     {
-        return $this->hasAnyPermissionTo($permissions);
+        return $this->hasAnyPermission($permissions); // chama o do Spatie
     }
 
     public function empresas(): BelongsToMany
     {
-        return $this->belongsToMany(Empresa::class, 'empresa_users');
+        return $this->belongsToMany(Empresa::class, 'empresa_users')
+            ->withPivot(['id', 'conta', 'role'])
+            ->withTimestamps();
     }
 
+    /**
+     * Empresa actual do utilizador (via sessão, ou primeira como fallback).
+     */
     public function empresaAtiva(): ?Empresa
     {
+        $empresaId = session('empresa_id');
+
+        if ($empresaId) {
+            return $this->empresas()->where('empresas.id', $empresaId)->first();
+        }
+
         return $this->empresas()->first();
+    }
+
+    /** Role do utilizador NA empresa indicada. */
+    public function roleNaEmpresa(?Empresa $empresa = null): ?string
+    {
+        $empresa ??= $this->empresaAtiva();
+
+        if (! $empresa) {
+            return null;
+        }
+
+        return $this->empresas()
+            ->where('empresas.id', $empresa->id)
+            ->first()?->pivot->role;
     }
 
     public function hasActiveSubscription(): bool

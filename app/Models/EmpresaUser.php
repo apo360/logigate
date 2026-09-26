@@ -16,15 +16,18 @@ class EmpresaUser extends Model implements Auditable
         'conta',
         'user_id',
         'empresa_id',  // Adicionando empresa_id para atribuição em massa
+        'role',  // Adicionando role para atribuição em massa
     ];
 
-    public function usuarios()
+    /** EmpresaUser PERTENCE a um User */
+    public function user()
     {
-        return $this->hasMany(User::class, 'user_id', 'id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
+    /** EmpresaUser PERTENCE a uma Empresa */
     public function empresa()
     {
-        return $this->hasMany(Empresa::class, 'empresa_id');
+        return $this->belongsTo(Empresa::class, 'empresa_id');
     }
 }

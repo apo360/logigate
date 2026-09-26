@@ -9,7 +9,7 @@ use App\Models\SalesInvoice;
 
 class DashboardFinancialService extends BaseDashboardService
 {
-    /*public function getFinancialKpis(): array
+    public function getFinancialKpis(): array
     {
         $empresaId = $this->empresaId();
         $monthStart = now()->startOfMonth();
@@ -78,7 +78,7 @@ class DashboardFinancialService extends BaseDashboardService
                 'total' => round((float) $row->total, 2),
             ])
             ->all();
-    }*/
+    }
 
     public function getClientesComDivida(int $limit = 5): array
     {

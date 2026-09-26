@@ -80,7 +80,9 @@ class Empresa extends Model implements Auditable
     // Definir relacionamento com usuários
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'empresa_users');
+        return $this->belongsToMany(User::class, 'empresa_users')
+            ->withPivot(['id', 'conta', 'role'])
+            ->withTimestamps();
     }
 
     public function activatedModules()

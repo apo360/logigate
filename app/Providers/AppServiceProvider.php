@@ -97,17 +97,29 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
 
+        Gate::define('manageEmpresaUser', function (User $actor, Empresa $empresa, User $managed) {
+            return app(UsuarioEmpresaPolicy::class)->manageUser($actor, $empresa, $managed);
+        });
+
+        /*Gate::define('manageGlobalPermissions', function (User $actor) {
+            return app(UsuarioEmpresaPolicy::class)->manageGlobalPermissions($actor);
+        });*/
+
+        Gate::define('manageEmpresaPermissions', function (User $actor, Empresa $empresa) {
+            return app(UsuarioEmpresaPolicy::class)->manageEmpresaPermissions($actor, $empresa);
+        });
+
         // Restrict log access to privileged administrators only.
         Gate::define('viewLogs', function (User $user): bool {
-            return $user->hasAnyRole(['Administrador', 'Admin', 'admin'])
-                || $user->getAllPermissions()->contains('name', 'viewLogs');
+            return $user->hasRole('Administrador')
+                || $user->can('audit.view');
         });
 
         // Security: authorize file keys strictly inside tenant namespace.
         Gate::define('accessTenantFile', function (User $user, string $key): bool {
-            $empresaId = $user->empresas()->value('empresas.id');
+            $empresaId = $user->empresaAtiva()?->id;
 
-            if (!$empresaId) {
+            if (! $empresaId) {
                 return false;
             }
 
@@ -118,16 +130,13 @@ class AppServiceProvider extends ServiceProvider
             return app(UsuarioEmpresaPolicy::class)->manageUser($actor, $empresa, $managedUser);
         });
 
-        Gate::define('manageGlobalPermissions', function (User $actor, mixed ...$args): bool {
-            return app(UsuarioEmpresaPolicy::class)->manageGlobalPermissions($actor);
-        });
-
         Gate::define('manageIntegrations', function (User $user, Empresa $empresa): bool {
-            return $user->empresas()->where('empresas.id', $empresa->id)->exists()
-                && (
-                    $user->hasAnyRole(['Administrador', 'Admin', 'admin', 'Gestor', 'Super Admin'])
-                    || $user->getAllPermissions()->contains('name', 'manage integrations')
-                );
+            if (! $user->empresas()->where('empresas.id', $empresa->id)->exists()) {
+                return false;
+            }
+
+            return $user->hasAnyRole(['Administrador', 'Gestor', 'Gestor Despachante'])
+                || $user->can('empresas.update');
         });
 
         // Security: explicit tenant-aware route model binding prevents cross-tenant IDOR.

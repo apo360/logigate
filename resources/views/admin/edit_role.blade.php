@@ -1,28 +1,63 @@
 <x-app-layout>
     @php
         $groupMeta = [
-            'empresa' => 'Empresa',
-            'user' => 'Usuários',
-            'users' => 'Usuários',
-            'usuario' => 'Usuários',
-            'usuarios' => 'Usuários',
-            'role' => 'Roles',
-            'roles' => 'Roles',
-            'permission' => 'Permissões',
-            'permissions' => 'Permissões',
-            'processo' => 'Processo',
-            'customer' => 'Clientes',
-            'cliente' => 'Clientes',
-            'licenciamento' => 'Licenciamento',
-            'mercadoria' => 'Mercadoria',
-            'financeiro' => 'Financeiro',
-            'manage' => 'Administração',
+            // Empresa / multi-tenant
+            'empresa'        => 'Empresa',
+            'empresas'       => 'Empresa',
+
+            // Utilizadores
+            'user'           => 'Utilizadores',
+            'users'          => 'Utilizadores',
+            'usuario'        => 'Utilizadores',
+            'usuarios'       => 'Utilizadores',
+
+            // Clientes
+            'customer'       => 'Clientes',
+            'customers'      => 'Clientes',
+            'cliente'        => 'Clientes',
+
+            // Operação aduaneira
+            'processo'       => 'Processos',
+            'processos'      => 'Processos',
+            'licenciamento'  => 'Licenciamentos',
+            'licenciamentos' => 'Licenciamentos',
+            'mercadoria'     => 'Mercadorias',
+            'mercadorias'    => 'Mercadorias',
+
+            // Documentos
+            'document'       => 'Documentos',
+            'documents'      => 'Documentos',
+
+            // Financeiro
+            'invoice'        => 'Facturação',
+            'invoices'       => 'Facturação',
+            'payment'        => 'Pagamentos',
+            'payments'       => 'Pagamentos',
+            'receipt'        => 'Recibos',
+            'receipts'       => 'Recibos',
+
+            // Relatórios & Auditoria
+            'report'         => 'Relatórios',
+            'reports'        => 'Relatórios',
+            'audit'          => 'Auditoria',
+
+            // Administração do sistema
+            'role'           => 'Roles',
+            'roles'          => 'Roles',
+            'permission'     => 'Permissões',
+            'permissions'    => 'Permissões',
+            'menu'           => 'Menus',
+            'menus'          => 'Menus',
+            'system'         => 'Sistema',
+            'manage'         => 'Administração',
         ];
 
-        $rolePermissions = $role->permissions->pluck('name')->all();
         $groupedPermissions = $permissions->groupBy(function ($permission) use ($groupMeta) {
-            $token = str_contains($permission->name, '.') ? str($permission->name)->before('.')->lower()->toString() : str($permission->name)->before(' ')->lower()->toString();
-            return $groupMeta[$token] ?? 'Administração';
+            $token = str_contains($permission->name, '.')
+                ? str($permission->name)->before('.')->lower()->toString()
+                : str($permission->name)->before(' ')->lower()->toString();
+
+            return $groupMeta[$token] ?? 'Outros';
         })->sortKeys();
 
         $formatPermission = fn (string $name) => str($name)->replace(['.', '_', '-'], ' ')->title();

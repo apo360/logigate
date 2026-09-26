@@ -2,8 +2,8 @@
 
 namespace App\Services\Dashboard;
 
+use App\Application\Arquivo\Services\ArquivoStorageService;
 use App\Models\Empresa;
-use Illuminate\Support\Arr;
 
 class OnboardingService extends BaseDashboardService
 {
@@ -22,12 +22,13 @@ class OnboardingService extends BaseDashboardService
             'Contacto_movel',
         ]);
 
-        $companyProfileComplete = collect($empresa)
-            ->every(fn ($value) => filled($value));
+        $companyProfileComplete = collect($empresa)->every(fn ($value) => filled($value));
 
         $usersConfigured = $this->empresa->users()->count() > 1;
         $operationsStarted = $this->empresa->processos()->exists() || $this->empresa->licenciaments()->exists();
-        $storageConfigured = config('filesystems.default') === 's3';
+
+        // ✅ Verifica se as credenciais S3 estão definidas. Não toca no bucket (rápido e sem custo AWS).
+        $storageConfigured = app(ArquivoStorageService::class)->configurationStatus($this->empresa)->configured;
 
         return [
             'company_profile_complete' => $companyProfileComplete,
