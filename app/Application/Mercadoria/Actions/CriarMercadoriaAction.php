@@ -24,6 +24,7 @@ final class CriarMercadoriaAction
         private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
         private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
         private readonly MercadoriaTenantAccessService $tenantAccess,
+        private readonly SincronizarContentoresMercadoriaAction $sincronizarContentores,
     ) {
     }
 
@@ -41,6 +42,8 @@ final class CriarMercadoriaAction
                 reason: $data->pautaChangeReason,
                 source: $data->pautaChangeSource === 'ai_suggestion' ? 'ai_suggestion' : 'system',
             );
+
+            $this->sincronizarContentores->execute($mercadoria, $data);
 
             $this->agrupamento->addOrUpdate($mercadoria);
             $this->parentTotals->applyCreate($mercadoria);

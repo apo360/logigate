@@ -40,6 +40,7 @@ use App\Http\Controllers\ScheduledTaskController;
 use App\Http\Controllers\WebPage\WelcomeController;
 use App\Http\Controllers\AppyPayWebhookController;
 use App\Models\Customer;
+use App\Livewire\Processo\ImportarDeclaracaoAsycuda;
 use App\Models\Processo;
 
     /** Rotas WEB */
@@ -254,6 +255,7 @@ use App\Models\Processo;
 
         Route::resource('customers', CustomerController::class)->except(['store', 'update']);
         Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);
+        Route::get('processos/importar-asycuda', ImportarDeclaracaoAsycuda::class)->name('processos.importar-asycuda');
         Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
 
     });

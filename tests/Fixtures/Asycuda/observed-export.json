@@ -1,0 +1,555 @@
+{
+    "transportInformation":  {
+                                 "borderIdentity":  {
+                                                        "identifier":  null,
+                                                        "nationalityCode":  null
+                                                    },
+                                 "borderTransportConveyanceNumber":  null,
+                                 "inlandTransportMode":  {
+                                                             "code":  "1"
+                                                         },
+                                 "arrivalIdentity":  {
+                                                         "identifier":  "MSC CHIQUITITA",
+                                                         "nationalityCode":  "CH"
+                                                     },
+                                 "borderTransportMode":  {
+                                                             "code":  null
+                                                         }
+                             },
+    "previousWarehouse":  {
+                              "name":  null,
+                              "code":  null
+                          },
+    "offices":  {
+                    "clearance":  {
+                                      "code":  "3POLA",
+                                      "name":  ""
+                                  },
+                    "presentation":  {
+                                         "code":  "3POLA",
+                                         "name":  ""
+                                     },
+                    "border":  {
+                                   "code":  "",
+                                   "name":  ""
+                               }
+                },
+    "additionalParties":  [
+
+                          ],
+    "parties":  {
+                    "financialResponsible":  null,
+                    "importer":  null,
+                    "consignee":  {
+                                      "name":  "ANONYMIZED CONSIGNEE",
+                                      "authorizationType":  null,
+                                      "authorizationCode":  null,
+                                      "address":  "ANONYMIZED ADDRESS",
+                                      "operatorCode":  "0000000000"
+                                  },
+                    "principal":  null,
+                    "exporter":  {
+                                     "name":  "ANONYMIZED EXPORTER",
+                                     "authorizationType":  null,
+                                     "authorizationCode":  null,
+                                     "address":  "ANONYMIZED ADDRESS",
+                                     "operatorCode":  ""
+                                 },
+                    "consignor":  null
+                },
+    "goodsLocation":  {
+                          "code":  null
+                      },
+    "information":  {
+                        "userGroup":  null,
+                        "epayment":  {
+                                         "enableEpaymentFlag":  true
+                                     },
+                        "containerFlag":  true,
+                        "operation":  null,
+                        "specificCircumstanceCode":  null,
+                        "isSplit":  null,
+                        "conformFlag":  null,
+                        "referenceDateTime":  null,
+                        "multiplePartiesFlag":  false,
+                        "advanceDeclaration":  false
+                    },
+    "countries":  null,
+    "declarantRepresentative":  null,
+    "warehouse":  {
+                      "name":  null,
+                      "code":  null
+                  },
+    "attachedDoc":  null,
+    "loadingDischargePlace":  {
+                                  "code":  null
+                              },
+    "items":  [
+                  {
+                      "errorId$":  null,
+                      "humanIndex$":  null,
+                      "ucr":  null,
+                      "parties":  {
+                                      "financialResponsible":  {
+                                                                   "name":  null,
+                                                                   "authorizationType":  null,
+                                                                   "authorizationCode":  null,
+                                                                   "address":  null,
+                                                                   "operatorCode":  null
+                                                               },
+                                      "importer":  {
+                                                       "name":  null,
+                                                       "authorizationType":  null,
+                                                       "authorizationCode":  null,
+                                                       "address":  null,
+                                                       "operatorCode":  null
+                                                   },
+                                      "consignee":  {
+                                                        "name":  null,
+                                                        "authorizationType":  null,
+                                                        "authorizationCode":  null,
+                                                        "address":  null,
+                                                        "operatorCode":  null
+                                                    },
+                                      "principal":  null,
+                                      "exporter":  {
+                                                       "name":  "",
+                                                       "authorizationType":  null,
+                                                       "authorizationCode":  null,
+                                                       "address":  "",
+                                                       "operatorCode":  null
+                                                   },
+                                      "consignor":  {
+                                                        "name":  null,
+                                                        "authorizationType":  null,
+                                                        "authorizationCode":  null,
+                                                        "address":  null,
+                                                        "operatorCode":  null
+                                                    }
+                                  },
+                      "goodsOrigin":  {
+                                          "country":  {
+                                                          "region":  null,
+                                                          "country":  {
+                                                                          "code":  "BR"
+                                                                      }
+                                                      },
+                                          "ruleCode":  null,
+                                          "preferenceCode":  null
+                                      },
+                      "additionalParties":  null,
+                      "writeOffDocumentId":  null,
+                      "goodsWeight":  {
+                                          "net":  25890,
+                                          "gross":  27899.5,
+                                          "netWeightUnit":  "KGM",
+                                          "grossWeightUnit":  "KGM"
+                                      },
+                      "id":  "31a99a0e-ccfb-4d01-9fdf-43550b26ce80",
+                      "valuationDetails":  {
+                                               "adjustmentRate":  null,
+                                               "transactionValue":  null,
+                                               "valuationMethodDescription":  "Valor Transaccional",
+                                               "itemPrice":  {
+                                                                 "amount":  21488.7,
+                                                                 "currencyRate":  {
+                                                                                      "currencyCode":  "EUR"
+                                                                                  }
+                                                             },
+                                               "valuationMethodCode":  "1"
+                                           },
+                      "customsProcedure":  {
+                                               "extendedCode":  "4100",
+                                               "additionalCode":  "000"
+                                           },
+                      "transactionTerm":  {
+                                              "paymentTermCode":  "RD",
+                                              "incoterms":  {
+                                                                "situationCode":  2,
+                                                                "place":  "CIF",
+                                                                "code":  "CIF"
+                                                            },
+                                              "transactionNatureCode":  "11"
+                                          },
+                      "productIdentities":  [
+
+                                            ],
+                      "transportDocumentReference":  {
+                                                         "waybill":  "MEDUWE161494",
+                                                         "manifest":  {
+                                                                          "officeCode":  "3POLA",
+                                                                          "registrationYear":  null,
+                                                                          "registrationDate":  null,
+                                                                          "departureDate":  "2026-07-04",
+                                                                          "registrationNumber":  null,
+                                                                          "voyageNumber":  "WM627R"
+                                                                      }
+                                                     },
+                      "vehicles":  [
+
+                                   ],
+                      "itemNumber":  1,
+                      "goodsDescription":  {
+                                               "tsc":  null,
+                                               "commercialDescription":  "LINGUIÇA DE PORCO CONGELADA",
+                                               "quotaInformation":  {
+                                                                        "supplementaryCode":  null,
+                                                                        "writeOffQuantity":  null,
+                                                                        "balance":  null,
+                                                                        "quotaType":  null,
+                                                                        "quotaCode":  null,
+                                                                        "quotaReference":  {
+                                                                                               "number":  null,
+                                                                                               "year":  null,
+                                                                                               "letter":  null,
+                                                                                               "dateTime":  null
+                                                                                           },
+                                                                        "quotaDocumentId":  null,
+                                                                        "itemNumber":  null
+                                                                    },
+                                               "tariffCode":  "1601000000",
+                                               "tariffDescription":  "Enchidos e produtos semelhantes, de carne, miudezas, sangue ou de insectos; preparações alimentícias à base de tais produtos",
+                                               "dangerousGoods":  {
+                                                                      "code":  "ADR2"
+                                                                  }
+                                           },
+                      "associatedManifestReference":  "3POLA 2026 MA 63 - 2026-07-08",
+                      "isSplit":  null,
+                      "delay":  {
+                                    "type":  null,
+                                    "days":  null
+                                },
+                      "previousDeclarations":  null,
+                      "goodsPackage":  {
+                                           "packageType":  {
+                                                               "code":  "CT"
+                                                           },
+                                           "number":  2589,
+                                           "marks":  "SEARA"
+                                       },
+                      "supplementaryUnits":  [
+                                                 {
+                                                     "errorId$":  null,
+                                                     "humanIndex$":  null,
+                                                     "code":  "KG",
+                                                     "quantity":  2589,
+                                                     "id":  null
+                                                 }
+                                             ],
+                      "adjustments":  [
+                                          {
+                                              "errorId$":  null,
+                                              "humanIndex$":  null,
+                                              "code":  "FRETE",
+                                              "apportionmentMode":  "NONE",
+                                              "name":  "Custos de transporte até ao local de importação",
+                                              "parentId":  null,
+                                              "line":  {
+                                                           "amount":  3510,
+                                                           "currencyRate":  {
+                                                                                "currencyCode":  "EUR"
+                                                                            }
+                                                       },
+                                              "id":  "b9da873f-e807-4735-aac5-c346d80b31b8"
+                                          },
+                                          {
+                                              "errorId$":  null,
+                                              "humanIndex$":  null,
+                                              "code":  "SEGURO",
+                                              "apportionmentMode":  "NONE",
+                                              "name":  "Custos de seguro das mercadorias importadas",
+                                              "parentId":  null,
+                                              "line":  {
+                                                           "amount":  50,
+                                                           "currencyRate":  {
+                                                                                "currencyCode":  "EUR"
+                                                                            }
+                                                       },
+                                              "id":  "865682d3-21ec-431f-b9aa-74f4c9936bbd"
+                                          }
+                                      ],
+                      "countries":  {
+                                        "trading":  {
+                                                        "code":  null
+                                                    },
+                                        "stopover":  {
+                                                         "code":  null
+                                                     },
+                                        "destination":  {
+                                                            "region":  null,
+                                                            "country":  {
+                                                                            "code":  "AO"
+                                                                        }
+                                                        },
+                                        "export":  {
+                                                       "region":  null,
+                                                       "country":  null
+                                                   }
+                                    }
+                  }
+              ],
+    "containers":  [
+                       {
+                           "errorId$":  null,
+                           "humanIndex$":  null,
+                           "tareWeight":  null,
+                           "description":  null,
+                           "grossVolume":  null,
+                           "seals":  [
+
+                                     ],
+                           "number":  "MSGU9130182",
+                           "items":  [
+                                         {
+                                             "errorId$":  null,
+                                             "humanIndex$":  null,
+                                             "id":  "31a99a0e-ccfb-4d01-9fdf-43550b26ce80",
+                                             "code":  "1",
+                                             "itemId":  "31a99a0e-ccfb-4d01-9fdf-43550b26ce80"
+                                         }
+                                     ],
+                           "unloadedFlag":  false,
+                           "sealIndicator":  false,
+                           "loadIndicator":  "FULL",
+                           "grossVolumeUnit":  null,
+                           "resealIndicator":  false,
+                           "grossWeight":  27899.5,
+                           "id":  "3efc6917-44b0-4ebc-9ac9-199b935dcc98",
+                           "numberOfPackages":  null,
+                           "declarationItemId":  null,
+                           "type":  "40HR"
+                       }
+                   ],
+    "mineralDeclaration":  null,
+    "accounts":  {
+                     "creditPin":  null,
+                     "guarantee":  null,
+                     "credit":  null,
+                     "prepayment":  null
+                 },
+    "declarantContactDetails":  {
+                                    "email":  "declarant@example.invalid",
+                                    "name":  "ANONYMIZED DECLARANT",
+                                    "phone":  "000000000"
+                                },
+    "declarantRepresentativeType":  null,
+    "mediaDocuments":  [
+                           {
+                               "scope":  "cd",
+                               "uid":  "iyikfCLLHjyJiZQT4UUcEttXBpU_0457648d_34e2_4465_bfc3_ac183dcd8252",
+                               "hash":  "6b78ce6845af543fbd6e4361b9cbd4af40094d6c13819f5044bf938a7c20d77516f9bf187625057e0686b5d10c4c117a3b1a7c53a316fffb8b7428945aae3603",
+                               "name":  "BL.pdf",
+                               "size":  278785,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "7b9a70bb-8d2c-49fc-b224-3633002d933f",
+                               "reference":  "MEDUWE161494",
+                               "code":  "401",
+                               "documentDate":  "2026-05-28T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "E8JSza1FPOxeF0wGI3rGU1x8gF4_ea388cd9_cd1c_435a_b56f_bd64f9e89a06",
+                               "hash":  "c722aeb79bf2e0e8ec08b00415050440f238eb4bb0d409fd20545761b58855d88b3be55926224426ad4af610b0fac7788deb1a8e67ed0f0af924135f74d63520",
+                               "name":  "FACTURA.pdf",
+                               "size":  118283,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "36e755a6-f6e1-4d96-a49f-527e94544bdc",
+                               "reference":  "WMH26-FC 31550",
+                               "code":  "403",
+                               "documentDate":  "2026-05-31T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "gIgRli1WfYY90MNdCO2KTRiyK9U_8c38f214_d825_468f_8dd7_72dc728cc981",
+                               "hash":  "3437d56d2eaab759f61faf85e41d6505aeea6374d6cecca2f50d4efcd0e4f3ba6a9ae0097dd78154b5b455fe72a11ec416d2ce7f441200118ba7f94f2d842406",
+                               "name":  "MINCO.pdf",
+                               "size":  106312,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "614c7d9c-adbb-4e30-a602-0992b3400251",
+                               "reference":  "202605000000675779",
+                               "code":  "301",
+                               "documentDate":  "2026-05-13T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "3npB0TGBmQeLE7VeN-CZVSO3eJk_5e1750d1_82d2_4740_b372_a1545300a731",
+                               "hash":  "66f69790f87c5d24b835ab85106389e6fa64f773941f320c58584202be243e87ae7f1224ebde4f8ff71fc2b38f6933ad9284f3b74be75a86ebc53f14a922e6f8",
+                               "name":  "CNCA.pdf",
+                               "size":  258183,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "49a0db8c-d402-4825-a34a-1f71bdba05cc",
+                               "reference":  "BR101-627127-22",
+                               "code":  "200",
+                               "documentDate":  "2026-06-22T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "UE1lgvFGGebxSehE8WbFOooByU4_fbfd8c6b_e046_4f2d_a851_b08b52243e18",
+                               "hash":  "e98574f883a43aa3788aad27ee69be8320ea5c558788c66a1b7246dd8280c22930088d53bdbf07da900b5e1f31c1c681bf5156e9d4e7654677b894744ce05a93",
+                               "name":  "CONTRATAÃÃO.pdf",
+                               "size":  117406,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "db2701a8-0732-46e3-ad99-2add771677b3",
+                               "reference":  "11364/2026",
+                               "code":  "405",
+                               "documentDate":  "2026-06-25T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "fteMAvylPXf5zLXp0_ExKX16G18_c128a94f_e239_4c99_b923_e92bc7ba7ebf",
+                               "hash":  "c96459679597a3175efe584e205b3dc54d388ff1719d51abf5c11e938ef292e1ce879f1a47ad378857d8c60b918809b860db9e7c0c3ab80033913ff606d39b0b",
+                               "name":  "GUIA.pdf",
+                               "size":  129047,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "c60f1109-a66e-498e-bbe1-1744949b9bed",
+                               "reference":  "3932/CS/DPSV/2026",
+                               "code":  "206",
+                               "documentDate":  "2026-06-24T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "jxD2Y7ZMdBGMNDIaJOIGWlR1yN8_cf891927_30ca_40ae_a4fb_64170a4c5561",
+                               "hash":  "fdbdb6f4457fd44f04c01861674662a5d9572eeb79a2766a435994bd9f66a822d8d277db1ab0e073bcac6a36ae5dd1d77664f7199ec83c267de0d4fac9bed9ee",
+                               "name":  "CERTIF DE QUALIDADE.pdf",
+                               "size":  156556,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "7e8d0c05-1ba2-4a48-a097-5638b9af1f0d",
+                               "reference":  "IO-00273267/490/26",
+                               "code":  "204",
+                               "documentDate":  "2026-05-20T00:00:00"
+                           },
+                           {
+                               "scope":  "cd",
+                               "uid":  "ifXg2yszAnMeyLcmZC3RoKe5Dcg_ec50c6ce_7623_4e84_a30d_05c8733f06cd",
+                               "hash":  "c651a3ae9c7277de29467f046e5a7296749298cdc194f75338500b10cc53862d1c12240546cae493d2ab82f9e045bbc8bb8366fcc9a9c0304c2a48ca226f5d97",
+                               "name":  "CERTIF DE ORIGEM.pdf",
+                               "size":  172144,
+                               "status":  "PENDING",
+                               "action":  "STORE",
+                               "verificationStatus":  null,
+                               "errorId$":  null,
+                               "humanIndex$":  null,
+                               "itemNumber":  1,
+                               "id":  "3ba8a74f-6d93-4054-9d26-9e635ee48138",
+                               "reference":  "SEARA 17343/26",
+                               "code":  "202",
+                               "documentDate":  "2026-05-28T00:00:00"
+                           }
+                       ],
+    "declarantRepresentativeContactDetails":  null,
+    "supportingDocuments":  [
+
+                            ],
+    "transactionTerm":  null,
+    "locators":  {
+                     "declarant":  {
+                                       "declarantReference":  null
+                                   },
+                     "ucr":  null
+                 },
+    "procedure":  {
+                      "flow":  null,
+                      "customsProcedure":  {
+                                               "extendedCode":  "4100",
+                                               "additionalCode":  "000"
+                                           },
+                      "modelCode":  "IM",
+                      "generalProcedureCode":  "4"
+                  },
+    "crudeDeclaration":  null,
+    "declarant":  {
+                      "name":  null,
+                      "authorizationType":  null,
+                      "authorizationCode":  null,
+                      "address":  "ANONYMIZED ADDRESS",
+                      "operatorCode":  "01049"
+                  },
+    "authorisations":  [
+
+                       ],
+    "manifestReference":  null,
+    "adjustments":  [
+                        {
+                            "errorId$":  null,
+                            "humanIndex$":  null,
+                            "name":  "Custos de transporte até ao local de importação",
+                            "id":  "b73fdfa1-793f-4587-bf94-7117190cb46a",
+                            "line":  {
+                                         "amount":  3510,
+                                         "currencyRate":  {
+                                                              "currencyCode":  "EUR"
+                                                          }
+                                     },
+                            "apportionmentMode":  "BY_WEIGHT",
+                            "fromItem":  null,
+                            "code":  "FRETE"
+                        },
+                        {
+                            "errorId$":  null,
+                            "humanIndex$":  null,
+                            "name":  "Custos de seguro das mercadorias importadas",
+                            "id":  "50718885-53f1-4f6b-8c93-1b3b62fd7fcf",
+                            "line":  {
+                                         "amount":  50,
+                                         "currencyRate":  {
+                                                              "currencyCode":  "EUR"
+                                                          }
+                                     },
+                            "apportionmentMode":  "BY_VALUE",
+                            "fromItem":  null,
+                            "code":  "SEGURO"
+                        }
+                    ],
+    "comment":  null,
+    "bankAccount":  {
+                        "code":  "BMA",
+                        "additionalInformation":  null,
+                        "reference":  null
+                    },
+    "customsSeal":  {
+                        "code":  "CDOA01049GDARD"
+                    },
+    "valuation":  {
+                      "totalInvoice":  {
+                                           "amount":  21488.7,
+                                           "currencyRate":  {
+                                                                "currencyCode":  "EUR"
+                                                            }
+                                       }
+                  }
+}

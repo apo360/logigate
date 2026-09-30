@@ -290,6 +290,40 @@
     </div>
 
     {{-- Seção Veículos --}}
+    @if($context === 'processo')
+    <section class="border-t pt-4" aria-labelledby="contentores-heading">
+        <div class="mb-3"><h4 id="contentores-heading" class="text-sm font-semibold text-gray-800">Contentores</h4><p class="text-xs text-gray-500">Seleccione os contentores desta mercadoria.</p></div>
+        @if(count($contentoresDisponiveis) > 0)
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                @foreach($contentoresDisponiveis as $contentor)
+                    <label wire:key="contentor-{{ $contentor['id'] }}" class="flex gap-3 rounded-lg border p-3 cursor-pointer hover:border-blue-400">
+                        <input type="checkbox" value="{{ $contentor['id'] }}" wire:model="form.contentor_ids" class="mt-1 rounded border-gray-300 text-blue-600">
+                        <span><span class="block text-sm font-medium text-gray-800">{{ $contentor['numero'] }} <span class="text-gray-500">{{ $contentor['tipo'] }}</span> <span class="text-xs text-gray-500">{{ $contentor['indicador_carga'] }}</span></span>
+                        @if($contentor['peso_bruto'])<span class="block text-xs text-gray-500">Peso bruto: {{ number_format((float) $contentor['peso_bruto'], 2, ',', '.') }} kg</span>@endif</span>
+                    </label>
+                @endforeach
+            </div>
+        @else
+            <div class="rounded-lg bg-gray-50 p-3 text-sm text-gray-600">Este processo ainda não possui contentores.</div>
+        @endif
+        @error('form.contentor_ids')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+        <button type="button" wire:click="toggleQuickCreateContentor" class="mt-3 text-sm font-medium text-blue-700">{{ count($contentoresDisponiveis) ? '+ Novo Contentor' : '+ Adicionar Contentor' }}</button>
+        @if($showQuickCreateContentor)
+            <div class="mt-3 rounded-lg border bg-gray-50 p-4 space-y-3"><h5 class="text-sm font-semibold text-gray-800">Novo Contentor</h5>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div><label class="block text-xs font-medium mb-1">Número *</label><input wire:model="contentorForm.numero" class="w-full rounded border-gray-300" maxlength="50">@error('contentorForm.numero')<span class="text-xs text-red-600">{{ $message }}</span>@enderror</div>
+                    <div><label class="block text-xs font-medium mb-1">Tipo</label><input wire:model="contentorForm.tipo" class="w-full rounded border-gray-300" maxlength="30"></div>
+                    <div><label class="block text-xs font-medium mb-1">Indicador de carga</label><input wire:model="contentorForm.indicador_carga" class="w-full rounded border-gray-300" maxlength="20"></div>
+                    <div><label class="block text-xs font-medium mb-1">Peso tara</label><input type="number" min="0" step="0.01" wire:model="contentorForm.peso_tara" class="w-full rounded border-gray-300"></div>
+                    <div><label class="block text-xs font-medium mb-1">Peso bruto</label><input type="number" min="0" step="0.01" wire:model="contentorForm.peso_bruto" class="w-full rounded border-gray-300"></div>
+                    <div><label class="block text-xs font-medium mb-1">Número de volumes</label><input type="number" min="0" step="1" wire:model="contentorForm.numero_volumes" class="w-full rounded border-gray-300"></div>
+                </div>
+                <div class="flex justify-end gap-2"><button type="button" wire:click="$set('showQuickCreateContentor', false)" class="rounded px-3 py-2 text-sm text-gray-600">Cancelar</button><button type="button" wire:click="createContentor" class="rounded bg-blue-600 px-3 py-2 text-sm text-white">Adicionar</button></div>
+            </div>
+        @endif
+    </section>
+    @endif
+
     @if($showVeiculos)
     <div class="border-t pt-4">
         <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">

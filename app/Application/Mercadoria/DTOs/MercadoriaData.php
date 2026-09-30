@@ -26,6 +26,7 @@ final class MercadoriaData
         public readonly ?float $potencia,
         public readonly ?string $pautaChangeReason = null,
         public readonly string $pautaChangeSource = 'manual',
+        public readonly array $contentorIds = [],
     ) {
     }
 
@@ -56,6 +57,7 @@ final class MercadoriaData
             potencia: self::nullableFloat($form['potencia'] ?? null),
             pautaChangeReason: self::nullableString($form['pauta_change_reason'] ?? null),
             pautaChangeSource: self::normalizeSource($form['pauta_change_source'] ?? 'manual'),
+            contentorIds: self::normalizeIds($form['contentor_ids'] ?? []),
         );
     }
 
@@ -135,5 +137,25 @@ final class MercadoriaData
         $value = (string) $value;
 
         return in_array($value, ['manual', 'ai_suggestion', 'import', 'system'], true) ? $value : 'manual';
+    }
+
+    /** @return list<int> */
+    private static function normalizeIds(mixed $values): array
+    {
+        if (! is_array($values)) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($values as $value) {
+            if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+                $id = (int) $value;
+                if ($id > 0) {
+                    $ids[$id] = $id;
+                }
+            }
+        }
+
+        return array_values($ids);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Livewire\Mercadorias;
 
 use App\Application\Mercadoria\Actions\AtualizarMercadoriaAction;
 use App\Application\Mercadoria\Actions\CriarMercadoriaAction;
+use App\Application\Contentor\Actions\CriarContentorAction;
 use App\Application\Mercadoria\Actions\ExcluirMercadoriaAction;
 use App\Application\Mercadoria\DTOs\MercadoriaData;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
@@ -13,6 +14,8 @@ use App\Application\Mercadoria\Services\PautaAduaneiraLookupService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\Subcategoria;
+use App\Models\Contentor;
+use Illuminate\Database\QueryException;
 use Livewire\Attributes\On;
 
 class CreateForm extends Component
@@ -27,6 +30,9 @@ class CreateForm extends Component
     public bool $open = false;
     public bool $showVeiculos = false;
     public bool $showMaquinas = false;
+    public array $contentoresDisponiveis = [];
+    public bool $showQuickCreateContentor = false;
+    public array $contentorForm = ['numero' => '', 'tipo' => '', 'indicador_carga' => '', 'peso_tara' => '', 'peso_bruto' => '', 'numero_volumes' => ''];
 
     public string $codigoStatus = 'idle'; 
     // idle | incomplete | invalid | valid
@@ -45,6 +51,7 @@ class CreateForm extends Component
         'unidade'         => 'Kg',
         'ncm_hs'          => '',
         'ncm_hs_numero'   => '',
+        'contentor_ids'   => [],
         'qualificacao'    => '',
         'preco_unitario'  => 0,
         'preco_total'     => 0,
@@ -125,6 +132,7 @@ class CreateForm extends Component
         $this->parentId = $parentId;
         app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), $context, $parentId, 'mercadorias.view');
         $this->subCategorias = SubCategoria::all()->toArray();
+        $this->loadContentores();
     }
 
     public function openModal(): void
@@ -133,6 +141,8 @@ class CreateForm extends Component
         $this->mode = 'create';
         $this->mercadoriaId = null;
         $this->originalCodigoAduaneiro = null;
+        $this->form['contentor_ids'] = [];
+        $this->loadContentores();
         app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), $this->context, $this->parentId, 'mercadorias.create');
         $this->open = true;
     }
@@ -165,6 +175,9 @@ class CreateForm extends Component
             'chassis'         => $m->chassis,
             'ano_fabricacao'  => $m->ano_fabricacao,
             'potencia'        => $m->potencia,
+            'contentor_ids'   => $this->context === 'processo'
+                ? $m->contentores()->where('contentores.processo_id', $this->parentId)->where('contentores.empresa_id', $m->processo?->empresa_id)->pluck('contentores.id')->map(fn ($id) => (string) $id)->all()
+                : [],
             'pauta_change_reason' => null,
             'pauta_change_source' => 'manual',
         ];
@@ -185,6 +198,10 @@ class CreateForm extends Component
         $this->showMaquinas = false;
         $this->pautas = [];
         $this->originalCodigoAduaneiro = null;
+        $this->form['contentor_ids'] = [];
+        $this->contentorForm = ['numero' => '', 'tipo' => '', 'indicador_carga' => '', 'peso_tara' => '', 'peso_bruto' => '', 'numero_volumes' => ''];
+        $this->showQuickCreateContentor = false;
+        $this->loadContentores();
     }
 
     // Atualizar closeModal para usar resetForm
@@ -309,6 +326,7 @@ class CreateForm extends Component
 
             // Limpar formulário
             $this->reset('form');
+            $this->form['contentor_ids'] = [];
 
             // Emitir eventos
             $this->dispatch($this->mode === 'edit' ? 'mercadoriaUpdated' : 'mercadoriaCreated');
@@ -329,6 +347,12 @@ class CreateForm extends Component
                 $this->mercadoriaId = null;
             }
 
+        } catch (QueryException $e) {
+            if ($this->isDuplicateContainerNumber($e)) {
+                $this->addError('contentorForm.numero', 'Este contentor já está registado neste processo.');
+                return;
+            }
+            $this->dispatch('toast', type: 'error', message: 'Erro ao salvar mercadoria: ' . $e->getMessage());
         } catch (\Exception $e) {
             $this->dispatch('toast', 
                 type: 'error', 
@@ -379,6 +403,70 @@ class CreateForm extends Component
     public function render()
     {
         return view('livewire.mercadorias.create-form');
+    }
+
+    public function createContentor(): void
+    {
+        if ($this->context !== 'processo') {
+            return;
+        }
+
+        $this->validate([
+            'contentorForm.numero' => 'required|string|max:50',
+            'contentorForm.tipo' => 'nullable|string|max:30',
+            'contentorForm.indicador_carga' => 'nullable|string|max:20',
+            'contentorForm.peso_tara' => 'nullable|numeric|min:0',
+            'contentorForm.peso_bruto' => 'nullable|numeric|min:0',
+            'contentorForm.numero_volumes' => 'nullable|integer|min:0',
+        ]);
+
+        try {
+            $contentor = app(CriarContentorAction::class)->execute($this->parentId, $this->contentorForm);
+        } catch (QueryException $exception) {
+            if ($this->isDuplicateContainerNumber($exception)) {
+                $this->addError('contentorForm.numero', 'Este contentor já está registado neste processo.');
+                return;
+            }
+            throw $exception;
+        }
+
+        $this->loadContentores();
+        $this->form['contentor_ids'] = array_values(array_unique([...($this->form['contentor_ids'] ?? []), (string) $contentor->id]));
+        $this->contentorForm = ['numero' => '', 'tipo' => '', 'indicador_carga' => '', 'peso_tara' => '', 'peso_bruto' => '', 'numero_volumes' => ''];
+        $this->showQuickCreateContentor = false;
+        $this->resetValidation();
+    }
+
+    public function toggleQuickCreateContentor(): void
+    {
+        if ($this->context === 'processo') {
+            $this->showQuickCreateContentor = ! $this->showQuickCreateContentor;
+        }
+    }
+
+    private function loadContentores(): void
+    {
+        if (($this->context ?? null) !== 'processo' || empty($this->parentId)) {
+            $this->contentoresDisponiveis = [];
+            return;
+        }
+
+        $processo = app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), 'processo', $this->parentId);
+        $this->contentoresDisponiveis = Contentor::query()
+            ->where('processo_id', $processo->id)
+            ->where('empresa_id', $processo->empresa_id)
+            ->orderBy('numero')
+            ->get(['id', 'numero', 'tipo', 'indicador_carga', 'peso_bruto'])
+            ->map(fn (Contentor $contentor) => $contentor->only(['id', 'numero', 'tipo', 'indicador_carga', 'peso_bruto']))
+            ->all();
+    }
+
+    private function isDuplicateContainerNumber(QueryException $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'contentores_processo_id_numero_unique')
+            || (str_contains($message, 'contentores.processo_id') && str_contains($message, 'contentores.numero'));
     }
 
     private function loadPautasForSubcategoria(?int $subcategoriaId): void

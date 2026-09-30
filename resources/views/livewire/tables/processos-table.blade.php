@@ -42,6 +42,7 @@
                     </select>
                 </div>
                 <div class="flex gap-2">
+                    <a href="{{ route('processos.importar-asycuda') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-md hover:bg-emerald-800">Importar ASYCUDA</a>
                     <a href="{{ route('processos.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">+ Novo Processo</a>
                     <a href="{{ route('licenciamentos.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">+ Licenciamento</a>
                 </div>
@@ -109,7 +110,7 @@
                                         <div x-data="{ open: false }" class="relative">
                                             <button @click="open = !open" class="text-gray-500 hover:text-gray-700">⋮</button>
                                             <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                                                <a href="{{ route('documentos.create', ['processo_id' => $p->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Facturar Processo</a>
+                                                <a href="{{ route('integracoes.facturacao-hongayetu.emitir-ft', ['processo_id' => $p->id]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Facturar Processo</a>
                                                 <a href="{{ route('gerar.xml', ['IdProcesso' => $p->id]) }}" target="_blank" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Gerar XML</a>
                                                 <hr class="my-1">
                                                 <button wire:confirm="Tem certeza que deseja eliminar este processo?" wire:click="deleteProcesso({{ $p->id }})" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Eliminar</button>

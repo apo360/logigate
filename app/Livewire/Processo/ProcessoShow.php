@@ -3,6 +3,7 @@
 namespace App\Livewire\Processo;
 
 use App\Application\Processo\Actions\EmitirNotaDespesaProcessoAction;
+use App\Application\Processo\Actions\ExportarDeclaracaoAsycudaAction;
 use App\Application\Processo\Actions\GerarExtratoMercadoriaProcessoAction;
 use App\Application\Processo\Actions\GerarTxtProcessoAction;
 use App\Application\Processo\Services\ProcessoTenantAccessService;
@@ -12,6 +13,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Livewire\Component;
 
@@ -25,6 +27,7 @@ final class ProcessoShow extends Component
 
     public array $camposNaoPreenchidos = [];
     public array $camposImportantes = [];
+    public string $asycudaTransportIdentifier = '';
 
     public function mount(Processo $processo): void
     {
@@ -96,6 +99,23 @@ final class ProcessoShow extends Component
             fn () => $action->execute(Auth::user(), $this->processo),
             'Nota de despesa gerada com sucesso.'
         );
+    }
+
+    public function exportarAsyscudaJson(ExportarDeclaracaoAsycudaAction $action): ?StreamedResponse
+    {
+        try {
+            $this->authorize('view', $this->processo);
+            $result = $action->execute($this->processo, $this->asycudaTransportIdentifier);
+            $this->dispatch('toast', type: 'success', message: 'JSON exportado. Confirme a compatibilidade de importação no ASYCUDA.');
+            return response()->streamDownload(static function () use ($result): void { echo $result->json; }, $result->filename, ['Content-Type' => 'application/json; charset=UTF-8']);
+        } catch (HttpExceptionInterface $e) {
+            throw $e;
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', type: 'error', message: $e->getMessage() ?: 'Não foi possível exportar a declaração.');
+            return null;
+        }
     }
 
     private function downloadFromAction(callable $callback, string $successMessage): ?BinaryFileResponse

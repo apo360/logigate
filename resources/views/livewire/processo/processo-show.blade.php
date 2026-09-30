@@ -356,6 +356,20 @@
                             <span wire:loading.remove wire:target="gerarExtratoMercadoria">Gerar Extrato de Mercadoria</span>
                             <span wire:loading wire:target="gerarExtratoMercadoria">A gerar...</span>
                         </button>
+                        <button type="button" wire:click="gerarCartaDiversa" wire:loading.attr="disabled" wire:target="gerarCartaDiversa" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50 w-full text-left disabled:opacity-50">
+                            <i class="fas fa-file-alt text-yellow-500 w-5"></i>
+                            <span wire:loading.remove wire:target="gerarCartaDiversa">Gerar Carta Diversa</span>
+                            <span wire:loading wire:target="gerarCartaDiversa">A gerar...</span>
+                        </button>
+                        {{-- Botão para gerar Asyscuda Json --}}
+                        <label class="block px-2 py-1 text-xs text-gray-600">Identificação do navio/transporte (confirmar para a declaração)
+                            <input type="text" wire:model="asycudaTransportIdentifier" class="mt-1 w-full rounded border-gray-300 text-sm" maxlength="120" placeholder="Nome conforme documento de transporte">
+                        </label>
+                        <button type="button" wire:click="exportarAsyscudaJson" wire:loading.attr="disabled" wire:target="exportarAsyscudaJson" class="flex items-center text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50 w-full text-left disabled:opacity-50">
+                            <i class="fas fa-file-code text-indigo-500 w-5"></i>
+                            <span wire:loading.remove wire:target="exportarAsyscudaJson">Exportar declaração Asyscuda JSON</span>
+                            <span wire:loading wire:target="exportarAsyscudaJson">A exportar...</span>
+                        </button>
                     @endcan
                     <hr>
                     <span class="flex items-center text-sm text-white bg-red-300 p-2 rounded cursor-not-allowed">

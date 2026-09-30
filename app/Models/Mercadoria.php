@@ -13,7 +13,7 @@ class Mercadoria extends Model
         'Fk_Importacao', 
         'Descricao',
         'NCM_HS',
-        'NCM_HS_Numero',
+        'NCM_HS_Numero', // Numero do contentor NCM/HS
         'Quantidade',
         'Qualificacao',
         'Unidade',
@@ -46,6 +46,13 @@ class Mercadoria extends Model
     public function processos()
     {
         return $this->belongsTo(Processo::class, 'Fk_Importacao');
+    }
+
+    public function contentores()
+    {
+        return $this->belongsToMany(Contentor::class, 'contentor_mercadoria', 'mercadoria_id', 'contentor_id')
+            ->withPivot(['asycuda_item_id', 'asycuda_link_id', 'codigo_item'])
+            ->withTimestamps();
     }
 
     public function licenciamento()
@@ -91,11 +98,6 @@ class Mercadoria extends Model
     /**
      * Relacionamento com o Processo/Mercadoria.
      */
-    public function procLicenMercadorias()
-    {
-        return $this->hasMany(ProcessoLicenciamentoMercadoria::class, 'processo_id');
-    }
-
     // Função auxiliar para calcular o frete da mercadoria
     public static function calcularFreteMercadoria($precoTotal, $FOB, $Frete) {
         return ($precoTotal / $FOB) * $Frete;

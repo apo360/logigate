@@ -253,6 +253,11 @@ class Processo extends Model implements Auditable
         return $this->hasMany(Mercadoria::class, 'Fk_Importacao');
     }
 
+    public function contentores()
+    {
+        return $this->hasMany(Contentor::class, 'processo_id');
+    }
+
     public function mercadoriasAgrupadas()
     {
         return $this->hasMany(MercadoriaAgrupada::class, 'processo_id');

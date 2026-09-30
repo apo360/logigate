@@ -24,6 +24,7 @@ final class AtualizarMercadoriaAction
         private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
         private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
         private readonly MercadoriaTenantAccessService $tenantAccess,
+        private readonly SincronizarContentoresMercadoriaAction $sincronizarContentores,
     ) {
     }
 
@@ -50,6 +51,8 @@ final class AtualizarMercadoriaAction
                 reason: $data->pautaChangeReason,
                 source: $data->pautaChangeSource,
             );
+
+            $this->sincronizarContentores->execute($updated, $data);
 
             $this->agrupamento->addOrUpdate($updated);
             $this->parentTotals->applyUpdate($before, $updated);

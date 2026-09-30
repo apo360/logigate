@@ -44,6 +44,7 @@ class ProcessoTenantIsolationTest extends TestCase
             'NrProcesso' => 'PROC-2026-000001',
         ]);
 
+        $this->actingAs($tenantBUser);
         $processo = app(CriarProcessoAction::class)->execute(CriarProcessoDTO::fromArray([
             'NrProcesso' => 'PROC-2026-000001',
             'customer_id' => $customerB->id,
@@ -53,6 +54,8 @@ class ProcessoTenantIsolationTest extends TestCase
             'estancia_id' => $estanciaId,
             'TipoProcesso' => (string) $tipoProcessoId,
             'Estado' => 'Aberto',
+            'forma_pagamento' => 'RD',
+            'codigo_banco' => '001',
             'DataAbertura' => now()->toDateString(),
         ]));
 
