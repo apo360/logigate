@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Domains\Customers\Actions;
+namespace App\Application\Customer\Actions;
 
 use App\Domains\Customers\Exceptions\CustomerNotAssociatedWithEmpresaException;
 use App\Application\Customer\Services\CustomerTenantAccessService;
