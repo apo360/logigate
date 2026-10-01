@@ -14,6 +14,9 @@ class DuplicarLicenciamentoAction
 
     public function execute(Licenciamento $original): Licenciamento
     {
+        \Illuminate\Support\Facades\Gate::authorize('view', $original);
+        \Illuminate\Support\Facades\Gate::authorize('create', Licenciamento::class);
+        abort_unless(\App\Support\BusinessAuthorization::allows(auth()->user(), 'mercadorias.create'), 403);
         return DB::transaction(function () use ($original) {
             // Dados básicos, excluindo campos que não devem ser copiados
             $dados = $original->toArray();

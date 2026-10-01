@@ -41,7 +41,7 @@ class OtpController extends AuthenticatedController
         $request->validate(['otp' => 'required|integer']);
 
         $user = Auth::user();
-        $empresa = $user->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa($user);
 
         if ($user->otp == $request->otp && Carbon::now()->lt(Carbon::parse($user->otp_expires_at))) {
 

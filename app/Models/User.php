@@ -10,12 +10,12 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Permission\Traits\HasRoles;
+use App\Models\Concerns\HasCompanyRoles;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class User extends Authenticatable implements Auditable
 {
-    use HasRoles;
+    use HasCompanyRoles;
     use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
@@ -93,31 +93,29 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
-     * Empresa actual do utilizador (via sessão, ou primeira como fallback).
+     * Empresa activa validada do actor autenticado, sem fallback de membership.
      */
     public function empresaAtiva(): ?Empresa
     {
-        $empresaId = session('empresa_id');
-
-        if ($empresaId) {
-            return $this->empresas()->where('empresas.id', $empresaId)->first();
-        }
-
-        return $this->empresas()->first();
+        return \App\Support\TenantContext::empresa($this);
     }
 
     /** Role do utilizador NA empresa indicada. */
     public function roleNaEmpresa(?Empresa $empresa = null): ?string
     {
-        $empresa ??= $this->empresaAtiva();
+        $empresa ??= \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             return null;
         }
 
-        return $this->empresas()
-            ->where('empresas.id', $empresa->id)
-            ->first()?->pivot->role;
+        if (\App\Support\TenantContext::empresaId() !== (int) $empresa->id) {
+            return null;
+        }
+        if (! \App\Support\TenantContext::userBelongsToEmpresa($this, (int) $empresa->id)) {
+            return null;
+        }
+        return $this->getRoleNames()->first();
     }
 
     public function hasActiveSubscription(): bool

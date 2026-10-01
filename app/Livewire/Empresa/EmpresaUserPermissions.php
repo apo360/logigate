@@ -15,8 +15,12 @@ use Livewire\Component;
 
 class EmpresaUserPermissions extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
+    #[\Livewire\Attributes\Locked]
     public Empresa $empresa;
 
+    #[\Livewire\Attributes\Locked]
     public User $managedUser;
 
     public array $roles = [];
@@ -51,8 +55,10 @@ class EmpresaUserPermissions extends Component
             'permissions.*' => [Rule::in($this->assignablePermissionNames())],
         ]);
 
-        app(SincronizarRolesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $this->managedUser, $this->roles);
-        app(SincronizarPermissoesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $this->managedUser, $this->permissions);
+        \Illuminate\Support\Facades\DB::transaction(function (): void {
+            app(SincronizarRolesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $this->managedUser, $this->roles);
+            app(SincronizarPermissoesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $this->managedUser, $this->permissions);
+        });
 
         $this->managedUser = $this->managedUser->refresh()->load('roles', 'permissions');
         $this->fillFromUser();
@@ -107,7 +113,7 @@ class EmpresaUserPermissions extends Component
 
     private function assignableRoleNames(): array
     {
-        if (Gate::forUser(auth()->user())->allows('manageGlobalPermissions', User::class)) {
+        if (auth()->user()->hasRole('Administrador')) {
             return app(ListarRolesQuery::class)->execute()->pluck('name')->all();
         }
 
@@ -116,10 +122,6 @@ class EmpresaUserPermissions extends Component
 
     private function assignablePermissionNames(): array
     {
-        if (Gate::forUser(auth()->user())->allows('manageGlobalPermissions', User::class)) {
-            return app(ListarPermissoesQuery::class)->execute()->pluck('name')->all();
-        }
-        
         return auth()->user()?->getAllPermissions()->pluck('name')->all() ?? [];
     }
 

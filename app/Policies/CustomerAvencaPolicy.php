@@ -62,7 +62,7 @@ class CustomerAvencaPolicy
             return false;
         }
 
-        if (Schema::hasColumn('customer_avencas', 'empresa_id') && (int) $avenca->empresa_id !== $empresaId) {
+        if (! Schema::hasColumn('customer_avencas', 'empresa_id') || (int) $avenca->empresa_id !== $empresaId) {
             return false;
         }
 
@@ -73,10 +73,6 @@ class CustomerAvencaPolicy
     {
         $access = app(CustomerTenantAccessService::class);
 
-        if ($access->isAdmin($user)) {
-            return true;
-        }
-
-        return $user->can($permission) || $user->can($fallbackPermission);
+        return \App\Support\BusinessAuthorization::any($user, [$permission, $fallbackPermission]);
     }
 }

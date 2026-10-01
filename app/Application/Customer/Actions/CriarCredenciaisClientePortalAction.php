@@ -22,6 +22,7 @@ class CriarCredenciaisClientePortalAction
     public function execute(int $customerId): CredenciaisClientePortalDTO
     {
         $customer = $this->customers->findOrFail($customerId);
+        \Illuminate\Support\Facades\Gate::authorize('managePortalCredentials', $customer);
 
         if (!$this->access->canAccess(Auth::user(), $customer)) {
             throw new CustomerNotAssociatedWithEmpresaException();

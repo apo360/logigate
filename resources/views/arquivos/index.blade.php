@@ -34,7 +34,7 @@
                 </a>
 
                 {{-- CRIAR PASTA --}}
-                <a href="{{ route('PastaAbrir', ['dir' => auth()->user()->empresas()->first()->conta]) }}" class="btn btn-success">
+                <a href="{{ route('PastaAbrir', ['dir' => \App\Support\TenantContext::empresa()->conta]) }}" class="btn btn-success">
                     Criar Pasta
                 </a>
 

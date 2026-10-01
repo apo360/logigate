@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ServicosTable extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use WithPagination;
 
     public $search = '';
@@ -73,7 +75,7 @@ class ServicosTable extends Component
 
     public function toggleStatus(Produto $product)
     {
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
         $action = app(ToggleProdutoStatusAction::class);
         $action->execute($product, $empresa);
 
@@ -88,7 +90,7 @@ class ServicosTable extends Component
     public function deleteProduct(Produto $product)
     {
         try {
-            $empresa = Auth::user()->empresas->first();
+            $empresa = \App\Support\TenantContext::empresa();
             $action = app(DeleteProdutoAction::class);
             $action->execute($product, $empresa);
         } catch (\RuntimeException $e) {
@@ -100,7 +102,7 @@ class ServicosTable extends Component
 
     public function render()
     {
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
         $query = app(ProdutoTableQuery::class);
         $products = $query->paginate($empresa, [
             'search' => $this->search,

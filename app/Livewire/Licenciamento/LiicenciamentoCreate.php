@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Auth;
 
 class LiicenciamentoCreate extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use AuthorizesRequests;
 
     // customer_id vindo da URL
@@ -225,7 +227,7 @@ class LiicenciamentoCreate extends Component
 
     private function empresa(): Empresa
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
         abort_if(!$empresa, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return $empresa;

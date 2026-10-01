@@ -10,6 +10,8 @@ use Livewire\Component;
 
 class PrevisaoReceitaWidget extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public array $forecast = [];
     public array $duties = [];
     public array $workload = [];
@@ -26,7 +28,7 @@ class PrevisaoReceitaWidget extends Component
 
     private function loadWidget(bool $fresh = false): void
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             $this->forecast = [];

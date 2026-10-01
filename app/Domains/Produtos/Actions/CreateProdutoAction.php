@@ -19,6 +19,8 @@ final class CreateProdutoAction
 
     public function execute(ProdutoFormData $produtoData, ProdutoPriceData $priceData, Empresa $empresa): Produto
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === (int) $empresa->id, 403);
+        \Illuminate\Support\Facades\Gate::authorize('create', Produto::class);
         return DB::transaction(function () use ($produtoData, $priceData, $empresa): Produto {
             $produto = $this->produtos->createForEmpresa($empresa, $produtoData->toArray());
 

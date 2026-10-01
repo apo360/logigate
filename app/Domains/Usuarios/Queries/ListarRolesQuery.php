@@ -9,6 +9,7 @@ final class ListarRolesQuery
 {
     public function execute(): Collection
     {
-        return Role::query()->orderBy('name')->get();
+        $id = \App\Support\CompanyRbac::activate();
+        return Role::query()->where('empresa_id', $id)->when(! $id, fn ($q) => $q->whereRaw('1=0'))->orderBy('name')->get();
     }
 }

@@ -15,12 +15,12 @@ class ClientePortalEmpresaContextController extends Controller
             'empresa_id' => ['required', 'integer'],
         ]);
 
-        $customer = Auth::guard('cliente_portal')->user()->customer;
+        $portal = Auth::guard('cliente_portal')->user();
+        $customer = $portal->customer;
         $empresaId = (int) $data['empresa_id'];
 
         abort_unless(
-            (int) $customer->empresa_id === $empresaId
-                || $customer->empresas()->where('empresas.id', $empresaId)->exists(),
+            (int) $portal->empresa_id === $empresaId && $customer !== null,
             403
         );
 

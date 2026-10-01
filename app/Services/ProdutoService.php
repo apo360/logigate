@@ -35,7 +35,7 @@ class ProdutoService
     public function createProduct(array $data)
     {
         return DB::transaction(function () use ($data) {
-            $data['empresa_id'] = Auth::user()->empresas->first()->id;
+            $data['empresa_id'] = \App\Support\TenantContext::empresa()->id;
             $product = Produto::create($data);
             return $product;
         });

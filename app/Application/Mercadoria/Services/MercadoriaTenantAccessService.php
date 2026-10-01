@@ -10,8 +10,6 @@ use App\Models\Mercadoria;
 use App\Models\Processo;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Support\Facades\Schema;
-use Spatie\Permission\Models\Permission;
 
 final class MercadoriaTenantAccessService
 {
@@ -61,11 +59,34 @@ final class MercadoriaTenantAccessService
             default => false,
         };
 
-        if (! $belongsToContext) {
+        if (! $belongsToContext || ! $this->belongsToActiveEmpresa($user, $model)) {
             throw new AuthorizationException('Mercadoria fora do contexto informado.');
         }
 
         return $model;
+    }
+
+    public function belongsToActiveEmpresa(User $user, Mercadoria $mercadoria): bool
+    {
+        $empresaId = \App\Support\TenantContext::empresaId($user);
+        if (! $empresaId) {
+            return false;
+        }
+        // Every supplied owner must agree; a valid parent cannot mask a foreign one.
+        $owners = [];
+        if ($mercadoria->getAttribute('empresa_id') !== null) {
+            $owners[] = (int) $mercadoria->getAttribute('empresa_id');
+        }
+        foreach (['Fk_Importacao' => Processo::class, 'licenciamento_id' => Licenciamento::class] as $key => $type) {
+            if ($mercadoria->getAttribute($key) !== null) {
+                $parent = (new $type())->newQueryWithoutScopes()->find($mercadoria->getAttribute($key));
+                if (! $parent) {
+                    return false;
+                }
+                $owners[] = (int) $parent->empresa_id;
+            }
+        }
+        return $owners !== [] && count(array_filter($owners, fn (int $owner): bool => $owner !== $empresaId)) === 0;
     }
 
     private function authorizeProcesso(User $user, int $processoId, ?string $permission = null): Processo
@@ -91,20 +112,10 @@ final class MercadoriaTenantAccessService
 
     private function authorizeOptionalPermission(User $user, ?string $permission): void
     {
-        if (! $permission || ! method_exists($user, 'hasPermissionTo')) {
-            return;
+        if (! $permission) {
+            throw new AuthorizationException('Permissão obrigatória.');
         }
-
-        if (! Schema::hasTable('permissions')) {
-            return;
-        }
-
-        $exists = Permission::query()
-            ->where('name', $permission)
-            ->where('guard_name', 'web')
-            ->exists();
-
-        if ($exists && ! $user->hasPermissionTo($permission)) {
+        if (! \App\Support\BusinessAuthorization::allows($user, $permission)) {
             throw new AuthorizationException('Sem permissão para esta operação.');
         }
     }

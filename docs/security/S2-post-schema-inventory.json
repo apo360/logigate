@@ -1,0 +1,636 @@
+{
+    "environment": "testing",
+    "database": "logigate_testing",
+    "laravel": "11.32.0",
+    "spatie": "6.10.1",
+    "schema": {
+        "roles": [
+            {
+                "Table": "roles",
+                "Create Table": "CREATE TABLE `roles` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `guard_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `created_at` timestamp NULL DEFAULT NULL,\n  `updated_at` timestamp NULL DEFAULT NULL,\n  `empresa_id` bigint unsigned DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `roles_empresa_id_name_guard_name_unique` (`empresa_id`,`name`,`guard_name`),\n  KEY `roles_empresa_id_index` (`empresa_id`)\n) ENGINE=InnoDB AUTO_INCREMENT=320 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            }
+        ],
+        "permissions": [
+            {
+                "Table": "permissions",
+                "Create Table": "CREATE TABLE `permissions` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `guard_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `created_at` timestamp NULL DEFAULT NULL,\n  `updated_at` timestamp NULL DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `permissions_name_guard_name_unique` (`name`,`guard_name`)\n) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            }
+        ],
+        "model_has_roles": [
+            {
+                "Table": "model_has_roles",
+                "Create Table": "CREATE TABLE `model_has_roles` (\n  `role_id` bigint unsigned NOT NULL,\n  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `model_id` bigint unsigned NOT NULL,\n  `empresa_id` bigint unsigned NOT NULL DEFAULT '0',\n  PRIMARY KEY (`empresa_id`,`role_id`,`model_id`,`model_type`),\n  KEY `model_has_roles_model_id_model_type_index` (`model_id`,`model_type`),\n  KEY `model_has_roles_role_id_foreign` (`role_id`),\n  KEY `model_has_roles_empresa_id_index` (`empresa_id`),\n  CONSTRAINT `model_has_roles_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            }
+        ],
+        "model_has_permissions": [
+            {
+                "Table": "model_has_permissions",
+                "Create Table": "CREATE TABLE `model_has_permissions` (\n  `permission_id` bigint unsigned NOT NULL,\n  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `model_id` bigint unsigned NOT NULL,\n  `empresa_id` bigint unsigned NOT NULL DEFAULT '0',\n  PRIMARY KEY (`empresa_id`,`permission_id`,`model_id`,`model_type`),\n  KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`),\n  KEY `model_has_permissions_permission_id_foreign` (`permission_id`),\n  KEY `model_has_permissions_empresa_id_index` (`empresa_id`),\n  CONSTRAINT `model_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            }
+        ],
+        "role_has_permissions": [
+            {
+                "Table": "role_has_permissions",
+                "Create Table": "CREATE TABLE `role_has_permissions` (\n  `permission_id` bigint unsigned NOT NULL,\n  `role_id` bigint unsigned NOT NULL,\n  PRIMARY KEY (`permission_id`,`role_id`),\n  KEY `role_has_permissions_role_id_foreign` (`role_id`),\n  CONSTRAINT `role_has_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,\n  CONSTRAINT `role_has_permissions_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            }
+        ],
+        "empresa_users": [
+            {
+                "Table": "empresa_users",
+                "Create Table": "CREATE TABLE `empresa_users` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `conta` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `role` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `user_id` bigint unsigned DEFAULT NULL,\n  `empresa_id` bigint unsigned DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT NULL,\n  `updated_at` timestamp NULL DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `empresa_users_user_id_empresa_id_unique` (`user_id`,`empresa_id`),\n  KEY `empresa_users_empresa_id_foreign` (`empresa_id`),\n  CONSTRAINT `empresa_users_empresa_id_foreign` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE CASCADE,\n  CONSTRAINT `empresa_users_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE\n) ENGINE=InnoDB AUTO_INCREMENT=773 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            }
+        ]
+    },
+    "roles": [
+        {
+            "id": 1,
+            "name": "Administrador",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 2,
+            "name": "Gestor",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 3,
+            "name": "Gestor Financeiro",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 4,
+            "name": "Gestor Auditor",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 5,
+            "name": "Gestor Despachante",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 6,
+            "name": "Transitário",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 7,
+            "name": "Praticante",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 8,
+            "name": "Operador",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 9,
+            "name": "Customer Manager",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:05",
+            "updated_at": "2026-09-30 22:08:05",
+            "empresa_id": null
+        },
+        {
+            "id": 10,
+            "name": "customer-manager",
+            "guard_name": "web",
+            "created_at": "2026-09-30 22:08:07",
+            "updated_at": "2026-09-30 22:08:07",
+            "empresa_id": null
+        }
+    ],
+    "permission_catalog": [
+        {
+            "id": 1,
+            "name": "users.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 2,
+            "name": "users.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 3,
+            "name": "users.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 4,
+            "name": "users.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 5,
+            "name": "empresas.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 6,
+            "name": "empresas.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 7,
+            "name": "empresas.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 8,
+            "name": "empresas.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 9,
+            "name": "customers.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 10,
+            "name": "customers.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 11,
+            "name": "customers.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 12,
+            "name": "customers.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 13,
+            "name": "customers.activate",
+            "guard_name": "web"
+        },
+        {
+            "id": 14,
+            "name": "customers.deactivate",
+            "guard_name": "web"
+        },
+        {
+            "id": 15,
+            "name": "customers.manage_portal_credentials",
+            "guard_name": "web"
+        },
+        {
+            "id": 16,
+            "name": "customers.view_processos",
+            "guard_name": "web"
+        },
+        {
+            "id": 17,
+            "name": "customers.view_licenciamentos",
+            "guard_name": "web"
+        },
+        {
+            "id": 18,
+            "name": "customers.view_documents",
+            "guard_name": "web"
+        },
+        {
+            "id": 19,
+            "name": "customers.associate_empresa",
+            "guard_name": "web"
+        },
+        {
+            "id": 20,
+            "name": "processos.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 21,
+            "name": "processos.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 22,
+            "name": "processos.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 23,
+            "name": "processos.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 24,
+            "name": "processos.manage_mercadorias",
+            "guard_name": "web"
+        },
+        {
+            "id": 25,
+            "name": "licenciamentos.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 26,
+            "name": "licenciamentos.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 27,
+            "name": "licenciamentos.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 28,
+            "name": "licenciamentos.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 29,
+            "name": "licenciamentos.manage_mercadorias",
+            "guard_name": "web"
+        },
+        {
+            "id": 30,
+            "name": "mercadorias.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 31,
+            "name": "mercadorias.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 32,
+            "name": "mercadorias.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 33,
+            "name": "mercadorias.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 34,
+            "name": "documents.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 35,
+            "name": "documents.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 36,
+            "name": "documents.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 37,
+            "name": "documents.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 38,
+            "name": "documents.download",
+            "guard_name": "web"
+        },
+        {
+            "id": 39,
+            "name": "invoices.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 40,
+            "name": "invoices.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 41,
+            "name": "invoices.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 42,
+            "name": "invoices.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 43,
+            "name": "payments.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 44,
+            "name": "payments.create",
+            "guard_name": "web"
+        },
+        {
+            "id": 45,
+            "name": "payments.update",
+            "guard_name": "web"
+        },
+        {
+            "id": 46,
+            "name": "payments.delete",
+            "guard_name": "web"
+        },
+        {
+            "id": 47,
+            "name": "receipts.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 48,
+            "name": "reports.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 49,
+            "name": "audit.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 50,
+            "name": "permissions.view",
+            "guard_name": "web"
+        },
+        {
+            "id": 51,
+            "name": "permissions.manage",
+            "guard_name": "web"
+        },
+        {
+            "id": 52,
+            "name": "menus.manage",
+            "guard_name": "web"
+        },
+        {
+            "id": 53,
+            "name": "system.configure",
+            "guard_name": "web"
+        }
+    ],
+    "users": [
+        {
+            "id": 18,
+            "memberships": [
+                {
+                    "empresa_id": 18,
+                    "role": null,
+                    "conta": "DEMO-OPERACIONAL"
+                }
+            ],
+            "roles": [
+                {
+                    "role_id": 10,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                }
+            ],
+            "permissions": [
+                {
+                    "permission_id": 1,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 2,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 3,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 4,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 9,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 10,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 11,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 12,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 13,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 14,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 15,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 16,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 17,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 18,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 19,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 20,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 21,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 22,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 23,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 24,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 25,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 26,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 27,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 28,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 29,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 30,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 31,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 32,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 33,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 34,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 35,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 38,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 39,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 40,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 43,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                },
+                {
+                    "permission_id": 47,
+                    "model_type": "App\\Models\\User",
+                    "model_id": 18,
+                    "empresa_id": 0
+                }
+            ],
+            "classification": "SAFE_SINGLE_MEMBERSHIP",
+            "flags": {
+                "is_active": 1,
+                "is_blocked": 0
+            }
+        }
+    ]
+}

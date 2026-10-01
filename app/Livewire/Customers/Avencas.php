@@ -20,12 +20,15 @@ use Livewire\Component;
 
 class Avencas extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use AuthorizesRequests;
 
     public int $customerId;
 
     public Customer $customer;
 
+    #[\Livewire\Attributes\Locked]
     public int $empresaId;
 
     public bool $showStructuredNotice = true;
@@ -65,6 +68,12 @@ class Avencas extends Component
             'form.status' => ['required', 'in:rascunho,ativa,suspensa,cancelada,encerrada,expirada'],
             'form.observacoes' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    public function hydrate(): void
+    {
+        $activeId = \App\Support\TenantContext::empresaId();
+        abort_unless($activeId !== null && $this->empresaId === $activeId, 403);
     }
 
     public function mount(int|Customer|null $customer = null, ?int $customerId = null): void

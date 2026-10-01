@@ -96,7 +96,9 @@ class ClientePortalSecurityTest extends TestCase
             'uuid' => (string) Str::uuid(),
             'empresa_id' => $customer->empresa_id,
             'customer_id' => $customer->id,
-            'contexto' => 'cliente',
+            'contexto' => 'customer',
+            'documentable_type' => Customer::class,
+            'documentable_id' => $customer->id,
             'categoria' => 'teste',
             'visibilidade' => 'privado',
             'storage_disk' => 's3',
@@ -114,7 +116,7 @@ class ClientePortalSecurityTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_empresa_context_allows_only_direct_or_associated_empresas(): void
+    public function test_empresa_context_remains_pinned_to_the_portal_credential(): void
     {
         [$portal, $customer] = $this->createPortalUser('empresa-context');
         $associatedEmpresa = $this->createEmpresa('ASSOC');
@@ -130,9 +132,9 @@ class ClientePortalSecurityTest extends TestCase
 
         $this->actingAs($portal, 'cliente_portal')
             ->post(route('cliente.portal.empresa-context.update'), ['empresa_id' => $associatedEmpresa->id])
-            ->assertRedirect();
+            ->assertForbidden();
 
-        $this->assertSame((int) $associatedEmpresa->id, session('cliente_portal_empresa_id'));
+        $this->assertSame((int) $portal->empresa_id, session('cliente_portal_empresa_id'));
 
         $this->actingAs($portal, 'cliente_portal')
             ->post(route('cliente.portal.empresa-context.update'), ['empresa_id' => $unrelatedEmpresa->id])
@@ -217,7 +219,7 @@ class ClientePortalSecurityTest extends TestCase
             'NrProcesso' => "PROC-{$suffix}-" . random_int(1000, 9999),
             'Descricao' => "Processo {$suffix}",
             'DataAbertura' => now()->toDateString(),
-            'TipoProcesso' => 1,
+            'TipoProcesso' => DB::table('regiao_aduaneiras')->insertGetId(['codigo'=>'11','abrev'=>'IM','descricao'=>'Importacao Portal Teste','created_at'=>now(),'updated_at'=>now()]),
             'Situacao' => 'Em processamento',
             'Estado' => 'Aberto',
             'customer_id' => $customer->id,

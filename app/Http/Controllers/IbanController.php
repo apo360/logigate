@@ -42,7 +42,7 @@ class IbanController extends Controller
             'conta-input' => 'required|string',
         ]);
 
-        $empresaId = Auth::user()->empresas->first()->id;
+        $empresaId = \App\Support\TenantContext::empresa()->id;
         $dto = EmpresaBancoDTO::fromRequest($request->all(), $empresaId);
 
         try {

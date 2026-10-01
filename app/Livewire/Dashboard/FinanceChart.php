@@ -9,6 +9,8 @@ use Livewire\Component;
 
 class FinanceChart extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public array $revenue = [];
     public array $summary = [];
 
@@ -24,7 +26,7 @@ class FinanceChart extends Component
 
     private function loadWidget(bool $fresh = false): void
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             $this->revenue = [];

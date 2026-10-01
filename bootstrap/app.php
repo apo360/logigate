@@ -22,8 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
 
     // MIDDLEWARES
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(append: [\App\Http\Middleware\SetCompanyPermissionTeam::class]);
+        $middleware->prependToPriorityList(
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SetCompanyPermissionTeam::class,
+        );
 
         $middleware->alias([
+            'empresa.active' => \App\Http\Middleware\EnsureActiveEmpresa::class,
             'auth' => \App\Http\Middleware\Authenticate::class,
             'admin.master'   => \App\Http\Middleware\AdminMasterMiddleware::class,
             'customer.auth'  => \App\Http\Middleware\CustomerAuthMiddleware::class,

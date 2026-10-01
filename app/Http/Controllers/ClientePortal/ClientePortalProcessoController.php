@@ -12,8 +12,9 @@ class ClientePortalProcessoController extends Controller
 {
     public function index(): RedirectResponse|View
     {
-        $customer = Auth::guard('cliente_portal')->user()->customer;
-        $processos = $customer->processos()->latest('id')->paginate(15);
+        $portal = Auth::guard('cliente_portal')->user();
+        $customer = $portal->customer;
+        $processos = $customer->processos()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portal->empresa_id)->latest('id')->paginate(15);
 
         if (! ViewFactory::exists('WebSite.ClienteAppPage.processos')) {
             return redirect()
@@ -26,8 +27,9 @@ class ClientePortalProcessoController extends Controller
 
     public function show(int $processoId): RedirectResponse|View
     {
-        $customer = Auth::guard('cliente_portal')->user()->customer;
-        $processo = $customer->processos()
+        $portal = Auth::guard('cliente_portal')->user();
+        $customer = $portal->customer;
+        $processo = $customer->processos()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portal->empresa_id)
             ->whereKey($processoId)
             ->firstOrFail();
 

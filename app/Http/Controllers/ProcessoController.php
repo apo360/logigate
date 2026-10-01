@@ -299,16 +299,16 @@ class ProcessoController extends AuthenticatedController
         $input = base_path('reports/nota_despesa.jrxml'); // Certifique-se de que este arquivo existe
         $output = base_path('reports');
 
-        $logoPath = public_path('logos/' . Auth::user()->empresas->first()->Logotipo);
+        $logoPath = public_path('logos/' . \App\Support\TenantContext::empresa()->Logotipo);
 
         $params = [
-            'Empresa' => Auth::user()->empresas->first()->Empresa,
+            'Empresa' => \App\Support\TenantContext::empresa()->Empresa,
             'Designacao' => 'Despachante Oficial',
-            'Cedula' => Auth::user()->empresas->first()->Cedula,
-            'NIF' => Auth::user()->empresas->first()->NIF,
+            'Cedula' => \App\Support\TenantContext::empresa()->Cedula,
+            'NIF' => \App\Support\TenantContext::empresa()->NIF,
             'P_user' => Auth::user()->name,
-            'Endereco_completo' => Auth::user()->empresas->first()->Endereco_completo  ?? '',
-            'Provincia' => Auth::user()->empresas->first()->provincia->Nome  ?? '',
+            'Endereco_completo' => \App\Support\TenantContext::empresa()->Endereco_completo  ?? '',
+            'Provincia' => \App\Support\TenantContext::empresa()->provincia->Nome  ?? '',
             'logotipo' => $logoPath,
 
             // Cliente
@@ -468,7 +468,7 @@ class ProcessoController extends AuthenticatedController
             'saldo' => $saldoClienteAnterior,
             'saldoActual' => $saldoClienteActual,
             'descricao' => $descricaoValorPagar,
-            'logotipo' => Auth::user()->empresas->first()->Logotipo,
+            'logotipo' => \App\Support\TenantContext::empresa()->Logotipo,
         ];
 
         $jasper = new PHPJasper();
@@ -575,7 +575,7 @@ class ProcessoController extends AuthenticatedController
 
         // Declarant
         $declarant = $xml->addChild('Declarant');
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
         $declarant->addChild('Declarant_code', $empresa->Cedula);
         $declarant->addChild('Declarant_name', "{$empresa->Empresa} {$empresa->Endereco_completo}");
         $declarant->addChild('Declarant_representative', $empresa->Empresa);
@@ -621,7 +621,7 @@ class ProcessoController extends AuthenticatedController
     private function resolveAuthorizedProcesso(mixed $processo, string $ability): Processo
     {
         if (!$processo instanceof Processo) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            $empresaId = \App\Support\TenantContext::empresaId();
             abort_if(!$empresaId, 404);
 
             $query = Processo::query();

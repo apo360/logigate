@@ -25,6 +25,7 @@ class AtualizarLicenciamentoAction
             if (!$licenciamento) {
                 throw new \Exception('Licenciamento não encontrado');
             }
+            \Illuminate\Support\Facades\Gate::authorize('update', $licenciamento);
 
             $this->faturamentoRules->assertMoedaPodeSerAlterada($licenciamento, $dto->moeda);
 

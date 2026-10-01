@@ -78,6 +78,7 @@ class Index extends Component
 
     public function deleteItem(int $id): void
     {
+        app(MercadoriaTenantAccessService::class)->authorizeMercadoria(Auth::user(), $id, $this->context, $this->parentId, 'mercadorias.delete');
         try {
             app(ExcluirMercadoriaAction::class)->execute($id, $this->context, $this->parentId);
             $this->reload();

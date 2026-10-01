@@ -20,10 +20,17 @@ trait BelongsToTenant
                 ? $model->getTenantColumn()
                 : 'empresa_id';
 
-            // Security: force tenant ownership from authenticated context.
-            if (empty($model->{$column})) {
-                $model->{$column} = TenantContext::empresaId();
+            // Registration and Portal use separate creation flows; jobs remain unchanged.
+            if (! (\Illuminate\Support\Facades\Auth::user() instanceof \App\Models\User)) {
+                return;
             }
+
+            $empresaId = TenantContext::empresaId();
+            if (! $empresaId || (! empty($model->{$column}) && (int) $model->{$column} !== $empresaId)) {
+                throw new \Illuminate\Auth\Access\AuthorizationException('Ownership fora da empresa ativa.');
+            }
+
+            $model->{$column} = $empresaId;
         });
     }
 }

@@ -305,7 +305,7 @@
                         </button>
 
                         @php
-                            $currentEmpresa = auth()->user()->empresas->first();
+                            $currentEmpresa = \App\Support\TenantContext::empresa();
                             $dropdownBase = 'flex items-center gap-2 px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-logigate-primary/60 dark:text-gray-200 dark:hover:bg-gray-800';
                             $dropdownActive = ' bg-logigate-primary/10 font-semibold text-logigate-primary dark:bg-logigate-primary/15 dark:text-logigate-tertiary';
                         @endphp
@@ -325,6 +325,9 @@
                             </div>
 
                             <div class="py-1">
+                                <a href="{{ route('empresa-context.index') }}" class="{{ $dropdownBase }}">
+                                    {{ __('Trocar empresa') }}
+                                </a>
                                 <a href="{{ route('profile.show') }}" class="{{ $dropdownBase }} {{ request()->routeIs('profile.show') ? $dropdownActive : '' }}">
                                     <i class="fa fa-user w-4 text-logigate-primary dark:text-logigate-tertiary" aria-hidden="true"></i>
                                     {{ __('Minha Conta') }}

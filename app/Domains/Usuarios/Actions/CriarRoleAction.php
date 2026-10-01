@@ -10,11 +10,18 @@ final class CriarRoleAction
 {
     public function execute(User $actor, string $name, array $permissions): Role
     {
-        Gate::forUser($actor)->authorize('manageGlobalPermissions', User::class);
+        $empresa = \App\Support\TenantContext::empresa($actor);
+        abort_unless($empresa, 403);
+        Gate::forUser($actor)->authorize('manageEmpresaPermissions', $empresa);
+        abort_unless($actor->hasRole('Administrador'), 403);
+        $permissions = \App\Support\CompanyRbac::permissions($actor, $permissions);
+        abort_unless(\App\Support\CompanyRbac::isBusinessRole($name), 403);
 
-        $role = Role::create(['name' => $name]);
-        $role->syncPermissions($permissions);
-
-        return $role;
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($empresa, $name, $permissions, $actor): Role {
+            $role = Role::query()->create(['name' => $name, 'guard_name' => 'web', 'empresa_id' => $empresa->id]);
+            $role->syncPermissions($permissions);
+            \App\Support\CompanyRbac::forgetUser($actor);
+            return $role;
+        });
     }
 }

@@ -15,6 +15,9 @@ use Livewire\Component;
 
 class EmpresaUserForm extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
+    #[\Livewire\Attributes\Locked]
     public Empresa $empresa;
 
     public ?int $editingUserId = null;
@@ -97,7 +100,7 @@ class EmpresaUserForm extends Component
                 Rule::unique('users', 'email')->ignore($this->editingUserId),
             ];
         } else {
-            $rules['form.email'] = ['required', 'email', 'max:255', 'unique:users,email'];
+            $rules['form.email'] = ['required', 'email', 'max:255'];
             $rules['form.password'] = ['required', 'string', 'min:8', 'same:form.password_confirmation'];
         }
 
@@ -166,7 +169,7 @@ class EmpresaUserForm extends Component
 
     private function assignableRoleNames(): array
     {
-        if (Gate::forUser(auth()->user())->allows('manageGlobalPermissions', User::class)) {
+        if (auth()->user()->hasRole('Administrador')) {
             return app(ListarRolesQuery::class)->execute()->pluck('name')->all();
         }
 

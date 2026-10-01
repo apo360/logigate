@@ -27,7 +27,7 @@ trait LicenciamentoTestSupport
             ]);
         }
 
-        $user->givePermissionTo($permissions);
+        \App\Support\CompanyRbac::within((int) $user->empresas()->sole()->id, fn () => $user->givePermissionTo($permissions));
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 

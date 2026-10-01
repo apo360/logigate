@@ -17,6 +17,7 @@ final class UpdateProdutoAction
     public function execute(Produto $produto, ProdutoFormData $data, Empresa $empresa): Produto
     {
         $produto = $this->produtos->findForEmpresa($produto->id, $empresa);
+        \Illuminate\Support\Facades\Gate::authorize('update', $produto);
 
         if ($this->produtos->hasSales($produto) && $produto->ProductCode !== $data->productCode) {
             throw new \RuntimeException('Não é permitido alterar o código de produto já associado a faturação.');

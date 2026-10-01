@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 
 class SubscriptionWizard extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
+    #[\Livewire\Attributes\Locked]
     public ?int $empresaId = null;
     public ?int $subscricaoExistenteId = null;
 
@@ -47,9 +50,15 @@ class SubscriptionWizard extends Component
     
     protected $listeners = ['proximoPasso', 'passoAnterior', 'finalizarSubscricao'];
 
+    public function hydrate(): void
+    {
+        $activeId = \App\Support\TenantContext::empresaId();
+        abort_unless($activeId !== null && $this->empresaId === $activeId, 403);
+    }
+
     public function mount()
     {
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         $this->empresaId = $empresa?->id;
         $this->subscricaoExistenteId = $empresa?->subscricaoAtiva?->id;

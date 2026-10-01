@@ -12,13 +12,15 @@ use App\Application\Integracoes\Services\IntegracaoResolverService;
 
 class MenuDinamico extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public $modulosAtivos = [];
     public $menusPrincipais = [];
     public $facturacaoHongayetuActiva = false;
 
     public function mount()
     {
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
         if (!$empresa) {
             $this->menusPrincipais = [];
             return;
@@ -82,7 +84,7 @@ class MenuDinamico extends Component
 
 
         //
-        $cacheKey = 'menus_user_' . Auth::id();
+        $cacheKey = 'menus_user_' . Auth::id() . '_empresa_' . $empresa->id;
 
         $tree = Cache::remember($cacheKey, now()->addHours(6), function () use ($menusArr) {
 

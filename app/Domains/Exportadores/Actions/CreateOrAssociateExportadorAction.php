@@ -18,6 +18,8 @@ final class CreateOrAssociateExportadorAction
 
     public function execute(ExportadorFormData $data, Empresa $empresa, User $user): Exportador
     {
+        abort_unless(\App\Support\TenantContext::empresaId($user) === (int) $empresa->id, 403);
+        \Illuminate\Support\Facades\Gate::forUser($user)->authorize('create', Exportador::class);
         return DB::transaction(function () use ($data, $empresa, $user): Exportador {
             $exportador = $this->exportadores->findGlobalByIdentity($data->exportadorTaxId, $data->exportador);
 

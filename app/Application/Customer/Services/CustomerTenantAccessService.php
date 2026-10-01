@@ -5,107 +5,50 @@ namespace App\Application\Customer\Services;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 
 class CustomerTenantAccessService
 {
     public function canAccess(User $user, Customer $customer): bool
     {
-        if ($this->isAdmin($user)) {
-            return true;
-        }
-
-        $empresaIds = $this->empresaIds($user);
-
-        if ($empresaIds->isEmpty()) {
+        $empresaId = $this->empresaId($user);
+        if (! $empresaId) {
             return false;
         }
 
-        if (!empty($customer->empresa_id) && $empresaIds->contains((int) $customer->empresa_id)) {
-            return true;
-        }
-
-        return $customer->empresas()
-            ->whereIn('empresas.id', $empresaIds->all())
-            ->exists();
+        return (int) $customer->empresa_id === $empresaId
+            || $customer->empresas()->where('empresas.id', $empresaId)->exists();
     }
 
     public function currentEmpresaId(): ?int
     {
-        $user = Auth::user();
+        return \App\Support\TenantContext::empresaId();
+    }
 
-        if (!$user) {
-            return null;
-        }
-
-        return $this->empresaId($user);
+    /** Global profile writes must not change another company's shared identity. */
+    public function canModifyProfile(User $user, Customer $customer): bool
+    {
+        $empresaId = $this->empresaId($user);
+        return $empresaId !== null && $this->canAccess($user, $customer)
+            && (! $customer->empresa_id || (int) $customer->empresa_id === $empresaId)
+            && ! $customer->empresas()->where('empresas.id', '!=', $empresaId)->exists();
     }
 
     public function empresaId(?User $user): ?int
     {
-        if (!$user) {
-            return null;
-        }
-
-        $directEmpresaId = $user->empresa_id
-            ?? session('empresa_id')
-            ?? session('current_empresa_id')
-            ?? session('empresa.id')
-            ?? null;
-
-        if ($directEmpresaId) {
-            return (int) $directEmpresaId;
-        }
-
-        if (method_exists($user, 'empresas')) {
-            return $user->empresas()->value('empresas.id');
-        }
-
-        return null;
+        return $user ? \App\Support\TenantContext::empresaId($user) : null;
     }
 
+    /** Operational tenant IDs, never the union of memberships. */
     public function empresaIds(?User $user): Collection
     {
-        if (!$user) {
-            return collect();
-        }
+        $id = $this->empresaId($user);
 
-        $ids = collect();
-
-        if (!empty($user->empresa_id)) {
-            $ids->push((int) $user->empresa_id);
-        }
-
-        $sessionEmpresaId = session('empresa_id')
-            ?? session('current_empresa_id')
-            ?? session('empresa.id')
-            ?? null;
-
-        if ($sessionEmpresaId) {
-            $ids->push((int) $sessionEmpresaId);
-        }
-
-        if (method_exists($user, 'empresas')) {
-            $ids = $ids->merge(
-                $user->empresas()
-                    ->pluck('empresas.id')
-                    ->map(fn ($id) => (int) $id)
-            );
-        }
-
-        return $ids
-            ->filter()
-            ->unique()
-            ->values();
+        return $id ? collect([$id]) : collect();
     }
 
     public function hasEmpresa(User $user): bool
     {
-        if ($this->isAdmin($user)) {
-            return true;
-        }
-
-        return $this->empresaIds($user)->isNotEmpty();
+        return $this->empresaId($user) !== null;
     }
 
     public function isAdmin(User $user): bool

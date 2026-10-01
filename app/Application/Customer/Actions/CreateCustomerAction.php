@@ -18,6 +18,8 @@ class CreateCustomerAction
 
     public function execute(CreateCustomerDTO $dto): Customer
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === (int) $dto->empresa_id, 403);
+        \Illuminate\Support\Facades\Gate::authorize('create', Customer::class);
         return DB::transaction(function () use ($dto) {
             $existing = $this->customers->findByTaxId($dto->CustomerTaxID);
 

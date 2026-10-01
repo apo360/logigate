@@ -12,33 +12,36 @@ class ProdutoPolicy
      */
     private function sameTenant(User $user, Produto $produto): bool
     {
-        $empresaId = $user->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId($user);
 
         return $empresaId !== null && (int) $produto->empresa_id === (int) $empresaId;
     }
 
     public function viewAny(User $user): bool
     {
-        return (bool) $user->empresas()->value('empresas.id');
+        return \App\Support\BusinessAuthorization::allows($user, 'produtos.view');
     }
 
     public function view(User $user, Produto $produto): bool
     {
-        return $this->sameTenant($user, $produto);
+        return $this->sameTenant($user, $produto)
+            && \App\Support\BusinessAuthorization::allows($user, 'produtos.view');
     }
 
     public function create(User $user): bool
     {
-        return (bool) $user->empresas()->value('empresas.id');
+        return \App\Support\BusinessAuthorization::allows($user, 'produtos.create');
     }
 
     public function update(User $user, Produto $produto): bool
     {
-        return $this->sameTenant($user, $produto);
+        return $this->sameTenant($user, $produto)
+            && \App\Support\BusinessAuthorization::allows($user, 'produtos.update');
     }
 
     public function delete(User $user, Produto $produto): bool
     {
-        return $this->sameTenant($user, $produto);
+        return $this->sameTenant($user, $produto)
+            && \App\Support\BusinessAuthorization::allows($user, 'produtos.delete');
     }
 }

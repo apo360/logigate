@@ -16,7 +16,7 @@ class CheckSubscription
      */
     public function handle(Request $request, Closure $next, $modulo = null)
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada');

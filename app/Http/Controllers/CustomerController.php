@@ -113,16 +113,18 @@ class CustomerController extends AuthenticatedController
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(int $customer, DeleteCustomerAction $action): RedirectResponse
+    public function destroy(Customer $customer, DeleteCustomerAction $action): RedirectResponse
     {
         try {
-            $model = Customer::query()->findOrFail($customer);
+            $model = $customer;
 
             $this->authorize('delete', $model);
 
-            $action->execute($customer);
+            $action->execute((int) $customer->id);
 
             return redirect()->route('customers.index')->with('success', 'Cliente eliminado com sucesso.');
+        } catch (\Illuminate\Auth\Access\AuthorizationException|\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            throw $e;
         } catch (\Throwable $e) {
 
             return back()->with('error', $e->getMessage());

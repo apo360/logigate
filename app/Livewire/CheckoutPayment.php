@@ -17,8 +17,11 @@ use Livewire\Component;
 
 class CheckoutPayment extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public string $method = 'GPO';
     public ?string $phone = null;
+    #[\Livewire\Attributes\Locked]
     public ?int $empresaId = null;
     public ?int $subscriptionId = null;
     public ?int $paymentId = null;
@@ -41,6 +44,12 @@ class CheckoutPayment extends Component
         'phone.regex' => 'Formato invalido. Use: 9XXXXXXXX.',
     ];
 
+    public function hydrate(): void
+    {
+        $activeId = \App\Support\TenantContext::empresaId();
+        abort_unless($activeId !== null && $this->empresaId === $activeId, 403);
+    }
+
     public function mount(): void
     {
         $user = Auth::user();
@@ -50,7 +59,7 @@ class CheckoutPayment extends Component
             return;
         }
 
-        $empresa = $user->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa($user);
 
         if (! $empresa) {
             redirect()->route('home')->with('error', 'Nenhuma empresa encontrada.');

@@ -9,7 +9,7 @@ class EmpresaPolicy
 {
     /**
      * Papéis com poderes de gestão dentro da empresa.
-     * NÃO inclui Administrador — esse é global e tratado à parte.
+     * Administrador também se limita à empresa activa.
      */
     private const EMPRESA_MANAGER_ROLES = [
         'Gestor',
@@ -17,30 +17,40 @@ class EmpresaPolicy
         'Gestor Financeiro',
     ];
 
+    public function select(User $user, Empresa $empresa): bool
+    {
+        // Membership permits selection; operational mutations require active context.
+        return $this->belongsToEmpresa($user, $empresa);
+    }
+
     public function view(User $user, Empresa $empresa): bool
     {
-        if ($user->hasRole('Administrador')) {
-            return true;
-        }
-
-        return $this->belongsToEmpresa($user, $empresa);
+        return \App\Support\TenantContext::empresaId($user) === (int) $empresa->id
+            && \App\Support\BusinessAuthorization::allows($user, 'empresas.view');
     }
 
     public function update(User $user, Empresa $empresa): bool
     {
-        if ($user->hasRole('Administrador')) {
-            return true;
+        if (\App\Support\TenantContext::empresaId($user) !== (int) $empresa->id) {
+            return false;
         }
 
         return $this->belongsToEmpresa($user, $empresa)
-            && $user->hasAnyRole(self::EMPRESA_MANAGER_ROLES)
-            && $user->can('empresas.update');
+            && ($user->hasRole('Administrador') || $user->hasAnyRole(self::EMPRESA_MANAGER_ROLES))
+            && \App\Support\BusinessAuthorization::allows($user, 'empresas.update');
     }
 
     public function delete(User $user, Empresa $empresa): bool
     {
-        return $user->hasRole('Administrador')
-            && $user->can('empresas.delete');
+        return \App\Support\TenantContext::empresaId($user) === (int) $empresa->id
+            && $user->hasRole('Administrador')
+            && \App\Support\BusinessAuthorization::allows($user, 'empresas.delete');
+    }
+
+    public function create(User $user): bool
+    {
+        return \App\Support\BusinessAuthorization::allows($user, 'empresas.create')
+            && $user->hasRole('Administrador');
     }
 
     private function belongsToEmpresa(User $user, Empresa $empresa): bool

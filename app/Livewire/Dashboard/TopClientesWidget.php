@@ -9,6 +9,8 @@ use Livewire\Component;
 
 class TopClientesWidget extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public array $topClientes = [];
     public array $clientesComDivida = [];
 
@@ -24,7 +26,7 @@ class TopClientesWidget extends Component
 
     private function loadWidget(bool $fresh = false): void
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             $this->topClientes = [];

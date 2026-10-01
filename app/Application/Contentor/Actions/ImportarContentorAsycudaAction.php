@@ -16,7 +16,7 @@ final class ImportarContentorAsycudaAction
 
     public function execute(int $processoId, array $container): Contentor
     {
-        $processo = $this->tenantAccess->authorizeContext(Auth::user(), 'processo', $processoId);
+        $processo = $this->tenantAccess->authorizeContext(Auth::user(), 'processo', $processoId, 'mercadorias.create');
 
         return Contentor::query()->create([
             'empresa_id' => $processo->empresa_id,

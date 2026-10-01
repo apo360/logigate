@@ -15,7 +15,7 @@ class TenantIsolationTest extends TestCase
 
     public function test_tenant_cannot_access_another_tenant_customer(): void
     {
-        [$tenantAUser] = $this->createTenantUser('A');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenantUser('A');
         [, $tenantBEmpresa] = $this->createTenantUser('B');
 
         $customerId = DB::table('customers')->insertGetId([
@@ -33,14 +33,14 @@ class TenantIsolationTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->actingAs($tenantAUser)
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])
             ->get("/customers/{$customerId}")
             ->assertNotFound();
     }
 
     public function test_tenant_cannot_finalize_another_tenant_process(): void
     {
-        [$tenantAUser] = $this->createTenantUser('A2');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenantUser('A2');
         [$tenantBUser, $tenantBEmpresa] = $this->createTenantUser('B2');
 
         $customerId = DB::table('customers')->insertGetId([
@@ -76,17 +76,17 @@ class TenantIsolationTest extends TestCase
             'updated_at' => now(),
         ]));
 
-        $this->actingAs($tenantAUser)
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])
             ->postJson("/processo/finalizar/{$processoId}")
             ->assertNotFound();
     }
 
     public function test_tenant_cannot_download_files_from_another_tenant_namespace(): void
     {
-        [$tenantAUser] = $this->createTenantUser('A3');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenantUser('A3');
         [, $tenantBEmpresa] = $this->createTenantUser('B3');
 
-        $this->actingAs($tenantAUser)
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])
             ->get("/arquivo/download/empresa/{$tenantBEmpresa->id}/files/private.pdf")
             ->assertForbidden();
     }

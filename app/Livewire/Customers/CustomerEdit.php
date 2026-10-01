@@ -20,6 +20,7 @@ class CustomerEdit extends Component
         $id = $customer instanceof Customer ? $customer->id : (int) $customer;
         
         $this->customer = app(BuscarCustomerQuery::class)->execute($id);
+        $this->authorize('update', $this->customer);
 
         $this->form = [
             'CustomerID' => $this->customer->CustomerID,
@@ -63,6 +64,7 @@ class CustomerEdit extends Component
 
     public function update(UpdateCustomerAction $action)
     {
+        $this->authorize('update', $this->customer);
         $this->validate();
 
         try {
@@ -85,4 +87,3 @@ class CustomerEdit extends Component
         return view('livewire.customers.customer-edit');
     }
 }
-

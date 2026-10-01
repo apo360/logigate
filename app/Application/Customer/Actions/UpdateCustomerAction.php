@@ -20,6 +20,10 @@ final class UpdateCustomerAction
     public function execute(UpdateCustomerDTO $dto): Customer
     {
         $customer = $this->customers->findOrFail($dto->id);
+        \Illuminate\Support\Facades\Gate::authorize('update', $customer);
+        foreach (['empresa_id', 'user_id'] as $owner) {
+            abort_if(array_key_exists($owner, $dto->data) && (int) $dto->data[$owner] !== (int) $customer->$owner, 403);
+        }
 
         if (!$this->access->canAccess(Auth::user(), $customer)) {
             throw new CustomerNotAssociatedWithEmpresaException();

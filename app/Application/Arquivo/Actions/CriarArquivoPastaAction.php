@@ -13,6 +13,7 @@ final class CriarArquivoPastaAction
 {
     public function execute(Empresa $empresa, User $user, string $name, ?int $parentId = null, string $type = 'custom'): ArquivoPasta
     {
+        \Illuminate\Support\Facades\Gate::forUser($user)->authorize('upload', [\App\Models\DocumentoArquivo::class, $empresa]);
         if (! Schema::hasTable('arquivo_pastas')) {
             throw new InvalidArgumentException('A tabela arquivo_pastas ainda não existe. Execute a migration aprovada.');
         }

@@ -15,6 +15,7 @@ final class UpdateExportadorProfileAction
 
     public function execute(Exportador $exportador, ExportadorFormData $data): Exportador
     {
+        \Illuminate\Support\Facades\Gate::authorize('updateProfile', $exportador);
         return $this->exportadores->updateGlobal($exportador, $data->globalAttributes());
     }
 }

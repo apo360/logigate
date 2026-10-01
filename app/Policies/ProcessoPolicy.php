@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Application\Processo\Services\ProcessoTenantAccessService;
 use App\Models\Processo;
 use App\Models\User;
-use Throwable;
 
 class ProcessoPolicy
 {
@@ -70,14 +69,6 @@ class ProcessoPolicy
 
     private function can(User $user, string $permission): bool
     {
-        if (! method_exists($user, 'hasPermissionTo')) {
-            return true;
-        }
-
-        try {
-            return $user->hasPermissionTo($permission);
-        } catch (Throwable) {
-            return true;
-        }
+        return \App\Support\BusinessAuthorization::allows($user, $permission);
     }
 }

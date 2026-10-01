@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ExportadorQuickForm extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public $showModal = false;
     
     public $ExportadorTaxID = '';
@@ -44,9 +46,10 @@ class ExportadorQuickForm extends Component
     
     public function save()
     {
+        $this->authorize('create', \App\Models\Exportador::class);
         $data = $this->validate();
         
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
         $action = app(CreateOrAssociateExportadorAction::class);
         
         $exportador = $action->execute(

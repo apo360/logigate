@@ -10,6 +10,8 @@ use Carbon\Carbon;
 
 class SubscriptionWidget extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public $empresa;
     public $subscricao;
     public ?int $subscricaoId = null;
@@ -24,7 +26,7 @@ class SubscriptionWidget extends Component
     
     public function carregarDados()
     {
-        $empresa = Auth::user()->empresas->first();
+        $empresa = \App\Support\TenantContext::empresa();
         $this->checkoutConta = $empresa?->conta;
 
         // Always prefer the active record, but safely fall back to the latest one

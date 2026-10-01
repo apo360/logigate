@@ -96,14 +96,17 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Licenciamento::class, LicenciamentoPolicy::class);
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
+        Gate::policy(\App\Models\Exportador::class, \App\Policies\ExportadorPolicy::class);
+        Gate::policy(\App\Models\Mercadoria::class, \App\Policies\MercadoriaPolicy::class);
 
         Gate::define('manageEmpresaUser', function (User $actor, Empresa $empresa, User $managed) {
             return app(UsuarioEmpresaPolicy::class)->manageUser($actor, $empresa, $managed);
         });
 
-        /*Gate::define('manageGlobalPermissions', function (User $actor) {
-            return app(UsuarioEmpresaPolicy::class)->manageGlobalPermissions($actor);
-        });*/
+        Gate::define('manageGlobalPermissions', fn (User $actor): bool => false);
+        Gate::define('manageUsers', function (User $actor, Empresa $empresa): bool {
+            return app(UsuarioEmpresaPolicy::class)->manageEmpresaPermissions($actor, $empresa);
+        });
 
         Gate::define('manageEmpresaPermissions', function (User $actor, Empresa $empresa) {
             return app(UsuarioEmpresaPolicy::class)->manageEmpresaPermissions($actor, $empresa);
@@ -111,8 +114,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Restrict log access to privileged administrators only.
         Gate::define('viewLogs', function (User $user): bool {
-            return $user->hasRole('Administrador')
-                || $user->can('audit.view');
+            // The global log viewer has no company filter or explicit platform RBAC contract.
+            return false;
         });
 
         // Security: authorize file keys strictly inside tenant namespace.
@@ -131,17 +134,16 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('manageIntegrations', function (User $user, Empresa $empresa): bool {
-            if (! $user->empresas()->where('empresas.id', $empresa->id)->exists()) {
+            if (\App\Support\TenantContext::empresaId($user) !== (int) $empresa->id) {
                 return false;
             }
 
-            return $user->hasAnyRole(['Administrador', 'Gestor', 'Gestor Despachante'])
-                || $user->can('empresas.update');
+            return \App\Support\BusinessAuthorization::allows($user, 'empresas.update');
         });
 
         // Security: explicit tenant-aware route model binding prevents cross-tenant IDOR.
         Route::bind('customer', function ($value) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            $empresaId = \App\Support\TenantContext::empresaId();
             abort_if(!$empresaId, 404);
 
             $query = Customer::query();
@@ -163,7 +165,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('processo', function ($value) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            $empresaId = \App\Support\TenantContext::empresaId();
             abort_if(!$empresaId, 404);
 
             $query = Processo::query();
@@ -179,7 +181,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('licenciamento', function ($value) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            $empresaId = \App\Support\TenantContext::empresaId();
             abort_if(!$empresaId, 404);
 
             return Licenciamento::query()
@@ -189,7 +191,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('produto', function ($value) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            $empresaId = \App\Support\TenantContext::empresaId();
             abort_if(!$empresaId, 404);
 
             return Produto::query()
@@ -199,13 +201,20 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('subscricao', function ($value) {
-            $empresaId = Auth::user()?->empresas()->value('empresas.id');
+            $empresaId = \App\Support\TenantContext::empresaId();
             abort_if(!$empresaId, 404);
 
             return Subscricao::query()
                 ->whereKey($value)
                 ->where('empresa_id', $empresaId)
                 ->firstOrFail();
+        });
+
+        Route::bind('documentoArquivo', function ($value) {
+            $empresaId = \App\Support\TenantContext::empresaId();
+            abort_if(!$empresaId, 404);
+
+            return DocumentoArquivo::query()->whereKey($value)->where('empresa_id', $empresaId)->firstOrFail();
         });
 
         Route::bind('empresa', function ($value) {

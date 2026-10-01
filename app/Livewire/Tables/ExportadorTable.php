@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class ExportadorTable extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use WithPagination;
 
     // Filtros
@@ -59,7 +61,7 @@ class ExportadorTable extends Component
     public function deleteExportador()
     {
         if ($this->exportadorIdToDelete) {
-            $empresa = Auth::user()->empresas->first();
+            $empresa = \App\Support\TenantContext::empresa();
             $exportador = Exportador::findOrFail($this->exportadorIdToDelete);
             $action = app(DeleteExportadorAction::class);
 
@@ -73,8 +75,9 @@ class ExportadorTable extends Component
 
     public function render()
     {
+        $this->authorize('viewAny', Exportador::class);
         // Obtém a empresa do utilizador autenticado
-        $empresa = Auth::user()->empresas->first(); // ou use a lógica da empresa actual
+        $empresa = \App\Support\TenantContext::empresa(); // ou use a lógica da empresa actual
         $query = app(ExportadorTableQuery::class);
 
         $exportadores = $query->paginate($empresa, [

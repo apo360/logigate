@@ -52,7 +52,7 @@ class CreateCustomerDTO
             is_active: (bool) ($data['is_active'] ?? true),
             foto: self::nullable($data['foto'] ?? null),
             user_id: (int) ($data['user_id'] ?? auth::id()),
-            empresa_id: (int) ($data['empresa_id'] ?? Auth::user()?->empresa_id),
+            empresa_id: (int) ($data['empresa_id'] ?? \App\Support\TenantContext::empresaId()),
             nacionality: self::nullable($data['nacionality'] ?? null),
             doc_type: self::nullable($data['doc_type'] ?? null),
             doc_num: self::nullable($data['doc_num'] ?? null),

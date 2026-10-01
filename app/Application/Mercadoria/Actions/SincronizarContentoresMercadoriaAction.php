@@ -23,7 +23,9 @@ final class SincronizarContentoresMercadoriaAction
             return;
         }
 
-        $processo = $this->tenantAccess->authorizeContext(Auth::user(), 'processo', $data->parentId);
+        $permission = $data->id ? 'mercadorias.update' : 'mercadorias.create';
+        $processo = $this->tenantAccess->authorizeContext(Auth::user(), 'processo', $data->parentId, $permission);
+        $this->tenantAccess->authorizeMercadoria(Auth::user(), $mercadoria, 'processo', $data->parentId, $permission);
         if ((int) $mercadoria->Fk_Importacao !== $data->parentId) {
             throw new AuthorizationException('Mercadoria fora do processo informado.');
         }

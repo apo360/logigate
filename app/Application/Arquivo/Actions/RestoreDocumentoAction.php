@@ -10,7 +10,7 @@ final readonly class RestoreDocumentoAction
     public function execute(int $documentoId, User $user): DocumentoArquivo
     {
         $documento = DocumentoArquivo::withTrashed()->findOrFail($documentoId);
-        abort_unless($user->empresas()->where('empresas.id', $documento->empresa_id)->exists(), 403);
+        abort_unless(\App\Support\TenantContext::empresaId($user) !== null && (int) $documento->empresa_id === \App\Support\TenantContext::empresaId($user), 403);
         $documento->restore();
 
         return $documento->refresh();

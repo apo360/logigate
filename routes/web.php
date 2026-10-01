@@ -76,12 +76,17 @@ use App\Models\Processo;
 
     Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(function () {
 
+        Route::get('/empresa-contexto', [\App\Http\Controllers\EmpresaContextController::class, 'index'])->name('empresa-context.index');
+        Route::post('/empresa-contexto', [\App\Http\Controllers\EmpresaContextController::class, 'update'])->name('empresa-context.update');
+
         Route::post('/logout', function (Request $request) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             return redirect('/login');
         })->name('logout');
+
+        Route::middleware('empresa.active')->group(function () {
         
         // ------------- Rotas para os despachantes ------------ //
         // Sistema de Controlle de usuarios. 
@@ -257,5 +262,7 @@ use App\Models\Processo;
         Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);
         Route::get('processos/importar-asycuda', ImportarDeclaracaoAsycuda::class)->name('processos.importar-asycuda');
         Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
+
+        });
 
     });

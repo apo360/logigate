@@ -19,6 +19,7 @@ final class UpdateProdutoPriceAction
 
     public function execute(Produto $produto, ProdutoPriceData $data, Empresa $empresa): void
     {
+        \Illuminate\Support\Facades\Gate::authorize('update', $produto);
         DB::transaction(function () use ($produto, $data, $empresa): void {
             $produto = $this->produtos->findForEmpresa($produto->id, $empresa);
             $currentPrice = $this->produtos->currentPrice($produto);

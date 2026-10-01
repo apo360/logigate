@@ -91,7 +91,7 @@ class PagamentoController extends AuthenticatedController
                 'data_pagamento' => $request->data_pagamento,
                 'sourceID' => Auth::user()->id,
                 'customer_id' => $fatura->customer_id,
-                'empresa_id' => Auth::user()->empresas->first()->id,
+                'empresa_id' => \App\Support\TenantContext::empresa()->id,
             ]);
 
             // 🔹 Criar linha do recibo (ligação à fatura) que vai ser tratado com o array

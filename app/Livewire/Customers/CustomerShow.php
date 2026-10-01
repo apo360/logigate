@@ -19,6 +19,8 @@ use Livewire\Component;
 
 class CustomerShow extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public Customer $customer;
 
     public int $customerId;
@@ -237,8 +239,8 @@ class CustomerShow extends Component
 
     public function render()
     {
-        $empresaId = auth()->user()?->empresa_id
-            ?? auth()->user()?->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId();
+        abort_unless($empresaId && $this->customerBelongsToEmpresa($empresaId), 403);
 
         $statementService = app(CustomerAccountStatementService::class);
         $ultimoMovimentoContaCorrente = $statementService

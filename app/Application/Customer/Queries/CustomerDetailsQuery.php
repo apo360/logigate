@@ -19,6 +19,7 @@ class CustomerDetailsQuery
     public function execute(int $id): Customer
     {
         $customer = $this->customers->findOrFail($id);
+        \Illuminate\Support\Facades\Gate::authorize('view', $customer);
 
         if (!$this->access->canAccess(Auth::user(), $customer)) {
             throw new CustomerNotAssociatedWithEmpresaException;

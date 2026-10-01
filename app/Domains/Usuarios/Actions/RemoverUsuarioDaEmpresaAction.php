@@ -11,7 +11,14 @@ final class RemoverUsuarioDaEmpresaAction
     public function execute(User $actor, Empresa $empresa, User $managedUser): void
     {
         Gate::forUser($actor)->authorize('manageUser', [$empresa, $managedUser]);
+        abort_unless(\App\Support\BusinessAuthorization::allows($actor, 'users.delete'), 403);
 
-        $empresa->users()->detach($managedUser->id);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($empresa, $managedUser): void {
+            // Rejoining must not silently revive previously removed company authority.
+            $managedUser->syncRoles([]);
+            $managedUser->syncPermissions([]);
+            $empresa->users()->detach($managedUser->id);
+        });
+        \App\Support\CompanyRbac::forgetUser($managedUser);
     }
 }

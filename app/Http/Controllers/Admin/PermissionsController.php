@@ -15,6 +15,7 @@ class PermissionsController extends Controller
 {
     public function index(ListarPermissoesQuery $query)
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         $permissions = $query->execute();
 
         return view('admin.permissions', compact('permissions'));
@@ -22,11 +23,13 @@ class PermissionsController extends Controller
 
     public function create()
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         return view('admin.create_permission');
     }
 
     public function store(Request $request, CriarPermissaoAction $action)
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         $validated = $request->validate([
             'name' => ['required', 'string', 'unique:permissions,name'],
         ]);
@@ -38,16 +41,19 @@ class PermissionsController extends Controller
 
     public function show(string $id)
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         return redirect()->route('permissions.index');
     }
 
     public function edit(Permission $permission)
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         return view('admin.edit_permission', compact('permission'));
     }
 
     public function update(Request $request, Permission $permission, AtualizarPermissaoAction $action)
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         $validated = $request->validate([
             'name' => ['required', 'string', 'unique:permissions,name,' . $permission->id],
         ]);
@@ -59,6 +65,7 @@ class PermissionsController extends Controller
 
     public function destroy(Permission $permission, ExcluirPermissaoAction $action)
     {
+        \Illuminate\Support\Facades\Gate::authorize('manageGlobalPermissions');
         $action->execute(Auth::user(), $permission);
 
         return redirect()->route('permissions.index')->with('success', 'Permissão excluída com sucesso!');

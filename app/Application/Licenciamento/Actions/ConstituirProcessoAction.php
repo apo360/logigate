@@ -25,6 +25,8 @@ class ConstituirProcessoAction
      */
     public function execute(Licenciamento $licenciamento, ?int $userId = null): Processo
     {
+        \Illuminate\Support\Facades\Gate::authorize('update', $licenciamento);
+        \Illuminate\Support\Facades\Gate::authorize('create', Processo::class);
         $userId = $userId ?? Auth::id();
 
         return DB::transaction(function () use ($licenciamento, $userId) {

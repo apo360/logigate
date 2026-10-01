@@ -12,11 +12,11 @@ class LoginResponse implements LoginResponseContract
     {
         $user = Auth::user();
 
-        $empresa = $user->empresas->first();
+        $empresa = app(\App\Application\Empresa\Actions\EstabelecerEmpresaAposAutenticacaoAction::class)->execute($user);
 
         if (! $empresa) {
             Log::warning('User without company', ['user_id' => $user->id]);
-            return redirect('/dashboard');
+            return redirect()->route('empresa-context.index');
         }
 
         if (! $user->hasActiveSubscription()) {

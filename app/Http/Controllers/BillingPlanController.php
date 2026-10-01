@@ -16,7 +16,7 @@ class BillingPlanController extends Controller
 {
     public function index(): View
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada.');
@@ -54,7 +54,7 @@ class BillingPlanController extends Controller
 
     public function start(Request $request): RedirectResponse
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada.');

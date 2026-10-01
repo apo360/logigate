@@ -21,6 +21,7 @@ class ExportadorController extends AuthenticatedController
      */
     public function index()
     {
+        $this->authorize('viewAny', Exportador::class);
         $exportadors = $this->empresa->exportadors()->get();
 
         return view('exportadors.index', compact('exportadors'));
@@ -31,6 +32,7 @@ class ExportadorController extends AuthenticatedController
      */
     public function create()
     {
+        $this->authorize('create', Exportador::class);
         $paises = Pais::all();
         return view('exportadors.create', compact('paises'));
     }
@@ -74,7 +76,7 @@ class ExportadorController extends AuthenticatedController
      */
     public function show(Exportador $exportador)
     {
-        //
+        $this->authorize('view', $exportador);
     }
 
     /**
@@ -82,6 +84,7 @@ class ExportadorController extends AuthenticatedController
      */
     public function edit(Exportador $exportador)
     {
+        $this->authorize('update', $exportador);
         $paises = Pais::all();
 
         return view('exportadors.edit', compact('exportador', 'paises'));
@@ -97,6 +100,11 @@ class ExportadorController extends AuthenticatedController
         UpdateExportadorAssociationAction $updateAssociation
     )
 {
+    $exportador = Exportador::findOrFail($id);
+    $this->authorize('update', $exportador);
+    if ($request->get('escopo', 'local') === 'global') {
+        $this->authorize('updateProfile', $exportador);
+    }
     try {
         $user = Auth::user();
         $escopo = $request->get('escopo', 'local'); // valor padrão: local
@@ -112,11 +120,7 @@ class ExportadorController extends AuthenticatedController
              * Só permitida para administradores ou utilizadores com permissão
              * global. Aqui alteramos os dados centrais do exportador.
              */
-            if ($user->hasRole('admin') || $user->can('update-global-exportador')) {
-                $exportador = $updateProfile->execute($exportador, $data);
-            } else {
-                throw new \Exception('Sem permissão para atualização global.');
-            }
+            $exportador = $updateProfile->execute($exportador, $data);
 
         } else {
             /**

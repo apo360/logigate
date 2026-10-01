@@ -7,7 +7,6 @@ use App\Domains\Usuarios\Repositories\UsuarioRepositoryInterface;
 use App\Models\Empresa;
 use App\Models\EmpresaUser;
 use App\Models\User;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -22,11 +21,16 @@ final class CriarUsuarioEmpresaAction
     public function execute(User $actor, Empresa $empresa, UsuarioEmpresaData $data): User
     {
         Gate::forUser($actor)->authorize('manageUsers', $empresa);
-        $this->authorizeAssignableRoles($actor, array_filter([$data->role]));
-        $this->authorizeAssignablePermissions($actor, $data->permissions);
+        abort_unless(\App\Support\BusinessAuthorization::allows($actor, 'users.create'), 403);
+        $roles = \App\Support\CompanyRbac::roles($actor, array_filter([$data->role]));
+        $permissions = \App\Support\CompanyRbac::permissions($actor, $data->permissions);
+        $existing = User::where('email', $data->email)->first();
+        if ($existing && \App\Support\TenantContext::userBelongsToEmpresa($existing, (int) $empresa->id)) {
+            Gate::forUser($actor)->authorize('manageUser', [$empresa, $existing]);
+        }
 
-        return DB::transaction(function () use ($empresa, $data): User {
-            $user = $this->usuarios->create([
+        return DB::transaction(function () use ($empresa, $data, $roles, $permissions): User {
+            $user = User::where('email', $data->email)->first() ?? $this->usuarios->create([
                 'name' => $data->name,
                 'email' => $data->email,
                 'password' => Hash::make((string) $data->password),
@@ -41,41 +45,11 @@ final class CriarUsuarioEmpresaAction
                 'conta' => $empresa->conta,
             ]);
 
-            if ($data->role) {
-                $user->assignRole($data->role);
-            }
-
-            if ($data->permissions !== []) {
-                $user->syncPermissions($data->permissions);
-            }
+            $user->syncRoles($roles);
+            $user->syncPermissions($permissions);
+            \App\Support\CompanyRbac::forgetUser($user);
 
             return $user->refresh();
         });
-    }
-
-    private function authorizeAssignableRoles(User $actor, array $roles): void
-    {
-        if ($roles === [] || Gate::forUser($actor)->allows('manageGlobalPermissions', User::class)) {
-            return;
-        }
-
-        $allowedRoles = $actor->roles->pluck('name')->all();
-
-        if (array_diff(array_values(array_unique($roles)), $allowedRoles) !== []) {
-            throw new AuthorizationException('Não autorizado a atribuir um papel fora do seu escopo.');
-        }
-    }
-
-    private function authorizeAssignablePermissions(User $actor, array $permissions): void
-    {
-        if ($permissions === [] || Gate::forUser($actor)->allows('manageGlobalPermissions', User::class)) {
-            return;
-        }
-
-        $allowedPermissions = $actor->getAllPermissions()->pluck('name')->all();
-
-        if (array_diff(array_values(array_unique($permissions)), $allowedPermissions) !== []) {
-            throw new AuthorizationException('Não autorizado a atribuir permissões fora do seu escopo.');
-        }
     }
 }

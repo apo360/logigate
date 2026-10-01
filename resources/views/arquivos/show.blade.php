@@ -98,8 +98,8 @@
                             <button type="submit" class="btn btn-outline-danger" name="action" value="delete" disabled>Excluir Selecionados</button>
                             <button type="submit" class="btn btn-outline-primary" name="action" value="move" disabled>Mover Selecionados</button>
                             <button type="submit" class="btn btn-outline-secondary" name="action" value="copy" disabled>Copiar Selecionados</button>
-                            <a href="{{ route('PastaAbrir', ['dir' => auth()->user()->empresas()->first()->conta.'/'.$arquivo]) }}" class="btn btn-success">Criar Pasta</a>
-                            <a href="{{ route('arquivos.create', ['dir' => auth()->user()->empresas()->first()->conta.'/'.$arquivo])}}" class="btn btn-warning">Carregar Ficheiros</a>
+                            <a href="{{ route('PastaAbrir', ['dir' => \App\Support\TenantContext::empresa()->conta.'/'.$arquivo]) }}" class="btn btn-success">Criar Pasta</a>
+                            <a href="{{ route('arquivos.create', ['dir' => \App\Support\TenantContext::empresa()->conta.'/'.$arquivo])}}" class="btn btn-warning">Carregar Ficheiros</a>
                         </div>
                     </div>
                 </form>

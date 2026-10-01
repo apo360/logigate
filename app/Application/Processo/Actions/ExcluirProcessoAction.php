@@ -20,6 +20,7 @@ final readonly class ExcluirProcessoAction
     {
         return DB::transaction(function () use ($id): bool {
             $processo = $this->processos->findOrFail($id);
+            \Illuminate\Support\Facades\Gate::authorize('delete', $processo);
             $this->rules->assertPodeExcluir($processo);
 
             return $this->processos->delete($id);

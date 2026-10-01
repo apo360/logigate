@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 class MigracaoController extends AuthenticatedController
 {
     public function create(){
-        $imports = Migracao::where('empresa_id', Auth::user()->empresas->first()->id)->get();
+        $imports = Migracao::where('empresa_id', \App\Support\TenantContext::empresa()->id)->get();
         return view('empresa.migracao', compact('imports'));
     }
 
@@ -25,7 +25,7 @@ class MigracaoController extends AuthenticatedController
             'type' => 'clientes',
             'file_path' => $filePath,
             'status' => 'pending',
-            'empresa_id' => Auth::user()->empresas->first()->id,
+            'empresa_id' => \App\Support\TenantContext::empresa()->id,
         ]);
 
         ImportCustomers::dispatch($filePath, $import->id);
@@ -41,7 +41,7 @@ class MigracaoController extends AuthenticatedController
             'type' => 'exportadores',
             'file_path' => $filePath,
             'status' => 'pending',
-            'empresa_id' => Auth::user()->empresas->first()->id,
+            'empresa_id' => \App\Support\TenantContext::empresa()->id,
         ]);
 
         ImportExportadores::dispatch($filePath, $import->id);
@@ -57,7 +57,7 @@ class MigracaoController extends AuthenticatedController
             'type' => 'processos',
             'file_path' => $filePath,
             'status' => 'pending',
-            'empresa_id' => Auth::user()->empresas->first()->id,
+            'empresa_id' => \App\Support\TenantContext::empresa()->id,
         ]);
 
         ImportProcessos::dispatch($filePath, $import->id);

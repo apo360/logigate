@@ -21,6 +21,8 @@ class CriarLicenciamentoAction
 
     public function execute(CriarLicenciamentoDTO $dto): Licenciamento
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === (int) $dto->empresa_id, 403);
+        \Illuminate\Support\Facades\Gate::authorize('create', Licenciamento::class);
         return DB::transaction(function () use ($dto) {
             $payload = $dto->toArray();
             $payload['codigo_licenciamento'] = $dto->codigo_licenciamento ?: $this->geradorCodigo->gerar($dto->empresa_id);

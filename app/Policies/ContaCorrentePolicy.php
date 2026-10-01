@@ -18,11 +18,12 @@ class ContaCorrentePolicy
             return false;
         }
 
-        if (Schema::hasColumn('conta_correntes', 'empresa_id') && (int) $movimento->empresa_id !== $empresaId) {
+        if (! Schema::hasColumn('conta_correntes', 'empresa_id') || (int) $movimento->empresa_id !== $empresaId) {
             return false;
         }
 
-        return app(CustomerTenantAccessService::class)->canAccess($user, $movimento->customer);
+        return app(CustomerTenantAccessService::class)->canAccess($user, $movimento->customer)
+            && \App\Support\BusinessAuthorization::allows($user, 'customers.view');
     }
 
     public function create(User $user, ?Customer $customer = null): bool
@@ -33,12 +34,7 @@ class ContaCorrentePolicy
 
         $access = app(CustomerTenantAccessService::class);
 
-        if ($access->isAdmin($user)) {
-            return true;
-        }
-
-        return $user->can('conta_corrente.create')
-            || $user->can('financeiro.movimentos.create')
-            || $user->can('customers.update');
+        return $access->hasEmpresa($user)
+            && \App\Support\BusinessAuthorization::any($user, ['conta_corrente.create', 'financeiro.movimentos.create', 'customers.update']);
     }
 }

@@ -29,19 +29,11 @@ class ClientePortalEnsureActive
             return $this->logout($request, 'A sua conta do portal do cliente não está vinculada a um cliente.');
         }
 
-        $empresaId = $request->session()->get('cliente_portal_empresa_id');
-
-        if ($empresaId && ! $this->customerCanUseEmpresa($customer, (int) $empresaId)) {
-            $request->session()->forget('cliente_portal_empresa_id');
+        // The credential authorizes one Customer/Empresa pair, not all customer memberships.
+        if (! $portalUser->empresa_id || ! $this->customerCanUseEmpresa($customer, (int) $portalUser->empresa_id)) {
+            return $this->logout($request, 'Empresa do portal não autorizada.');
         }
-
-        if (! $request->session()->has('cliente_portal_empresa_id')) {
-            $defaultEmpresaId = $this->defaultEmpresaId($portalUser, $customer);
-
-            if ($defaultEmpresaId) {
-                $request->session()->put('cliente_portal_empresa_id', $defaultEmpresaId);
-            }
-        }
+        $request->session()->put('cliente_portal_empresa_id', (int) $portalUser->empresa_id);
 
         return $next($request);
     }
@@ -56,17 +48,6 @@ class ClientePortalEnsureActive
         return redirect()
             ->route('cliente.portal.login')
             ->with('error', $message);
-    }
-
-    private function defaultEmpresaId($portalUser, $customer): ?int
-    {
-        foreach ([$portalUser->empresa_id, $customer->empresa_id] as $empresaId) {
-            if ($empresaId && $this->customerCanUseEmpresa($customer, (int) $empresaId)) {
-                return (int) $empresaId;
-            }
-        }
-
-        return $customer->empresas()->value('empresas.id');
     }
 
     private function customerCanUseEmpresa($customer, int $empresaId): bool

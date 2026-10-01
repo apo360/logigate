@@ -216,7 +216,7 @@ class ArquivoController extends AuthenticatedController
      */
     private function resolveEmpresaId(): int
     {
-        $empresaId = Auth::user()?->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId();
         abort_if(!$empresaId, 403, 'Nenhuma empresa associada ao usuário autenticado.');
 
         return (int) $empresaId;

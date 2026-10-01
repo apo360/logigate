@@ -18,13 +18,14 @@ class ModuleSubscriptionController extends AuthenticatedController
     public function index()
     {
         $modules = Module::all();
-        $empresa = Auth::user()->empresas->first(); // Supondo que o usuário está associado a uma empresa
+        $empresa = \App\Support\TenantContext::empresa(); // Supondo que o usuário está associado a uma empresa
 
         return view('modules.index', compact('modules', 'empresa'));
     }
 
     public function show(Empresa $empresa)
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === (int) $empresa->id, 403);
         $modulos = Module::all();
         $metodosPagamento = MetodoPagamento::all();
         return view('empresa.subscricao', compact('empresa', 'modulos', 'metodosPagamento'));

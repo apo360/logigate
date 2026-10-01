@@ -71,7 +71,11 @@
             </x-slot>
 
             <x-slot name="content">
-                @php($currentEmpresa = auth()->user()->empresas->first())
+                @php($currentEmpresa = \App\Support\TenantContext::empresa())
+
+                <x-dropdown-link href="{{ route('empresa-context.index') }}">
+                    {{ __('Trocar empresa') }}
+                </x-dropdown-link>
 
                 <x-dropdown-link href="{{ route('profile.show') }}">
                     <i class="fa fa-user mr-2 text-blue-600"></i>{{ __('Minha Conta') }}

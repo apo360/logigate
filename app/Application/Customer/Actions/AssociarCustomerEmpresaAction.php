@@ -14,6 +14,8 @@ class AssociarCustomerEmpresaAction
 
     public function execute(AssociarCustomerEmpresaDTO $dto): void
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === $dto->empresaId, 403);
+        abort_unless(\App\Support\BusinessAuthorization::allows(auth()->user(), 'customers.associate_empresa'), 403);
         $this->customers->associateToEmpresa(
             $dto->customerId,
             $dto->empresaId,

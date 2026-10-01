@@ -11,7 +11,9 @@ class EmpresaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() instanceof \App\Models\User
+            && \App\Support\TenantContext::empresaId($this->user())
+            && $this->user()->can('empresas.create');
     }
 
     /**
@@ -44,7 +46,7 @@ class EmpresaRequest extends FormRequest
             'apelido' => 'nullable|string|max:150',
             'telefone' => 'nullable|string|max:150',
             'tipo' => 'nullable|string|max:150',
-            'user_id' => 'nullable|exists:users,id',
+            'user_id' => 'prohibited',
         ];
     }
 }

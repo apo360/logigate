@@ -17,6 +17,8 @@ use Livewire\WithPagination;
 
 class ContaCorrente extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use AuthorizesRequests;
     use WithPagination;
 
@@ -24,6 +26,7 @@ class ContaCorrente extends Component
 
     public Customer $customer;
 
+    #[\Livewire\Attributes\Locked]
     public int $empresaId;
 
     public string $search = '';
@@ -67,6 +70,12 @@ class ContaCorrente extends Component
             'form.data_movimento' => 'required|date',
             'form.observacoes' => 'nullable|string|max:1000',
         ];
+    }
+
+    public function hydrate(): void
+    {
+        $activeId = \App\Support\TenantContext::empresaId();
+        abort_unless($activeId !== null && $this->empresaId === $activeId, 403);
     }
 
     public function mount(int|Customer|null $customer = null, ?int $customerId = null): void
@@ -205,8 +214,7 @@ class ContaCorrente extends Component
 
     private function currentEmpresaId(): int
     {
-        $empresaId = Auth::user()?->empresa_id
-            ?? Auth::user()?->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId();
 
         abort_if(!$empresaId, 403);
 

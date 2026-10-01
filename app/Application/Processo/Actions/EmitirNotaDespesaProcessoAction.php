@@ -35,7 +35,7 @@ final class EmitirNotaDespesaProcessoAction
 
         $tarifa = $processo->emolumentoTarifa
             ?? EmolumentoTarifa::query()->where('processo_id', $processo->id)->first();
-        $empresa = $processo->empresa ?? $user->empresas()->first();
+        $empresa = $processo->empresa ?? \App\Support\TenantContext::empresa($user);
         $filename = 'nota_despesa_' . $this->safeName($processo->NrProcesso) . '.pdf';
         $outputName = pathinfo($filename, PATHINFO_FILENAME);
         $outputDirectory = storage_path('app/reports/processos/' . $processo->id);

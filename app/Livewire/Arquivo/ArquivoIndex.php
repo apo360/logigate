@@ -24,6 +24,8 @@ use Livewire\WithFileUploads;
 
 class ArquivoIndex extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use WithFileUploads;
 
     public ?Empresa $empresa = null;
@@ -52,6 +54,13 @@ class ArquivoIndex extends Component
     public string $novaPastaTipo = 'custom';
 
     public array $files = [];
+
+    public function hydrate(): void
+    {
+        $activeId = \App\Support\TenantContext::empresaId();
+        abort_unless($activeId !== null && (int) $this->empresa?->id === $activeId, 403);
+        Gate::forUser(Auth::user())->authorize('viewAny', [DocumentoArquivo::class, $this->empresa]);
+    }
 
     public function mount(): void
     {

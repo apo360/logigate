@@ -1,0 +1,67 @@
+app\Http\Middleware\CheckPasswordChanged.php:24:            if (!$user->roles->contains('name', 'Adminstrador') && !$user->password_changed) {
+app\Http\Middleware\RoleMiddleware.php:19:        if (!Auth::check() || !Auth::user()->hasRole($role)) {
+app\Application\Customer\Services\CustomerTenantAccessService.php:47:        if (method_exists($user, 'hasRole')) {
+app\Application\Customer\Services\CustomerTenantAccessService.php:48:            return $user->hasRole('admin')
+app\Application\Customer\Services\CustomerTenantAccessService.php:49:                || $user->hasRole('super-admin')
+app\Application\Customer\Services\CustomerTenantAccessService.php:50:                || $user->hasRole('Administrador')
+app\Application\Customer\Services\CustomerTenantAccessService.php:51:                || $user->hasRole('CEO');
+app\Domains\Usuarios\Policies\UsuarioEmpresaPolicy.php:35:        if ($managedUser->hasRole('Administrador') && ! $actor->hasRole('Administrador')) {
+app\Domains\Usuarios\Policies\UsuarioEmpresaPolicy.php:46:        if ($actor->hasRole('Administrador')) {
+app\Domains\Usuarios\Policies\UsuarioEmpresaPolicy.php:51:        return $actor->hasAnyRole(self::EMPRESA_MANAGER_ROLES)
+app\Domains\Usuarios\Policies\UsuarioEmpresaPolicy.php:78:        if ($actor->hasRole('Administrador')) {
+app\Domains\Usuarios\Policies\UsuarioEmpresaPolicy.php:83:        return $actor->hasRole('Gestor') && $actor->can('users.update');
+app\Domains\Empresa\Policies\EmpresaPolicy.php:37:        if ($user->hasRole('Administrador')) {
+app\Domains\Empresa\Policies\EmpresaPolicy.php:42:            && $user->hasAnyRole(self::EMPRESA_MANAGER_ROLES)
+app\Domains\Empresa\Policies\EmpresaPolicy.php:49:            && $user->hasRole('Administrador')
+app\Domains\Usuarios\Actions\ExcluirRoleAction.php:16:        abort_unless($actor->hasRole('Administrador'), 403);
+app\Domains\Empresa\Actions\CriarEmpresaAction.php:27:        $permissions = $actor->getAllPermissions()->reject(fn ($p) => in_array($p->name,
+app\Domains\Usuarios\Actions\CriarUsuarioEmpresaAction.php:26:        $permissions = \App\Support\CompanyRbac::permissions($actor, $data->permissions);
+app\Domains\Usuarios\Actions\CriarRoleAction.php:16:        abort_unless($actor->hasRole('Administrador'), 403);
+app\Domains\Usuarios\Actions\AtualizarRoleAction.php:16:        abort_unless($actor->hasRole('Administrador'), 403);
+app\Application\Arquivo\Policies\DocumentoPolicy.php:87:        return $user->getAllPermissions()
+app\Application\Mercadoria\Services\MercadoriaTenantAccessService.php:94:        if (! $permission || ! method_exists($user, 'hasPermissionTo')) {
+app\Application\Mercadoria\Services\MercadoriaTenantAccessService.php:107:        if ($exists && ! $user->hasPermissionTo($permission)) {
+app\Support\CompanyRbac.php:63:        $admin = $actor->hasRole('Administrador');
+app\Support\CompanyRbac.php:69:            if (! $role || (! $admin && (! $actor->hasRole($role) || $role->name === 'Administrador'))) {
+app\Support\CompanyRbac.php:89:            if (! $permission || ! $actor->hasPermissionTo($permission)
+app\Support\ActorContext.php:24:        return self::user()?->roles->pluck('name')->first();
+app\Policies\ProcessoPolicy.php:73:        if (! method_exists($user, 'hasPermissionTo')) {
+app\Policies\ProcessoPolicy.php:78:            return $user->hasPermissionTo($permission);
+app\Policies\LicenciamentoPolicy.php:48:        if (method_exists($user, 'hasPermissionTo')) {
+app\Policies\LicenciamentoPolicy.php:49:            return $user->hasPermissionTo($permission);
+app\Http\Controllers\ExportadorController.php:115:            if ($user->hasRole('admin') || $user->can('update-global-exportador')) {
+app\Livewire\Empresa\EmpresaUserPermissions.php:58:        app(SincronizarRolesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $this->managedUser, $this->roles);
+app\Livewire\Empresa\EmpresaUserPermissions.php:59:        app(SincronizarPermissoesUsuarioAction::class)->execute(auth()->user(), $this->empresa, $this->managedUser, $this->permissions);
+app\Livewire\Empresa\EmpresaUserPermissions.php:70:        $this->permissions = collect($this->permissions)
+app\Livewire\Empresa\EmpresaUserPermissions.php:83:        $this->permissions = collect($this->permissions)
+app\Livewire\Empresa\EmpresaUserPermissions.php:107:            'selectedPermissionsCount' => count($this->permissions),
+app\Livewire\Empresa\EmpresaUserPermissions.php:114:        if (auth()->user()->hasRole('Administrador')) {
+app\Livewire\Empresa\EmpresaUserPermissions.php:118:        return auth()->user()?->roles->pluck('name')->all() ?? [];
+app\Livewire\Empresa\EmpresaUserPermissions.php:123:        return auth()->user()?->getAllPermissions()->pluck('name')->all() ?? [];
+app\Livewire\Empresa\EmpresaUserPermissions.php:136:        $this->roles = $this->managedUser->roles->pluck('name')->all();
+app\Livewire\Empresa\EmpresaUserPermissions.php:137:        $this->permissions = $this->managedUser->permissions->pluck('name')->all();
+app\Livewire\Empresa\EmpresaUserPermissions.php:163:                    'selected' => in_array($permission->name, $this->permissions, true),
+app\Livewire\Empresa\EmpresaUserForm.php:74:            'role' => $user->roles->pluck('name')->first() ?? '',
+app\Livewire\Empresa\EmpresaUserForm.php:172:        if (auth()->user()->hasRole('Administrador')) {
+app\Livewire\Empresa\EmpresaUserForm.php:176:        return auth()->user()?->roles->pluck('name')->all() ?? [];
+app\Models\Concerns\HasCompanyRoles.php:14:        hasRole as private spatieHasRole;
+app\Models\Concerns\HasCompanyRoles.php:15:        hasPermissionTo as private spatieHasPermissionTo;
+app\Models\Concerns\HasCompanyRoles.php:50:    public function hasRole($roles, ?string $guard = null): bool
+app\Models\Concerns\HasCompanyRoles.php:55:    public function hasPermissionTo($permission, $guardName = null): bool
+app\Http\Controllers\Admin\UserRoleController.php:29:        $roles = $user->roles
+app\Http\Controllers\Admin\UserRoleController.php:54:        $roles = $user->roles
+app\Http\Controllers\Admin\Roles.php:21:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Http\Controllers\Admin\Roles.php:30:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Http\Controllers\Admin\Roles.php:39:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Http\Controllers\Admin\Roles.php:54:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Http\Controllers\Admin\Roles.php:61:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Http\Controllers\Admin\Roles.php:71:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Http\Controllers\Admin\Roles.php:86:        abort_unless($empresa && auth()->user()->hasRole('Administrador'), 403);
+app\Models\User.php:104:    public function roleNaEmpresa(?Empresa $empresa = null): ?string
+app\Models\User.php:115:        return $this->getRoleNames()->first();
+app\Providers\AppServiceProvider.php:115:            return $user->hasRole('Administrador')
+app\Providers\AppServiceProvider.php:139:            return $user->hasAnyRole(['Administrador', 'Gestor', 'Gestor Despachante'])
+app\Providers\EventServiceProvider.php:42:                'user_type' => $event->user->roles->pluck('name')->first(),
+app\Providers\EventServiceProvider.php:95:                'user_type' => $event->user->roles->pluck('name')->first(),
+app\Providers\FortifyServiceProvider.php:49:                'roles' => $event->user->roles->pluck('name') // Ensure `roles` is a relationship
+app\Domains\Exportadores\Actions\DeleteExportadorAction.php:35:        return ($user->hasRole('admin') || $user->can('delete-global-exportador'))

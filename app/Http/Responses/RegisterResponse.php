@@ -17,11 +17,11 @@ class RegisterResponse implements RegisterResponseContract
             return redirect()->route('login');
         }
 
-        $empresa = $user->empresas()->first();
+        $empresa = app(\App\Application\Empresa\Actions\EstabelecerEmpresaAposAutenticacaoAction::class)->execute($user);
 
         if (! $empresa) {
             Log::warning('RegisterResponse without empresa', ['user_id' => $user->id]);
-            return redirect()->route('home');
+            return redirect()->route('empresa-context.index');
         }
 
         $subscription = $empresa->subscricoes()

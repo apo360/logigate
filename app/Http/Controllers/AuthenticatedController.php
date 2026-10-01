@@ -15,7 +15,7 @@ abstract class AuthenticatedController extends BaseController
 
         // Centralize tenant resolution for authenticated SaaS controllers.
         $this->middleware(function ($request, $next) {
-            $this->empresa = Auth::user()?->empresas()->first();
+            $this->empresa = \App\Support\TenantContext::empresa();
 
             return $next($request);
         });

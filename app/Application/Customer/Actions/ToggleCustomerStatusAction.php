@@ -8,6 +8,7 @@ final readonly class ToggleCustomerStatusAction
 {
     public function execute(Customer $customer, bool $active): Customer
     {
+        \Illuminate\Support\Facades\Gate::authorize($active ? 'activate' : 'deactivate', $customer);
         $customer->is_active = $active ? 1 : 0;
         $customer->save();
 

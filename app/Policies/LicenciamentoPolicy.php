@@ -45,10 +45,6 @@ class LicenciamentoPolicy
 
     private function can(User $user, string $permission): bool
     {
-        if (method_exists($user, 'hasPermissionTo')) {
-            return $user->hasPermissionTo($permission);
-        }
-
-        return true;
+        return \App\Support\BusinessAuthorization::allows($user, $permission);
     }
 }

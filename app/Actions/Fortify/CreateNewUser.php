@@ -5,7 +5,6 @@ namespace App\Actions\Fortify;
 use App\Domains\Empresa\Actions\CriarEmpresaAction;
 use App\Domains\Empresa\Data\EmpresaData;
 use App\Models\User;
-use App\Models\EmpresaUser;
 use App\Models\Subscricao;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -15,8 +14,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -50,26 +47,16 @@ class CreateNewUser implements CreatesNewUsers
             ]);
 
             // 2) Empresa
-            $empresa = app(CriarEmpresaAction::class)->execute(
+            $empresa = app(CriarEmpresaAction::class)->executeForNewUser(
                 EmpresaData::from([
                     'Empresa'    => $input['empresa'],
                     'Designacao' => $input['designacao'] ?? 'Despachante Oficial',
                     'NIF'        => $input['nif'],
-                ])
+                ]), $user
             );
 
-            // 3) Vínculo User ↔ Empresa (role de contexto)
-            EmpresaUser::create([
-                'empresa_id' => $empresa->id,
-                'user_id'    => $user->id,
-                'conta'      => $empresa->conta,
-                'role'       => 'Administrador',   // ✅ primeiro user é Administrador do sistema que por sua vez pode ser o Gestor ou criar um user como gestor DA EMPRESA
-            ]);
-
-            // 4) Role Spatie (autorização) — NUNCA Administrador
-            $this->assignInitialRole($user);
-
-            // 5) Subscrição
+            // Membership and company-scoped Administrador are created atomically by the Action.
+            // Subscription business behavior remains unchanged.
             Subscricao::create([
                 'empresa_id'           => $empresa->id,
                 'plano_id'             => $input['plano_id'],
@@ -100,21 +87,4 @@ class CreateNewUser implements CreatesNewUsers
         }
     }
 
-    /**
-     * O primeiro utilizador de uma empresa é Gestor — não Administrador global.
-     */
-    private function assignInitialRole(User $user): void
-    {
-        $guard = 'web';
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-        $gestorRole = Role::where('name', 'Administrador')
-            ->where('guard_name', $guard)
-            ->firstOrFail();
-
-        $user->assignRole($gestorRole);
-
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
-    }
 }

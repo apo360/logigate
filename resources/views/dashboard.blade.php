@@ -5,7 +5,7 @@
 
         @php
             $user = auth()->user();
-            $empresa = $user?->empresas->first();
+            $empresa = \App\Support\TenantContext::empresa($user);
             $sections = [
                 ['id' => 'visao-geral', 'label' => 'Visão Geral'],
                 ['id' => 'operacoes', 'label' => 'Operações'],

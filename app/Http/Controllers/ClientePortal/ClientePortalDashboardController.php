@@ -16,7 +16,7 @@ class ClientePortalDashboardController extends Controller
     {
         $portalUser = Auth::guard('cliente_portal')->user();
         $customer = $portalUser->customer;
-        $empresasAssociadas = $customer->empresas()->get();
+        $empresasAssociadas = $customer->empresas()->where('empresas.id', $portalUser->empresa_id)->get();
         $documentosCount = DocumentoArquivo::query()
             ->where('empresa_id', $portalUser->empresa_id)
             ->where('customer_id', $portalUser->customer_id)
@@ -33,8 +33,8 @@ class ClientePortalDashboardController extends Controller
             'portalUser' => $portalUser,
             'portal' => $portalUser,
             'customer' => $customer,
-            'processosCount' => $customer->processos()->count(),
-            'licenciamentosCount' => $customer->licenciamento()->count(),
+            'processosCount' => $customer->processos()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portalUser->empresa_id)->count(),
+            'licenciamentosCount' => $customer->licenciamento()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portalUser->empresa_id)->count(),
             'documentosCount' => $documentosCount,
             'currentEmpresaId' => session('cliente_portal_empresa_id'),
             'empresasAssociadas' => $empresasAssociadas,

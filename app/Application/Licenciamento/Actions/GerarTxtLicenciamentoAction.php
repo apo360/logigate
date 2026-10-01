@@ -18,6 +18,8 @@ class GerarTxtLicenciamentoAction
      */
     public function execute(Licenciamento $licenciamento): array
     {
+        \Illuminate\Support\Facades\Gate::authorize('view', $licenciamento);
+        \Illuminate\Support\Facades\Gate::authorize('update', $licenciamento);
         // Validação original: frete e seguro diferentes de zero
         if (is_null($licenciamento->frete) || is_null($licenciamento->seguro) || $licenciamento->frete == 0 || $licenciamento->seguro == 0) {
             throw new \InvalidArgumentException('Os campos Frete e Seguro precisam estar preenchidos e diferentes de zero antes de gerar o licenciamento.');

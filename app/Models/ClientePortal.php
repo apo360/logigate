@@ -37,7 +37,12 @@ class ClientePortal extends Authenticatable
 
     public function customer()
     {
-        return $this->belongsTo(Customer::class, 'customer_id', 'id');
+        return $this->belongsTo(Customer::class, 'customer_id', 'id')
+            ->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)
+            ->where(function ($query): void {
+                $query->where('customers.empresa_id', $this->empresa_id)
+                    ->orWhereHas('empresas', fn ($empresa) => $empresa->where('empresas.id', $this->empresa_id));
+            });
     }
 
     public function empresas()

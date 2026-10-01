@@ -9,7 +9,6 @@ use App\Application\Arquivo\Actions\UploadDocumentoAction;
 use App\Application\Arquivo\DTOs\UploadDocumentoDTO;
 use App\Domains\Arquivo\Enums\DocumentoCategoriaEnum;
 use App\Domains\Arquivo\Enums\DocumentoContextoEnum;
-use App\Models\Customer;
 use App\Models\Licenciamento;
 use App\Models\Processo;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +17,8 @@ use Livewire\WithFileUploads;
 
 class DocumentosManager extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use WithFileUploads;
 
     public string $contexto;
@@ -31,6 +32,11 @@ class DocumentosManager extends Component
         $this->contexto = $contexto;
         $this->entidadeId = $entidadeId;
         $this->documentos = collect();
+        $this->loadDocumentos();
+    }
+
+    public function hydrate(): void
+    {
         $this->loadDocumentos();
     }
 
@@ -109,8 +115,8 @@ class DocumentosManager extends Component
         return match ($this->contexto) {
             DocumentoContextoEnum::PROCESSO->value => (int) Processo::query()->whereKey($this->entidadeId)->value('empresa_id'),
             DocumentoContextoEnum::LICENCIAMENTO->value => (int) Licenciamento::query()->whereKey($this->entidadeId)->value('empresa_id'),
-            DocumentoContextoEnum::CUSTOMER->value => (int) (Customer::query()->whereKey($this->entidadeId)->value('empresa_id') ?: Auth::user()->empresas()->value('empresas.id')),
-            default => (int) Auth::user()->empresas()->value('empresas.id'),
+            DocumentoContextoEnum::CUSTOMER->value => (int) \App\Support\TenantContext::empresaId(),
+            default => (int) \App\Support\TenantContext::empresaId(),
         };
     }
 }

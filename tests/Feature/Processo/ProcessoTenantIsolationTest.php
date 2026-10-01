@@ -14,7 +14,7 @@ class ProcessoTenantIsolationTest extends TestCase
 
     public function test_tenant_cannot_access_or_operate_on_another_tenant_process(): void
     {
-        [$tenantAUser] = $this->createTenant('A');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenant('A');
         [$tenantBUser, $tenantBEmpresa] = $this->createTenant('B');
         [$estanciaId, $tipoProcessoId] = $this->createLookupData();
 
@@ -22,11 +22,11 @@ class ProcessoTenantIsolationTest extends TestCase
         $exportadorB = $this->createExportador($tenantBEmpresa, $tenantBUser, 'B');
         $processoB = $this->createProcesso($tenantBEmpresa, $tenantBUser, $customerB, $exportadorB, $estanciaId, $tipoProcessoId);
 
-        $this->actingAs($tenantAUser)->get(route('processos.show', $processoB))->assertNotFound();
-        $this->actingAs($tenantAUser)->get(route('processos.edit', $processoB))->assertNotFound();
-        $this->actingAs($tenantAUser)->postJson(route('processo.finalizar', $processoB->id))->assertNotFound();
-        $this->actingAs($tenantAUser)->get(route('processos.print', $processoB->id))->assertNotFound();
-        $this->actingAs($tenantAUser)->get(route('gerar.xml', $processoB->id))->assertNotFound();
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])->get(route('processos.show', $processoB))->assertNotFound();
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])->get(route('processos.edit', $processoB))->assertNotFound();
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])->postJson(route('processo.finalizar', $processoB->id))->assertNotFound();
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])->get(route('processos.print', $processoB->id))->assertNotFound();
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])->get(route('gerar.xml', $processoB->id))->assertNotFound();
     }
 
     public function test_process_number_duplicate_check_is_scoped_per_empresa(): void
@@ -44,7 +44,8 @@ class ProcessoTenantIsolationTest extends TestCase
             'NrProcesso' => 'PROC-2026-000001',
         ]);
 
-        $this->actingAs($tenantBUser);
+        $this->actingAs($tenantBUser)->withSession(['empresa_id' => $tenantBEmpresa->id]);
+        $tenantBUser->givePermissionTo('processos.create');
         $processo = app(CriarProcessoAction::class)->execute(CriarProcessoDTO::fromArray([
             'NrProcesso' => 'PROC-2026-000001',
             'customer_id' => $customerB->id,

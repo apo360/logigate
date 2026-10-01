@@ -6,7 +6,7 @@
 
 <div x-data="{ open: {{ $isActive ? 'true' : 'false' }} }">
 
-    <a href="{{ $submenu['route'] == '#' ? '#' : route($submenu['route']) }}"
+    <a href="{{ $submenu['route'] !== '#' && \Illuminate\Support\Facades\Route::has($submenu['route']) ? route($submenu['route']) : '#' }}"
        @if(count($children) > 0)
            @click.prevent="open = !open"
        @endif

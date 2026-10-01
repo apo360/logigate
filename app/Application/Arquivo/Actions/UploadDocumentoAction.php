@@ -113,7 +113,7 @@ final readonly class UploadDocumentoAction
     private function resolveCustomer(UploadDocumentoDTO $dto): array
     {
         $customer = Customer::query()->findOrFail($dto->entidadeId);
-        $empresaId = $dto->empresaId ?: (int) ($customer->empresa_id ?: $customer->empresas()->value('empresas.id'));
+        $empresaId = \App\Support\TenantContext::empresaId() ?? 0;
 
         if (! empty($customer->empresa_id) && (int) $customer->empresa_id === (int) $empresaId) {
             return [$empresaId, (int) $customer->id, null, null, $customer];

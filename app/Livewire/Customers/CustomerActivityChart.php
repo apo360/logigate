@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Schema;
 
 class CustomerActivityChart extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     use AuthorizesRequests;
 
    public int $customerId;
@@ -73,7 +75,7 @@ class CustomerActivityChart extends Component
 
     private function tenantCustomerQuery()
     {
-        $empresaId = Auth::user()?->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId();
         abort_if(!$empresaId, 403);
 
         $query = Customer::query();

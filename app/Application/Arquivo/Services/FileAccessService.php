@@ -39,7 +39,8 @@ final class FileAccessService
 
     public function assertUserCanAccessEmpresa(User $user, int $empresaId): void
     {
-        $allowed = $user->empresas()->where('empresas.id', $empresaId)->exists();
+        $activeId = \App\Support\TenantContext::empresaId($user);
+        $allowed = $activeId !== null && $activeId === $empresaId;
 
         if (! $allowed) {
             throw new AcessoDocumentoNegadoException('Sem permissão para acessar documentos desta empresa.');

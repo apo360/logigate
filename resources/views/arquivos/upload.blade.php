@@ -47,7 +47,7 @@
                 Arraste e solte os arquivos e pastas aqui, ou clique para adicionar arquivos ou pastas.
             </label>
             <!-- A conta é o nome da pasta Raiz no S3 -->
-            <input type="hidden" name="pasta_raiz" value="{{ request()->get('dir') ?? auth()->user()->empresas()->first()->conta }}"> <!-- A conta é o nome da pasta Raiz no S3 -->
+            <input type="hidden" name="pasta_raiz" value="{{ request()->get('dir') ?? \App\Support\TenantContext::empresa()->conta }}"> <!-- A conta é o nome da pasta Raiz no S3 -->
             <input id="file-upload" type="file" multiple style="display: none;" onchange="updateFileList()" />
 
             <table id="file-list-table" class="table">

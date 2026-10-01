@@ -14,6 +14,8 @@ final class CreateExportadorAction
 {
     public function execute(ExportadorFormData $data, Empresa $empresa, User $user): Exportador
     {
+        abort_unless(\App\Support\TenantContext::empresaId($user) === (int) $empresa->id, 403);
+        \Illuminate\Support\Facades\Gate::forUser($user)->authorize('create', Exportador::class);
         try {
             return DB::transaction(function () use ($data, $empresa, $user): Exportador {
                 $payload = $data->toArray();

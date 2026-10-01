@@ -15,7 +15,7 @@ class CustomerAvencaController extends AuthenticatedController
     public function index()
     {
         // Filtra apenas os clientes que têm avenças associadas
-        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)
+        $clientes = Customer::where('empresa_id', \App\Support\TenantContext::empresa()->id ?? null)
         ->has('avencas') // Garante que o cliente tenha ao menos uma avença
         ->with('avencas')->get(); // Carrega também as avenças associadas
         
@@ -28,7 +28,7 @@ class CustomerAvencaController extends AuthenticatedController
      */
     public function create()
     {
-        $clientes = Customer::where('empresa_id', Auth::user()->empresas->first()->id ?? null)->get(); // Busca todos os clientes
+        $clientes = Customer::where('empresa_id', \App\Support\TenantContext::empresa()->id ?? null)->get(); // Busca todos os clientes
         return view('customer.avenca_create', compact('clientes'));
     }
 

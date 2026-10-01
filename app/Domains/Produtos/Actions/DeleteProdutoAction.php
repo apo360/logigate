@@ -16,6 +16,7 @@ final class DeleteProdutoAction
     public function execute(Produto $produto, Empresa $empresa): Produto
     {
         $produto = $this->produtos->findForEmpresa($produto->id, $empresa);
+        \Illuminate\Support\Facades\Gate::authorize('delete', $produto);
 
         if ($this->produtos->hasSales($produto)) {
             throw new \RuntimeException('Não pode apagar, já existe faturação ligada.');

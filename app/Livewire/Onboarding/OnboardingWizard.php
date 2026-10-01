@@ -9,13 +9,15 @@ use Livewire\Component;
 
 class OnboardingWizard extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public array $checklist = [];
     public array $warnings = [];
     public bool $isCompleted = false;
 
     public function mount(): void
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             return;

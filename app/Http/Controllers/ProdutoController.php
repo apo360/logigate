@@ -41,6 +41,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function index(ProdutoTableQuery $query)
     {
+        $this->authorize('viewAny', Produto::class);
         return view('service.list_service_produto', [
             'products' => $query->paginate($this->empresa),
             'taxas' => TaxTable::orderBy('TaxPercentage', 'desc')->get(),
@@ -55,6 +56,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function create()
     {
+        $this->authorize('create', Produto::class);
         return view('service.create_service', [
             'productTypes' => ProductType::all(),
             'productExemptionReasons' => ProductExemptionReason::all(),
@@ -84,8 +86,10 @@ class ProdutoController extends AuthenticatedController
     /**
      * Show (API)
      */
-    public function show($id)
+    public function show(Produto $produto)
     {
+        $this->authorize('view', $produto);
+        $id = $produto->getKey();
         return view('service.show_service', [
             'produto' => Produto::with(['price', 'grupo', 'tipo', 'empresa'])
                 ->where('empresa_id', $this->empresa->id)
@@ -103,6 +107,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function edit($id)
     {
+        $this->authorize('update', Produto::where('empresa_id', $this->empresa->id)->findOrFail($id));
         return view('service.edit_service', [
             'produto' => Produto::where('empresa_id', $this->empresa->id)->findOrFail($id),
             'productTypes' => ProductType::all(),
@@ -143,6 +148,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function export()
     {
+        $this->authorize('viewAny', Produto::class);
         return $this->productService->exportCSV();
     }
 
@@ -151,6 +157,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function import()
     {
+        $this->authorize('create', Produto::class);
         return $this->productService->importCSV(request());
     }
 
@@ -159,6 +166,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function report()
     {
+        $this->authorize('viewAny', Produto::class);
         return view('produtos.reports', [
             'topSellingProducts' => $this->productService->getTopSellingProducts()
         ]);
@@ -180,6 +188,7 @@ class ProdutoController extends AuthenticatedController
      */
     public function showUpdatePriceForm(Produto $produto)
     {
+        $this->authorize('update', $produto);
         abort_unless((int) $produto->empresa_id === (int) $this->empresa->id, 403);
 
         return view('service.update_price', [
@@ -195,6 +204,7 @@ class ProdutoController extends AuthenticatedController
      */    
     public function updatePrice(Request $request, Produto $produto, UpdateProdutoPriceAction $action)
     {
+        $this->authorize('update', $produto);
         // Validação
         $request->validate([
             'new_price' => 'required|numeric|min:0.01',

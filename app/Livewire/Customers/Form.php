@@ -27,6 +27,8 @@ use Illuminate\Validation\ValidationException;
 
 class Form extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public array $form = [
         'CustomerTaxID' => '000000',
         'CustomerType' => '',
@@ -150,7 +152,7 @@ class Form extends Component
             ];
             
             // Verificar se já está associado à empresa atual
-            $userEmpresaId = Auth::user()->empresas->first()->id;
+            $userEmpresaId = \App\Support\TenantContext::empresa()->id;
             if ($userEmpresaId) {
                 $alreadyAssociated = $existing->empresas()
                     ->where('empresa_id', $userEmpresaId)
@@ -176,9 +178,10 @@ class Form extends Component
     
     public function associateExistingCustomer(AssociarCustomerEmpresaAction $actionAssociate)
     {
+        abort_unless(\App\Support\BusinessAuthorization::allows(Auth::user(), 'customers.associate_empresa'), 403);
         try {
 
-            $empresa = Auth::user()->empresas->first();
+            $empresa = \App\Support\TenantContext::empresa();
             
             // Action para associar cliente à empresa
             $dto = new AssociarCustomerEmpresaDTO(
@@ -239,6 +242,7 @@ class Form extends Component
 
     public function save(CreateCustomerAction $action, SincronizarClienteFacturacaoAction $syncAction)
     {
+        $this->authorize('create', Customer::class);
         $this->nifSearchPerformed = true;
 
         try {
@@ -295,8 +299,7 @@ class Form extends Component
 
     private function currentEmpresaId(): int
     {
-        $empresaId = Auth::user()->empresa_id
-            ?? Auth::user()->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId();
 
         if (!$empresaId) {
             throw new \RuntimeException('Nenhuma empresa activa foi encontrada para o utilizador autenticado.');

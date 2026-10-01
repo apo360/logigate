@@ -14,8 +14,9 @@ class ClientePortalLicenciamentoController extends Controller
 {
     public function index(): RedirectResponse|View
     {
-        $customer = Auth::guard('cliente_portal')->user()->customer;
-        $licenciamentos = $customer->licenciamento()->latest('id')->paginate(15);
+        $portal = Auth::guard('cliente_portal')->user();
+        $customer = $portal->customer;
+        $licenciamentos = $customer->licenciamento()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portal->empresa_id)->latest('id')->paginate(15);
 
         if (! ViewFactory::exists('WebSite.ClienteAppPage.licenciamentos')) {
             return redirect()
@@ -28,9 +29,10 @@ class ClientePortalLicenciamentoController extends Controller
 
     public function show(int $licenciamentoId): RedirectResponse|View
     {
-        $customer = Auth::guard('cliente_portal')->user()->customer;
-        $licenciamento = $customer->licenciamento()
-            ->with(['cliente', 'empresa'])
+        $portal = Auth::guard('cliente_portal')->user();
+        $customer = $portal->customer;
+        $licenciamento = $customer->licenciamento()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portal->empresa_id)
+            ->with(['cliente' => fn ($query) => $query->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->whereKey($portal->customer_id), 'empresa'])
             ->whereKey($licenciamentoId)
             ->firstOrFail();
 
@@ -53,9 +55,10 @@ class ClientePortalLicenciamentoController extends Controller
             'codigo_licenciamento' => ['required', 'string', 'max:255'],
         ]);
 
-        $customer = Auth::guard('cliente_portal')->user()->customer;
-        $licenciamento = $customer->licenciamento()
-            ->with(['cliente', 'empresa'])
+        $portal = Auth::guard('cliente_portal')->user();
+        $customer = $portal->customer;
+        $licenciamento = $customer->licenciamento()->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('empresa_id', $portal->empresa_id)
+            ->with(['cliente' => fn ($query) => $query->withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->whereKey($portal->customer_id), 'empresa'])
             ->where('codigo_licenciamento', $data['codigo_licenciamento'])
             ->first();
 

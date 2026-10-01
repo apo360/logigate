@@ -22,6 +22,7 @@ final readonly class ExcluirLicenciamentoAction
             if (! $licenciamento) {
                 throw new \InvalidArgumentException('Licenciamento não encontrado.');
             }
+            \Illuminate\Support\Facades\Gate::authorize('delete', $licenciamento);
 
             $this->rules->assertPodeExcluir($licenciamento);
 

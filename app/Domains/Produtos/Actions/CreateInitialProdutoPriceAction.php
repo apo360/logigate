@@ -17,6 +17,8 @@ final class CreateInitialProdutoPriceAction
 
     public function execute(Produto $produto, ProdutoPriceData $data): void
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === (int) $produto->empresa_id, 403);
+        \Illuminate\Support\Facades\Gate::authorize('create', Produto::class);
         $venda = $this->rules->normalizeVenda($data->venda, $produto);
         $vendaSemIva = $data->vendaSemIva ?? $this->rules->vendaSemIva($venda, $data->imposto);
 

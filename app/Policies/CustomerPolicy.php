@@ -26,7 +26,8 @@ class CustomerPolicy
     public function view(User $user, Customer $customer): bool
     {
         return app(CustomerTenantAccessService::class)
-            ->canAccess($user, $customer);
+            ->canAccess($user, $customer)
+            && $this->can($user, 'customers.view');
     }
 
     /**
@@ -35,7 +36,8 @@ class CustomerPolicy
     public function create(User $user): bool
     {
         return app(CustomerTenantAccessService::class)
-        ->hasEmpresa($user);
+            ->hasEmpresa($user)
+            && $this->can($user, 'customers.create');
     }
 
     /**
@@ -45,7 +47,7 @@ class CustomerPolicy
     {
         $access = app(CustomerTenantAccessService::class);
 
-        return $access->canAccess($user, $customer)
+        return $access->canModifyProfile($user, $customer)
             && $this->can($user, 'customers.update');
     }
 
@@ -56,7 +58,7 @@ class CustomerPolicy
     {
         $access = app(CustomerTenantAccessService::class);
 
-        return $access->canAccess($user, $customer)
+        return $access->canModifyProfile($user, $customer)
             && $this->can($user, 'customers.delete');
     }
 
@@ -65,7 +67,7 @@ class CustomerPolicy
      */
     public function restore(User $user, Customer $customer): bool
     {
-        return app(CustomerTenantAccessService::class)->canAccess($user, $customer);
+        return $this->update($user, $customer);
     }
 
     /**
@@ -89,7 +91,7 @@ class CustomerPolicy
     {
         $access = app(CustomerTenantAccessService::class);
 
-        return $access->canAccess($user, $customer)
+        return $access->canModifyProfile($user, $customer)
             && $this->can($user, 'customers.activate');
     }
 
@@ -97,7 +99,7 @@ class CustomerPolicy
     {
         $access = app(CustomerTenantAccessService::class);
 
-        return $access->canAccess($user, $customer)
+        return $access->canModifyProfile($user, $customer)
             && $this->can($user, 'customers.deactivate');
     }
 
@@ -135,17 +137,7 @@ class CustomerPolicy
 
     private function can(User $user, string $permission): bool
     {
-        $access = app(CustomerTenantAccessService::class);
-
-        if ($access->isAdmin($user)) {
-            return true;
-        }
-
-        if (method_exists($user, 'can')) {
-            return $user->can($permission);
-        }
-
-        return false;
+        return \App\Support\BusinessAuthorization::allows($user, $permission);
     }
 
 }

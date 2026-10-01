@@ -12,10 +12,7 @@ final class LicenciamentoTenantAccessService
 {
     public function empresaIdFor(User $user): ?int
     {
-        return $user->empresa_id
-            ?? session('empresa_id')
-            ?? session('empresa_atual_id')
-            ?? $user->empresas()->value('empresas.id');
+        return \App\Support\TenantContext::empresaId($user);
     }
 
     public function userHasEmpresa(User $user): bool

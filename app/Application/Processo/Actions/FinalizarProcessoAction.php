@@ -27,6 +27,7 @@ final readonly class FinalizarProcessoAction
     {
         return DB::transaction(function () use ($id): Processo {
             $processo = $this->processos->findOrFail($id);
+            \Illuminate\Support\Facades\Gate::authorize('finalize', $processo);
             $erros = $this->finalizacaoRules->validar($processo);
 
             if ($erros !== []) {

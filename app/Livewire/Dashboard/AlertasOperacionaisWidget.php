@@ -9,6 +9,8 @@ use Livewire\Component;
 
 class AlertasOperacionaisWidget extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public array $alerts = [];
 
     public function mount(): void
@@ -23,7 +25,7 @@ class AlertasOperacionaisWidget extends Component
 
     private function loadWidget(bool $fresh = false): void
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             $this->alerts = [];

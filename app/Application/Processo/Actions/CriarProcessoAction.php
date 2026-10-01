@@ -27,6 +27,8 @@ final readonly class CriarProcessoAction
 
     public function execute(CriarProcessoDTO $dto): Processo
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === $dto->empresaId, 403);
+        \Illuminate\Support\Facades\Gate::authorize('create', Processo::class);
         return DB::transaction(function () use ($dto): Processo {
             $numero = $dto->numero ?: (string) $this->geradorNumero->gerar($dto->empresaId);
 

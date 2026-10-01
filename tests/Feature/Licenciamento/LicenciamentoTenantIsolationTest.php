@@ -20,21 +20,21 @@ class LicenciamentoTenantIsolationTest extends TestCase
         $this->grantLicenciamentoPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'FT-LIC-OWN');
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withSession(['empresa_id' => $empresa->id])
             ->get(route('licenciamentos.index'))
             ->assertOk();
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withSession(['empresa_id' => $empresa->id])
             ->get(route('licenciamentos.create'))
             ->assertOk();
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withSession(['empresa_id' => $empresa->id])
             ->get(route('licenciamentos.show', $licenciamento))
             ->assertOk()
             ->assertSee('Ações Rápidas')
             ->assertSee('Gerir Mercadorias');
 
-        $this->actingAs($user)
+        $this->actingAs($user)->withSession(['empresa_id' => $empresa->id])
             ->get(route('licenciamentos.edit', $licenciamento))
             ->assertOk();
     }
@@ -45,7 +45,7 @@ class LicenciamentoTenantIsolationTest extends TestCase
             $this->markTestSkipped('licenciamentos table is not available in this environment.');
         }
 
-        [$tenantAUser] = $this->createTenant('FT-LIC-A');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenant('FT-LIC-A');
         [$tenantBUser, $tenantBEmpresa] = $this->createTenant('FT-LIC-B');
         $this->grantLicenciamentoPermissions($tenantAUser);
         [$estanciaId] = $this->createLookupData();
@@ -85,33 +85,33 @@ class LicenciamentoTenantIsolationTest extends TestCase
             'updated_at' => now(),
         ]));
 
-        $this->actingAs($tenantAUser)
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])
             ->get(route('licenciamentos.show', $licenciamentoId))
             ->assertNotFound();
     }
 
     public function test_tenant_cannot_edit_another_tenant_licenciamento(): void
     {
-        [$tenantAUser] = $this->createTenant('FT-LIC-EDIT-A');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenant('FT-LIC-EDIT-A');
         [$tenantBUser, $tenantBEmpresa] = $this->createTenant('FT-LIC-EDIT-B');
         $this->grantLicenciamentoPermissions($tenantAUser);
 
         $licenciamento = $this->createLicenciamentoFor($tenantBEmpresa, $tenantBUser, 'FT-LIC-EDIT-B');
 
-        $this->actingAs($tenantAUser)
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])
             ->get(route('licenciamentos.edit', $licenciamento->id))
             ->assertNotFound();
     }
 
     public function test_tenant_cannot_delete_another_tenant_licenciamento(): void
     {
-        [$tenantAUser] = $this->createTenant('FT-LIC-DELETE-A');
+        [$tenantAUser, $tenantAEmpresa] = $this->createTenant('FT-LIC-DELETE-A');
         [$tenantBUser, $tenantBEmpresa] = $this->createTenant('FT-LIC-DELETE-B');
         $this->grantLicenciamentoPermissions($tenantAUser);
 
         $licenciamento = $this->createLicenciamentoFor($tenantBEmpresa, $tenantBUser, 'FT-LIC-DELETE-B');
 
-        $this->actingAs($tenantAUser)
+        $this->actingAs($tenantAUser)->withSession(['empresa_id' => $tenantAEmpresa->id])
             ->delete(route('licenciamentos.destroy', $licenciamento->id))
             ->assertNotFound();
     }

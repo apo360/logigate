@@ -20,6 +20,9 @@ final class ListarMercadoriasQuery
         $this->tenantAccess->authorizeContext($user ?? Auth::user(), $context, $parentId, 'mercadorias.view');
 
         $mercadorias = $this->mercadorias->listForContext($context, $parentId);
+        foreach ($mercadorias as $mercadoria) {
+            $this->tenantAccess->authorizeMercadoria($user ?? Auth::user(), $mercadoria, $context, $parentId, 'mercadorias.view');
+        }
         $agrupadas = $this->mercadorias->groupedForContext($context, $parentId);
 
         return [

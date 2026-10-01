@@ -16,6 +16,7 @@ final class ToggleProdutoStatusAction
     public function execute(Produto $produto, Empresa $empresa): Produto
     {
         $produto = $this->produtos->findForEmpresa($produto->id, $empresa);
+        \Illuminate\Support\Facades\Gate::authorize('update', $produto);
         $newStatus = (int) ! ((bool) $produto->status);
 
         return $this->produtos->setStatus($produto, $newStatus);

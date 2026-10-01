@@ -12,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 
 class ClienteQuickForm extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public $showModal = false;
     
     public $CustomerTaxID = '';
@@ -113,8 +115,7 @@ class ClienteQuickForm extends Component
 
     private function currentEmpresaId(): int
     {
-        $empresaId = Auth::user()->empresa_id
-            ?? Auth::user()->empresas()->value('empresas.id');
+        $empresaId = \App\Support\TenantContext::empresaId();
 
         if (!$empresaId) {
             throw new \RuntimeException('Nenhuma empresa activa foi encontrada para o utilizador autenticado.');

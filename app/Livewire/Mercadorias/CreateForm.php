@@ -451,7 +451,7 @@ class CreateForm extends Component
             return;
         }
 
-        $processo = app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), 'processo', $this->parentId);
+        $processo = app(MercadoriaTenantAccessService::class)->authorizeContext(Auth::user(), 'processo', $this->parentId, 'mercadorias.view');
         $this->contentoresDisponiveis = Contentor::query()
             ->where('processo_id', $processo->id)
             ->where('empresa_id', $processo->empresa_id)

@@ -9,7 +9,7 @@ class UsuarioEmpresaPolicy
 {
     /**
      * Papéis com poderes de gestão DENTRO da empresa.
-     * NÃO inclui Administrador — esse é global e tratado à parte.
+     * Todos os papéis são resolvidos exclusivamente na empresa activa.
     */
     private const EMPRESA_MANAGER_ROLES = [
         'Gestor',
@@ -22,6 +22,10 @@ class UsuarioEmpresaPolicy
     */
     public function manageUser(User $actor, Empresa $empresa, User $managedUser): bool
     {
+        if (\App\Support\TenantContext::empresaId($actor) !== (int) $empresa->id) {
+            return false;
+        }
+
         // Ninguém se gere a si mesmo (evita auto-promoção/auto-remoção)
         if ($actor->is($managedUser)) {
             return false;
@@ -38,23 +42,17 @@ class UsuarioEmpresaPolicy
             return false;
         }
 
-        // Administrador global pode gerir qualquer um dentro da empresa
-        if ($actor->hasRole('Administrador')) {
-            return true;
-        }
-
-        // Gestores da empresa — necessitam da permissão users.update
-        return $actor->hasAnyRole(self::EMPRESA_MANAGER_ROLES)
-            && $actor->can('users.update');
+        // Administrador da empresa activa pode gerir membros dessa empresa
+        return ($actor->hasRole('Administrador') || $actor->hasAnyRole(self::EMPRESA_MANAGER_ROLES))
+            && \App\Support\BusinessAuthorization::allows($actor, 'users.update');
     }
 
     /**
-     * Um utilizador pode atribuir/remover roles e permissões GLOBAIS?
-     * Só o Administrador do sistema.
+     * Não há contrato de RBAC de plataforma nestas policies empresariais.
      */
     public function manageGlobalPermissions(User $actor): bool
     {
-        return $actor->hasRole('Administrador') && $actor->can('permissions.manage');
+        return false; // The separate PIN session is not a business RBAC authority.
     }
 
     /**
@@ -63,16 +61,16 @@ class UsuarioEmpresaPolicy
      */
     public function manageEmpresaPermissions(User $actor, Empresa $empresa): bool
     {
+        if (\App\Support\TenantContext::empresaId($actor) !== (int) $empresa->id) {
+            return false;
+        }
+
         if (! $this->belongsToEmpresa($actor, $empresa)) {
             return false;
         }
 
-        if ($actor->hasRole('Administrador')) {
-            return true;
-        }
-
-        // Gestor da empresa pode atribuir roles da sua empresa
-        return $actor->hasRole('Gestor') && $actor->can('users.update');
+        return ($actor->hasRole('Administrador') || $actor->hasRole('Gestor'))
+            && \App\Support\BusinessAuthorization::allows($actor, 'users.update');
     }
 
     /**

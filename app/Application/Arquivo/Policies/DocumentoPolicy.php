@@ -12,30 +12,30 @@ final class DocumentoPolicy
 {
     public function viewAny(User $user, Empresa $empresa): bool
     {
-        return $this->canUseArquivo($user, $empresa, ['arquivo.view', 'arquivo.manage']);
+        return $this->canUseArquivo($user, $empresa, ['documents.view', 'arquivo.view', 'arquivo.manage']);
     }
 
     public function upload(User $user, Empresa $empresa): bool
     {
-        return $this->canUseArquivo($user, $empresa, ['arquivo.upload', 'arquivo.manage']);
+        return $this->canUseArquivo($user, $empresa, ['documents.create', 'arquivo.upload', 'arquivo.manage']);
     }
 
     public function view(User $user, DocumentoArquivo $documento): bool
     {
         return $this->sameEmpresa($user, $documento)
-            && $this->hasAnyArquivoPermission($user, ['arquivo.view', 'arquivo.manage']);
+            && $this->hasAnyArquivoPermission($user, ['documents.view', 'arquivo.view', 'arquivo.manage']);
     }
 
     public function download(User $user, DocumentoArquivo $documento): bool
     {
         return $this->sameEmpresa($user, $documento)
-            && $this->hasAnyArquivoPermission($user, ['arquivo.download', 'arquivo.manage']);
+            && $this->hasAnyArquivoPermission($user, ['documents.download', 'arquivo.download', 'arquivo.manage']);
     }
 
     public function delete(User $user, DocumentoArquivo $documento): bool
     {
         return $this->sameEmpresa($user, $documento)
-            && $this->hasAnyArquivoPermission($user, ['arquivo.delete', 'arquivo.manage']);
+            && $this->hasAnyArquivoPermission($user, ['documents.delete', 'arquivo.delete', 'arquivo.manage']);
     }
 
     public function manage(User $user, Empresa $empresa): bool
@@ -69,21 +69,22 @@ final class DocumentoPolicy
 
     private function sameEmpresa(User $user, DocumentoArquivo $documento): bool
     {
-        return $user->empresas()->where('empresas.id', $documento->empresa_id)->exists();
+        $activeId = \App\Support\TenantContext::empresaId($user);
+
+        return $activeId !== null && (int) $documento->empresa_id === $activeId;
     }
 
     private function canUseArquivo(User $user, Empresa $empresa, array $permissions): bool
     {
-        return $user->empresas()->where('empresas.id', $empresa->id)->exists()
+        $activeId = \App\Support\TenantContext::empresaId($user);
+
+        return $activeId !== null && (int) $empresa->id === $activeId
             && $this->hasAnyArquivoPermission($user, $permissions);
     }
 
     private function hasAnyArquivoPermission(User $user, array $permissions): bool
     {
-        return $user->getAllPermissions()
-            ->pluck('name')
-            ->intersect($permissions)
-            ->isNotEmpty();
+        return \App\Support\BusinessAuthorization::any($user, $permissions);
     }
 
     private function portalCanAccess(ClientePortal $portal, DocumentoArquivo $documento): bool

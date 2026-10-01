@@ -13,9 +13,11 @@ use Livewire\Component;
 
 class EmpresaSubscricao extends Component
 {
+    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+
     public function index()
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada.');
@@ -54,7 +56,7 @@ class EmpresaSubscricao extends Component
 
     public function start(Request $request)
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada.');
@@ -116,7 +118,7 @@ class EmpresaSubscricao extends Component
     
     public function render()
     {
-        $empresa = Auth::user()?->empresas()->first();
+        $empresa = \App\Support\TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada.');

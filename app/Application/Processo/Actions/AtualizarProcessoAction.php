@@ -23,6 +23,7 @@ final readonly class AtualizarProcessoAction
     {
         return DB::transaction(function () use ($dto): Processo {
             $processo = $this->processos->findOrFail($dto->id);
+            \Illuminate\Support\Facades\Gate::authorize('update', $processo);
 
             $this->rules->assertPodeTransicionar($processo, $dto->estado);
             $this->rules->assertDataFechoNaoAnterior($dto->dataAbertura, $dto->dataFecho);

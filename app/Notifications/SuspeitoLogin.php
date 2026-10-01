@@ -45,7 +45,7 @@ class SuspeitoLogin extends Notification implements ShouldQueue
         return (new MailMessage)
         ->subject('Login suspeito detectado')
         ->view('emails.suspeito_login', [
-            'userName' => $notifiable->name,
+            'userName' => $this->user->name,
             'ipAddress' => $this->ip,
         ]);
     }

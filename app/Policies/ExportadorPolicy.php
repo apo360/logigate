@@ -4,7 +4,8 @@ namespace App\Policies;
 
 use App\Models\Exportador;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use App\Support\BusinessAuthorization;
+use App\Support\TenantContext;
 
 class ExportadorPolicy
 {
@@ -14,7 +15,7 @@ class ExportadorPolicy
     public function viewAny(User $user): bool
     {
         //
-        return true;
+        return BusinessAuthorization::allows($user, 'exportadores.view');
     }
 
     /**
@@ -23,7 +24,7 @@ class ExportadorPolicy
     public function view(User $user, Exportador $exportador): bool
     {
         //
-        return true;
+        return $this->sameEmpresa($user, $exportador) && BusinessAuthorization::allows($user, 'exportadores.view');
     }
 
     /**
@@ -32,7 +33,7 @@ class ExportadorPolicy
     public function create(User $user): bool
     {
         //
-        return true;
+        return BusinessAuthorization::allows($user, 'exportadores.create');
     }
 
     /**
@@ -41,7 +42,7 @@ class ExportadorPolicy
     public function update(User $user, Exportador $exportador): bool
     {
         //
-        return true;
+        return $this->sameEmpresa($user, $exportador) && BusinessAuthorization::allows($user, 'exportadores.update');
     }
 
     /**
@@ -50,7 +51,7 @@ class ExportadorPolicy
     public function delete(User $user, Exportador $exportador): bool
     {
         //
-        return true;
+        return $this->sameEmpresa($user, $exportador) && BusinessAuthorization::allows($user, 'exportadores.delete');
     }
 
     /**
@@ -59,7 +60,7 @@ class ExportadorPolicy
     public function restore(User $user, Exportador $exportador): bool
     {
         //
-        return true;
+        return false;
     }
 
     /**
@@ -68,6 +69,22 @@ class ExportadorPolicy
     public function forceDelete(User $user, Exportador $exportador): bool
     {
         //
-        return true;
+        return false;
+    }
+
+    public function updateProfile(User $user, Exportador $exportador): bool
+    {
+        $id = TenantContext::empresaId($user);
+        return $this->update($user, $exportador)
+            && (int) $exportador->empresa_id === $id
+            && ! $exportador->empresas()->where('empresas.id', '!=', $id)->exists();
+    }
+
+    private function sameEmpresa(User $user, Exportador $exportador): bool
+    {
+        $id = TenantContext::empresaId($user);
+        // The module lists/changes company associations. Legacy owner metadata
+        // cannot restore authority after that association has been removed.
+        return $id !== null && $exportador->empresas()->where('empresas.id', $id)->exists();
     }
 }

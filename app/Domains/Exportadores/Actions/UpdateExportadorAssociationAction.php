@@ -16,6 +16,8 @@ final class UpdateExportadorAssociationAction
 
     public function execute(Exportador $exportador, Empresa $empresa, ExportadorFormData $data): Exportador
     {
+        abort_unless(\App\Support\TenantContext::empresaId() === (int) $empresa->id, 403);
+        \Illuminate\Support\Facades\Gate::authorize('update', $exportador);
         $this->exportadores->updateAssociation($exportador, $empresa, $data->associationAttributes());
 
         return $exportador->refresh();

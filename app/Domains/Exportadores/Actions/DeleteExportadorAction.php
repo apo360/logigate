@@ -17,6 +17,8 @@ final class DeleteExportadorAction
 
     public function execute(Exportador $exportador, Empresa $empresa, User $user): void
     {
+        abort_unless(\App\Support\TenantContext::empresaId($user) === (int) $empresa->id, 403);
+        \Illuminate\Support\Facades\Gate::forUser($user)->authorize('delete', $exportador);
         DB::transaction(function () use ($exportador, $empresa, $user): void {
             if ($this->exportadores->hasEmpresaAssociation($exportador, $empresa)) {
                 $this->exportadores->detachFromEmpresa($exportador, $empresa);
@@ -32,7 +34,7 @@ final class DeleteExportadorAction
 
     private function canHardDelete(User $user, Exportador $exportador): bool
     {
-        return ($user->hasRole('admin') || $user->can('delete-global-exportador'))
+        return \Illuminate\Support\Facades\Gate::forUser($user)->allows('forceDelete', $exportador)
             && ! $this->exportadores->hasBusinessDependencies($exportador);
     }
 }

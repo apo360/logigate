@@ -19,6 +19,7 @@ final class DeleteCustomerAction
     public function execute(int $customerId): bool
     {
         $customer = $this->customers->findOrFail($customerId);
+        \Illuminate\Support\Facades\Gate::authorize('delete', $customer);
 
         if (!$this->access->canAccess(Auth::user(), $customer)) {
             throw new CustomerNotAssociatedWithEmpresaException();
