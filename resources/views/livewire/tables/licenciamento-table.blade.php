@@ -1,4 +1,6 @@
 <div>
+    @if(session('import_result')) @include('empresa.partials.import-result', ['result' => session('import_result')]) @endif
+
 
     {{-- ===================== --}}
     {{-- STATS CARDS --}}

@@ -22,7 +22,7 @@ class CompanyScopedRbacTest extends TestCase
     {
         parent::setUp();
         self::assertTrue(app()->environment('testing'));
-        self::assertSame('logigate_testing', DB::connection()->getDatabaseName());
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', DB::connection()->getDatabaseName());
         DB::beginTransaction();
     }
 

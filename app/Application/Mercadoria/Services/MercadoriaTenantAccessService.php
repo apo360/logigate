@@ -44,14 +44,16 @@ final class MercadoriaTenantAccessService
         $this->authorizeOptionalPermission($user, $permission);
 
         if ($this->isWritePermission($permission)) {
+            $model = Licenciamento::query()->whereKey($model->id)->lockForUpdate()->firstOrFail();
             $processIds = $model->mercadorias()->whereNotNull('Fk_Importacao')->distinct()->pluck('Fk_Importacao');
+            $linkedId = app(\App\Application\Licenciamento\Services\LicenciamentoProcessLink::class)->processId($model);
+            if ($linkedId) { $processIds->push($linkedId); $processIds = $processIds->unique(); }
             if ($processIds->count() > 1) {
                 throw new AuthorizationException('Licenciamento com vínculos de processo inconsistentes.');
             }
             if ($processIds->isNotEmpty()) {
                 $this->authorizeProcesso($user, (int) $processIds->first(), $permission);
             }
-            $model = Licenciamento::query()->whereKey($model->id)->lockForUpdate()->firstOrFail();
         }
 
         return $model;

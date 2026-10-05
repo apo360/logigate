@@ -145,11 +145,12 @@ final class ContentorDomainTest extends TestCase
         $processoB = $this->createProcesso($empresaB, $userB, $customerB, $exportadorB, $estanciaId, $tipoProcessoId);
         $action = app(ImportarContentorAsycudaAction::class);
 
-        $this->actingAs($userA);
+        $this->grantTenantPermissions($userA, ['processos.update', 'mercadorias.create']);
+        $this->signInTenant($userA);
         $created = $action->execute($processoA->id, ['numero' => 'APP-CHECK-A', 'empresa_id' => $empresaB->id]);
         self::assertSame($processoA->empresa_id, $created->empresa_id);
 
-        $this->actingAs($userB);
+        $this->signInTenant($userB);
         try {
             $action->execute($processoA->id, ['numero' => 'APP-CHECK-B', 'empresa_id' => $empresaB->id]);
             self::fail('A user from Empresa B must not create a container for Empresa A process.');

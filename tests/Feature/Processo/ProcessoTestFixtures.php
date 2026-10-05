@@ -12,6 +12,23 @@ use Illuminate\Support\Facades\Schema;
 
 trait ProcessoTestFixtures
 {
+    private function signInTenant(User $user): static
+    {
+        $this->actingAs($user);
+        \App\Support\TenantContext::setEmpresa($user, $user->empresas()->sole());
+        return $this;
+    }
+
+    private function grantTenantPermissions(User $user, array $permissions): void
+    {
+        foreach ($permissions as $permission) {
+            \Spatie\Permission\Models\Permission::findOrCreate($permission, 'web');
+        }
+        \App\Support\CompanyRbac::within((int) $user->empresas()->sole()->id,
+            fn () => $user->givePermissionTo($permissions));
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
     private function createTenant(string $suffix): array
     {
         $user = User::factory()->create([
@@ -144,7 +161,7 @@ trait ProcessoTestFixtures
             'exportador_id' => $exportador->id,
             'estancia_id' => $estanciaId,
             'forma_pagamento' => 'RD',
-            'codigo_banco' => '001',
+            'codigo_banco' => '0040',
             'Cambio' => 1,
             'fob_total' => 100,
             'frete' => 10,

@@ -26,6 +26,18 @@ class ConstituirProcessoAction
         return DB::transaction(function () use ($licenciamento): Processo {
             $licenciamento = Licenciamento::query()->whereKey($licenciamento->id)->lockForUpdate()->firstOrFail();
             Gate::authorize('update', $licenciamento);
+            if (! \Illuminate\Support\Facades\Schema::hasTable('licenciamento_processos')) {
+                throw new \RuntimeException('Actualize o schema dos vínculos antes de converter.');
+            }
+            $link = app(\App\Application\Licenciamento\Services\LicenciamentoProcessLink::class);
+            if ($existingId = $link->processId($licenciamento)) {
+                $processo = Processo::query()->where('empresa_id', $licenciamento->empresa_id)->findOrFail($existingId);
+                $invalidItems = $licenciamento->mercadorias()->where(function ($query) use ($existingId) {
+                    $query->whereNull('Fk_Importacao')->orWhere('Fk_Importacao', '!=', $existingId);
+                })->exists();
+                if ($invalidItems) { throw new InvalidArgumentException('Mercadorias incompatíveis com o vínculo permanente.'); }
+                return $processo;
+            }
             $items = $licenciamento->mercadorias()->lockForUpdate()->get();
             $processIds = $items->pluck('Fk_Importacao')->filter()->unique();
             if ($processIds->count() > 1) {
@@ -36,6 +48,7 @@ class ConstituirProcessoAction
                 if ($items->contains(fn ($item) => ! $item->Fk_Importacao)) {
                     throw new InvalidArgumentException('Existem mercadorias sem processo num licenciamento já convertido. Reveja a associação.');
                 }
+                $link->attach($licenciamento, $processo);
                 return $processo;
             }
             $readiness = app(LicenciamentoOperationalReadinessService::class)->analyze($licenciamento);
@@ -43,6 +56,7 @@ class ConstituirProcessoAction
                 throw new InvalidArgumentException(implode(' ', $readiness['process_blockers']));
             }
             $processo = $this->criarProcesso->execute(CriarProcessoDTO::fromArray($this->processData($licenciamento, (int) Auth::id())));
+            $link->attach($licenciamento, $processo);
             foreach ($items as $item) {
                 $item->Fk_Importacao = $processo->id;
                 $item->save();

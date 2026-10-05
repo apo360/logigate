@@ -1,64 +1,31 @@
 <?php
-// app/Imports/LicenciamentosImport.php
-
 namespace App\Imports;
 
-use App\Models\Licenciamento;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use App\Application\Importacao\RowsImport;
+use App\Application\Licenciamento\Actions\CriarLicenciamentoAction;
+use App\Application\Licenciamento\DTOs\CriarLicenciamentoDTO;
+use App\Application\Licenciamento\Support\LicenciamentoFormSupport;
+use Illuminate\Support\Facades\Validator;
 
-class LicenciamentosImport implements ToModel, WithHeadingRow, WithValidation
+class LicenciamentosImport extends RowsImport
 {
-    protected int $empresaId;
-
-    public function __construct(int $empresaId)
+    protected function fields(): array
     {
-        $this->empresaId = $empresaId;
+        return array_values(array_diff(array_keys(app(LicenciamentoFormSupport::class)->rules($this->empresa->id)), ['Nr_factura', 'status_fatura']));
     }
-
-    public function model(array $row)
+    protected function create(array $data): int
     {
-        // Mapeamento das colunas (ajustar conforme cabeçalho do export)
-        return new Licenciamento([
-            'codigo_licenciamento' => $row['codigo_licenciamento'],
-            'cliente_id' => $row['cliente_id'] ?? null, // seria melhor buscar por nome/NIF
-            'exportador_id' => $row['exportador_id'] ?? null,
-            'estancia_id' => $row['estancia_id'],
-            'referencia_cliente' => $row['referencia_cliente'],
-            'factura_proforma' => $row['factura_proforma'],
-            'descricao' => $row['descricao'],
-            'moeda' => $row['moeda'],
-            'tipo_declaracao' => $row['tipo_declaracao'] == 'Importação' ? '11' : '21',
-            'tipo_transporte' => $row['tipo_transporte'],
-            'registo_transporte' => $row['registo_transporte'],
-            'nacionalidade_transporte' => $row['nacionalidade_transporte'],
-            'manifesto' => $row['manifesto'],
-            'data_entrada' => $row['data_entrada'],
-            'porto_entrada' => $row['porto_entrada'],
-            'peso_bruto' => $row['peso_bruto'],
-            'adicoes' => $row['adicoes'],
-            'metodo_avaliacao' => $row['metodo_avaliacao'],
-            'codigo_volume' => $row['codigo_volume'],
-            'qntd_volume' => $row['qntd_volume'],
-            'forma_pagamento' => $row['forma_pagamento'],
-            'codigo_banco' => $row['codigo_banco'],
-            'fob_total' => $row['fob_total'],
-            'frete' => $row['frete'],
-            'seguro' => $row['seguro'],
-            'cif' => $row['cif'],
-            'pais_origem' => $row['pais_origem'],
-            'porto_origem' => $row['porto_origem'],
-            'empresa_id' => $this->empresaId,
-        ]);
-    }
-
-    public function rules(): array
-    {
-        return [
-            'codigo_licenciamento' => 'required|unique:licenciamentos,codigo_licenciamento',
-            'descricao' => 'required',
-            'fob_total' => 'required|numeric|min:0',
-        ];
+        $data['adicoes'] = 0; // The spreadsheet creates a header, without merchandise rows.
+        $support = app(LicenciamentoFormSupport::class);
+        $rules = array_intersect_key($support->rules($this->empresa->id), array_flip($this->fields()));
+        foreach (\Illuminate\Support\Facades\Schema::getColumns('licenciamentos') as $column) {
+            if ($column['name'] !== 'codigo_licenciamento' && isset($rules[$column['name']]) && ! $column['nullable']) {
+                $rules[$column['name']] = array_values(array_filter($rules[$column['name']], fn ($rule) => $rule !== 'nullable'));
+                $rules[$column['name']][] = 'required';
+            }
+        }
+        $validated = Validator::make($data, $rules)->validate();
+        app(\App\Application\Importacao\ImportReferences::class)->validate($this->empresa, $data['cliente_id'] ?? null, $data['exportador_id'] ?? null);
+        return app(CriarLicenciamentoAction::class)->execute(new CriarLicenciamentoDTO($validated + ['empresa_id' => $this->empresa->id, 'user_id' => $this->actor->id]))->id;
     }
 }

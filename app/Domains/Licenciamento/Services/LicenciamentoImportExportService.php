@@ -27,12 +27,12 @@ class LicenciamentoImportExportService
         $extension = $file->getClientOriginalExtension();
         switch (strtolower($extension)) {
             case 'csv':
-                return app(ImportLicenciamentosFromCsvAction::class)->execute($file, $empresaId);
+                return app(ImportLicenciamentosFromCsvAction::class)->execute($file, $empresaId, $userId);
             case 'xlsx':
             case 'xls':
-                return app(ImportLicenciamentosFromExcelAction::class)->execute($file, $empresaId);
+                return app(ImportLicenciamentosFromExcelAction::class)->execute($file, $empresaId, $userId);
             case 'txt':
-                return app(ImportLicenciamentosFromTxtAction::class)->execute($file, $empresaId, $userId);
+                throw new \InvalidArgumentException('Importação TXT temporariamente indisponível até validar o contrato das mercadorias. Use CSV ou Excel para o cadastro.');
             default:
                 throw new \InvalidArgumentException('Formato de arquivo não suportado. Use CSV, XLSX ou TXT.');
         }

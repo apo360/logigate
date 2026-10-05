@@ -55,6 +55,12 @@ class ProcessosTable extends Component
     public function updatingSortDirection() { $this->resetPage(); }
 
 
+    public function limparFiltros(): void
+    {
+        $this->reset('search', 'searchDate', 'status');
+        $this->resetPage();
+    }
+
     public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
@@ -144,8 +150,16 @@ class ProcessosTable extends Component
 
         $processos = $query->paginate($this->perPage);
 
+        $stats = app(ProcessoTenantAccessService::class)->scopeForUser(Processo::query(), $this->user())
+            ->selectRaw('COUNT(*) AS total')
+            ->selectRaw('COALESCE(SUM(Estado = ?), 0) AS abertos', [EstadoProcessoEnum::ABERTO->value])
+            ->selectRaw('COALESCE(SUM(Estado NOT IN (?, ?, ?)), 0) AS em_andamento', [EstadoProcessoEnum::ABERTO->value, EstadoProcessoEnum::FINALIZADO->value, EstadoProcessoEnum::CANCELADO->value])
+            ->selectRaw('COALESCE(SUM(Estado = ?), 0) AS finalizados', [EstadoProcessoEnum::FINALIZADO->value])
+            ->first();
+
         return view('livewire.tables.processos-table', [
             'processos' => $processos,
+            'stats' => $stats,
         ]);
     }
 

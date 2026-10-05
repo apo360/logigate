@@ -1,37 +1,31 @@
 <?php
-// app/Imports/CustomersImport.php
 namespace App\Imports;
 
-use App\Models\Customer;
+use App\Application\Importacao\RowsImport;
+use App\Application\Customer\Actions\CreateCustomerAction;
+use App\Application\Customer\DTOs\CreateCustomerDTO;
 use App\Http\Requests\CustomerRequest;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class CustomersImport implements ToModel, WithHeadingRow, WithValidation, WithBatchInserts, WithChunkReading
+class CustomersImport extends RowsImport
 {
-    public function model(array $row)
+    protected function fields(): array
     {
-        return Customer::updateOrCreate(
-            ['CustomerTaxID' => $row['customertaxid'] ?? null], // evita duplicados
-            [
-                'CompanyName' => $row['companyname'] ?? null,
-                'Telephone' => $row['telephone'] ?? null,
-                'Email' => $row['email'] ?? null,
-                'Website' => $row['website'] ?? null,
-                'SelfBillingIndicator' => $row['selfbillingindicator'] ?? 0,
-            ]
-        );
+        return ['CustomerTaxID', 'CompanyName', 'CustomerType', 'Telephone', 'Email', 'Website', 'AccountID', 'SelfBillingIndicator', 'TipoCliente', 'Status'];
     }
-
-    public function rules(): array
-    {return (new CustomerRequest())->rules();}
-
-    public function batchSize(): int
-    {return 1000;}
-
-    public function chunkSize(): int
-    {return 1000;}
+    protected function create(array $data): int
+    {
+        foreach (['CustomerTaxID', 'Telephone', 'AccountID'] as $field) {
+            if (isset($data[$field])) { $data[$field] = (string) $data[$field]; }
+        }
+        // Locate globally only to reuse the normal association path; never update a shared profile.
+        $existing = \App\Models\Customer::withoutGlobalScope(\App\Models\Scopes\TenantScope::class)->where('CustomerTaxID', $data['CustomerTaxID'] ?? '')->first();
+        if ($existing && ! $this->empresa->customers()->where('customers.id', $existing->id)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['CustomerTaxID' => 'NIF indisponível para importação. Use o fluxo autorizado de associação de clientes.']);
+        }
+        $validated = CustomerRequest::validateLivewire($data, $existing?->id);
+        $validated['tipo_cliente'] = $validated['TipoCliente'];
+        $validated['is_active'] = ($validated['Status'] ?? 'ativo') === 'ativo';
+        $dto = CreateCustomerDTO::fromArray($validated + ['empresa_id' => $this->empresa->id, 'user_id' => $this->actor->id]);
+        return app(CreateCustomerAction::class)->execute($dto)->id;
+    }
 }

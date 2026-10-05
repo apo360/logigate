@@ -260,6 +260,9 @@
                                             </thead>
                                             <tbody>
                                                 @foreach($processo->mercadoriasAgrupadas as $agrupamento)
+                                                @php
+                                                    $itensAgrupamento = $agrupamento->mercadoriasQuery()->get();
+                                                @endphp
                                                     <tr class="cursor-pointer hover:bg-gray-50" x-data="{ expanded: false }">
                                                         <td class="px-4 py-2 text-sm font-medium text-gray-900">
                                                             {{ $agrupamento->codigo_aduaneiro }}<br>
@@ -270,7 +273,7 @@
                                                         <td class="px-4 py-2 text-sm text-right font-semibold text-yellow-600">{{ number_format($agrupamento->preco_total, 2, ',', '.') }}</td>
                                                         <td class="px-4 py-2 text-sm text-center">
                                                             <button @click="expanded = !expanded" class="text-blue-600">
-                                                                <i class="fas" :class="expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i> {{ count($agrupamento->mercadorias) }}
+                                                                <i class="fas" :class="expanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i> {{ $itensAgrupamento->count() }}
                                                             </button>
                                                         </td>
                                                     </tr>
@@ -281,7 +284,7 @@
                                                                     <tr><th class="px-2">Descrição</th><th class="px-2">Qtd</th><th class="px-2">Peso</th><th class="px-2">Preço Total</th><th class="px-2">Ações</th></tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    @foreach($agrupamento->mercadorias as $mercadoria)
+                                                                    @foreach($itensAgrupamento as $mercadoria)
                                                                         <tr>
                                                                             <td class="px-2">{{ $mercadoria->Descricao }}</td>
                                                                             <td class="px-2">{{ $mercadoria->Quantidade }}</td>

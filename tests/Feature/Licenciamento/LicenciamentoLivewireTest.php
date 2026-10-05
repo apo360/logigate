@@ -25,7 +25,7 @@ class LicenciamentoLivewireTest extends TestCase
         $customerB = $this->createCustomer($tenantBEmpresa, $tenantBUser, 'LW-LIC-B');
         $exportadorB = $this->createExportador($tenantBEmpresa, $tenantBUser, 'LW-LIC-B');
 
-        $this->actingAs($tenantAUser);
+        $this->signInTenant($tenantAUser);
 
         Livewire::test(LiicenciamentoCreate::class)
             ->set('cliente_id', $customerB->id)
@@ -54,7 +54,7 @@ class LicenciamentoLivewireTest extends TestCase
         $customer = $this->createCustomer($empresa, $user, 'LW-LIC-CREATE');
         $exportador = $this->createExportador($empresa, $user, 'LW-LIC-CREATE');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         $component = Livewire::test(LiicenciamentoCreate::class);
 
@@ -82,7 +82,7 @@ class LicenciamentoLivewireTest extends TestCase
         $this->grantLicenciamentoPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'LW-LIC-EDIT');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoEdit::class, ['licenciamento' => $licenciamento])
             ->set('descricao', 'Licenciamento atualizado via Livewire')

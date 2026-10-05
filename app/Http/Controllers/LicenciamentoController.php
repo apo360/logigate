@@ -115,9 +115,9 @@ class LicenciamentoController extends AuthenticatedController
         ]);
 
         try {
-            $licenciamento = $service->import($request->file('file'), $this->empresa->id, auth()->id());
+            $result = $service->import($request->file('file'), $this->empresa->id, auth()->id());
 
-            return redirect()->route('licenciamentos.show', $licenciamento)->with('success', 'Importação concluída!');
+            return redirect()->route('licenciamentos.index')->with('import_result', $result->toArray())->with('success', 'Importação processada. Consulte as linhas aceites e rejeitadas.');
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }

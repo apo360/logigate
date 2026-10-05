@@ -37,6 +37,9 @@ final class CriarMercadoriaAction
             if ($data->context === 'licenciamento') {
                 $processIds = \App\Models\Mercadoria::where('licenciamento_id', $data->parentId)
                     ->whereNotNull('Fk_Importacao')->distinct()->pluck('Fk_Importacao');
+                $license = \App\Models\Licenciamento::query()->findOrFail($data->parentId);
+                $linkedId = app(\App\Application\Licenciamento\Services\LicenciamentoProcessLink::class)->processId($license);
+                if ($linkedId) { $processIds->push($linkedId); $processIds = $processIds->unique(); }
                 if ($processIds->count() > 1) {
                     throw new \InvalidArgumentException('Licenciamento com vínculos de processo inconsistentes.');
                 }

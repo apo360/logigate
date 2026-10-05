@@ -27,7 +27,7 @@ class ProcessoShowActionsTest extends TestCase
         $processo = $this->createProcesso($empresa, $user, $customer, $exportador, $estanciaId, $tipoProcessoId);
         $this->grantProcessoPermissions($user);
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processo])
             ->assertSee('Gerar TXT')
@@ -61,7 +61,7 @@ class ProcessoShowActionsTest extends TestCase
             }
         });
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processo])
             ->call('emitirNotaDespesa')
@@ -91,7 +91,7 @@ class ProcessoShowActionsTest extends TestCase
             }
         });
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processo])
             ->call('gerarExtratoMercadoria')
@@ -107,7 +107,7 @@ class ProcessoShowActionsTest extends TestCase
         $processo = $this->createProcesso($empresa, $user, $customer, $exportador, $estanciaId, $tipoProcessoId);
         $this->grantProcessoPermissions($user);
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processo])
             ->call('gerarTxt')
@@ -137,7 +137,7 @@ class ProcessoShowActionsTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processo->fresh()])
             ->call('gerarTxt')
@@ -155,7 +155,7 @@ class ProcessoShowActionsTest extends TestCase
         $this->grantProcessoPermissions($tenantAUser);
         $this->grantProcessoPermissions($tenantBUser);
 
-        $this->actingAs($tenantAUser);
+        $this->signInTenant($tenantAUser);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processoB])
             ->assertNotFound();
@@ -178,7 +178,7 @@ class ProcessoShowActionsTest extends TestCase
             ]);
         }
 
-        $user->givePermissionTo($permissions);
+        $this->grantTenantPermissions($user, $permissions);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

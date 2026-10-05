@@ -29,7 +29,7 @@ final class ImportarDeclaracaoAsycudaTest extends TestCase
         [$user, $empresa, $refs, $mapped] = $this->context();
         $customerCount = \App\Models\Customer::query()->count();
         $exporterCount = \App\Models\Exportador::query()->count();
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         $preview = app(PrepararImportacaoAsycudaAction::class)->execute($mapped, $refs);
 
@@ -51,7 +51,7 @@ final class ImportarDeclaracaoAsycudaTest extends TestCase
     public function test_confirm_creates_new_process_items_containers_and_uuid_based_pivot(): void
     {
         [$user, $empresa, $refs, $mapped] = $this->context();
-        $this->actingAs($user);
+        $this->signInTenant($user);
         Storage::fake('s3');
 
         $preview = app(PrepararImportacaoAsycudaAction::class)->execute($mapped, $refs);
@@ -71,17 +71,18 @@ final class ImportarDeclaracaoAsycudaTest extends TestCase
         ]);
         self::assertSame(0.25, (float) $process->mercadorias()->firstOrFail()->preco_unitario);
         self::assertSame(647.25, (float) $process->mercadorias()->firstOrFail()->preco_total);
-        self::assertSame(647.25, (float) $process->fob_total);
+        // Item totals do not replace an unconfirmed declared FOB.
+        self::assertSame(0.0, (float) $process->fob_total);
         self::assertSame(21488.7, $mapped['financial']['policy']['external_invoice_total']['amount']);
         self::assertNotSame((float) $mapped['financial']['policy']['external_invoice_total']['amount'], (float) $process->fob_total);
-        self::assertSame(1, \App\Models\Customer::query()->count());
-        self::assertSame(1, \App\Models\Exportador::query()->count());
+        self::assertSame(1, $empresa->customers()->count());
+        self::assertSame(1, $empresa->exportadors()->count());
     }
 
     public function test_invalid_external_item_uuid_rolls_back_all_import_rows(): void
     {
         [$user, , $refs, $mapped] = $this->context();
-        $this->actingAs($user);
+        $this->signInTenant($user);
         Storage::fake('s3');
         $mapped['contentorMercadorias'][0]['mercadoria_external_id'] = 'missing-item-uuid';
         $before = [
@@ -107,7 +108,7 @@ final class ImportarDeclaracaoAsycudaTest extends TestCase
         [$userB, $empresaB] = $this->createTenant('ASYCUDA-FOREIGN-' . random_int(100, 999));
         $customerB = $this->createCustomer($empresaB, $userB, 'ASYCUDA-FOREIGN-C-' . random_int(100, 999));
         $exporterB = $this->createExportador($empresaB, $userB, 'ASYCUDA-FOREIGN-E-' . random_int(100, 999));
-        $this->actingAs($userA);
+        $this->signInTenant($userA);
 
         $crossTenantChoices = array_merge($refs, [
             'customer_id' => $customerB->id,
@@ -134,6 +135,7 @@ final class ImportarDeclaracaoAsycudaTest extends TestCase
     private function context(): array
     {
         [$user, $empresa] = $this->createTenant('ASYCUDA-' . random_int(100, 999));
+        $this->grantTenantPermissions($user, ['processos.create', 'processos.update', 'mercadorias.create']);
         [$estanciaId] = $this->createLookupData();
         $customer = $this->createCustomer($empresa, $user, 'ASYCUDA-' . random_int(100, 999));
         $exportador = $this->createExportador($empresa, $user, 'ASYCUDA-' . random_int(100, 999));

@@ -39,7 +39,7 @@ final readonly class FinalizarProcessoAction
                 throw new InvalidArgumentException(implode(' ', $erros));
             }
 
-            $contaDespacho = $this->contaDespachoSequencial->gerarContaDespachoSequencial();
+            $contaDespacho = $this->contaDespachoSequencial->gerarContaDespachoSequencial((int) $processo->empresa_id);
 
             return $this->processos->update($id, new AtualizarProcessoDTO(
                 id: $id,

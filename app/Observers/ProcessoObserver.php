@@ -8,7 +8,6 @@ use App\Support\ActorContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
-use OwenIt\Auditing\Models\Audit;
 
 class ProcessoObserver
 {
@@ -18,17 +17,6 @@ class ProcessoObserver
             $processo->user_id = ActorContext::id();
         }
 
-        $this->audit([
-            'user_type' => ActorContext::primaryRole() ?? 'sem-perfil',
-            'user_id' => ActorContext::id(),
-            'event' => 'novo_processo',
-            'new_values' => ['message' => 'Usuário registrou um novo processo ' . $processo->NrProcesso],
-            'url' => ActorContext::requestUrl(),
-            'ip_address' => ActorContext::ipAddress(),
-            'user_agent' => ActorContext::userAgent(),
-            'auditable_type' => ActorContext::user() ? get_class(ActorContext::user()) : null,
-            'auditable_id' => ActorContext::id(),
-        ]);
 
         Log::info('Novo processo criado', [
             'NrProcesso' => $processo->NrProcesso,
@@ -55,29 +43,7 @@ class ProcessoObserver
             throw new \Exception('Não é permitido alterar o estado de um processo finalizado.');
         }
 
-        $alteracoes = $processo->getDirty();
-        $originais = $processo->getOriginal();
-        $detalhes = [];
 
-        foreach ($alteracoes as $campo => $valorNovo) {
-            $detalhes[$campo] = [
-                'antes' => $originais[$campo] ?? null,
-                'depois' => $valorNovo,
-            ];
-        }
-
-        $this->audit([
-            'user_type' => ActorContext::primaryRole() ?? 'sem-perfil',
-            'user_id' => ActorContext::id(),
-            'event' => 'Actualização do Processo ' . $processo->NrProcesso,
-            'old_values' => $originais,
-            'new_values' => $detalhes,
-            'url' => ActorContext::requestUrl(),
-            'ip_address' => ActorContext::ipAddress(),
-            'user_agent' => ActorContext::userAgent(),
-            'auditable_type' => get_class($processo),
-            'auditable_id' => $processo->id,
-        ]);
     }
 
     public function deleting(Processo $processo): void
@@ -98,16 +64,4 @@ class ProcessoObserver
         }
     }
 
-    private function audit(array $payload): void
-    {
-        if (!Schema::hasTable('audits')) {
-            Log::warning('Auditoria de processo ignorada: tabela audits ausente.', [
-                'event' => $payload['event'] ?? null,
-            ]);
-
-            return;
-        }
-
-        Audit::create($payload);
-    }
 }

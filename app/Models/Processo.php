@@ -15,6 +15,16 @@ class Processo extends Model implements Auditable
     use HasFactory, SoftDeletes, BelongsToTenant, HasDocumentos;
     use \OwenIt\Auditing\Auditable;
 
+    public function generateTags(): array
+    {
+        $correlation = request()->attributes->get('v1_operation_id');
+        if (! $correlation) {
+            $correlation = (string) \Illuminate\Support\Str::uuid();
+            request()->attributes->set('v1_operation_id', $correlation);
+        }
+        return ['empresa:' . $this->empresa_id, 'operation:' . $correlation];
+    }
+
     /**
      * A tabela associada ao modelo.
      *

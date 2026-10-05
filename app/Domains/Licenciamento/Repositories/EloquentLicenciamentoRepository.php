@@ -14,7 +14,12 @@ class EloquentLicenciamentoRepository implements LicenciamentoRepositoryInterfac
     public function create(CriarLicenciamentoDTO $dto): Licenciamento
     {
         $data = $this->onlyExistingColumns($dto->toArray());
-
+        foreach (Schema::getColumns('licenciamentos') as $column) {
+            if (! $column['nullable'] && $column['default'] !== null
+                && array_key_exists($column['name'], $data) && $data[$column['name']] === null) {
+                unset($data[$column['name']]); // Let the database apply its existing creation default.
+            }
+        }
         return Licenciamento::create($data);
     }
 

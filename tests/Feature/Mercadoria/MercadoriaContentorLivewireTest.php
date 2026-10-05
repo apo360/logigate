@@ -25,7 +25,8 @@ final class MercadoriaContentorLivewireTest extends TestCase
     public function test_create_form_creates_mercadoria_and_syncs_selected_process_contentor(): void
     {
         [$user, $empresa, $processo, $subcategoria, $pauta, $contentor] = $this->context('MER-CREATE-CONT');
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
 
         Livewire::test(CreateForm::class, ['context' => 'processo', 'parentId' => $processo->id])
             ->set('form.subcategoria_id', $subcategoria->id)
@@ -51,7 +52,8 @@ final class MercadoriaContentorLivewireTest extends TestCase
     public function test_edit_form_replaces_mercadoria_contentor_links(): void
     {
         [$user, , $processo, $subcategoria, $pauta, $firstContentor, $secondContentor] = $this->context('MER-EDIT-CONT');
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
         $mercadoria = app(CriarMercadoriaAction::class)->execute(MercadoriaData::fromLivewire([
             'subcategoria_id' => $subcategoria->id,
             'codigo_aduaneiro' => $pauta->codigo,

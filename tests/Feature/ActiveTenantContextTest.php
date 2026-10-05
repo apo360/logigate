@@ -24,7 +24,7 @@ class ActiveTenantContextTest extends TestCase
         parent::setUp();
         // Check before opening any database connection. No migrations or seeds.
         self::assertTrue(app()->environment('testing'));
-        self::assertSame('logigate_testing', config('database.connections.' . config('database.default') . '.database'));
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', config('database.connections.' . config('database.default') . '.database'));
         DB::beginTransaction();
         $this->transactionStarted = true;
         (new \ReflectionProperty(app(), 'isRunningInConsole'))->setValue(app(), false);

@@ -35,7 +35,6 @@ class LiicenciamentoShow extends Component
         $this->licenciamento = $licenciamento
             ->load(app(LicenciamentoFormSupport::class)->relations())
             ->loadMissing([
-                'procLicenFaturas.fatura.salesdoctotal',
                 'procLicenFaturas.processo',
             ]);
 
@@ -74,7 +73,6 @@ class LiicenciamentoShow extends Component
                 'mercadorias',
                 'mercadoriasAgrupadas',
                 'procLicenFaturas.processo',
-                'procLicenFaturas.fatura.salesdoctotal',
             ]);
             $this->carregarIndicadores();
 
@@ -157,7 +155,6 @@ class LiicenciamentoShow extends Component
             'mercadorias',
             'mercadoriasAgrupadas',
             'procLicenFaturas.processo',
-            'procLicenFaturas.fatura.salesdoctotal',
         ]);
 
         $analysis = app(LicenciamentoOperationalReadinessService::class)->analyze($this->licenciamento);

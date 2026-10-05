@@ -1,30 +1,28 @@
 <?php
-
 namespace App\Imports;
 
-use App\Models\Processo;
-use Maatwebsite\Excel\Concerns\ToModel;
+use App\Application\Importacao\RowsImport;
+use App\Application\Processo\Actions\CriarProcessoAction;
+use App\Application\Processo\DTOs\CriarProcessoDTO;
+use App\Application\Processo\Support\ProcessoFormSupport;
+use Illuminate\Support\Facades\Validator;
 
-class ProcessosImport implements ToModel
+class ProcessosImport extends RowsImport
 {
-    /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
-    public function model(array $row)
+    protected function fields(): array { return array_values(array_diff(array_keys(app(ProcessoFormSupport::class)->rules($this->empresa->id)), ['DataPartida'])); }
+    protected function create(array $data): int
     {
-        return new Processo([
-            'NrProcesso' => $row[0],
-            'ContaDespacho' => $row[1],
-            'RefCliente' => $row[2],
-            'Descricao' => $row[3],
-            'DataAbertura' => $row[4],
-            'DataFecho' => $row[5],
-            'TipoProcesso' => $row[6],
-            'Situacao' => $row[7],
-            'customer_id' => $row[8],
-            'exportador_id' => $row[9],
-        ]);
+        foreach (array_keys($data) as $field) {
+            $field = ['NrDAR' => 'N_Dar', 'NrMarcaFiscal' => 'MarcaFiscal'][$field] ?? $field;
+            if (! \Illuminate\Support\Facades\Schema::hasColumn('processos', $field)) {
+                throw new \InvalidArgumentException('Campo indisponível no schema: ' . $field);
+            }
+        }
+        $data += ['Estado' => 'Aberto', 'DataAbertura' => now()->toDateString()];
+        $support = app(ProcessoFormSupport::class);
+        $validated = Validator::make($data, $support->rules($this->empresa->id))->validate();
+        app(\App\Application\Importacao\ImportReferences::class)->validate($this->empresa, $data['customer_id'] ?? null, $data['exportador_id'] ?? null);
+        if (($data['Estado'] ?? 'Aberto') !== 'Aberto') { throw new \InvalidArgumentException('A importação cria apenas processos abertos.'); }
+        return app(CriarProcessoAction::class)->execute(CriarProcessoDTO::fromArray($validated + ['empresa_id' => $this->empresa->id, 'user_id' => $this->actor->id]))->id;
     }
 }

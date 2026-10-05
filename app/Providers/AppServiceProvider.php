@@ -236,5 +236,8 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
         \App\Models\Exportador::observe(\App\Observers\ExportadorObserver::class);
         \App\Models\Processo::observe(\App\Observers\ProcessoObserver::class);
+        foreach ([\App\Models\Customer::class, \App\Models\Exportador::class, \App\Models\Processo::class, \App\Models\Licenciamento::class, \App\Models\Mercadoria::class] as $model) {
+            $model::observe(\App\Observers\OperationalAuditObserver::class);
+        }
     }
 }

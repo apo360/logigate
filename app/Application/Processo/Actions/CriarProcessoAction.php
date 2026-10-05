@@ -33,6 +33,9 @@ final readonly class CriarProcessoAction
             || $dto->contaDespacho !== null || $dto->dataFecho !== null) {
             throw new \InvalidArgumentException('Crie o processo aberto e utilize o comando de finalização.');
         }
+        if (! Schema::hasTable('operational_sequences')) {
+            throw new \RuntimeException('Actualize o schema das séries antes de criar processos.');
+        }
         return DB::transaction(function () use ($dto): Processo {
             $numero = $dto->numero ?: (string) $this->geradorNumero->gerar($dto->empresaId);
 

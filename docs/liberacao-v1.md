@@ -1,0 +1,27 @@
+# Liberação da V1 — preparação de 05/10/2026
+
+Estado: implementação preparada, NÃO aprovada para produção. Em 05/10/2026, por autorização do utilizador, foram executados 200 testes seleccionados num clone descartável do banco de testes, com quatro migrations aplicadas apenas nesse clone. Após corrigir fixtures, permissões e Livewire, a execução conjunta terminou com 199 aprovados, 1 ignorado, 0 falhas/erros e 1766 assertions. Permanecem 33 depreciações. Nenhuma migration de produção ou reconciliação de dados reais foi executada. Ver [relatório de testes](resultados-testes-v1-2026-10-05.md) para cobertura e pendências.
+
+## Ordem de homologação
+
+1. Rever e versionar o diff completo, preservando alterações locais de outras tarefas. Criar build reproduzível com dependências bloqueadas, autoload optimizado, assets e configuração do runtime de produção. O desenvolvimento usa PHP 8.5; a plataforma Composer declara 8.2: escolher o runtime de produção e executar os checks nele.
+2. Criar um ambiente descartável e um banco próprio, sem credenciais de produção. Reproduzir migrations desde zero e com uma cópia anonimizada do schema legado. Não reutilizar automaticamente logigate_testing para operações de recriação.
+3. Executar `php artisan v1:diagnostico` apenas no ambiente autorizado. O comando é read-only, mostra amostras limitadas e não exporta contactos. Arquivar o resultado com acesso restrito. Verificar duplicados, vínculos entre empresas, CIF divergente e schema ausente. Resultado vazio não garante ausência de todos os problemas legados.
+4. Resolver conflitos mediante proposta por IDs, valores antigos/novos e justificação, com aprovação antes de qualquer reconciliação. Não ajustar FOB declarado a partir dos itens automaticamente. Não confirmar câmbio histórico automaticamente. Vínculos legados podem ser adoptados pela conversão somente quando todos os itens apontam para um único processo da mesma empresa; não há backfill automático.
+5. Ensaiar migrations pendentes de DataPartida/câmbio e as migrations de 05/10: resultados de importação e vínculo/séries operacionais. A migration de índices recusa duplicados antes de criar tabelas. Ensaiar rollback e também falhas parciais de DDL no MySQL; usar manutenção/exclusão de escritores ao aplicar índices.
+6. Validar cadastro, edição, associação/desassociação e bloqueios entre duas empresas. Retomar os testes de Exportadores e a revisão visual em desktop/mobile, formulários, modais, mensagens e permissões. Fechar o contrato de Customer partilhado/estado por empresa; a sobreposição Cliente/Exportador permanece em standby e não é resolvida aqui.
+7. Validar o fluxo Cliente → Licenciamento → Mercadorias → TXT de saída → Processo → câmbio confirmado → finalização. Importação TXT está bloqueada no servidor: o formato legado criava agrupamentos sem mercadorias. A exportação TXT permanece sujeita à validação de conteúdo/aceitação do sistema destino.
+8. Executar dois workers reais concorrentes: primeira e seguintes reservas de NrProcesso/ContaDespacho, ano de emissão de processo antigo, conversão repetida e simultânea, remoção de todos os itens e criação de novos após conversão. Verificar vínculos únicos, números distintos e ausência de corrupção por rollback/deadlock.
+9. Ensaiar importações com cabeçalho: linhas válidas/inválidas, referências de outra empresa, NIF já registado, permissão revogada após dispatch, entrega duplicada e falha de infraestrutura. CSV/Excel de licenciamento cria apenas cadastros; itens não são inferidos do ficheiro. Lotes de Clientes/Processos guardam resultado por linha e bloqueiam repetição de lotes concluídos/parciais; reenviar apenas rejeitadas. Não reexecutar jobs antigos sem ator/empresa.
+10. Ensaiar workers, paths/disco dos uploads, S3, documentos, relatórios, alertas e acessos. Folder Actions podem produzir efeitos no storage fora da transação SQL: testar compensação/repetição num storage de homologação. Não executar chamadas externas reais antes de autorização específica.
+11. Ensaiar backup/restauro completo (banco + ficheiros), medir tempo de recuperação, documentar rollback de aplicação/schema e verificar monitorização de jobs falhados e logs. Não confundir backup criado com restauro comprovado.
+
+## Pontos que exigem validação adicional
+
+A trilha Auditable de Processo conserva o caminho HTTP; o observer operacional cobre CRUD em console e CRUD dos restantes cadastros. Ainda é necessário comprovar ausência de duplicação, histórico de mudanças de pivots/associações e operações que usem queries em massa. Ausência da tabela audits é reportada nos logs e não equivale a histórico persistido: verificar a tabela antes da liberação.
+
+A sequência usa um contador protegido por empresa/tipo/ano e considera números legados para escolher o próximo. A criação e conversão de Processo recusam schema sem as tabelas novas; a finalização também requer a confirmação de câmbio. Estas funções ficam bloqueadas até aplicar/validar as migrations em ambiente autorizado.
+
+## Critério para produção
+
+Todos os bloqueios P1 corrigidos e comprovados, ou caminhos efectivamente desactivados no servidor; invariantes e isolamento positivos/negativos aprovados; concorrência comprovada; schema e dados legados revistos; testes no runtime final; backups restaurados; release versionada e plano de rollback ensaiado. Os módulos financeiros e integrações excluídos da tarefa precisam de validação própria se fizerem parte da V1 publicada.

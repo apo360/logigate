@@ -32,7 +32,7 @@ class ExportadorQuickForm extends Component
     
     public function open()
     {
-        $this->reset();
+        $this->reset(['ExportadorTaxID', 'Exportador', 'Pais', 'Endereco', 'Telefone', 'Email']);
         $this->resetValidation();
         $this->showModal = true;
     }

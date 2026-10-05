@@ -26,7 +26,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $this->grantShowPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-ACTIONS');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         $component = Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento]);
 
@@ -48,7 +48,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $this->grantShowPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-MERC');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento])
             ->call('abrirMercadorias')
@@ -63,7 +63,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $this->grantShowPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-READY');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento])
             ->assertSee('Prontidão do Licenciamento')
@@ -80,7 +80,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $this->grantShowPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-NO-MERC');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento])
             ->assertSee('Sem mercadorias associadas')
@@ -112,7 +112,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-WITH-MERC');
         $this->createMercadoriaForLicenciamento($licenciamento->id);
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento->refresh()])
             ->assertDontSee('Sem mercadorias associadas')
@@ -126,7 +126,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-CIF');
         $licenciamento->forceFill(['cif' => 999])->save();
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento->refresh()])
             ->assertSee('CIF inconsistente')
@@ -141,7 +141,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $this->createMercadoriaForLicenciamento($licenciamento->id);
         $licenciamento->forceFill(['txt_gerado' => 1])->save();
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento->refresh()])
             ->assertSee('Timeline')
@@ -156,7 +156,7 @@ class LicenciamentoShowActionsTest extends TestCase
         $this->grantShowPermissions($user);
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'SHOW-FAT-EMPTY');
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento])
             ->assertSee('Sem faturas associadas.');
@@ -188,7 +188,7 @@ class LicenciamentoShowActionsTest extends TestCase
             Schema::enableForeignKeyConstraints();
         }
 
-        $this->actingAs($user);
+        $this->signInTenant($user);
 
         Livewire::test(LiicenciamentoShow::class, ['licenciamento' => $licenciamento->refresh()])
             ->assertSee('Fatura:')
@@ -205,7 +205,7 @@ class LicenciamentoShowActionsTest extends TestCase
 
         $this->assertFalse($tenantAUser->can('view', $licenciamentoB));
 
-        $this->actingAs($tenantAUser)
+        $this->signInTenant($tenantAUser)
             ->get(route('licenciamentos.show', $licenciamentoB))
             ->assertNotFound();
     }

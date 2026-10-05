@@ -29,7 +29,8 @@ final class ContentorMercadoriaSyncTest extends TestCase
         $one = Contentor::withoutEvents(fn () => Contentor::query()->create(['empresa_id' => $empresa->id, 'processo_id' => $processo->id, 'numero' => 'SYNC-001']));
         $two = Contentor::withoutEvents(fn () => Contentor::query()->create(['empresa_id' => $empresa->id, 'processo_id' => $processo->id, 'numero' => 'SYNC-002']));
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
         $action = app(SincronizarContentoresMercadoriaAction::class);
         $action->execute($mercadoria, MercadoriaData::fromLivewire(['contentor_ids' => [$one->id, $two->id]], 'processo', $processo->id));
         $action->execute($mercadoria, MercadoriaData::fromLivewire(['contentor_ids' => [$two->id]], 'processo', $processo->id));
@@ -53,7 +54,8 @@ final class ContentorMercadoriaSyncTest extends TestCase
         [, $otherEmpresa] = $this->createTenant('CM-XEMP');
         $wrongCompany = Contentor::withoutEvents(fn () => Contentor::query()->create(['empresa_id' => $otherEmpresa->id, 'processo_id' => $processo->id, 'numero' => 'SYNC-XEMP']));
         $mercadoria->contentores()->attach($validContentor->id);
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
         $action = app(SincronizarContentoresMercadoriaAction::class);
 
         foreach ([$wrongProcess, $wrongCompany] as $contentor) {
@@ -77,7 +79,8 @@ final class ContentorMercadoriaSyncTest extends TestCase
         $contentor = Contentor::withoutEvents(fn () => Contentor::query()->create(['empresa_id' => $empresa->id, 'processo_id' => $processo->id, 'numero' => 'SYNC-LIC']));
         $mercadoria->contentores()->attach($contentor->id);
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
         app(SincronizarContentoresMercadoriaAction::class)->execute($mercadoria, MercadoriaData::fromLivewire(['contentor_ids' => []], 'licenciamento', 1));
 
         self::assertSame([$contentor->id], $mercadoria->contentores()->pluck('contentores.id')->all());

@@ -20,7 +20,7 @@ class S11RuntimeGateTest extends TestCase
     {
         parent::setUp();
         self::assertTrue(app()->environment('testing'));
-        self::assertSame('logigate_testing', config('database.connections.'.config('database.default').'.database'));
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', config('database.connections.'.config('database.default').'.database'));
         DB::beginTransaction();
         $this->transaction = true;
         // Render login notifications in memory; never send mail to real recipients.

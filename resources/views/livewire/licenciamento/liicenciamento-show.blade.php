@@ -435,7 +435,7 @@
                                 <div><strong>Status:</strong> {{ ucfirst($fatura->status_fatura ?? 'Não informada') }}</div>
                                 <div>
                                     <strong>Valor:</strong>
-                                    @if($fatura->fatura)
+                                    @if($fatura->relationLoaded('fatura') && $fatura->getRelation('fatura'))
                                         {{ number_format((float) $fatura->fatura->gross_total, 2) }} {{ $licenciamento->moeda }}
                                     @else
                                         Não informada

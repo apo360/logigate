@@ -20,8 +20,8 @@ class S3FailClosedAuthorizationTest extends TestCase
     {
         parent::setUp();
         self::assertTrue(app()->environment('testing'));
-        self::assertSame('logigate_testing', config('database.connections.'.config('database.default').'.database'));
-        self::assertSame('logigate_testing', DB::connection()->getDatabaseName());
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', config('database.connections.'.config('database.default').'.database'));
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', DB::connection()->getDatabaseName());
         DB::beginTransaction();
     }
 

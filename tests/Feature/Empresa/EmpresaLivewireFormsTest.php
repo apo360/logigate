@@ -31,6 +31,7 @@ use Tests\TestCase;
 class EmpresaLivewireFormsTest extends TestCase
 {
     use DatabaseTransactions;
+    use \Tests\Feature\Processo\ProcessoTestFixtures;
 
     private Empresa $empresa;
 
@@ -42,15 +43,12 @@ class EmpresaLivewireFormsTest extends TestCase
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $empresa = Empresa::query()->find(1);
-
-        if (! $empresa) {
-            $this->fail('A base de testes precisa conter empresas.id = 1. Nenhuma migration, refresh ou seed global foi executado.');
-        }
+        [, $empresa] = $this->createTenant('EMP-LW-' . uniqid());
 
         $this->empresa = $empresa;
         $this->actor = $this->adminForEmpresa($empresa);
-        $this->actingAs($this->actor);
+        $this->grantTenantPermissions($this->actor, ['empresas.view', 'empresas.update', 'users.view', 'users.create', 'users.update', 'users.delete']);
+        $this->signInTenant($this->actor);
     }
 
     public function test_empresa_profile_loads_and_updates_empresa_one(): void
@@ -73,7 +71,7 @@ class EmpresaLivewireFormsTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('empresas', [
-            'id' => 1,
+            'id' => $this->empresa->id,
             'Empresa' => $nome,
             'NIF' => $nif,
         ]);
@@ -81,9 +79,10 @@ class EmpresaLivewireFormsTest extends TestCase
 
     public function test_empresa_logo_uploads_to_s3_using_ddd_path_and_removes_legacy_logo(): void
     {
+        config()->set('filesystems.disks.s3', ['driver' => 's3', 'key' => 'test-key', 'secret' => 'test-secret', 'region' => 'test-region', 'bucket' => 'test-bucket', 'url' => 'https://s3.test']);
         Storage::fake('s3');
 
-        $oldPath = 'empresa/1/logotipos/old-logo.png';
+        $oldPath = 'empresa/' . $this->empresa->id . '/logotipos/old-logo.png';
         Storage::disk('s3')->put($oldPath, 'old-logo');
 
         $this->empresa->forceFill([
@@ -97,11 +96,12 @@ class EmpresaLivewireFormsTest extends TestCase
 
         Storage::disk('s3')->assertMissing($oldPath);
 
-        $files = Storage::disk('s3')->allFiles('despachantes/1/empresa/logotipos');
+        $directory = dirname(app(\App\Application\Arquivo\Services\S3PathBuilder::class)->empresaLogotipo($this->empresa, 'test.png')->value());
+        $files = Storage::disk('s3')->allFiles($directory);
 
         $this->assertCount(1, $files);
-        $this->assertStringStartsWith('despachantes/1/empresa/logotipos/', $files[0]);
-        $this->assertStringContainsString('despachantes/1/empresa/logotipos/', (string) $this->empresa->fresh()->Logotipo);
+        $this->assertStringStartsWith($directory . '/', $files[0]);
+        $this->assertStringContainsString($directory . '/', (string) $this->empresa->fresh()->Logotipo);
         $this->assertStringNotContainsString('/tmp/', (string) $this->empresa->fresh()->Logotipo);
     }
 
@@ -121,7 +121,7 @@ class EmpresaLivewireFormsTest extends TestCase
             ->assertSet('conta', null);
 
         $account = EmpresaBanco::query()
-            ->where('empresa_id', 1)
+            ->where('empresa_id', $this->empresa->id)
             ->where('iban', $iban)
             ->where('conta', $conta)
             ->first();
@@ -134,13 +134,13 @@ class EmpresaLivewireFormsTest extends TestCase
 
         $this->assertDatabaseMissing('empresa_banco', [
             'id' => $account->id,
-            'empresa_id' => 1,
+            'empresa_id' => $this->empresa->id,
         ]);
     }
 
     public function test_empresa_user_form_creates_and_updates_user_for_empresa_one(): void
     {
-        $role = $this->role('Operador Empresa Teste');
+        $role = $this->role('Operador');
         $email = 'novo-utilizador-' . uniqid() . '@example.test';
 
         Livewire::test(EmpresaUserForm::class, ['empresa' => $this->empresa->fresh()])
@@ -156,7 +156,7 @@ class EmpresaLivewireFormsTest extends TestCase
         $created = User::query()->where('email', $email)->first();
 
         $this->assertNotNull($created);
-        $this->assertTrue($created->empresas()->where('empresas.id', 1)->exists());
+        $this->assertTrue($created->empresas()->where('empresas.id', $this->empresa->id)->exists());
         $this->assertTrue($created->hasRole($role->name));
 
         $this->role('Gestor');
@@ -204,14 +204,14 @@ class EmpresaLivewireFormsTest extends TestCase
             ->call('remove', $managed->id)
             ->assertHasNoErrors();
 
-        $this->assertFalse($managed->fresh()->empresas()->where('empresas.id', 1)->exists());
+        $this->assertFalse($managed->fresh()->empresas()->where('empresas.id', $this->empresa->id)->exists());
     }
 
     public function test_empresa_user_permissions_sync_roles_and_permissions(): void
     {
         $managed = $this->managedUserForEmpresa($this->empresa);
-        $role = $this->role('Supervisor Empresa Teste');
-        $permission = $this->permission('manage empresa livewire test');
+        $role = $this->role('Gestor Auditor');
+        $permission = $this->permission('users.view');
 
         Livewire::test(EmpresaUserPermissions::class, [
             'empresa' => $this->empresa->fresh(),
@@ -252,7 +252,7 @@ class EmpresaLivewireFormsTest extends TestCase
             ->assertHasNoErrors();
 
         $integration = EmpresaIntegracao::query()
-            ->where('empresa_id', 1)
+            ->where('empresa_id', $this->empresa->id)
             ->where('tipo', 'facturacao')
             ->where('provedor', 'hongayetu_facturacao')
             ->firstOrFail();
@@ -266,6 +266,7 @@ class EmpresaLivewireFormsTest extends TestCase
 
         $this->assertSame('activo', $integration->fresh()->estado->value);
 
+        config()->set('hongayetu_facturacao.api_url', 'https://facturacao.internal');
         Http::fake([
             'https://facturacao.internal/auth/verificar' => Http::response(['ok' => true], 200),
         ]);
@@ -289,7 +290,7 @@ class EmpresaLivewireFormsTest extends TestCase
             'email' => 'plain-' . uniqid() . '@example.test',
         ]);
         $this->empresa->users()->attach($plainUser->id, ['conta' => $this->empresa->conta]);
-        $this->actingAs($plainUser);
+        $this->signInTenant($plainUser);
 
         Livewire::test(EmpresaIntegracoes::class)
             ->assertForbidden();
@@ -311,7 +312,7 @@ class EmpresaLivewireFormsTest extends TestCase
         ]);
 
         $empresa->users()->attach($user->id, ['conta' => $empresa->conta]);
-        $user->assignRole($this->role('Administrador'));
+        \App\Support\CompanyRbac::within((int) $empresa->id, fn () => $user->assignRole($this->role('Administrador')));
 
         return $user->refresh();
     }
@@ -326,7 +327,7 @@ class EmpresaLivewireFormsTest extends TestCase
         ]);
 
         $empresa->users()->attach($user->id, ['conta' => $empresa->conta]);
-        $user->assignRole($this->role('Operador Empresa Teste'));
+        \App\Support\CompanyRbac::within((int) $empresa->id, fn () => $user->assignRole($this->role('Operador')));
 
         return $user->refresh();
     }
@@ -336,6 +337,7 @@ class EmpresaLivewireFormsTest extends TestCase
         return Role::query()->firstOrCreate([
             'name' => $name,
             'guard_name' => 'web',
+            'empresa_id' => $this->empresa->id,
         ]);
     }
 

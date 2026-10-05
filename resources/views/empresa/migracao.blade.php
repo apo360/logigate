@@ -14,6 +14,7 @@
 
         <p class="text-sm text-slate-600">Importação de exportadores: CSV/Excel com cabeçalho. Colunas: Exportador, ExportadorTaxID, AccountID, Endereco, Telefone, Email, Pais, Website, Cidade, codigo_exportador, additional_info, status. Nome e Pais (ID do país) são obrigatórios. Guarde NIF e telefone como texto para preservar zeros iniciais. Um erro numa linha cancela o lote; cadastros existentes são associados sem alterar os seus dados centrais.</p>
 
+        <p class="text-sm text-slate-600">Clientes e Processos: ficheiros com cabeçalho, até 5000 linhas. Os processos entram abertos, com cliente e exportador associados à empresa. Consulte linhas aceites/rejeitadas no histórico; reenvie apenas as rejeitadas. NIFs e telefones devem ser texto.</p>
         @if(session('status'))
             <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 {{ session('status') }}
@@ -54,6 +55,7 @@
                                 <td class="px-4 py-3">
                                     <span class="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                                         {{ $import->status }}
+                                        @if($import->result) @include('empresa.partials.import-result', ['result' => $import->result]) @endif
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ $import->created_at?->format('d/m/Y H:i') }}</td>

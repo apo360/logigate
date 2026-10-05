@@ -29,10 +29,13 @@ class LicenciamentoPolicyTest extends TestCase
         ]);
 
         foreach (['view', 'update', 'delete'] as $ability) {
+            $this->signInTenant($tenantAUser);
             $this->assertTrue(Gate::forUser($tenantAUser)->allows($ability, $licenciamento), $ability);
+            $this->signInTenant($tenantBUser);
             $this->assertFalse(Gate::forUser($tenantBUser)->allows($ability, $licenciamento), $ability);
         }
 
+        $this->signInTenant($tenantAUser);
         $this->assertTrue(Gate::forUser($tenantAUser)->allows('create', Licenciamento::class));
         $this->assertFalse(Gate::forUser(User::factory()->create())->allows('create', Licenciamento::class));
     }

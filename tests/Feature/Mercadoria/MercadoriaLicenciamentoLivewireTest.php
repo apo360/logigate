@@ -13,16 +13,16 @@ use App\Models\Mercadoria;
 use App\Models\PautaAduaneira;
 use App\Models\Subcategoria;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Feature\Licenciamento\LicenciamentoTestSupport;
 use Tests\Feature\Processo\ProcessoTestFixtures;
-use Tests\TestCase;
+use Tests\Support\IsolatedDatabaseTestCase;
 
-class MercadoriaLicenciamentoLivewireTest extends TestCase
+class MercadoriaLicenciamentoLivewireTest extends IsolatedDatabaseTestCase
 {
-    use RefreshDatabase;
+
     use LicenciamentoTestSupport;
     use ProcessoTestFixtures;
 
@@ -36,7 +36,8 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         $this->createMercadoria($licenciamento, $pauta, ['Descricao' => 'Mercadoria visivel']);
         $this->createMercadoria($otherLicenciamento, $pauta, ['Descricao' => 'Mercadoria escondida']);
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
 
         $component = Livewire::test(Index::class, ['context' => 'licenciamento', 'parentId' => $licenciamento->id]);
         $descricoes = collect($component->get('mercadorias'))->pluck('Descricao')->all();
@@ -51,7 +52,8 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'MER-MODAL');
         $this->createPautaFixture();
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
 
         Livewire::test(CreateForm::class, ['context' => 'licenciamento', 'parentId' => $licenciamento->id])
             ->call('openModal')
@@ -59,14 +61,15 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
             ->assertSet('mode', 'create');
     }
 
-    public function test_creates_mercadoria_for_licenciamento_and_updates_totals(): void
+    public function test_creates_mercadoria_and_preserves_declared_totals(): void
     {
         [$user, $empresa] = $this->createTenant('MER-CREATE');
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'MER-CREATE');
         $licenciamento->forceFill(['fob_total' => 0, 'peso_bruto' => 0, 'adicoes' => 0])->save();
         [$subcategoria, $pauta] = $this->createPautaFixture();
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
 
         Livewire::test(CreateForm::class, ['context' => 'licenciamento', 'parentId' => $licenciamento->id])
             ->set('form.subcategoria_id', $subcategoria->id)
@@ -88,12 +91,12 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         ]);
 
         $licenciamento->refresh();
-        $this->assertSame('60.00', (string) $licenciamento->fob_total);
-        $this->assertSame('12.00', (string) $licenciamento->peso_bruto);
+        $this->assertSame('0.00', (string) $licenciamento->fob_total);
+        $this->assertSame('0.00', (string) $licenciamento->peso_bruto);
         $this->assertSame(1, (int) $licenciamento->adicoes);
     }
 
-    public function test_updates_mercadoria_and_recalculates_total_and_parent_totals(): void
+    public function test_updates_item_total_and_preserves_declared_totals(): void
     {
         [$user, $empresa] = $this->createTenant('MER-UPDATE');
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'MER-UPDATE');
@@ -108,7 +111,8 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         ]);
         $licenciamento->forceFill(['fob_total' => 30, 'peso_bruto' => 5, 'adicoes' => 1])->save();
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
 
         Livewire::test(CreateForm::class, ['context' => 'licenciamento', 'parentId' => $licenciamento->id])
             ->call('openEditModal', $mercadoria->id)
@@ -123,11 +127,11 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         $this->assertSame('100.00', (string) $mercadoria->preco_total);
 
         $licenciamento->refresh();
-        $this->assertSame('100.00', (string) $licenciamento->fob_total);
-        $this->assertSame('8.00', (string) $licenciamento->peso_bruto);
+        $this->assertSame('30.00', (string) $licenciamento->fob_total);
+        $this->assertSame('5.00', (string) $licenciamento->peso_bruto);
     }
 
-    public function test_deletes_mercadoria_and_updates_totals(): void
+    public function test_deletes_mercadoria_and_preserves_declared_totals(): void
     {
         [$user, $empresa] = $this->createTenant('MER-DELETE');
         $licenciamento = $this->createLicenciamentoFor($empresa, $user, 'MER-DELETE');
@@ -139,7 +143,8 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         ]);
         $licenciamento->forceFill(['fob_total' => 40, 'peso_bruto' => 4, 'adicoes' => 1])->save();
 
-        $this->actingAs($user);
+        $this->grantTenantPermissions($user, ['mercadorias.view', 'mercadorias.create', 'mercadorias.update', 'mercadorias.delete', 'licenciamentos.update', 'processos.update']);
+        $this->signInTenant($user);
 
         Livewire::test(Index::class, ['context' => 'licenciamento', 'parentId' => $licenciamento->id])
             ->call('deleteItem', $mercadoria->id)
@@ -148,8 +153,8 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         $this->assertDatabaseMissing('mercadorias', ['id' => $mercadoria->id]);
 
         $licenciamento->refresh();
-        $this->assertSame('0.00', (string) $licenciamento->fob_total);
-        $this->assertSame('0.00', (string) $licenciamento->peso_bruto);
+        $this->assertSame('40.00', (string) $licenciamento->fob_total);
+        $this->assertSame('4.00', (string) $licenciamento->peso_bruto);
         $this->assertSame(0, (int) $licenciamento->adicoes);
     }
 
@@ -180,7 +185,7 @@ class MercadoriaLicenciamentoLivewireTest extends TestCase
         [$subcategoria, $pauta] = $this->createPautaFixture();
         $mercadoriaB = $this->createMercadoria($licenciamentoB, $pauta, ['subcategoria_id' => $subcategoria->id]);
 
-        $this->actingAs($tenantAUser);
+        $this->signInTenant($tenantAUser);
 
         try {
             app(CriarMercadoriaAction::class)->execute(MercadoriaData::fromLivewire([

@@ -25,7 +25,8 @@ class ProcessoLivewireTest extends TestCase
         $customerB = $this->createCustomer($tenantBEmpresa, $tenantBUser, 'B');
         $exportadorB = $this->createExportador($tenantBEmpresa, $tenantBUser, 'B');
 
-        $this->actingAs($tenantAUser);
+        $this->grantTenantPermissions($tenantAUser, ['processos.create', 'processos.view']);
+        $this->signInTenant($tenantAUser);
 
         Livewire::test(ProcessoCreate::class)
             ->set('customer_id', $customerB->id)
@@ -51,7 +52,8 @@ class ProcessoLivewireTest extends TestCase
             'Cambio' => 2,
         ]);
 
-        $this->actingAs($tenantUser);
+        $this->grantTenantPermissions($tenantUser, ['processos.view', 'processos.update']);
+        $this->signInTenant($tenantUser);
 
         $component = Livewire::test(ProcessoEdit::class, ['processo' => $processo]);
 
@@ -90,9 +92,10 @@ class ProcessoLivewireTest extends TestCase
         $exportadorB = $this->createExportador($tenantBEmpresa, $tenantBUser, 'B3');
         $processoB = $this->createProcesso($tenantBEmpresa, $tenantBUser, $customerB, $exportadorB, $estanciaId, $tipoProcessoId);
 
-        $this->actingAs($tenantAUser);
+        $this->grantTenantPermissions($tenantAUser, ['processos.create', 'processos.view']);
+        $this->signInTenant($tenantAUser);
 
         Livewire::test(ProcessoShow::class, ['processo' => $processoB])
-            ->assertForbidden();
+            ->assertNotFound();
     }
 }

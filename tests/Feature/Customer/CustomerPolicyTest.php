@@ -29,8 +29,8 @@ class CustomerPolicyTest extends TestCase
         self::assertTrue(app()->environment('testing'));
         self::assertSame('mysql', config('database.default'));
         self::assertContains(config('database.connections.mysql.host'), ['127.0.0.1', 'localhost']);
-        self::assertSame('logigate_testing', config('database.connections.mysql.database'));
-        self::assertSame('logigate_testing', DB::connection()->getDatabaseName());
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', config('database.connections.mysql.database'));
+        self::assertSame(getenv('V1_TEST_DATABASE') ?: 'logigate_testing', DB::connection()->getDatabaseName());
         DB::beginTransaction();
         $this->transactionStarted = true;
     }

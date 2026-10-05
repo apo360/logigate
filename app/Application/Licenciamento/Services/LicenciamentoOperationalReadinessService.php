@@ -19,7 +19,6 @@ final class LicenciamentoOperationalReadinessService
             'mercadorias',
             'mercadoriasAgrupadas',
             'procLicenFaturas.processo',
-            'procLicenFaturas.fatura.salesdoctotal',
         ]);
 
         $checklist = $this->buildChecklist($licenciamento);
@@ -123,7 +122,7 @@ final class LicenciamentoOperationalReadinessService
             $blockers[] = 'Não existem mercadorias associadas.';
         }
 
-        if ($this->faturas($licenciamento)->contains(fn ($fatura) => $fatura->processo_id !== null)) {
+        if (app(LicenciamentoProcessLink::class)->processId($licenciamento) || $this->faturas($licenciamento)->contains(fn ($fatura) => $fatura->processo_id !== null)) {
             $blockers[] = 'Já existe processo constituído para este licenciamento.';
         }
 
@@ -186,7 +185,7 @@ final class LicenciamentoOperationalReadinessService
             $alerts[] = $this->alert('danger', 'Fatura anulada', 'Existe fatura anulada associada a este licenciamento.');
         }
 
-        if ($faturas->contains(fn ($fatura) => $fatura->processo_id !== null)) {
+        if (app(LicenciamentoProcessLink::class)->processId($licenciamento) || $faturas->contains(fn ($fatura) => $fatura->processo_id !== null)) {
             $alerts[] = $this->alert('info', 'Processo já constituído', 'Este licenciamento já possui processo associado.');
         }
 

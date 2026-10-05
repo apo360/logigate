@@ -23,11 +23,18 @@ class ProcessoPolicyTest extends TestCase
         $exportadorA = $this->createExportador($tenantAEmpresa, $tenantAUser, 'A');
         $processoA = $this->createProcesso($tenantAEmpresa, $tenantAUser, $customerA, $exportadorA, $estanciaId, $tipoProcessoId);
 
+        $permissions = ['processos.view', 'processos.create', 'processos.update', 'processos.delete', 'processos.finalize', 'processos.print', 'processos.export_xml', 'processos.simulate'];
+        $this->grantTenantPermissions($tenantAUser, $permissions);
+        $this->grantTenantPermissions($tenantBUser, $permissions);
+
         foreach (['view', 'update', 'delete', 'finalize', 'print', 'exportXml', 'simulate'] as $ability) {
+            $this->signInTenant($tenantAUser);
             $this->assertTrue(Gate::forUser($tenantAUser)->allows($ability, $processoA));
+            $this->signInTenant($tenantBUser);
             $this->assertFalse(Gate::forUser($tenantBUser)->allows($ability, $processoA));
         }
 
+        $this->signInTenant($tenantAUser);
         $this->assertTrue(Gate::forUser($tenantAUser)->allows('create', Processo::class));
         $this->assertFalse(Gate::forUser(User::factory()->create())->allows('create', Processo::class));
     }

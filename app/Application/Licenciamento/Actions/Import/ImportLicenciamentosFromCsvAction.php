@@ -1,17 +1,19 @@
 <?php
-// app/Application/Licenciamento/Actions/Import/ImportLicenciamentosFromCsvAction.php
-
 namespace App\Application\Licenciamento\Actions\Import;
 
+use App\Application\Importacao\BatchResult;
 use App\Imports\LicenciamentosImport;
-use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\UploadedFile;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ImportLicenciamentosFromCsvAction
 {
-    public function execute(UploadedFile $file, int $empresaId): void
+    public function execute(UploadedFile $file, int $empresaId, int $userId): BatchResult
     {
-        $import = new LicenciamentosImport($empresaId);
-        Excel::import($import, $file);
+        abort_unless(\App\Support\TenantContext::empresaId() === $empresaId && auth()->id() === $userId, 403);
+        \Illuminate\Support\Facades\Gate::authorize('create', \App\Models\Licenciamento::class);
+        $import = new LicenciamentosImport(\App\Support\TenantContext::empresa(), auth()->user());
+        \Illuminate\Support\Facades\DB::transaction(fn () => Excel::import($import, $file));
+        return $import->result;
     }
 }

@@ -135,18 +135,16 @@ class ResumoAsys extends Component
 
         // Carregar agrupamentos do banco
         $this->mercadoriasAgrupadas = MercadoriaAgrupada::where('processo_id', $this->processo->id)
-            ->with(['mercadorias' => function($query) {
-                $query->select('id', 'codigo_aduaneiro', 'Descricao', 'Quantidade', 'Peso', 'preco_total');
-            }])
             ->get()
             ->map(function($agrupamento) {
+                $itens = $agrupamento->mercadoriasQuery()->get();
                 return [
                     'codigo_aduaneiro' => $agrupamento->codigo_aduaneiro,
-                    'descricao' => $agrupamento->mercadorias->first()->Descricao ?? 'Não informado',
+                    'descricao' => $itens->first()->Descricao ?? 'Não informado',
                     'quantidade_total' => $agrupamento->quantidade_total,
                     'peso_total' => $agrupamento->peso_total,
                     'preco_total' => $agrupamento->preco_total,
-                    'quantidade_itens' => $agrupamento->mercadorias->count(),
+                    'quantidade_itens' => $itens->count(),
                 ];
             })
             ->toArray();
