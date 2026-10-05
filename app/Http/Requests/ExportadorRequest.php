@@ -22,22 +22,16 @@ class ExportadorRequest extends FormRequest
      */
     public function rules()
     {
-        $id = $this->isMethod('PUT') ? $this->route('exportadors') : null;
-
-        return [
-            'ExportadorTaxID' => ['nullable', 'string', 'min:6', 'max:20'], // NIF deve ter exatamente 20 dígitos
-            'AccountID' => ['nullable', 'string', 'max:30'],
-            'Exportador' => ['required', 'string', 'max:100'],
-            'Endereco' => ['nullable', 'string', 'max:254'],
-            'Telefone' => ['nullable', 'string', 'max:20'], // Defina um tamanho máximo apropriado para o telefone
-            'Email' => ['nullable', 'email', 'max:254'],
-            'Pais' => ['required', 'numeric'],
-            'Website' => ['nullable', 'url', 'max:60'], // Verifica se é uma URL válida
-            'Cidade' => ['nullable', 'string', 'max:60'],
-            'codigo_exportador' => ['nullable', 'string', 'max:150'],
-            'additional_info' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'in:ATIVO,INATIVO'],
-        ];
+        if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
+            if ($this->input('escopo', 'local') === 'local') {
+                return array_intersect_key(\App\Domains\Exportadores\Services\ExportadorValidation::rules(), array_flip([
+                    'codigo_exportador', 'additional_info', 'status',
+                ])) + ['escopo' => ['sometimes', 'required', 'in:local,global']];
+            }
+        }
+        return array_merge(\App\Domains\Exportadores\Services\ExportadorValidation::rules(), [
+            'escopo' => ['sometimes', 'required', 'in:local,global'],
+        ]);
     }
 
     public function messages()

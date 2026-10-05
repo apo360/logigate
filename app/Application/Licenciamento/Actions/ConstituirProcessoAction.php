@@ -4,15 +4,12 @@ namespace App\Application\Licenciamento\Actions;
 
 use App\Application\Processo\Actions\CriarProcessoAction;
 use App\Application\Processo\DTOs\CriarProcessoDTO;
-use App\Domains\Processo\Enums\EstadoProcessoEnum;
-use App\Models\Licenciamento;
-use App\Models\Processo;
-use App\Models\ProcLicenFactura;
-use App\Models\Mercadoria;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
+use App\Application\Processo\Support\ProcessoFormSupport;
+use App\Application\Licenciamento\Services\LicenciamentoOperationalReadinessService;
+use App\Application\Mercadoria\Services\MercadoriaAgrupamentoService;
+use App\Models\{Licenciamento, Processo};
+use Illuminate\Support\Facades\{Auth, DB, Gate};
+use InvalidArgumentException;
 
 class ConstituirProcessoAction
 {
@@ -20,76 +17,63 @@ class ConstituirProcessoAction
     {
     }
 
-    /**
-     * @throws \Exception
-     */
     public function execute(Licenciamento $licenciamento, ?int $userId = null): Processo
     {
-        \Illuminate\Support\Facades\Gate::authorize('update', $licenciamento);
-        \Illuminate\Support\Facades\Gate::authorize('create', Processo::class);
-        $userId = $userId ?? Auth::id();
+        Gate::authorize('update', $licenciamento);
+        Gate::authorize('create', Processo::class);
+        abort_unless($userId === null || $userId === Auth::id(), 403);
 
-        return DB::transaction(function () use ($licenciamento, $userId) {
-            if (Schema::hasTable('proc_licen_sales')) {
-                $existe = ProcLicenFactura::where('licenciamento_id', $licenciamento->id)->first();
-
-                if ($existe?->processo_id) {
-                    $processoQuery = Processo::query();
-
-                    if (!Schema::hasColumn('processos', 'deleted_at')) {
-                        $processoQuery->withoutGlobalScope(SoftDeletingScope::class);
-                    }
-
-                    return $processoQuery
-                        ->where('empresa_id', $licenciamento->empresa_id)
-                        ->findOrFail((int) $existe->processo_id);
+        return DB::transaction(function () use ($licenciamento): Processo {
+            $licenciamento = Licenciamento::query()->whereKey($licenciamento->id)->lockForUpdate()->firstOrFail();
+            Gate::authorize('update', $licenciamento);
+            $items = $licenciamento->mercadorias()->lockForUpdate()->get();
+            $processIds = $items->pluck('Fk_Importacao')->filter()->unique();
+            if ($processIds->count() > 1) {
+                throw new InvalidArgumentException('As mercadorias estão vinculadas a processos diferentes. Reveja os vínculos antes da conversão.');
+            }
+            if ($processIds->count() === 1) {
+                $processo = Processo::query()->where('empresa_id', $licenciamento->empresa_id)->findOrFail($processIds->first());
+                if ($items->contains(fn ($item) => ! $item->Fk_Importacao)) {
+                    throw new InvalidArgumentException('Existem mercadorias sem processo num licenciamento já convertido. Reveja a associação.');
                 }
+                return $processo;
             }
-
-            $processo = $this->criarProcesso->execute(CriarProcessoDTO::fromArray([
-                'ContaDespacho'       => $licenciamento->referencia_cliente,
-                'RefCliente'          => $licenciamento->referencia_cliente,
-                'estancia_id'         => $licenciamento->estancia_id,
-                'Descricao'           => $licenciamento->descricao,
-                'DataAbertura'        => now()->toDateString(),
-                'TipoProcesso'        => $licenciamento->tipo_declaracao,
-                'Estado'              => EstadoProcessoEnum::ABERTO,
-                'customer_id'         => $licenciamento->cliente_id,
-                'user_id'             => $userId,
-                'empresa_id'          => $licenciamento->empresa_id,
-                'exportador_id'       => $licenciamento->exportador_id,
-                'forma_pagamento'     => $licenciamento->forma_pagamento,
-                'fob_total'           => $licenciamento->fob_total,
-                'frete'               => $licenciamento->frete,
-                'seguro'              => $licenciamento->seguro,
-                'codigo_banco'        => $licenciamento->codigo_banco,
-                'peso_bruto'          => $licenciamento->peso_bruto,
-                'TipoTransporte'      => $licenciamento->tipo_transporte,
-                'registo_transporte'  => $licenciamento->registo_transporte,
-                'nacionalidade_transporte' => $licenciamento->nacionalidade_transporte,
-                'Moeda'               => $licenciamento->moeda,
-                'Cambio'              => 1.0,
-                'ValorTotal'          => $licenciamento->cif,
-                'cif'                 => $licenciamento->cif,
-                'ValorAduaneiro'      => $licenciamento->cif + $licenciamento->frete + $licenciamento->seguro,
-            ]));
-
-            if (Schema::hasTable('proc_licen_sales')) {
-                ProcLicenFactura::updateOrCreate(
-                    ['licenciamento_id' => $licenciamento->id],
-                    [
-                        'empresa_id' => $licenciamento->empresa_id,
-                        'processo_id' => $processo->id,
-                    ]
-                );
+            $readiness = app(LicenciamentoOperationalReadinessService::class)->analyze($licenciamento);
+            if (! $readiness['ready_for_process']) {
+                throw new InvalidArgumentException(implode(' ', $readiness['process_blockers']));
             }
-
-            if (Schema::hasTable('mercadorias') && Schema::hasColumn('mercadorias', 'Fk_Importacao')) {
-                Mercadoria::where('licenciamento_id', $licenciamento->id)
-                    ->update(['Fk_Importacao' => $processo->id]);
+            $processo = $this->criarProcesso->execute(CriarProcessoDTO::fromArray($this->processData($licenciamento, (int) Auth::id())));
+            foreach ($items as $item) {
+                $item->Fk_Importacao = $processo->id;
+                $item->save();
             }
-
+            if ($items->isNotEmpty()) {
+                app(MercadoriaAgrupamentoService::class)->addOrUpdate($items->first());
+            }
             return $processo;
-        });
+        }, 3);
+    }
+
+    /** Conversion starts a draft; an exchange rate must subsequently be entered explicitly. */
+    public function processData(Licenciamento $licenciamento, int $userId): array
+    {
+        $values = app(ProcessoFormSupport::class)->calculatedValues($licenciamento->fob_total, $licenciamento->frete, $licenciamento->seguro, null);
+        $tipoProcesso = \App\Models\RegiaoAduaneira::query()->where('codigo', $licenciamento->tipo_declaracao)->value('id');
+        if (! $tipoProcesso) {
+            throw new InvalidArgumentException('O tipo de declaração não tem regime aduaneiro correspondente.');
+        }
+        return [
+            'RefCliente' => $licenciamento->referencia_cliente, 'estancia_id' => $licenciamento->estancia_id,
+            'Descricao' => $licenciamento->descricao, 'DataAbertura' => now()->toDateString(),
+            'TipoProcesso' => (string) $tipoProcesso, 'Estado' => 'Aberto',
+            'customer_id' => $licenciamento->cliente_id, 'user_id' => $userId,
+            'empresa_id' => $licenciamento->empresa_id, 'exportador_id' => $licenciamento->exportador_id,
+            'forma_pagamento' => $licenciamento->forma_pagamento, 'codigo_banco' => $licenciamento->codigo_banco,
+            'fob_total' => $licenciamento->fob_total, 'frete' => $licenciamento->frete, 'seguro' => $licenciamento->seguro,
+            'peso_bruto' => $licenciamento->peso_bruto, 'TipoTransporte' => $licenciamento->tipo_transporte,
+            'registo_transporte' => $licenciamento->registo_transporte,
+            'nacionalidade_transporte' => $licenciamento->nacionalidade_transporte, 'Moeda' => $licenciamento->moeda,
+            'Cambio' => null, 'ValorTotal' => $values['cif'],
+        ] + $values;
     }
 }

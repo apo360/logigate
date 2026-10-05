@@ -332,17 +332,17 @@
                     <h3 class="font-semibold text-gray-700"><i class="fas fa-hand-point-right"></i> Ações Rápidas</h3>
                 </div>
                 <div class="p-4 space-y-2">
+                    @can('create', $licenciamento)
+                        {{-- Nesta parte deve perguntar se cria um licenciamento novo com o mesmo cliente ou não --}}
+                        
+                    @endcan
                     @can('update', $licenciamento)
                         <a href="{{ route('licenciamentos.edit', $licenciamento) }}" class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 p-2 rounded hover:bg-gray-50">
                             <i class="fas fa-edit text-blue-500 w-5"></i> <span>Editar Licenciamento</span>
                         </a>
                     @endcan
 
-                    <button
-                        type="button"
-                        wire:click="abrirMercadorias"
-                        wire:loading.attr="disabled"
-                        wire:target="abrirMercadorias"
+                    <button type="button" wire:click="abrirMercadorias" wire:loading.attr="disabled" wire:target="abrirMercadorias"
                         class="flex w-full items-center space-x-2 text-left text-sm text-gray-700 hover:text-emerald-700 p-2 rounded hover:bg-gray-50 disabled:opacity-60"
                     >
                         <i class="fas fa-boxes text-emerald-500 w-5"></i>

@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Helpers\DatabaseErrorHandler;
 use App\Domains\Exportadores\Actions\CreateOrAssociateExportadorAction;
 use App\Domains\Exportadores\Actions\DeleteExportadorAction;
-use App\Domains\Exportadores\Actions\UpdateExportadorAssociationAction;
-use App\Domains\Exportadores\Actions\UpdateExportadorProfileAction;
 use App\Domains\Exportadores\Data\ExportadorFormData;
 use App\Http\Requests\ExportadorRequest;
 use App\Models\Exportador;
@@ -74,10 +72,11 @@ class ExportadorController extends AuthenticatedController
     /**
      * Display the specified resource.
      */
-    public function show(Exportador $exportador)
+    public function show(Exportador $exportador, \App\Domains\Exportadores\Queries\ExportadorDetailQuery $query)
     {
-        $this->authorize('view', $exportador);
+        return view('exportadors.show', $query->execute($exportador->id, $this->empresa));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -87,79 +86,24 @@ class ExportadorController extends AuthenticatedController
         $this->authorize('update', $exportador);
         $paises = Pais::all();
 
-        return view('exportadors.edit', compact('exportador', 'paises'));
+        return view('exportadors.edit', [
+            'exportador' => $exportador,
+            'paises' => $paises,
+            'association' => $exportador->empresas()->where('empresas.id', $this->empresa->id)->firstOrFail()->pivot,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(
-        ExportadorRequest $request,
-        $id,
-        UpdateExportadorProfileAction $updateProfile,
-        UpdateExportadorAssociationAction $updateAssociation
-    )
-{
-    $exportador = Exportador::findOrFail($id);
-    $this->authorize('update', $exportador);
-    if ($request->get('escopo', 'local') === 'global') {
-        $this->authorize('updateProfile', $exportador);
-    }
-    try {
-        $user = Auth::user();
-        $escopo = $request->get('escopo', 'local'); // valor padrão: local
-
-        // Encontra o exportador
-        $exportador = Exportador::findOrFail($id);
-        $data = ExportadorFormData::fromArray($request->validated());
-
-        // --- ESCOPOS DE ATUALIZAÇÃO ---
-        if ($escopo === 'global') {
-            /**
-             * Atualização Global
-             * Só permitida para administradores ou utilizadores com permissão
-             * global. Aqui alteramos os dados centrais do exportador.
-             */
-            $exportador = $updateProfile->execute($exportador, $data);
-
-        } else {
-            /**
-             * Atualização Local
-             * Apenas altera os dados da associação (pivot) e não os dados centrais
-             * da tabela "exportadors".
-             */
-            $exportador = $updateAssociation->execute($exportador, $this->empresa, $data);
-        }
-
-        // Resposta AJAX
+    public function update(ExportadorRequest $request, Exportador $exportador, \App\Domains\Exportadores\Actions\UpdateExportadorAction $action)
+    {
+        $action->execute($exportador, $this->empresa, ExportadorFormData::fromArray($request->validated()), $request->input('escopo', 'local'));
         if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => $escopo === 'global'
-                    ? 'Exportador atualizado globalmente com sucesso!'
-                    : 'Exportador atualizado localmente com sucesso!',
-                'exportador_id' => $exportador->id,
-            ]);
+            return response()->json(['success' => true, 'message' => 'Exportador atualizado com sucesso.', 'exportador_id' => $exportador->id]);
         }
-
-        // Resposta padrão (redirect)
-        return redirect()
-            ->route('exportadors.edit', $exportador->id)
-            ->with('success', $escopo === 'global'
-                ? 'Exportador atualizado globalmente com sucesso!'
-                : 'Exportador atualizado localmente com sucesso!');
-
-    } catch (\Exception $e) {
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro: ' . $e->getMessage(),
-            ], 500);
-        }
-
-        return back()->withErrors('Erro: ' . $e->getMessage());
+        return redirect()->route('exportadors.show', $exportador->id)->with('success', 'Exportador atualizado com sucesso.');
     }
-}
 
 
     /**

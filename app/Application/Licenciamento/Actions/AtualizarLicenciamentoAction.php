@@ -34,11 +34,9 @@ class AtualizarLicenciamentoAction
                 unset($payload['txt_gerado']);
             }
 
-            if ($dto->cif->getValor() == 0 && $dto->fob_total->getValor() > 0) {
-                $payload['cif'] = $this->calcularCif
-                    ->calcular($dto->fob_total, $dto->frete, $dto->seguro)
-                    ->getValor();
-            }
+            $payload['cif'] = $this->calcularCif
+                ->calcular($dto->fob_total, $dto->frete, $dto->seguro)
+                ->getValor();
 
             return $this->repository->update($dto->id, new AtualizarLicenciamentoDTO(['id' => $dto->id] + $payload));
         });

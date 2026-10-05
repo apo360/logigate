@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domains\Arquivo\Support\HasDocumentos;
+use App\Application\Processo\Services\EmolumentoTarifaTotalsService;
 use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,6 +44,7 @@ class Processo extends Model implements Auditable
         'Pais_origem',
         'Pais_destino',
         'PortoOrigem',
+        'DataPartida',
         'DataChegada',
         'TipoTransporte',
         'registo_transporte',
@@ -51,6 +53,9 @@ class Processo extends Model implements Auditable
         'codigo_banco',
         'Moeda',
         'Cambio',
+        'cambio_origem',
+        'cambio_data',
+        'cambio_confirmado',
         'ValorTotal',
         'ValorAduaneiro',
         'fob_total',
@@ -78,6 +83,11 @@ class Processo extends Model implements Auditable
         'updated_at',
         'deleted_at'
     ];
+
+    public function totaisMercadorias(): array
+    {
+        return app(\App\Application\Mercadoria\Services\MercadoriaParentTotalsService::class)->calculatedTotals($this);
+    }
 
     /**
      * Configurar a tabela dinamicamente. 
@@ -282,27 +292,7 @@ class Processo extends Model implements Auditable
 
     public function getGuiaFiscalAttribute()
     {
-        return (float) array_sum([
-            $this->direitos ?? 0.00,
-            $this->emolumentos ?? 0.00,
-            $this->porto ?? 0.00,
-            $this->terminal ?? 0.00,
-            $this->lmc ?? 0.00,
-            $this->navegacao ?? 0.00,
-            $this->inerentes ?? 0.00,
-            $this->frete ?? 0.00,
-            $this->carga_descarga ?? 0.00,
-            $this->deslocacao ?? 0.00,
-            $this->selos ?? 0.00,
-            $this->iva_aduaneiro ?? 0.00,
-            $this->iec ?? 0.00,
-            $this->impostoEstatistico ?? 0.00,
-            $this->juros_mora ?? 0.00,
-            $this->caucao ?? 0.00,
-            $this->honorario ?? 0.00,
-            $this->honorario_iva ?? 0.00,
-            $this->orgaos_ofiais ?? 0.00,
-        ]);
+        return (new EmolumentoTarifaTotalsService())->guiaFiscal($this->emolumentoTarifa);
     }
 
     public function portoDesembarque()

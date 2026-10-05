@@ -209,7 +209,7 @@ final class ProcessoFormSupport
 
         return [
             'cif' => $cif,
-            'ValorAduaneiro' => $cif * (float) ($cambio ?: 1),
+            'ValorAduaneiro' => (float) $cambio > 0 ? round($cif * (float) $cambio, 2) : null,
         ];
     }
 

@@ -47,6 +47,19 @@ final readonly class AtualizarProcessoDTO
         public ?int $localizacaoMercadoriaId = null,
         public ?int $condicaoPagamentoId = null,
         public ?string $observacoes = null,
+        public ?string $vinheta = null,
+        public ?string $dataPartida = null,
+        public ?int $quantidadeBarris = null,
+        public ?string $dataCarregamento = null,
+        public ?float $valorBarrilUsd = null,
+        public ?string $numDeslocacoes = null,
+        public ?string $rsmNum = null,
+        public ?string $certificadoOrigem = null,
+        public ?string $guiaExportacao = null,
+        public ?array $providedFields = null,
+        public ?string $cambioOrigem = null,
+        public ?string $cambioData = null,
+        public ?bool $cambioConfirmado = null,
     ) {
     }
 
@@ -57,7 +70,13 @@ final readonly class AtualizarProcessoDTO
 
     public static function fromArray(array $data): self
     {
-        $estado = self::nullableString($data['Estado'] ?? null);
+        $estado = $data['Estado'] ?? null;
+        $providedFields = array_keys($data);
+        foreach (['NrDAR' => 'N_Dar', 'NrMarcaFiscal' => 'MarcaFiscal'] as $alias => $field) {
+            if (array_key_exists($alias, $data)) {
+                $providedFields[] = $field;
+            }
+        }
 
         return new self(
             id: (int) $data['id'],
@@ -67,13 +86,13 @@ final readonly class AtualizarProcessoDTO
             dataAbertura: self::nullableString($data['DataAbertura'] ?? null),
             dataFecho: self::nullableString($data['DataFecho'] ?? null),
             tipoProcesso: self::nullableString($data['TipoProcesso'] ?? null),
-            estado: $estado === null ? null : ($estado instanceof EstadoProcessoEnum ? $estado : EstadoProcessoEnum::from((string) $estado)),
+            estado: $estado === null || $estado === '' ? null : ($estado instanceof EstadoProcessoEnum ? $estado : EstadoProcessoEnum::from((string) $estado)),
             customerId: self::nullableInt($data['customer_id'] ?? null),
             exportadorId: self::nullableInt($data['exportador_id'] ?? null),
             estanciaId: self::nullableInt($data['estancia_id'] ?? null),
             nrDu: self::nullableString($data['NrDU'] ?? null),
-            nDar: self::nullableInt($data['N_Dar'] ?? $data['NrDAR'] ?? null),
-            marcaFiscal: self::nullableString($data['MarcaFiscal'] ?? $data['NrMarcaFiscal'] ?? null),
+            nDar: self::nullableInt(array_key_exists('N_Dar', $data) ? $data['N_Dar'] : ($data['NrDAR'] ?? null)),
+            marcaFiscal: self::nullableString(array_key_exists('MarcaFiscal', $data) ? $data['MarcaFiscal'] : ($data['NrMarcaFiscal'] ?? null)),
             blcPorte: self::nullableString($data['BLC_Porte'] ?? null),
             paisOrigem: self::nullableInt($data['Pais_origem'] ?? null),
             paisDestino: self::nullableInt($data['Pais_destino'] ?? null),
@@ -97,12 +116,25 @@ final readonly class AtualizarProcessoDTO
             localizacaoMercadoriaId: self::nullableInt($data['localizacao_mercadoria_id'] ?? null),
             condicaoPagamentoId: self::nullableInt($data['condicao_pagamento_id'] ?? null),
             observacoes: self::nullableString($data['observacoes'] ?? null),
+            vinheta: self::nullableString($data['vinheta'] ?? null),
+            dataPartida: self::nullableString($data['DataPartida'] ?? null),
+            quantidadeBarris: self::nullableInt($data['quantidade_barris'] ?? null),
+            dataCarregamento: self::nullableString($data['data_carregamento'] ?? null),
+            valorBarrilUsd: self::nullableFloat($data['valor_barril_usd'] ?? null),
+            numDeslocacoes: self::nullableString($data['num_deslocacoes'] ?? null),
+            rsmNum: self::nullableString($data['rsm_num'] ?? null),
+            certificadoOrigem: self::nullableString($data['certificado_origem'] ?? null),
+            guiaExportacao: self::nullableString($data['guia_exportacao'] ?? null),
+            providedFields: $providedFields,
+            cambioOrigem: self::nullableString($data['cambio_origem'] ?? null),
+            cambioData: self::nullableString($data['cambio_data'] ?? null),
+            cambioConfirmado: array_key_exists('cambio_confirmado', $data) ? filter_var($data['cambio_confirmado'], FILTER_VALIDATE_BOOLEAN) : null,
         );
     }
 
     public function toArray(): array
     {
-        return array_filter([
+        $attributes = [
             'ContaDespacho' => $this->contaDespacho,
             'RefCliente' => $this->referenciaCliente,
             'Descricao' => $this->descricao,
@@ -139,12 +171,28 @@ final readonly class AtualizarProcessoDTO
             'localizacao_mercadoria_id' => $this->localizacaoMercadoriaId,
             'condicao_pagamento_id' => $this->condicaoPagamentoId,
             'observacoes' => $this->observacoes,
-        ], static fn ($value): bool => $value !== null);
+            'vinheta' => $this->vinheta,
+            'DataPartida' => $this->dataPartida,
+            'quantidade_barris' => $this->quantidadeBarris,
+            'data_carregamento' => $this->dataCarregamento,
+            'valor_barril_usd' => $this->valorBarrilUsd,
+            'num_deslocacoes' => $this->numDeslocacoes,
+            'rsm_num' => $this->rsmNum,
+            'certificado_origem' => $this->certificadoOrigem,
+            'guia_exportacao' => $this->guiaExportacao,
+            'cambio_origem' => $this->cambioOrigem,
+            'cambio_data' => $this->cambioData,
+            'cambio_confirmado' => $this->cambioConfirmado,
+        ];
+
+        return $this->providedFields === null
+            ? array_filter($attributes, static fn ($value): bool => $value !== null)
+            : array_intersect_key($attributes, array_flip($this->providedFields));
     }
 
     private static function nullableInt(mixed $value): ?int
     {
-        return $value === null || $value === '' || $value === 0 || $value === '0' ? null : (int) $value;
+        return $value === null || $value === '' ? null : (int) $value;
     }
 
     private static function nullableFloat(mixed $value): ?float

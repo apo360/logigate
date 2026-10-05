@@ -36,6 +36,10 @@ final class ProcessoEdit extends Component
     public ?string $DataChegada = null;
     public ?string $Moeda = 'USD';
     public ?float $Cambio = null;
+    public ?string $cambio_origem = null;
+    public ?string $cambio_data = null;
+    public bool $cambio_confirmado = false;
+    public bool $hasCambioMetadata = false;
     public ?float $fob_total = null;
     public ?float $frete = null;
     public ?float $seguro = null;
@@ -69,6 +73,7 @@ final class ProcessoEdit extends Component
     public ?string $guia_exportacao = null;
 
     public bool $showCrudExportFields = false;
+    public bool $hasDataPartida = false;
 
     public $clientes;
     public $exportadores;
@@ -89,16 +94,24 @@ final class ProcessoEdit extends Component
 
         $this->processo = $processo;
         $this->processoId = (int) $processo->id;
+        $this->hasDataPartida = \Illuminate\Support\Facades\Schema::hasColumn('processos', 'DataPartida');
+        $this->hasCambioMetadata = \Illuminate\Support\Facades\Schema::hasColumn('processos', 'cambio_confirmado');
 
         foreach (app(ProcessoFormSupport::class)->options($this->empresa()) as $property => $value) {
             $this->{$property} = $value;
         }
 
         $this->fillFromProcesso($processo);
+        $this->EstadoOptions = array_values(array_filter($this->EstadoOptions,
+            fn (EstadoProcessoEnum $estado): bool => $estado !== EstadoProcessoEnum::FINALIZADO
+                || $this->Estado === EstadoProcessoEnum::FINALIZADO->value));
     }
 
     public function updated($field, $value): void
     {
+        if ($field === 'Cambio') {
+            $this->cambio_confirmado = false;
+        }
         if (in_array($field, ['fob_total', 'frete', 'seguro', 'Cambio'], true)) {
             $this->recalcularValores();
         }
@@ -129,6 +142,7 @@ final class ProcessoEdit extends Component
 
             return redirect()->route('processos.show', $processo);
         } catch (\Throwable $e) {
+            $this->addError('processo', $e->getMessage());
             session()->flash('error', 'Erro ao atualizar processo: ' . $e->getMessage());
             return null;
         }
@@ -136,7 +150,16 @@ final class ProcessoEdit extends Component
 
     public function rules(): array
     {
-        return app(ProcessoFormSupport::class)->rules($this->empresa()->id, $this->processoId);
+        $rules = app(ProcessoFormSupport::class)->rules($this->empresa()->id, $this->processoId);
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('processos', 'DataPartida')) {
+            unset($rules['DataPartida']);
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn('processos', 'cambio_confirmado')) {
+            $rules['cambio_origem'] = ['nullable', 'required_if:cambio_confirmado,true', 'string', 'max:150'];
+            $rules['cambio_data'] = ['nullable', 'required_if:cambio_confirmado,true', 'date', 'before_or_equal:today'];
+            $rules['cambio_confirmado'] = ['boolean'];
+        }
+        return $rules;
     }
 
     public function messages(): array
@@ -170,6 +193,9 @@ final class ProcessoEdit extends Component
         $this->DataChegada = $this->dateForInput($processo->DataChegada);
         $this->Moeda = $this->nullableString($processo->Moeda) ?? 'USD';
         $this->Cambio = $this->nullableFloat($processo->Cambio);
+        $this->cambio_origem = $processo->cambio_origem;
+        $this->cambio_data = $this->dateForInput($processo->cambio_data);
+        $this->cambio_confirmado = (bool) $processo->cambio_confirmado;
         $this->fob_total = $this->nullableFloat($processo->fob_total);
         $this->frete = $this->nullableFloat($processo->frete);
         $this->seguro = $this->nullableFloat($processo->seguro);

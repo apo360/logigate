@@ -18,6 +18,9 @@ final class UpdateExportadorAssociationAction
     {
         abort_unless(\App\Support\TenantContext::empresaId() === (int) $empresa->id, 403);
         \Illuminate\Support\Facades\Gate::authorize('update', $exportador);
+        \Illuminate\Support\Facades\Validator::make($data->associationAttributes(), array_intersect_key(
+            \App\Domains\Exportadores\Services\ExportadorValidation::rules(), $data->associationAttributes()
+        ))->validate();
         $this->exportadores->updateAssociation($exportador, $empresa, $data->associationAttributes());
 
         return $exportador->refresh();

@@ -5,7 +5,6 @@ namespace App\Application\Mercadoria\Actions;
 use App\Application\Mercadoria\DTOs\MercadoriaData;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaAgrupamentoService;
-use App\Application\Mercadoria\Services\MercadoriaParentTotalsService;
 use App\Application\Mercadoria\Services\MercadoriaRules;
 use App\Application\Mercadoria\Services\MercadoriaTenantAccessService;
 use App\Application\PautaAduaneira\Actions\AssociarPautaMercadoriaAction;
@@ -20,7 +19,6 @@ final class CriarMercadoriaAction
         private readonly MercadoriaRepositoryInterface $mercadorias,
         private readonly MercadoriaRules $rules,
         private readonly MercadoriaAgrupamentoService $agrupamento,
-        private readonly MercadoriaParentTotalsService $parentTotals,
         private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
         private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
         private readonly MercadoriaTenantAccessService $tenantAccess,
@@ -35,7 +33,18 @@ final class CriarMercadoriaAction
             $this->rules->validate($data);
             $pauta = $this->consultarCodigoPautal->execute($data->codigoAduaneiro);
 
-            $mercadoria = $this->mercadorias->create($data->toModelAttributes());
+            $attributes = $data->toModelAttributes();
+            if ($data->context === 'licenciamento') {
+                $processIds = \App\Models\Mercadoria::where('licenciamento_id', $data->parentId)
+                    ->whereNotNull('Fk_Importacao')->distinct()->pluck('Fk_Importacao');
+                if ($processIds->count() > 1) {
+                    throw new \InvalidArgumentException('Licenciamento com vínculos de processo inconsistentes.');
+                }
+                if ($processIds->isNotEmpty()) {
+                    $attributes['Fk_Importacao'] = (int) $processIds->first();
+                }
+            }
+            $mercadoria = $this->mercadorias->create($attributes);
             $mercadoria = $this->associarPautaMercadoria->execute(
                 mercadoriaId: $mercadoria->id,
                 pautaAduaneiraId: $pauta->id,
@@ -46,7 +55,6 @@ final class CriarMercadoriaAction
             $this->sincronizarContentores->execute($mercadoria, $data);
 
             $this->agrupamento->addOrUpdate($mercadoria);
-            $this->parentTotals->applyCreate($mercadoria);
 
             return $mercadoria;
         });

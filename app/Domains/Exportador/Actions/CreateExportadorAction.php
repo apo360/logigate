@@ -3,40 +3,21 @@
 namespace App\Domains\Exportador\Actions;
 
 use App\Domains\Exportador\Data\ExportadorFormData;
-use App\Models\Exportador;
 use App\Models\Empresa;
+use App\Models\Exportador;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
+/** Legacy adapter to the canonical Exportadores domain. */
 class CreateExportadorAction
 {
-    public function execute(
-        ExportadorFormData $formData,
-        Empresa $empresa,
-        User $user,
-        ?Exportador $exportador = null) : Exportador{
+    public function __construct(private readonly \App\Domains\Exportadores\Actions\CreateOrAssociateExportadorAction $create) {}
 
-    try{
-        return DB::transaction(function() use ($formData, $empresa, $user, $exportador) {
-            // Verifica se o exportador jÃ¡ existe globalmente
-            $exportador ??= new Exportador();
-
-            // Pegar os Fillable do modelo Exportador
-            foreach ($exportador->getFillable() as $field) {
-                if (property_exists($formData, $field)) {
-                    $exportador->{$field} = $formData->{$field};
-                }
-            }
-
-            $exportador->empresa_id = $empresa->id;
-            $exportador->user_id = $user->id;
-            $exportador->save();
-
-            return $exportador->refresh();
-        });
-        } catch (\Throwable $e) {
-            report($e);
-            throw $e;
+    public function execute(ExportadorFormData $formData, Empresa $empresa, User $user, ?Exportador $exportador = null): Exportador
+    {
+        if ($exportador !== null) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['Exportador' => 'Use a ação de atualização para editar um exportador existente.']);
         }
+        $data = \App\Domains\Exportadores\Data\ExportadorFormData::fromArray(get_object_vars($formData));
+        return $this->create->execute($data, $empresa, $user);
     }
 }

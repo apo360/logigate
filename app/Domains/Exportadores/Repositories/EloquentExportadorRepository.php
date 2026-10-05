@@ -126,7 +126,11 @@ final class EloquentExportadorRepository implements ExportadorRepositoryInterfac
         return (object) [
             'total' => (clone $query)->count(),
             'ativos' => (clone $query)->where('exportador_empresas.status', 'ATIVO')->count(),
-            'com_licenciamentos' => 0,
+            'com_licenciamentos' => (clone $query)->whereExists(function ($subquery) use ($empresa) {
+                $subquery->selectRaw('1')->from('licenciamentos')
+                    ->whereColumn('licenciamentos.exportador_id', 'exportadors.id')
+                    ->where('licenciamentos.empresa_id', $empresa->id);
+            })->count(),
         ];
     }
 
@@ -137,9 +141,9 @@ final class EloquentExportadorRepository implements ExportadorRepositoryInterfac
             ->get();
     }
 
-    private function baseEmpresaQuery(Empresa $empresa): Builder
+    private function baseEmpresaQuery(Empresa $empresa): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $empresa->exportadors()->getQuery();
+        return $empresa->exportadors();
     }
 
     private function filterGlobalAttributes(array $attributes): array
@@ -178,7 +182,7 @@ final class EloquentExportadorRepository implements ExportadorRepositoryInterfac
 
     private function allowedSortField(string $field): string
     {
-        return in_array($field, ['Exportador', 'ExportadorTaxID', 'Telefone', 'Email', 'created_at'], true)
+        return in_array($field, ['Exportador', 'ExportadorTaxID', 'Endereco', 'Telefone', 'Email', 'created_at'], true)
             ? $field
             : 'Exportador';
     }

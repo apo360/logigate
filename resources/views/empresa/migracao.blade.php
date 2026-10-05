@@ -12,6 +12,8 @@
             <x-import-form route="{{ route('import.processos') }}" buttonText="Importar Processos" texto="Importar processos para o sistema." />
         </section>
 
+        <p class="text-sm text-slate-600">Importação de exportadores: CSV/Excel com cabeçalho. Colunas: Exportador, ExportadorTaxID, AccountID, Endereco, Telefone, Email, Pais, Website, Cidade, codigo_exportador, additional_info, status. Nome e Pais (ID do país) são obrigatórios. Guarde NIF e telefone como texto para preservar zeros iniciais. Um erro numa linha cancela o lote; cadastros existentes são associados sem alterar os seus dados centrais.</p>
+
         @if(session('status'))
             <div class="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
                 {{ session('status') }}

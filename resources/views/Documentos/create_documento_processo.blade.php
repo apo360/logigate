@@ -47,7 +47,7 @@
         ['name' => 'Dashboard', 'url' => route('dashboard')],
         ['name' => 'Processos', 'url' => route('processos.index')],
         ['name' => 'Visualizar Processo', 'url' => route('processos.show', $processo->id)],
-        ['name' => 'Emitir Factura do Processo ', 'url' => route('documentos.create', ['processo_id' => $processo->id])]
+        ['name' => 'Emitir Factura do Processo ', 'url' => route('integracoes.facturacao-hongayetu-emitir-ft', ['processo_id' => $processo->id])]
     ]" separator="/" />
 
     <form action="{{ route('documentos.store') }}" method="POST" class="space-y-6">

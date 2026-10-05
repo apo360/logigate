@@ -24,7 +24,7 @@
                     <div x-show="open" @click.outside="open = false"
                          class="absolute right-0 mt-2 w-56 bg-white shadow rounded-lg border z-50">
 
-                        <a href="{{ route('documentos.create', ['processo_id' => $processo->id]) }}"
+                        <a href="{{ route('integracoes.facturacao-hongayetu-emitir-ft', ['processo_id' => $processo->id]) }}"
                            class="dropdown-item">Factura</a>
 
                         <a href="{{ route('gerar.xml', ['IdProcesso' => $processo->id]) }}"

@@ -164,7 +164,7 @@
 
                                 <!-- Valores Aduaneiros -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">FOB Total *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">FOB declarado *</label>
                                     <div class="relative">
                                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">$</span>
                                         <input wire:model.live="fob_total" type="number" step="0.01" class="pl-7 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -250,7 +250,7 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Peso Bruto (kg)</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Peso bruto declarado (kg)</label>
                                     <input wire:model="peso_bruto" type="number" step="0.01" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
 
@@ -293,8 +293,11 @@
                     <h3 class="font-semibold text-gray-700"><i class="fas fa-chart-line"></i> Resumo Financeiro</h3>
                 </div>
                 <div class="p-4 space-y-3">
+                    @php($totaisCalculados = $licenciamento->totaisMercadorias())
+                    <div class="text-sm">FOB calculado dos itens: {{ number_format($totaisCalculados['fob'], 2) }} {{ $moeda }}</div>
+                    <div class="text-sm">Peso calculado dos itens: {{ number_format($totaisCalculados['peso'], 3) }} kg</div>
                     <div class="flex justify-between">
-                        <span class="text-sm text-gray-500">FOB Total:</span>
+                        <span class="text-sm text-gray-500">FOB declarado:</span>
                         <span class="font-medium">{{ number_format($fob_total, 2) }} {{ $moeda }}</span>
                     </div>
                     <div class="flex justify-between">

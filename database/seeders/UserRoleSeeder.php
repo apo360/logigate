@@ -27,6 +27,9 @@ class UserRoleSeeder extends Seeder
             'customers.view_processos', 'customers.view_licenciamentos',
             'customers.view_documents', 'customers.associate_empresa',
 
+            // Exportadores
+            'exportadores.view', 'exportadores.create', 'exportadores.update', 'exportadores.delete',
+
             // Processos
             'processos.view', 'processos.create', 'processos.update', 'processos.delete',
             'processos.manage_mercadorias',
@@ -89,6 +92,7 @@ class UserRoleSeeder extends Seeder
             'customers.view', 'customers.create', 'customers.update', 'customers.delete',
             'customers.activate', 'customers.deactivate',
             'customers.manage_portal_credentials',
+            'exportadores.view', 'exportadores.create', 'exportadores.update', 'exportadores.delete',
             'customers.view_processos', 'customers.view_licenciamentos',
             'customers.view_documents', 'customers.associate_empresa',
             'processos.view', 'processos.create', 'processos.update', 'processos.delete',
@@ -123,6 +127,7 @@ class UserRoleSeeder extends Seeder
         // Gestor Despachante
         Role::findByName('Gestor Despachante', 'web')->syncPermissions([
             'customers.view', 'customers.create', 'customers.update',
+            'exportadores.view', 'exportadores.create', 'exportadores.update', 'exportadores.delete',
             'processos.view', 'processos.create', 'processos.update', 'processos.delete',
             'processos.manage_mercadorias',
             'licenciamentos.view', 'licenciamentos.create', 'licenciamentos.update',
@@ -159,6 +164,7 @@ class UserRoleSeeder extends Seeder
             'customers.view', 'customers.create', 'customers.update', 'customers.delete',
             'customers.activate', 'customers.deactivate',
             'customers.manage_portal_credentials',
+            'exportadores.view', 'exportadores.create', 'exportadores.update', 'exportadores.delete',
             'customers.view_processos', 'customers.view_licenciamentos',
             'customers.view_documents', 'customers.associate_empresa',
             'processos.view', 'licenciamentos.view', 'mercadorias.view',

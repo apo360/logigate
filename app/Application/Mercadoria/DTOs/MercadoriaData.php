@@ -88,7 +88,6 @@ final class MercadoriaData
 
         if ($this->context === 'licenciamento') {
             $attributes['licenciamento_id'] = $this->parentId;
-            $attributes['Fk_Importacao'] = null;
         }
 
         return $attributes;

@@ -35,6 +35,7 @@ class MigracaoController extends AuthenticatedController
 
     public function importExportadores(Request $request)
     {
+        $this->authorize('create', \App\Models\Exportador::class);
         $request->validate(['file' => 'required|mimes:xlsx,csv']);
         $filePath = $request->file('file')->store('imports');
         $import = Migracao::create([
@@ -44,7 +45,7 @@ class MigracaoController extends AuthenticatedController
             'empresa_id' => \App\Support\TenantContext::empresa()->id,
         ]);
 
-        ImportExportadores::dispatch($filePath, $import->id);
+        ImportExportadores::dispatch($filePath, $import->id, (int) $this->empresa->id, (int) Auth::id());
 
         return back()->with('success', 'A importação de exportadores foi iniciada. Você será notificado quando estiver completa.');
     }

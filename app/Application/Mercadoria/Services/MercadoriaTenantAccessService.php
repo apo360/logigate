@@ -9,6 +9,7 @@ use App\Models\Licenciamento;
 use App\Models\Mercadoria;
 use App\Models\Processo;
 use App\Models\User;
+use App\Domains\Processo\Services\ProcessoLifecycleRules;
 use Illuminate\Auth\Access\AuthorizationException;
 
 final class MercadoriaTenantAccessService
@@ -42,6 +43,17 @@ final class MercadoriaTenantAccessService
 
         $this->authorizeOptionalPermission($user, $permission);
 
+        if ($this->isWritePermission($permission)) {
+            $processIds = $model->mercadorias()->whereNotNull('Fk_Importacao')->distinct()->pluck('Fk_Importacao');
+            if ($processIds->count() > 1) {
+                throw new AuthorizationException('Licenciamento com vínculos de processo inconsistentes.');
+            }
+            if ($processIds->isNotEmpty()) {
+                $this->authorizeProcesso($user, (int) $processIds->first(), $permission);
+            }
+            $model = Licenciamento::query()->whereKey($model->id)->lockForUpdate()->firstOrFail();
+        }
+
         return $model;
     }
 
@@ -61,6 +73,10 @@ final class MercadoriaTenantAccessService
 
         if (! $belongsToContext || ! $this->belongsToActiveEmpresa($user, $model)) {
             throw new AuthorizationException('Mercadoria fora do contexto informado.');
+        }
+
+        if ($model->Fk_Importacao && $this->isWritePermission($permission)) {
+            $this->authorizeProcesso($user, (int) $model->Fk_Importacao, $permission);
         }
 
         return $model;
@@ -91,7 +107,11 @@ final class MercadoriaTenantAccessService
 
     private function authorizeProcesso(User $user, int $processoId, ?string $permission = null): Processo
     {
-        $processo = (new Processo())->newQueryWithoutScopes()->findOrFail($processoId);
+        $query = (new Processo())->newQueryWithoutScopes();
+        if ($this->isWritePermission($permission)) {
+            $query->lockForUpdate();
+        }
+        $processo = $query->findOrFail($processoId);
         $empresaId = $this->licenciamentos->empresaIdFor($user);
 
         if (! $empresaId || (int) $processo->empresa_id !== (int) $empresaId) {
@@ -100,7 +120,16 @@ final class MercadoriaTenantAccessService
 
         $this->authorizeOptionalPermission($user, $permission);
 
+        if ($this->isWritePermission($permission)) {
+            app(ProcessoLifecycleRules::class)->assertMercadoriasEditaveis($processo);
+        }
+
         return $processo;
+    }
+
+    private function isWritePermission(?string $permission): bool
+    {
+        return in_array($permission, ['mercadorias.create', 'mercadorias.update', 'mercadorias.delete'], true);
     }
 
     private function ensureAuthenticated(?User $user): void

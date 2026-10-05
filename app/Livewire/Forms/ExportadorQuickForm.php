@@ -21,15 +21,13 @@ class ExportadorQuickForm extends Component
     public $Telefone = '';
     public $Email = '';
     
-    protected $rules = [
-        'ExportadorTaxID' => 'nullable|string|min:6|max:20',
-        'Exportador' => 'required|string',
-        'Pais' => 'required|exists:paises,id',
-        'Endereco' => 'required|string',
-        'Telefone' => 'required|string',
-        'Email' => 'nullable|email',
-    ];
-    
+    protected function rules(): array
+    {
+        return array_intersect_key(\App\Domains\Exportadores\Services\ExportadorValidation::rules(), array_flip([
+            'ExportadorTaxID', 'Exportador', 'Pais', 'Endereco', 'Telefone', 'Email',
+        ]));
+    }
+
     protected $listeners = ['abrirModalExportador' => 'open'];
     
     public function open()

@@ -142,7 +142,7 @@
                                     @error('Descricao') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Peso Bruto (kg)</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Peso bruto declarado (kg)</label>
                                     <input type="number" step="0.01" wire:model="peso_bruto" class="w-full rounded-md border-gray-300 shadow-sm">
                                 </div>
                             </div>
@@ -235,10 +235,12 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Data Partida</label>
-                                    <input type="date" wire:model="DataPartida" class="w-full rounded-md border-gray-300 shadow-sm">
-                                </div>
+                                @if($hasDataPartida)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Partida</label>
+                                        <input type="date" wire:model="DataPartida" class="w-full rounded-md border-gray-300 shadow-sm">
+                                    </div>
+                                @endif
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Data Chegada (Prevista)</label>
                                     <input type="date" wire:model="DataChegada" class="w-full rounded-md border-gray-300 shadow-sm">
@@ -259,7 +261,7 @@
                                     <option value="AOA">AOA</option>
                                 </select>
                                 <input type="number" step="0.0001" wire:model.live="Cambio" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="Câmbio">
-                                <input type="number" step="0.01" wire:model.live="fob_total" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="FOB Total">
+                                <input type="number" step="0.01" wire:model.live="fob_total" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="FOB declarado">
                                 <input type="number" step="0.01" wire:model.live="frete" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="Frete">
                                 <input type="number" step="0.01" wire:model.live="seguro" class="w-full rounded-md border-gray-300 shadow-sm" placeholder="Seguro">
                                 <input type="number" step="0.01" wire:model="cif" class="w-full rounded-md bg-gray-100" readonly>
@@ -315,7 +317,16 @@
                     <div class="p-4 space-y-3 text-sm">
                         <div><strong>Cliente:</strong> {{ $clientes->firstWhere('id', (int) ($customer_id ?? 0))->CompanyName ?? '—' }}</div>
                         <div><strong>Exportador:</strong> {{ $exportadores->firstWhere('id', (int) ($exportador_id ?? 0))->Exportador ?? '—' }}</div>
-                        <div><strong>FOB Total:</strong> {{ number_format($fob_total ?? 0, 2) }} {{ $Moeda ?? 'USD' }}</div>
+                        <div><strong>FOB declarado:</strong> {{ number_format($fob_total ?? 0, 2) }} {{ $Moeda ?? 'USD' }}</div>
+                        @php($totaisCalculados = $processo->totaisMercadorias())
+                        <div><strong>FOB calculado dos itens:</strong> {{ number_format($totaisCalculados['fob'], 2) }} {{ $Moeda }}</div>
+                        <div><strong>Peso calculado dos itens:</strong> {{ number_format($totaisCalculados['peso'], 3) }} kg</div>
+                        @if(!$Cambio)<div>Câmbio pendente — confirme a taxa antes de finalizar.</div>@endif
+                        @if($hasCambioMetadata)
+                            <label class="block">Origem do câmbio <input type="text" wire:model="cambio_origem" maxlength="150" class="w-full rounded-md border-gray-300"></label>
+                            <label class="block">Data da taxa <input type="date" wire:model="cambio_data" class="w-full rounded-md border-gray-300"></label>
+                            <label class="block"><input type="checkbox" wire:model="cambio_confirmado"> Confirmo a taxa, origem e data do câmbio</label>
+                        @endif
                         <div><strong>CIF:</strong> {{ number_format($cif ?? 0, 2) }} {{ $Moeda ?? 'USD' }}</div>
                         <div><strong>Valor Aduaneiro:</strong> {{ number_format($ValorAduaneiro ?? 0, 2) }} Kz</div>
                         <hr>

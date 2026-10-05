@@ -36,7 +36,12 @@ final class EloquentProcessoRepository implements ProcessoRepositoryInterface
     public function update(int $id, AtualizarProcessoDTO $dto): Processo
     {
         $processo = $this->findOrFail($id);
-        $processo->fill($this->onlyExistingColumns($dto->toArray()));
+        $attributes = $dto->toArray();
+        $missing = array_diff(array_keys($attributes), Schema::getColumnListing('processos'));
+        if ($missing !== []) {
+            throw new \InvalidArgumentException('Schema de processos desatualizado; campos sem coluna: ' . implode(', ', $missing));
+        }
+        $processo->fill($attributes);
         $processo->save();
 
         return $processo->refresh()->load($this->relations());

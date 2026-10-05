@@ -199,6 +199,11 @@
                        class="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-center text-xs font-medium text-green-700 hover:bg-green-100">
                         Processo
                     </a>
+
+                    <a href="{{ route('licenciamentos.create', ['customer_id' => $cliente->id]) }}"
+                        class="rounded-lg border border-cyan-400 bg-cyan-50 px-3 py-2 text-center text-xs font-medium text-red-700 hover:bg-red-100">
+                        Licenciamento
+                    </a>
                 </div>
             </div>
         @empty

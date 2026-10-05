@@ -95,7 +95,7 @@ function menuProcessoActions($p)
 
             <a href="'.route('processos.show',$p->id).'" class="item">👁 Visualizar</a>
             <a href="'.route('processos.edit',$p->id).'" class="item text-yellow-600">✏ Editar</a>
-            <a href="'.route('documentos.create',['processo_id'=>$p->id]).'" class="item">📄 Factura</a>
+            <a href="'.route('integracoes.facturacao-hongayetu-emitir-ft',['processo_id'=>$p->id]).'" class="item">📄 Factura</a>
         </div>
     </div>
     ';

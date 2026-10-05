@@ -9,6 +9,7 @@ use App\Domains\Processo\Enums\EstadoProcessoEnum;
 use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
 use App\Domains\Processo\Services\ContaDespachoSequencialService;
 use App\Domains\Processo\Services\ProcessoFinalizacaoRules;
+use App\Domains\Processo\Services\ProcessoLifecycleRules;
 use App\Models\Processo;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -19,6 +20,7 @@ final readonly class FinalizarProcessoAction
         private ProcessoRepositoryInterface $processos, 
         private ContaDespachoSequencialService $contaDespachoSequencial,
         private ProcessoFinalizacaoRules $finalizacaoRules,
+        private ProcessoLifecycleRules $lifecycleRules,
     ) {
     }
 
@@ -26,8 +28,11 @@ final readonly class FinalizarProcessoAction
     public function execute(int $id): Processo
     {
         return DB::transaction(function () use ($id): Processo {
+            Processo::query()->whereKey($id)->lockForUpdate()->firstOrFail();
             $processo = $this->processos->findOrFail($id);
             \Illuminate\Support\Facades\Gate::authorize('finalize', $processo);
+            $this->lifecycleRules->assertPodeFinalizar($processo);
+            $this->lifecycleRules->assertDataFechoNaoAnterior($processo->DataAbertura, now()->toDateString());
             $erros = $this->finalizacaoRules->validar($processo);
 
             if ($erros !== []) {

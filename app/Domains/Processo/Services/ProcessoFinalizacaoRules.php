@@ -23,16 +23,21 @@ final readonly class ProcessoFinalizacaoRules
             $erros[] = 'O campo BLC_Porte é obrigatório.';
         }
 
-        if (empty($processo->ValorAduaneiro)) {
+        if ((float) $processo->ValorAduaneiro <= 0) {
             $erros[] = 'O campo ValorAduaneiro é obrigatório.';
         }
 
-        if (empty($processo->cif)) {
+        if ((float) $processo->cif <= 0) {
             $erros[] = 'O campo CIF é obrigatório.';
         }
 
-        if (empty($processo->Cambio)) {
+        if ((float) $processo->Cambio <= 0) {
             $erros[] = 'O campo Cambio é obrigatório.';
+        }
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('processos', 'cambio_confirmado')) {
+            $erros[] = 'Atualize o schema para registar a confirmação, origem e data do câmbio antes de finalizar.';
+        } elseif (! $processo->cambio_confirmado || ! $processo->cambio_origem || ! $processo->cambio_data) {
+            $erros[] = 'O câmbio deve ser confirmado com origem e data antes da finalização.';
         }
 
         if ($processo->mercadorias->isEmpty()) {

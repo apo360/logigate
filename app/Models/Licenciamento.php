@@ -15,6 +15,11 @@ class Licenciamento extends Model
     //
     protected $table = "licenciamentos";
 
+    public function totaisMercadorias(): array
+    {
+        return app(\App\Application\Mercadoria\Services\MercadoriaParentTotalsService::class)->calculatedTotals($this);
+    }
+
     // Definindo os campos que podem ser atribuídos em massa
     protected $fillable = [
         'codigo_licenciamento',

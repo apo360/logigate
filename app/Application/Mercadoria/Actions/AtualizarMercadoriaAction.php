@@ -5,7 +5,6 @@ namespace App\Application\Mercadoria\Actions;
 use App\Application\Mercadoria\DTOs\MercadoriaData;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\Mercadoria\Services\MercadoriaAgrupamentoService;
-use App\Application\Mercadoria\Services\MercadoriaParentTotalsService;
 use App\Application\Mercadoria\Services\MercadoriaRules;
 use App\Application\Mercadoria\Services\MercadoriaTenantAccessService;
 use App\Application\PautaAduaneira\Actions\AssociarPautaMercadoriaAction;
@@ -20,7 +19,6 @@ final class AtualizarMercadoriaAction
         private readonly MercadoriaRepositoryInterface $mercadorias,
         private readonly MercadoriaRules $rules,
         private readonly MercadoriaAgrupamentoService $agrupamento,
-        private readonly MercadoriaParentTotalsService $parentTotals,
         private readonly ConsultarCodigoPautalAction $consultarCodigoPautal,
         private readonly AssociarPautaMercadoriaAction $associarPautaMercadoria,
         private readonly MercadoriaTenantAccessService $tenantAccess,
@@ -40,7 +38,6 @@ final class AtualizarMercadoriaAction
             $this->tenantAccess->authorizeMercadoria(Auth::user(), $data->id, $data->context, $data->parentId, 'mercadorias.update');
             $pauta = $this->consultarCodigoPautal->execute($data->codigoAduaneiro);
             $mercadoria = $this->mercadorias->findInContext($data->id, $data->context, $data->parentId);
-            $before = clone $mercadoria;
 
             $this->agrupamento->remove($mercadoria);
 
@@ -55,7 +52,6 @@ final class AtualizarMercadoriaAction
             $this->sincronizarContentores->execute($updated, $data);
 
             $this->agrupamento->addOrUpdate($updated);
-            $this->parentTotals->applyUpdate($before, $updated);
 
             return $updated;
         });

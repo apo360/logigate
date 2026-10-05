@@ -27,11 +27,9 @@ class CriarLicenciamentoAction
             $payload = $dto->toArray();
             $payload['codigo_licenciamento'] = $dto->codigo_licenciamento ?: $this->geradorCodigo->gerar($dto->empresa_id);
 
-            if ($dto->cif->getValor() == 0 && $dto->fob_total->getValor() > 0) {
-                $payload['cif'] = $this->calcularCif
-                    ->calcular($dto->fob_total, $dto->frete, $dto->seguro)
-                    ->getValor();
-            }
+            $payload['cif'] = $this->calcularCif
+                ->calcular($dto->fob_total, $dto->frete, $dto->seguro)
+                ->getValor();
 
             $licenciamento = $this->repository->create(new CriarLicenciamentoDTO($payload));
             $this->criarPastaLicenciamento->execute($licenciamento);

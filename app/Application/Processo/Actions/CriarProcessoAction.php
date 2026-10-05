@@ -29,6 +29,10 @@ final readonly class CriarProcessoAction
     {
         abort_unless(\App\Support\TenantContext::empresaId() === $dto->empresaId, 403);
         \Illuminate\Support\Facades\Gate::authorize('create', Processo::class);
+        if ($dto->estado === \App\Domains\Processo\Enums\EstadoProcessoEnum::FINALIZADO
+            || $dto->contaDespacho !== null || $dto->dataFecho !== null) {
+            throw new \InvalidArgumentException('Crie o processo aberto e utilize o comando de finalização.');
+        }
         return DB::transaction(function () use ($dto): Processo {
             $numero = $dto->numero ?: (string) $this->geradorNumero->gerar($dto->empresaId);
 
@@ -41,6 +45,9 @@ final readonly class CriarProcessoAction
             // Evita reconversão desnecessária via toArray/fromArray (contrato simétrico do DTO)
             // e garante que o número gerado seja persistido no campo correto.
             $payload = $dto->toArray();
+            $payload = array_merge($payload, app(\App\Application\Processo\Support\ProcessoFormSupport::class)->calculatedValues(
+                $payload['fob_total'] ?? null, $payload['frete'] ?? null, $payload['seguro'] ?? null, $payload['Cambio'] ?? null,
+            ));
             $payload['NrProcesso'] = $numero;
 
             $processo = $this->processos->create(CriarProcessoDTO::fromArray($payload));
