@@ -30,6 +30,7 @@ Route::prefix('v1')->group(function () {
         
         // Sugestões (autocomplete)
         Route::get('/pauta/sugestoes', [PautaAduaneiraController::class, 'suggestions']);
+        Route::get('/pauta/detalhes/{id}', [PautaAduaneiraController::class, 'details'])->whereNumber('id');
         
         // Estatísticas
         Route::get('/pauta/estatisticas', [PautaAduaneiraController::class, 'statistics']);

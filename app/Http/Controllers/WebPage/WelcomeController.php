@@ -11,7 +11,7 @@ class WelcomeController extends BaseController
     //
     public function index(){
 
-        $planos = Plano::all();
+        $planos = Plano::with('itemplano')->get();
 
         return view('welcome', compact('planos'));
     }

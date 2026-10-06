@@ -49,11 +49,13 @@ final class EloquentPautaAduaneiraRepository implements PautaAduaneiraRepository
             $query->where(function (Builder $query) use ($term, $tipo) {
                 if ($tipo === 'codigo') {
                     $this->applyCodigoFilter($query, $term);
+
                     return;
                 }
 
                 if ($tipo === 'descricao') {
                     $this->applyDescricaoFilter($query, $term);
+
                     return;
                 }
 
@@ -63,34 +65,40 @@ final class EloquentPautaAduaneiraRepository implements PautaAduaneiraRepository
         }
 
         if (! empty($filters['capitulo'])) {
-            $query->where('codigo', 'like', $filters['capitulo'] . '%');
+            $query->where('codigo', 'like', $filters['capitulo'].'%');
         }
 
         if (! empty($filters['posicao'])) {
-            $query->where('codigo', 'like', $filters['posicao'] . '%');
+            $query->where('codigo', 'like', $filters['posicao'].'%');
         }
 
         return $query
             ->orderBy('codigo')
-            ->paginate(max(1, min($perPage, 100)));
+            ->orderBy('id')
+            ->paginate(max(1, min($perPage, 100)), ['*'], 'page', isset($filters['page']) ? (int) $filters['page'] : null);
     }
 
     private function applyCodigoFilter(Builder $query, string $codigo, string $boolean = 'and'): void
     {
         $normalized = preg_replace('/\D+/', '', $codigo) ?? '';
-        $like = '%' . $codigo . '%';
-        $normalizedLike = '%' . $normalized . '%';
+        $like = '%'.$this->escapeLike($codigo).'%';
+        $normalizedLike = '%'.$normalized.'%';
 
         $query->where(function (Builder $query) use ($like, $normalizedLike) {
             $query->where('codigo', 'like', $like)
-                ->orWhereRaw("REPLACE(codigo, '.', '') like ?", [$normalizedLike]);
+                ->when($normalizedLike !== '%%', fn ($query) => $query->orWhereRaw("REPLACE(codigo, '.', '') like ?", [$normalizedLike]));
         }, null, null, $boolean);
     }
 
     private function applyDescricaoFilter(Builder $query, string $descricao, string $boolean = 'and'): void
     {
-        $term = '%' . mb_strtolower($descricao) . '%';
+        $term = '%'.$this->escapeLike(mb_strtolower($descricao)).'%';
 
         $query->whereRaw('LOWER(descricao) LIKE ?', [$term], $boolean);
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }

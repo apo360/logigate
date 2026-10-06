@@ -3,732 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0047AB">
-    <title>Logigate | Gestão Aduaneira e Comércio Externo em Angola</title>
-    <meta name="description" content="A Logigate centraliza processos aduaneiros, documentos, clientes, pagamentos e acompanhamento operacional numa plataforma digital para Angola.">
-    <meta property="og:title" content="Logigate | Plataforma Digital para Gestão Aduaneira">
-    <meta property="og:description" content="Digitalize processos, centralize documentos e ofereça acompanhamento moderno aos seus clientes.">
+    <meta name="theme-color" content="#061f40">
+    <title>LogiGate | Gestão aduaneira em Angola</title>
+    <meta name="description" content="Centralize processos, licenciamentos, documentos e clientes. Conheça o LogiGate, compare planos e descubra as ferramentas públicas de gestão aduaneira em Angola.">
+    <meta property="og:title" content="LogiGate | A sua operação aduaneira, organizada num só lugar.">
+    <meta property="og:description" content="Gestão aduaneira para empresas e despachantes em Angola.">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="pt_AO">
-    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --brand: #0047AB;
-            --brand-dark: #073B83;
-            --ink: #0F172A;
-            --muted: #475569;
-            --line: #D7DEE8;
-            --soft: #F7FAFC;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            color: var(--ink);
-            background: #FFFFFF;
-        }
-
-        .focus-ring:focus-visible {
-            outline: 3px solid #38BDF8;
-            outline-offset: 3px;
-        }
-
-        .site-shell {
-            max-width: 1180px;
-            margin: 0 auto;
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-
-        .btn-primary,
-        .btn-secondary,
-        .btn-light {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 46px;
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            font-weight: 700;
-            transition: background-color .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
-        }
-
-        .btn-primary {
-            background: var(--brand);
-            color: #FFFFFF;
-        }
-
-        .btn-primary:hover {
-            background: var(--brand-dark);
-        }
-
-        .btn-secondary {
-            color: var(--brand);
-            border: 1px solid var(--brand);
-            background: #FFFFFF;
-        }
-
-        .btn-secondary:hover {
-            background: #EFF6FF;
-        }
-
-        .btn-light {
-            background: #FFFFFF;
-            color: var(--brand);
-        }
-
-        .section {
-            padding: 4rem 0;
-        }
-
-        .section-muted {
-            background: var(--soft);
-        }
-
-        .eyebrow {
-            color: var(--brand);
-            font-weight: 800;
-            font-size: .78rem;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-        }
-
-        .card {
-            border: 1px solid var(--line);
-            border-radius: 8px;
-            background: #FFFFFF;
-        }
-
-        .hero-bg {
-            min-height: 88vh;
-            background-image:
-                linear-gradient(90deg, rgba(3, 22, 51, .88), rgba(3, 22, 51, .66), rgba(3, 22, 51, .25)),
-                url('{{ asset('dist/img/logistic_bg_login.jpg') }}');
-            background-size: cover;
-            background-position: center;
-        }
-
-        .hero-panel {
-            border: 1px solid rgba(255, 255, 255, .28);
-            background: rgba(255, 255, 255, .08);
-            border-radius: 8px;
-        }
-
-        .mobile-menu {
-            display: none;
-        }
-
-        .mobile-menu.is-open {
-            display: block;
-        }
-
-        .skip-link {
-            position: fixed;
-            left: 1rem;
-            top: 1rem;
-            z-index: 60;
-            transform: translateY(-140%);
-            border-radius: 8px;
-            background: #FFFFFF;
-            padding: .65rem 1rem;
-            color: var(--brand);
-            font-weight: 700;
-        }
-
-        .skip-link:focus {
-            transform: translateY(0);
-        }
-
-        @media (min-width: 768px) {
-            .section {
-                padding: 5rem 0;
-            }
-
-            .site-shell {
-                padding-left: 1.5rem;
-                padding-right: 1.5rem;
-            }
-        }
-    </style>
+    <meta property="og:image" content="{{ asset('dist/img/LandingPage/port-desktop-1600.webp') }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    @vite(['resources/css/landing.css', 'resources/js/landing.js'])
 </head>
-<body>
-    <a href="#conteudo" class="skip-link focus-ring text-sm">
-        Saltar para o conteúdo
-    </a>
-
-    <header class="fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white">
-        <div class="site-shell">
-            <div class="flex h-16 items-center justify-between">
-                <a href="#inicio" class="focus-ring flex items-center gap-3" aria-label="Logigate">
-                    <img src="{{ asset('dist/img/LOGIGATE.png') }}" alt="" class="h-10 w-auto">
-                    <span class="text-lg font-extrabold tracking-tight text-gray-900">Logi<span class="text-blue-700">Gate</span></span>
-                </a>
-
-                <nav class="hidden items-center gap-6 text-sm font-semibold text-gray-700 lg:flex" aria-label="Navegação principal">
-                    <a href="#funcionalidades" class="focus-ring hover:text-blue-700">Funcionalidades</a>
-                    <a href="{{ route('consultar.pauta') }}" class="focus-ring hover:text-blue-700">Pauta Aduaneira</a>
-                    <a href="#planos" class="focus-ring hover:text-blue-700">Planos</a>
-                    <a href="#faq" class="focus-ring hover:text-blue-700">FAQ</a>
-                    <a href="{{ route('login') }}" class="focus-ring hover:text-blue-700">Login</a>
-                    <a href="#planos" class="btn-primary focus-ring">Começar Gratuitamente</a>
+<body class="lg-landing">
+    <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
+    <header class="site-header">
+        <div class="shell">
+            <div class="header-row">
+                <a class="brand" href="{{ route('home') }}" aria-label="LogiGate — página inicial"><img src="{{ asset('dist/img/LandingPage/logo-horizontal.webp') }}" width="720" height="201" alt="LOGIGATE"></a>
+                <nav class="desktop-nav" aria-label="Navegação principal">
+                    <a href="#plataforma">Plataforma</a>
+                    <a href="{{ route('marketplace') }}">Encontrar despachante</a>
+                    <a href="{{ route('consultar.pauta') }}">Pauta Aduaneira</a>
+                    <a href="#planos">Planos</a>
                 </nav>
-
-                <button id="menuButton" type="button" class="focus-ring rounded p-2 text-gray-800 lg:hidden" aria-expanded="false" aria-controls="mobileMenu" aria-label="Abrir menu">
-                    <i class="fas fa-bars text-xl" aria-hidden="true"></i>
-                </button>
-            </div>
-
-            <nav id="mobileMenu" class="mobile-menu border-t border-gray-200 py-4 lg:hidden" aria-label="Menu móvel">
-                <div class="grid gap-3 text-sm font-semibold text-gray-800">
-                    <a href="#funcionalidades" class="focus-ring rounded px-2 py-2">Funcionalidades</a>
-                    <a href="{{ route('consultar.pauta') }}" class="focus-ring rounded px-2 py-2">Pauta Aduaneira</a>
-                    <a href="#planos" class="focus-ring rounded px-2 py-2">Planos</a>
-                    <a href="#faq" class="focus-ring rounded px-2 py-2">FAQ</a>
-                    <a href="{{ route('login') }}" class="focus-ring rounded px-2 py-2">Login</a>
-                    <a href="#planos" class="btn-primary focus-ring mt-2">Começar Gratuitamente</a>
+                <div class="desktop-access">
+                    <a class="portal-link" href="{{ route('cliente.portal.login') }}">Portal do cliente</a>
+                    <a class="button primary" href="{{ route('login') }}">Entrar na aplicação <span aria-hidden="true">↗</span></a>
                 </div>
+                <button class="menu-toggle" type="button" aria-controls="mobile-menu" aria-expanded="false" aria-label="Abrir menu"><span aria-hidden="true">☰</span></button>
+            </div>
+            <nav id="mobile-menu" class="mobile-nav" aria-label="Menu móvel">
+                <a href="#plataforma">Plataforma</a>
+                <a href="{{ route('marketplace') }}">Encontrar despachante</a>
+                <a href="{{ route('consultar.pauta') }}">Pauta Aduaneira</a>
+                <a href="#planos">Planos</a>
+                <a class="portal-link" href="{{ route('cliente.portal.login') }}">Portal do cliente</a>
+                <a class="button primary" href="{{ route('login') }}">Entrar na aplicação</a>
             </nav>
         </div>
     </header>
+    <main id="conteudo" tabindex="-1">
+        <section id="inicio" class="hero" aria-labelledby="hero-title">
+            <div class="shell hero-grid">
+                <div class="hero-copy">
+                    <span class="eyebrow">Gestão aduaneira para empresas e despachantes em Angola</span>
+                    <h1 id="hero-title">A sua operação aduaneira, <span>organizada num só lugar.</span></h1>
+                    <p>Centralize processos, licenciamentos, documentos e clientes com o LogiGate. Acompanhe o trabalho da sua equipa e mantenha a informação organizada ao longo de cada operação.</p>
+                    <div class="hero-actions">
+                        <a class="button primary" href="#planos">Ver planos <span aria-hidden="true">→</span></a>
+                        <a class="button secondary" href="#plataforma">Explorar a plataforma</a>
+                    </div>
+                    <div class="hero-footnote">Da informação dispersa a uma operação organizada.</div>
+                </div>
+                <figure class="hero-art">
+                    <picture>
+                        <source media="(max-width: 899px)" srcset="{{ asset('dist/img/LandingPage/port-mobile-480.webp') }} 480w, {{ asset('dist/img/LandingPage/port-mobile-800.webp') }} 800w" sizes="100vw" width="800" height="1200">
+                        <img src="{{ asset('dist/img/LandingPage/port-desktop-1600.webp') }}" srcset="{{ asset('dist/img/LandingPage/port-desktop-960.webp') }} 960w, {{ asset('dist/img/LandingPage/port-desktop-1600.webp') }} 1600w" sizes="(min-width: 900px) 52vw, 100vw" width="1672" height="941" fetchpriority="high" alt="Ilustração conceptual de um navio de carga, gruas e uma frente urbana costeira inspirada em Luanda.">
+                    </picture>
+                    <figcaption>Ilustração conceptual · contexto portuário</figcaption>
+                </figure>
+            </div>
+        </section>
+        <div class="hero-bottom"><div class="shell"><p><strong>Uma plataforma. Três percursos.</strong> Gestão empresarial, ferramentas públicas e acesso do cliente.</p><a class="text-link" href="#ferramentas">Conhecer as ferramentas públicas <span aria-hidden="true">↗</span></a></div></div>
 
-    <main id="conteudo">
-        <section id="inicio" class="hero-bg flex items-center pt-20 text-white">
-            <div class="site-shell w-full py-12 md:py-20">
-                <div class="max-w-3xl">
-                    <p class="mb-5 inline-flex rounded bg-white px-3 py-2 text-sm font-bold text-blue-800">
-                        LOGIGATE 2026 · Angola
-                    </p>
-                    <h1 class="text-4xl font-extrabold leading-tight md:text-5xl lg:text-6xl">
-                        A Plataforma Digital para Gestão Aduaneira e Comércio Externo em Angola
-                    </h1>
-                    <p class="mt-6 max-w-2xl text-lg leading-8 text-blue-50">
-                        Digitalize os seus processos, centralize documentos, acompanhe operações e ofereça aos seus clientes uma experiência moderna e transparente.
-                    </p>
-                    <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                        <a href="#planos" class="btn-light focus-ring">Começar Gratuitamente</a>
-                        <a href="#contactos" class="btn-secondary focus-ring border-white text-white" style="background: transparent; color: #FFFFFF; border-color: #FFFFFF;">Solicitar Demonstração</a>
+        <section id="plataforma" class="section platform" aria-labelledby="platform-title">
+            <div class="shell">
+                <div class="platform-heading">
+                    <div><span class="eyebrow">A plataforma, por dentro</span><h2 id="platform-title">Menos dispersão.<br>Mais clareza na operação.</h2></div>
+                    <p>Dos processos aos clientes, encontre a informação de que precisa para acompanhar o trabalho diário. Explore as principais áreas do LogiGate.</p>
+                </div>
+                <nav class="demo-tabs" aria-label="Áreas da demonstração">
+                    <a id="tab-processos" href="#demo-processos" aria-controls="demo-processos" data-demo="processos">Processos</a>
+                    <a id="tab-licenciamentos" href="#demo-licenciamentos" aria-controls="demo-licenciamentos" data-demo="licenciamentos">Licenciamentos</a>
+                    <a id="tab-clientes" href="#demo-clientes" aria-controls="demo-clientes" data-demo="clientes">Clientes</a>
+                </nav>
+                <div class="demo-frame">
+                    <aside class="demo-sidebar" aria-hidden="true">
+                        <div class="demo-logo">LOGIGATE</div><p>Área de trabalho</p><p data-demo-nav="processos" class="active">▤ &nbsp; Processos</p><p data-demo-nav="licenciamentos">▧ &nbsp; Licenciamentos</p><p data-demo-nav="clientes">♙ &nbsp; Clientes</p><p>▱ &nbsp; Documentos</p><small>Empresa de demonstração<br>Dados fictícios</small>
+                    </aside>
+                    <div class="demo-body">
+                        <div class="demo-topbar"><strong>Gestão aduaneira</strong><span class="demo-label">Prévia · dados fictícios</span></div>
+                        <section id="demo-processos" class="demo-panel" aria-labelledby="processos-title">
+                            <h3 id="processos-title">Processos</h3><p>Consulte referências, tipos e estados para acompanhar cada operação.</p>
+                            <div class="demo-metrics"><div><strong>03</strong><span>Processos na prévia</span></div><div><strong>02</strong><span>Em acompanhamento</span></div><div><strong>01</strong><span>Finalizado</span></div></div>
+                            <table class="preview-table"><caption class="sr-only">Exemplos fictícios de processos</caption><thead><tr><th>Processo</th><th>Tipo</th><th>Estado</th><th class="optional-col">Origem</th><th class="optional-col">Abertura</th></tr></thead><tbody>
+                                <tr><td>PR / 2026 / 001</td><td>Importação</td><td><span class="badge">Em análise</span></td><td class="optional-col">Portugal</td><td class="optional-col">01/10/2026</td></tr>
+                                <tr><td>PR / 2026 / 002</td><td>Importação</td><td><span class="badge amber">Aguardando documentos</span></td><td class="optional-col">China</td><td class="optional-col">02/10/2026</td></tr>
+                                <tr><td>PR / 2026 / 003</td><td>Exportação</td><td><span class="badge green">Finalizado</span></td><td class="optional-col">Angola</td><td class="optional-col">03/10/2026</td></tr>
+                            </tbody></table>
+                        </section>
+                        <section id="demo-licenciamentos" class="demo-panel" aria-labelledby="licenciamentos-title">
+                            <h3 id="licenciamentos-title">Licenciamentos</h3><p>Reúna referências, clientes e mercadorias e consulte o estado do licenciamento.</p>
+                            <div class="demo-metrics"><div><strong>03</strong><span>Licenciamentos</span></div><div><strong>01</strong><span>Pendente</span></div><div><strong>02</strong><span>Gerados ou processados</span></div></div>
+                            <table class="preview-table"><caption class="sr-only">Exemplos fictícios de licenciamentos</caption><thead><tr><th>Cliente / referência</th><th>Descrição</th><th>Estado</th><th class="optional-col">Origem</th></tr></thead><tbody>
+                                <tr><td>Empresa Exemplo A<br>LIC / 001</td><td>Equipamento industrial</td><td><span class="badge amber">Pendente</span></td><td class="optional-col">Portugal</td></tr>
+                                <tr><td>Empresa Exemplo B<br>LIC / 002</td><td>Material eléctrico</td><td><span class="badge">Gerado</span></td><td class="optional-col">China</td></tr>
+                                <tr><td>Empresa Exemplo C<br>LIC / 003</td><td>Produtos alimentares</td><td><span class="badge green">Processado</span></td><td class="optional-col">Brasil</td></tr>
+                            </tbody></table>
+                        </section>
+                        <section id="demo-clientes" class="demo-panel" aria-labelledby="clientes-title">
+                            <h3 id="clientes-title">Clientes</h3><p>Consulte os clientes e os processos e licenciamentos associados a cada um.</p>
+                            <div class="demo-metrics"><div><strong>03</strong><span>Clientes na prévia</span></div><div><strong>02</strong><span>Importadores</span></div><div><strong>01</strong><span>Exportador</span></div></div>
+                            <table class="preview-table"><caption class="sr-only">Exemplos fictícios de clientes</caption><thead><tr><th>Cliente</th><th>Tipo</th><th>Processos</th><th class="optional-col">Licenciamentos</th></tr></thead><tbody>
+                                <tr><td>Empresa Exemplo A</td><td>Importador</td><td>1</td><td class="optional-col">1</td></tr><tr><td>Empresa Exemplo B</td><td>Importador</td><td>1</td><td class="optional-col">1</td></tr><tr><td>Empresa Exemplo C</td><td>Exportador</td><td>1</td><td class="optional-col">1</td></tr>
+                            </tbody></table>
+                        </section>
                     </div>
                 </div>
-
-                <div class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                    @foreach(['Plataforma 100% Online', 'Portal Cliente Integrado', 'Pagamentos Digitais', 'Gestão Documental', 'Consulta da Pauta Aduaneira'] as $highlight)
-                        <div class="hero-panel px-4 py-3 text-sm font-semibold text-white">
-                            <i class="fas fa-check mr-2 text-green-300" aria-hidden="true"></i>{{ $highlight }}
-                        </div>
-                    @endforeach
-                </div>
+                <p class="demo-caption">Demonstração em HTML baseada nas áreas da aplicação. Todos os dados são fictícios; esta prévia não executa operações.</p>
+                <p class="platform-support">Cada operação reúne documentos, intervenientes e etapas que precisam de acompanhamento. O LogiGate reúne essa informação numa plataforma de gestão aduaneira, para ajudar a sua equipa a consultar o que precisa, acompanhar o andamento dos processos e coordenar o trabalho diário.</p>
             </div>
         </section>
 
-        <section class="section section-muted" aria-labelledby="problema-heading">
-            <div class="site-shell grid gap-10 lg:grid-cols-2 lg:items-center">
-                <div>
-                    <p class="eyebrow">O problema</p>
-                    <h2 id="problema-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">O comércio externo ainda enfrenta demasiada burocracia</h2>
-                    <p class="mt-5 text-lg leading-8 text-gray-700">
-                        Muitas operações continuam dependentes de documentos físicos, trocas de e-mails dispersas e processos difíceis de acompanhar.
-                    </p>
-                </div>
-                <div class="grid gap-3 sm:grid-cols-2">
-                    @foreach(['Falta de visibilidade dos processos', 'Atrasos operacionais', 'Comunicação difícil com clientes', 'Documentação descentralizada', 'Custos administrativos elevados', 'Perda de produtividade'] as $problem)
-                        <div class="card p-4">
-                            <i class="fas fa-minus-circle mb-3 text-amber-600" aria-hidden="true"></i>
-                            <p class="font-semibold text-gray-900">{{ $problem }}</p>
-                        </div>
-                    @endforeach
+        <section id="ferramentas" class="section" aria-labelledby="tools-title">
+            <div class="shell"><div class="intro"><span class="eyebrow">Ferramentas públicas</span><h2 id="tools-title">O seu próximo passo<br>pode começar aqui.</h2><p>Explore as ferramentas públicas, sem criar uma conta na aplicação.</p></div>
+                <div class="public-tools" style="margin-top:40px">
+                    <article class="tool"><span class="tool-number">01 / MARKETPLACE</span><h3>Encontre um despachante</h3><p>Pesquise por nome, especialidade ou localização no marketplace do LogiGate.</p><a class="text-link" href="{{ route('marketplace') }}">Encontrar despachante <span aria-hidden="true">↗</span></a></article>
+                    <article class="tool"><span class="tool-number">02 / PAUTA ADUANEIRA</span><h3>Consulte a Pauta Aduaneira</h3><p>Pesquise mercadorias por descrição ou código pautal.</p><a class="text-link" href="{{ route('consultar.pauta') }}">Consultar pauta <span aria-hidden="true">↗</span></a></article>
                 </div>
             </div>
         </section>
-
-        <section class="section bg-white" aria-labelledby="solucao-heading">
-            <div class="site-shell">
-                <div class="max-w-3xl">
-                    <p class="eyebrow">A solução Logigate</p>
-                    <h2 id="solucao-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Uma única plataforma para gerir toda a operação</h2>
-                    <p class="mt-5 text-lg leading-8 text-gray-700">
-                        A Logigate moderniza a forma como processos aduaneiros são geridos, com documentos, clientes, pagamentos e acompanhamento operacional num único lugar.
-                    </p>
-                </div>
-
-                <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    @foreach(['Gerir processos', 'Centralizar documentos', 'Controlar clientes', 'Emitir facturas', 'Gerir conta corrente', 'Receber pagamentos', 'Acompanhar em tempo real', 'Comunicar com clientes'] as $solution)
-                        <div class="card p-5">
-                            <i class="fas fa-check-circle mb-3 text-green-600" aria-hidden="true"></i>
-                            <h3 class="font-bold text-gray-900">{{ $solution }}</h3>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="mt-10 border-l-4 border-blue-700 bg-blue-50 p-6">
-                    <p class="text-2xl font-extrabold leading-9 text-blue-950">Menos burocracia. Mais controlo. Mais produtividade.</p>
-                </div>
+        <section class="section steps-section" aria-labelledby="steps-title">
+            <div class="shell"><span class="eyebrow">Como começar</span><h2 id="steps-title">Da escolha do plano<br>ao acesso à sua operação.</h2>
+                <ol class="steps"><li><span class="step-number">01</span><h3>Escolher plano</h3><p>Compare as funcionalidades, os limites e o período de cobrança para a sua empresa.</p></li><li><span class="step-number">02</span><h3>Cadastrar empresa</h3><p>Preencha os dados da empresa e do utilizador responsável no cadastro.</p></li><li><span class="step-number">03</span><h3>Activar acesso</h3><p>Nos planos pagos, conclua o pagamento e aguarde a confirmação para activar a subscrição. Nos planos identificados como gratuitos, a activação segue o fluxo gratuito disponível.</p></li></ol>
             </div>
         </section>
-
-        <section class="section section-muted" aria-labelledby="perfis-heading">
-            <div class="site-shell">
-                <div class="mb-10 max-w-3xl">
-                    <p class="eyebrow">Quem utiliza</p>
-                    <h2 id="perfis-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Criada para quem vive a operação aduaneira</h2>
-                </div>
-
-                <div class="grid gap-4 lg:grid-cols-3">
-                    <article class="card p-6">
-                        <span class="rounded bg-green-100 px-3 py-1 text-xs font-bold text-green-800">Disponível agora</span>
-                        <h3 class="mt-5 text-xl font-extrabold">Despachante Oficial</h3>
-                        <p class="mt-3 text-gray-700">Ferramentas para gestão completa dos processos aduaneiros.</p>
-                        <ul class="mt-5 space-y-2 text-sm text-gray-700">
-                            @foreach(['Processos Aduaneiros', 'Gestão de Clientes', 'Facturação', 'Conta Corrente', 'Relatórios', 'Gestão Documental'] as $item)
-                                <li><i class="fas fa-check mr-2 text-blue-700" aria-hidden="true"></i>{{ $item }}</li>
-                            @endforeach
-                        </ul>
-                    </article>
-
-                    <article class="card p-6">
-                        <span class="rounded bg-green-100 px-3 py-1 text-xs font-bold text-green-800">Disponível agora</span>
-                        <h3 class="mt-5 text-xl font-extrabold">Cliente</h3>
-                        <p class="mt-3 text-gray-700">Acompanhe processos sem depender de chamadas ou e-mails.</p>
-                        <ul class="mt-5 space-y-2 text-sm text-gray-700">
-                            @foreach(['Consulta de Processos', 'Consulta de Documentos', 'Consulta de Pagamentos', 'Comunicação com o Operador'] as $item)
-                                <li><i class="fas fa-check mr-2 text-blue-700" aria-hidden="true"></i>{{ $item }}</li>
-                            @endforeach
-                        </ul>
-                    </article>
-
-                    <article class="card p-6">
-                        <span class="rounded bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">Brevemente</span>
-                        <h3 class="mt-5 text-xl font-extrabold">Transitário</h3>
-                        <p class="mt-3 text-gray-700">Área especializada para operações logísticas e acompanhamento de cargas.</p>
-                    </article>
-                </div>
-            </div>
-        </section>
-
-        <section id="funcionalidades" class="section bg-white" aria-labelledby="features-heading">
-            <div class="site-shell">
-                <div class="mb-10 max-w-3xl">
-                    <p class="eyebrow">Funcionalidades</p>
-                    <h2 id="features-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">As principais áreas da operação num só sistema</h2>
-                </div>
-
-                <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    @php
-                        $features = [
-                            ['icon' => 'fa-ship', 'title' => 'Gestão Aduaneira', 'text' => 'Controlo completo dos processos de importação e exportação.'],
-                            ['icon' => 'fa-folder-open', 'title' => 'Gestão Documental', 'text' => 'Organização digital de todos os documentos.'],
-                            ['icon' => 'fa-file-invoice', 'title' => 'Facturação', 'text' => 'Emissão e gestão financeira integrada.'],
-                            ['icon' => 'fa-wallet', 'title' => 'Conta Corrente', 'text' => 'Controlo de saldos e cobranças.'],
-                            ['icon' => 'fa-user-shield', 'title' => 'Portal Cliente', 'text' => 'Acompanhamento em tempo real.'],
-                            ['icon' => 'fa-chart-line', 'title' => 'Relatórios', 'text' => 'Informação estratégica para apoio à decisão.'],
-                            ['icon' => 'fa-layer-group', 'title' => 'Subscrições', 'text' => 'Planos adaptados ao tamanho da sua operação.'],
-                            ['icon' => 'fa-credit-card', 'title' => 'Pagamentos Integrados', 'text' => 'Integração com soluções de pagamento digitais.'],
-                        ];
-                    @endphp
-
-                    @foreach($features as $feature)
-                        <article class="card p-5">
-                            <i class="fas {{ $feature['icon'] }} mb-4 text-2xl text-blue-700" aria-hidden="true"></i>
-                            <h3 class="font-extrabold text-gray-900">{{ $feature['title'] }}</h3>
-                            <p class="mt-3 text-sm leading-6 text-gray-700">{{ $feature['text'] }}</p>
+        <section id="planos" class="section plans-section" aria-labelledby="plans-title">
+            <div class="shell"><div class="intro"><span class="eyebrow">Planos LogiGate</span><h2 id="plans-title">Escolha o plano para<br>a sua forma de trabalhar.</h2><p>Compare as condições disponíveis. Os valores correspondem ao período de cobrança seleccionado, em kwanzas.</p></div>
+                <fieldset class="billing"><legend>Período de cobrança</legend>@foreach(\App\Models\Plano::MODALIDADES_PAGAMENTO as $cycle => $label)<label><input type="radio" name="billing" value="{{ $cycle }}" @checked($cycle === 'monthly')><span>{{ $label }}</span></label>@endforeach</fieldset>
+                <div class="plan-grid" style="--plan-columns: {{ min(4, max(1, $planos->count())) }}">
+                    @forelse($planos as $plano)
+                        <article class="plan">
+                            <h3>{{ $plano->nome }}</h3><p class="plan-description">{{ $plano->descricao }}</p>
+                            <div class="plan-price" data-monthly="{{ $plano->preco_mensal }}" data-semestral="{{ $plano->preco_semestral }}" data-annual="{{ $plano->preco_anual }}">{{ $plano->preco_mensal === null ? 'Preço não disponível' : number_format((float) $plano->preco_mensal, 2, ',', '.') . ' AOA' }}</div><p class="cycle-label">por mês</p>
+                            <ul>@forelse($plano->itemplano as $item)<li>{{ $item->item }}</li>@empty<li>Consulte o apoio para conhecer as funcionalidades deste plano.</li>@endforelse
+                                @foreach(['limite_utilizadores' => 'Utilizadores', 'limite_processos' => 'Processos', 'limite_armazenamento_gb' => 'Armazenamento (GB)'] as $attribute => $label)
+                                    @if($plano->{$attribute} !== null)<li>{{ $label }}: {{ $plano->{$attribute} }}</li>@endif
+                                @endforeach
+                            </ul>
+                            <form method="GET" action="{{ route('register') }}"><input type="hidden" name="plano" value="{{ $plano->id }}"><input type="hidden" class="billing-cycle" name="modalidade" value="monthly"><button type="submit" class="button primary" @disabled($plano->preco_mensal === null)>Escolher plano <span aria-hidden="true">→</span></button></form>
+                            <div class="plan-prices">Semestral: {{ $plano->preco_semestral === null ? 'não disponível' : number_format((float) $plano->preco_semestral, 2, ',', '.') . ' AOA' }} · Anual: {{ $plano->preco_anual === null ? 'não disponível' : number_format((float) $plano->preco_anual, 2, ',', '.') . ' AOA' }}. @if($plano->preco_semestral !== null)<a class="text-link" href="{{ route('register', ['plano' => $plano->id, 'modalidade' => 'semestral']) }}">Escolher semestral →</a>@endif @if($plano->preco_anual !== null)<a class="text-link" href="{{ route('register', ['plano' => $plano->id, 'modalidade' => 'annual']) }}">Escolher anual →</a>@endif</div>
                         </article>
-                    @endforeach
-                </div>
+                    @empty
+                        <div class="empty-plans"><h3>Planos indisponíveis de momento</h3><p>Contacte a equipa para conhecer as condições de adesão.</p><a class="text-link" href="#contactos">Falar com a equipa →</a></div>
+                    @endforelse
+                </div><p class="plans-note">Tem dúvidas sobre o plano ou a activação? <a class="text-link" href="#contactos">Fale connosco →</a></p>
             </div>
         </section>
-
-        <section class="section section-muted" aria-labelledby="marketplace-heading">
-            <div class="site-shell grid gap-8 lg:grid-cols-2 lg:items-center">
-                <div>
-                    <p class="eyebrow">Marketplace de serviços</p>
-                    <h2 id="marketplace-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Em breve: uma rede especializada para o sector</h2>
-                    <p class="mt-5 text-lg leading-8 text-gray-700">
-                        Estamos a desenvolver um marketplace para conectar despachantes, transitários, transportadores e prestadores de serviços logísticos.
-                    </p>
-                </div>
-                <div class="card p-6">
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        @foreach(['Despachantes', 'Transitários', 'Transportadores', 'Prestadores Logísticos'] as $item)
-                            <div class="rounded border border-gray-200 p-4 font-semibold text-gray-800">{{ $item }}</div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
+        <section class="section portal-section" aria-labelledby="portal-title">
+            <div class="shell portal-grid"><div><span class="eyebrow">Portal do cliente</span><h2 id="portal-title">Acompanhe os seus processos</h2><p>Aceda ao portal para consultar os processos e documentos disponibilizados pela sua empresa ou despachante. O acesso é concedido por quem acompanha a sua operação.</p></div><div class="portal-aside"><a class="button" href="{{ route('cliente.portal.login') }}">Aceder ao portal <span aria-hidden="true">↗</span></a><small>Já é cliente de uma empresa ou despachante?<br>Utilize o acesso que lhe foi disponibilizado.</small></div></div>
         </section>
-
-        <section class="section bg-white" aria-labelledby="pauta-heading">
-            <div class="site-shell grid gap-8 lg:grid-cols-2 lg:items-center">
-                <div>
-                    <p class="eyebrow">Consulta da Pauta Aduaneira</p>
-                    <h2 id="pauta-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Consulte rapidamente informação pautal</h2>
-                    <p class="mt-5 text-lg leading-8 text-gray-700">
-                        Pesquise códigos pautais, mercadorias, taxas, direitos aduaneiros, IVA e impostos aplicáveis.
-                    </p>
-                    <a href="{{ route('consultar.pauta') }}" class="btn-primary focus-ring mt-6">Consultar Pauta Aduaneira</a>
-                </div>
-                <div class="card p-6">
-                    <div class="grid gap-3">
-                        @foreach(['Códigos pautais', 'Mercadorias', 'Taxas', 'Direitos Aduaneiros', 'IVA', 'Impostos Aplicáveis'] as $item)
-                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 last:border-b-0 last:pb-0">
-                                <span class="font-semibold text-gray-800">{{ $item }}</span>
-                                <i class="fas fa-search text-blue-700" aria-hidden="true"></i>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
+        <section id="faq" class="section" aria-labelledby="faq-title">
+            <div class="shell faq-grid"><div><span class="eyebrow">Antes de começar</span><h2 id="faq-title">Perguntas frequentes</h2></div><div class="faq-list">
+                <details><summary>Quem pode aderir ao LogiGate?</summary><p>Empresas e despachantes podem escolher um plano e cadastrar a empresa e o utilizador responsável. O portal do cliente tem um acesso separado.</p></details>
+                <details><summary>Como escolho o plano e a modalidade?</summary><p>Na secção de planos, seleccione o período de cobrança e compare os preços, funcionalidades e limites. A escolha do plano encaminha para o cadastro com o plano e a modalidade seleccionados.</p></details>
+                <details><summary>Como é activado o acesso?</summary><p>Nos planos pagos, o cadastro encaminha para o pagamento; a activação depende da confirmação. Quando o plano é identificado como gratuito pelo sistema, o fluxo permite a activação sem pagamento. Contacte o apoio se precisar de ajuda.</p></details>
+                <details><summary>Preciso de criar uma conta para consultar a pauta?</summary><p>Não. A Pauta Aduaneira e o marketplace são ferramentas públicas. Pesquisar ou pedir uma proposta não cria automaticamente uma conta na aplicação.</p></details>
+                <details><summary>Como obtenho acesso ao portal do cliente?</summary><p>O acesso é concedido pela empresa ou despachante que acompanha a sua operação. Utilize as credenciais disponibilizadas para entrar no portal do cliente; não existe cadastro público neste percurso.</p></details>
+            </div></div>
         </section>
-
-        <section class="section section-muted" aria-labelledby="como-heading">
-            <div class="site-shell">
-                <div class="mb-10 max-w-3xl">
-                    <p class="eyebrow">Como funciona</p>
-                    <h2 id="como-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Da escolha do plano à operação em menos de 10 minutos</h2>
-                </div>
-                <div class="grid gap-4 md:grid-cols-5">
-                    @foreach(['Escolha o plano ideal', 'Crie a sua conta', 'Configure a empresa', 'Convide colaboradores', 'Comece a gerir processos'] as $index => $step)
-                        <div class="card p-5">
-                            <div class="flex h-10 w-10 items-center justify-center rounded bg-blue-700 font-extrabold text-white">{{ $index + 1 }}</div>
-                            <h3 class="mt-4 font-bold text-gray-900">{{ $step }}</h3>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-
-        <section id="planos" class="section bg-white" aria-labelledby="planos-heading">
-            <div class="site-shell">
-                <div class="mb-10 max-w-3xl">
-                    <p class="eyebrow">Planos</p>
-                    <h2 id="planos-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Planos adaptados ao tamanho da sua operação</h2>
-                    <p class="mt-5 text-lg leading-8 text-gray-700">Todos os planos incluem actualizações automáticas, segurança dos dados, backups automáticos e suporte técnico.</p>
-                </div>
-
-                <div class="mb-8 inline-flex rounded border border-gray-300 p-1" role="tablist" aria-label="Modalidade de pagamento">
-                    <button type="button" class="cycle-tab rounded px-4 py-2 text-sm font-bold text-white" style="background: var(--brand);" data-cycle="monthly" aria-selected="true">Mensal</button>
-                    <button type="button" class="cycle-tab rounded px-4 py-2 text-sm font-bold text-gray-700" data-cycle="semestral" aria-selected="false">Semestral</button>
-                    <button type="button" class="cycle-tab rounded px-4 py-2 text-sm font-bold text-gray-700" data-cycle="annual" aria-selected="false">Anual</button>
-                </div>
-
-                @if($planos->count())
-                    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        @foreach($planos as $plano)
-                            <article class="card flex flex-col p-6 {{ $plano->is_popular ? 'border-blue-700' : '' }}">
-                                @if($plano->is_popular)
-                                    <span class="mb-4 w-max rounded bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">Mais Popular</span>
-                                @endif
-
-                                <h3 class="text-xl font-extrabold">{{ $plano->nome }}</h3>
-                                <p class="mt-3 text-sm leading-6 text-gray-700" style="min-height: 48px;">{{ \Illuminate\Support\Str::limit($plano->descricao, 90) }}</p>
-
-                                <div class="mt-6">
-                                    <div class="plan-price text-3xl font-extrabold" data-monthly="{{ (float) $plano->preco_mensal }}" data-semestral="{{ (float) $plano->preco_semestral }}" data-annual="{{ (float) $plano->preco_anual }}">
-                                        {{ number_format((float) $plano->preco_mensal, 0, ',', '.') }} AOA
-                                    </div>
-                                    <p class="cycle-label mt-1 text-sm text-gray-600">por mês</p>
-                                </div>
-
-                                <ul class="mt-6 flex-1 space-y-3 text-sm text-gray-700">
-                                    @forelse($plano->itemplano as $item)
-                                        <li class="flex gap-2">
-                                            <i class="fas {{ $item->icon ?: 'fa-check' }} mt-1 text-blue-700" aria-hidden="true"></i>
-                                            <span>{{ $item->item }}</span>
-                                        </li>
-                                    @empty
-                                        <li class="flex gap-2"><i class="fas fa-check mt-1 text-blue-700" aria-hidden="true"></i><span>Gestão base de processos e documentos</span></li>
-                                        <li class="flex gap-2"><i class="fas fa-check mt-1 text-blue-700" aria-hidden="true"></i><span>Suporte técnico incluído</span></li>
-                                    @endforelse
-                                </ul>
-
-                                <form method="GET" action="{{ route('register') }}" class="mt-6">
-                                    <input type="hidden" name="plano" value="{{ $plano->id }}">
-                                    <input type="hidden" name="modalidade" class="billing-cycle" value="monthly">
-                                    <button type="submit" class="btn-primary focus-ring w-full">
-                                        {{ $plano->is_free ? 'Começar Gratuitamente' : 'Escolher Plano' }}
-                                    </button>
-                                </form>
-                            </article>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="card p-8 text-center">
-                        <h3 class="text-xl font-extrabold">Planos em actualização</h3>
-                        <p class="mt-3 text-gray-700">Fale connosco para escolher a configuração ideal para a sua operação.</p>
-                        <a href="#contactos" class="btn-primary focus-ring mt-6">Solicitar Demonstração</a>
-                    </div>
-                @endif
-            </div>
-        </section>
-
-        <section id="faq" class="section section-muted" aria-labelledby="faq-heading">
-            <div class="site-shell">
-                <div class="mb-10 max-w-3xl">
-                    <p class="eyebrow">FAQ</p>
-                    <h2 id="faq-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Perguntas frequentes</h2>
-                </div>
-
-                <div class="grid gap-4 lg:grid-cols-2">
-                    @php
-                        $faqs = [
-                            ['q' => 'A Logigate funciona na cloud?', 'a' => 'Sim. Pode aceder a partir de qualquer local, usando uma ligação à internet.'],
-                            ['q' => 'O Portal Cliente já está disponível?', 'a' => 'Sim. Os clientes podem acompanhar processos, documentos, pagamentos e comunicação com o operador.'],
-                            ['q' => 'O Transitário já pode usar a plataforma?', 'a' => 'A área especializada para transitários está em desenvolvimento e será disponibilizada brevemente.'],
-                            ['q' => 'Como a subscrição é activada?', 'a' => 'Depois da escolha do plano e confirmação do pagamento, a subscrição é activada para a empresa.'],
-                            ['q' => 'Posso consultar a Pauta Aduaneira sem conta?', 'a' => 'Sim. A consulta pública da pauta está acessível a partir da landing page.'],
-                            ['q' => 'Quanto tempo demora a activação?', 'a' => 'O fluxo foi desenhado para demorar menos de 10 minutos quando os dados e pagamento estão concluídos.'],
-                        ];
-                    @endphp
-
-                    @foreach($faqs as $index => $faq)
-                        <div class="card">
-                            <button type="button" class="faq-toggle focus-ring flex w-full items-center justify-between gap-4 p-5 text-left" aria-expanded="false" aria-controls="faq-{{ $index }}">
-                                <span class="font-bold text-gray-900">{{ $faq['q'] }}</span>
-                                <i class="fas fa-chevron-down text-blue-700" aria-hidden="true"></i>
-                            </button>
-                            <div id="faq-{{ $index }}" class="hidden px-5 pb-5 text-gray-700">
-                                {{ $faq['a'] }}
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-
-        <section id="contactos" class="section bg-white" aria-labelledby="contactos-heading">
-            <div class="site-shell grid gap-10 lg:grid-cols-2">
-                <div>
-                    <p class="eyebrow">Demonstração</p>
-                    <h2 id="contactos-heading" class="mt-3 text-3xl font-extrabold md:text-4xl">Solicite uma demonstração da Logigate</h2>
-                    <p class="mt-5 text-lg leading-8 text-gray-700">Conte-nos sobre a sua operação e a nossa equipa ajuda a escolher o melhor caminho.</p>
-
-                    <div class="mt-8 space-y-4 text-gray-700">
-                        <p><i class="fas fa-phone mr-3 text-blue-700" aria-hidden="true"></i><a href="tel:+244948242262" class="focus-ring hover:text-blue-700">+244 948 242 262</a></p>
-                        <p><i class="fas fa-envelope mr-3 text-blue-700" aria-hidden="true"></i><a href="mailto:geral@hongayetu.com" class="focus-ring hover:text-blue-700">geral@hongayetu.com</a></p>
-                        <p><i class="fas fa-map-marker-alt mr-3 text-blue-700" aria-hidden="true"></i>Luanda, Angola</p>
-                    </div>
-                </div>
-
-                <form id="contactForm" action="{{ route('contact.send') }}" method="POST" class="card p-6">
+        <section id="contactos" class="section contact-section" aria-labelledby="contact-title">
+            <div class="shell contact-grid"><div><span class="eyebrow">Vamos conversar</span><h2 id="contact-title">Conheça o LogiGate<br>com a nossa equipa.</h2><p style="margin-top:22px;color:var(--muted)">Conte-nos sobre a sua operação. Solicite uma demonstração ou esclareça dúvidas sobre planos e acesso.</p><div class="contact-info"><a href="tel:+244948242262">+244 948 242 262</a><a href="mailto:geral@hongayetu.com">geral@hongayetu.com</a><p>Luanda, Angola</p></div></div>
+                <form id="contact-form" class="contact-form" action="{{ route('contact.send') }}" method="POST" data-json-form data-feedback="contact-feedback">
                     @csrf
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <label for="nome" class="block text-sm font-bold text-gray-800">Nome completo</label>
-                            <input id="nome" name="nome" type="text" required class="focus-ring mt-2 w-full rounded border border-gray-300 px-3 py-3">
-                        </div>
-                        <div>
-                            <label for="empresa" class="block text-sm font-bold text-gray-800">Empresa</label>
-                            <input id="empresa" name="empresa" type="text" class="focus-ring mt-2 w-full rounded border border-gray-300 px-3 py-3">
-                        </div>
-                    </div>
-                    <div class="mt-4">
-                        <label for="email" class="block text-sm font-bold text-gray-800">Email</label>
-                        <input id="email" name="email" type="email" required class="focus-ring mt-2 w-full rounded border border-gray-300 px-3 py-3">
-                    </div>
-                    <div class="mt-4">
-                        <label for="telefone" class="block text-sm font-bold text-gray-800">Telefone</label>
-                        <input id="telefone" name="telefone" type="tel" required class="focus-ring mt-2 w-full rounded border border-gray-300 px-3 py-3">
-                    </div>
-                    <div class="mt-4">
-                        <label for="assunto" class="block text-sm font-bold text-gray-800">Assunto</label>
-                        <select id="assunto" name="assunto" required class="focus-ring mt-2 w-full rounded border border-gray-300 px-3 py-3">
-                            <option value="">Seleccione</option>
-                            <option value="demonstracao">Solicitar demonstração</option>
-                            <option value="planos">Informação sobre planos</option>
-                            <option value="pauta">Consulta da pauta</option>
-                            <option value="outro">Outro</option>
-                        </select>
-                    </div>
-                    <div class="mt-4">
-                        <label for="mensagem" class="block text-sm font-bold text-gray-800">Mensagem</label>
-                        <textarea id="mensagem" name="mensagem" rows="4" required class="focus-ring mt-2 w-full rounded border border-gray-300 px-3 py-3"></textarea>
-                    </div>
-                    <button type="submit" class="btn-primary focus-ring mt-5 w-full">Enviar pedido</button>
+                    <div class="form-grid"><div class="field"><label for="nome">Nome completo</label><input id="nome" name="nome" autocomplete="name" maxlength="255" required></div><div class="field"><label for="empresa">Empresa (opcional)</label><input id="empresa" name="empresa" autocomplete="organization" maxlength="255"></div></div>
+                    <div class="form-grid"><div class="field"><label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" maxlength="255" required></div><div class="field"><label for="telefone">Telefone</label><input id="telefone" name="telefone" type="tel" autocomplete="tel" maxlength="20" required></div></div>
+                    <div class="field"><label for="assunto">Como podemos ajudar?</label><select id="assunto" name="assunto" required><option value="">Seleccione um assunto</option><option value="demonstracao">Solicitar demonstração</option><option value="planos">Informação sobre planos</option><option value="pauta">Consulta da pauta</option><option value="outro">Outro</option></select></div>
+                    <div class="field"><label for="mensagem">Mensagem</label><textarea id="mensagem" name="mensagem" rows="4" maxlength="5000" required></textarea></div><button class="button primary" type="submit">Enviar pedido <span aria-hidden="true">→</span></button><p class="form-hint">O pedido de contacto não cria uma conta.</p><p id="contact-feedback" class="form-feedback" role="status" aria-live="polite" aria-atomic="true"></p>
                 </form>
             </div>
         </section>
     </main>
-
-    <footer class="bg-gray-900 py-10 text-white">
-        <div class="site-shell">
-            <div class="grid gap-8 md:grid-cols-4">
-                <div class="md:col-span-2">
-                    <div class="flex items-center gap-3">
-                        <img src="{{ asset('dist/img/LOGIGATE.png') }}" alt="" class="h-10 w-auto">
-                        <span class="text-lg font-extrabold">Logigate</span>
-                    </div>
-                    <p class="mt-4 max-w-md text-gray-300">Plataforma digital para gestão aduaneira, comércio externo e acompanhamento operacional em Angola.</p>
-                </div>
-                <div>
-                    <h3 class="font-bold">Acesso</h3>
-                    <ul class="mt-4 space-y-2 text-gray-300">
-                        <li><a href="{{ route('login') }}" class="focus-ring hover:text-white">Login</a></li>
-                        <li><a href="{{ route('cliente.portal.login') }}" class="focus-ring hover:text-white">Portal Cliente</a></li>
-                        <li><a href="#" class="focus-ring hover:text-white">Transitário</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-bold">Newsletter</h3>
-                    <form id="newsletterForm" action="{{ route('newsletter.subscribe') }}" method="POST" class="mt-4 flex">
-                        @csrf
-                        <label for="newsletter-email" class="sr-only">Email</label>
-                        <input id="newsletter-email" name="email" type="email" required placeholder="O seu email" class="focus-ring min-w-0 flex-1 rounded-l border-0 px-3 py-3 text-gray-900">
-                        <button type="submit" class="focus-ring rounded-r bg-blue-700 px-4 font-bold hover:bg-blue-800" aria-label="Subscrever">
-                            <i class="fas fa-paper-plane" aria-hidden="true"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-            <div class="mt-8 border-t border-gray-800 pt-6 text-sm text-gray-400">
-                &copy; {{ date('Y') }} Logigate by Hongayetu LDA. Todos os direitos reservados.
-            </div>
-        </div>
-    </footer>
-
-    <div id="pageNotice" class="fixed bottom-4 left-4 right-4 z-50 hidden rounded border bg-white p-4 text-sm font-semibold shadow-lg md:left-auto md:w-96" role="status" aria-live="polite"></div>
-
-    <script>
-        const menuButton = document.getElementById('menuButton');
-        const mobileMenu = document.getElementById('mobileMenu');
-
-        if (menuButton && mobileMenu) {
-            menuButton.addEventListener('click', () => {
-                const isOpen = mobileMenu.classList.toggle('is-open');
-                menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            });
-
-            mobileMenu.querySelectorAll('a').forEach((link) => {
-                link.addEventListener('click', () => {
-                    mobileMenu.classList.remove('is-open');
-                    menuButton.setAttribute('aria-expanded', 'false');
-                });
-            });
-        }
-
-        const formatter = new Intl.NumberFormat('pt-AO', { maximumFractionDigits: 0 });
-        const cycleLabels = {
-            monthly: 'por mês',
-            semestral: 'por semestre',
-            annual: 'por ano'
-        };
-
-        document.querySelectorAll('.cycle-tab').forEach((tab) => {
-            tab.addEventListener('click', () => {
-                const cycle = tab.dataset.cycle;
-
-                document.querySelectorAll('.cycle-tab').forEach((item) => {
-                    item.setAttribute('aria-selected', 'false');
-                    item.classList.remove('text-white');
-                    item.classList.add('text-gray-700');
-                    item.style.background = 'transparent';
-                });
-
-                tab.setAttribute('aria-selected', 'true');
-                tab.classList.add('text-white');
-                tab.classList.remove('text-gray-700');
-                tab.style.background = 'var(--brand)';
-
-                document.querySelectorAll('.billing-cycle').forEach((input) => {
-                    input.value = cycle;
-                });
-
-                document.querySelectorAll('.plan-price').forEach((price) => {
-                    const value = Number(price.dataset[cycle] || 0);
-                    price.textContent = formatter.format(value) + ' AOA';
-                    const label = price.parentElement.querySelector('.cycle-label');
-                    if (label) {
-                        label.textContent = cycleLabels[cycle];
-                    }
-                });
-            });
-        });
-
-        document.querySelectorAll('.faq-toggle').forEach((button) => {
-            button.addEventListener('click', () => {
-                const target = document.getElementById(button.getAttribute('aria-controls'));
-                const isExpanded = button.getAttribute('aria-expanded') === 'true';
-                button.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
-                if (target) {
-                    target.classList.toggle('hidden');
-                }
-            });
-        });
-
-        const notice = document.getElementById('pageNotice');
-
-        function showNotice(type, message) {
-            if (!notice) return;
-
-            notice.classList.remove('hidden', 'border-green-200', 'border-red-200', 'text-green-800', 'text-red-800');
-            notice.classList.add(type === 'success' ? 'border-green-200' : 'border-red-200');
-            notice.classList.add(type === 'success' ? 'text-green-800' : 'text-red-800');
-            notice.textContent = message;
-
-            window.setTimeout(() => {
-                notice.classList.add('hidden');
-            }, 6000);
-        }
-
-        async function submitJsonForm(form) {
-            const button = form.querySelector('button[type="submit"]');
-            const originalHtml = button ? button.innerHTML : '';
-
-            if (button) {
-                button.disabled = true;
-                button.textContent = 'A enviar...';
-            }
-
-            try {
-                const response = await fetch(form.action, {
-                    method: form.method || 'POST',
-                    body: new FormData(form),
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (!response.ok || !data.success) {
-                    const firstError = data.errors ? Object.values(data.errors)[0][0] : null;
-                    showNotice('error', firstError || data.message || 'Não foi possível enviar. Verifique os dados e tente novamente.');
-                    return;
-                }
-
-                showNotice('success', data.message || 'Pedido enviado com sucesso.');
-                form.reset();
-            } catch (error) {
-                showNotice('error', 'Erro de ligação. Tente novamente dentro de instantes.');
-            } finally {
-                if (button) {
-                    button.disabled = false;
-                    button.innerHTML = originalHtml;
-                }
-            }
-        }
-
-        const contactForm = document.getElementById('contactForm');
-        if (contactForm) {
-            contactForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                submitJsonForm(contactForm);
-            });
-        }
-
-        const newsletterForm = document.getElementById('newsletterForm');
-        if (newsletterForm) {
-            newsletterForm.addEventListener('submit', (event) => {
-                event.preventDefault();
-                submitJsonForm(newsletterForm);
-            });
-        }
-    </script>
+    <footer class="site-footer"><div class="shell"><div class="footer-grid"><div class="footer-brand"><a href="{{ route('home') }}" aria-label="LogiGate — página inicial"><img src="{{ asset('dist/img/LandingPage/logo-light.webp') }}" width="720" height="182" loading="lazy" alt="LOGIGATE"></a><p>Gestão aduaneira para empresas e despachantes em Angola.</p></div><div><h3>Encontre o seu caminho</h3><nav class="footer-links" aria-label="Ligações do rodapé"><a href="{{ route('login') }}">Entrar na aplicação</a><a href="{{ route('cliente.portal.login') }}">Portal do cliente</a><a href="{{ route('marketplace') }}">Encontrar despachante</a><a href="{{ route('consultar.pauta') }}">Pauta Aduaneira</a></nav></div><div><h3>Novidades do LogiGate</h3><form id="newsletter-form" action="{{ route('newsletter.subscribe') }}" method="POST" data-json-form data-feedback="newsletter-feedback">@csrf<label class="sr-only" for="newsletter-email">Email para a newsletter</label><div class="newsletter"><input id="newsletter-email" name="email" type="email" autocomplete="email" maxlength="255" placeholder="O seu email" required><button type="submit" aria-label="Subscrever newsletter">→</button></div><p id="newsletter-feedback" class="form-feedback" role="status" aria-live="polite" aria-atomic="true"></p></form></div></div><div class="footer-bottom"><span>&copy; {{ date('Y') }} LogiGate by Hongayetu LDA. Todos os direitos reservados.</span><span>Luanda, Angola</span></div></div></footer>
 </body>
 </html>

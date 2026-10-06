@@ -346,8 +346,9 @@
       left: 0;
     }
   </style>
+  @vite(['resources/js/pauta-marketplace.js'])
 </head>
-<body>
+<body class="pauta-page">
   <!-- Skip to content link -->
   <a href="#main-content" class="skip-link">Saltar para o conteúdo principal</a>
 
@@ -451,94 +452,38 @@
   </nav>
 
   <main id="main-content">
-    <!-- Hero Section -->
-    <section class="pt-32 pb-20 relative overflow-hidden">
-      <div class="container mx-auto px-4 lg:px-8">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb mb-8" data-aos="fade-down">
-          <a href="{{ route('home') }}"><i class="fas fa-home"></i> Início</a>
-          <i class="fas fa-chevron-right text-xs"></i>
-          <span>Pauta Aduaneira</span>
-        </div>
-
-        <div class="text-center text-white mb-12" data-aos="fade-up">
-          <h1 class="text-5xl lg:text-6xl font-bold mb-6">
-            Consulta <span class="gradient-text">Pauta Aduaneira</span>
-          </h1>
-          <p class="text-xl opacity-90 max-w-3xl mx-auto">
-            Pesquise códigos NCM/SH, impostos e requisitos para importação e exportação em Angola
-          </p>
-        </div>
-
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12" id="statistics">
-          <!-- Carregado via JavaScript -->
-        </div>
-
-        <!-- Search Box -->
-        <div class="max-w-4xl mx-auto" data-aos="fade-up" data-aos-delay="200">
-          <div class="search-box flex flex-col md:flex-row">
-            <input type="text" 
-                   id="searchInput"
-                   class="search-input flex-grow"
-                   placeholder="Pesquisar por código (ex: 0203.11.00) ou descrição..."
-                   autocomplete="off">
-            <button id="searchButton" class="search-button">
-              <i class="fas fa-search mr-2"></i>Consultar
-            </button>
-          </div>
-          
-          <!-- Suggestions -->
-          <div id="suggestions" class="glass-card mt-2 hidden absolute z-20 w-full max-w-4xl"></div>
-        </div>
-
-        <!-- Quick Filters -->
-        <div class="flex flex-wrap justify-center gap-3 mt-8" data-aos="fade-up" data-aos-delay="300">
-          <button class="filter-chip" data-capitulo="01">🌾 Cap. 01 - Animais vivos</button>
-          <button class="filter-chip" data-capitulo="02">🥩 Cap. 02 - Carnes</button>
-          <button class="filter-chip" data-capitulo="84">⚙️ Cap. 84 - Máquinas</button>
-          <button class="filter-chip" data-capitulo="85">💡 Cap. 85 - Elétricos</button>
-          <button class="filter-chip" data-capitulo="87">🚗 Cap. 87 - Veículos</button>
-          <button class="filter-chip" data-capitulo="90">🔬 Cap. 90 - Instrumentos</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Results Section -->
-    <section class="pb-20">
-      <div class="container mx-auto px-4 lg:px-8">
-        <!-- Loading -->
-        <div id="loading" class="hidden text-center py-12">
-          <div class="spinner mx-auto mb-4"></div>
-          <p class="text-white">A carregar resultados...</p>
-        </div>
-
-        <!-- Results Container -->
-        <div id="results" class="glass-card p-8">
-          <div class="text-center py-12 text-gray-500">
-            <i class="fas fa-search text-5xl mb-4 text-blue-300"></i>
-            <p class="text-lg">Digite um termo de pesquisa para começar</p>
-            <p class="text-sm mt-2">Ex: 0203, máquinas, veículos, etc.</p>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <div id="pagination" class="flex justify-center mt-8 gap-2"></div>
-      </div>
-    </section>
+    @include('WebSite.partials.pauta-content')
   </main>
 
   <!-- Detail Modal -->
-  <div id="detailModal" class="modal">
+  <div id="detailModal" class="modal @if($selection) active @endif" role="dialog" aria-modal="true" aria-labelledby="modalTitle" data-details-endpoint="{{ url('/api/v1/pauta/detalhes') }}">
     <div class="modal-content">
       <div class="p-8">
         <div class="flex justify-between items-start mb-6">
-          <h2 class="text-2xl font-bold text-gray-900" id="modalTitle"></h2>
-          <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700 transition">
-            <i class="fas fa-times text-2xl"></i>
-          </button>
+          <h2 class="text-2xl font-bold text-gray-900" id="modalTitle" tabindex="-1">{{ $selection ? 'Código: '.$selection['codigo'] : '' }}</h2>
+          <a data-pauta-close href="{{ route('consultar.pauta', \Illuminate\Support\Arr::only($filters, ['q','tipo','page','per_page'])) }}" aria-label="Fechar detalhes" class="text-gray-500 hover:text-gray-700 transition">
+            <span aria-hidden="true">×</span>
+          </a>
         </div>
-        <div id="modalContent" class="space-y-6"></div>
+        <div class="pauta-detail-grid">
+          <div id="modalContent" class="space-y-6">@include('WebSite.partials.pauta-detail')</div>
+          <aside id="pauta-marketplace-guide" class="pauta-guide" @if(!$directory) hidden @endif aria-live="polite" data-endpoint="{{ route('marketplace.guide') }}" data-marketplace="{{ route('marketplace') }}">
+            @if($directory)
+              <h3>Despachantes com experiência nesta mercadoria</h3>
+              @if($directory['error'] ?? false)<p>Não foi possível consultar o histórico público. Pode tentar novamente ou explorar o marketplace.</p>@endif
+              @forelse($directory['profiles'] as $profile)
+                <article><h4>{{ $profile->public_name }}</h4><p>{{ $profile->public_location ?: 'Localização pública não indicada' }}</p><p>{{ $profile->operations !== null ? 'Código exacto · actividade em '.$profile->active_months.' meses · '.$profile->operations.' processos concluídos.' : 'Especialidade declarada. Sem histórico público disponível neste período.' }}</p></article>
+              @empty @unless($directory['error'] ?? false)<p>Sem histórico público autorizado disponível. Isso não significa ausência de experiência profissional.</p>@endunless @endforelse
+              @php
+                $guideContext = \Illuminate\Support\Arr::only($filters, ['months','location','recurrence']);
+                foreach (['q','tipo','page','per_page'] as $key) { if (isset($filters[$key]) && $filters[$key] !== '') $guideContext['pauta_'.$key] = $filters[$key]; }
+              @endphp
+              <a href="{{ route('marketplace', array_merge($guideContext, ['pauta_id' => $selection['id'], 'codigo' => $selection['codigo'], 'mercadoria_descricao' => $selection['descricao']])) }}">Ver todos no marketplace →</a>
+              <p>Histórico registado no LogiGate de {{ $directory['start']->format('d/m/Y') }} a {{ $directory['end']->copy()->subDay()->format('d/m/Y') }}. O guia não valida oficialmente a classificação pautal nem garante prazos.</p>
+            @endif
+          </aside>
+        </div>
+        <noscript><p>A consulta e a pesquisa estão disponíveis sem JavaScript.</p></noscript>
       </div>
     </div>
   </div>
@@ -610,14 +555,16 @@
   
   <script>
     // Initialize AOS
-    AOS.init({
+    const pautaReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (window.AOS && !pautaReducedMotion) AOS.init({
       duration: 1000,
       once: true,
       offset: 100
     });
+    else document.documentElement.classList.add('pauta-static');
 
-    // Particles.js
-    particlesJS('particles-js', {
+    // Optional visual libraries must not block the existing public search.
+    if (typeof particlesJS === 'function' && !pautaReducedMotion) particlesJS('particles-js', {
       particles: {
         number: { value: 80, density: { enable: true, value_area: 800 } },
         color: { value: "#ffffff" },
@@ -668,289 +615,6 @@
       });
     }
 
-    // Load Statistics
-    async function loadStatistics() {
-      try {
-        const response = await fetch(`${API_BASE}/pauta/estatisticas`);
-        const data = await response.json();
-        
-        if (data.success) {
-          const stats = data.data;
-          document.getElementById('statistics').innerHTML = `
-            <div class="stat-card">
-              <div class="stat-number">${stats.total_codigos}</div>
-              <div class="stat-label">Total Códigos</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number">${stats.total_capitulos}</div>
-              <div class="stat-label">Capítulos</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number">${stats.total_posicoes}</div>
-              <div class="stat-label">Posições</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-number">${stats.total_subposicoes}</div>
-              <div class="stat-label">Subposições</div>
-            </div>
-          `;
-        }
-      } catch (error) {
-        console.error('Erro ao carregar estatísticas:', error);
-      }
-    }
-
-    // Autocomplete
-    let searchTimeout;
-    const searchInput = document.getElementById('searchInput');
-    const suggestionsDiv = document.getElementById('suggestions');
-
-    searchInput.addEventListener('input', function(e) {
-      clearTimeout(searchTimeout);
-      const termo = e.target.value.trim();
-      
-      if (termo.length < 2) {
-        suggestionsDiv.classList.add('hidden');
-        return;
-      }
-      
-      searchTimeout = setTimeout(async () => {
-        try {
-          const response = await fetch(`${API_BASE}/pauta/sugestoes?termo=${encodeURIComponent(termo)}`);
-          const data = await response.json();
-          
-          if (data.success && data.data.length > 0) {
-            suggestionsDiv.innerHTML = data.data.map(item => `
-              <div class="p-4 hover:bg-gray-50 cursor-pointer border-b last:border-0 transition" 
-                   onclick="selectSuggestion('${item.codigo}')">
-                <div class="font-medium text-gray-900">${item.codigo}</div>
-                <div class="text-sm text-gray-600">${item.descricao}</div>
-              </div>
-            `).join('');
-            suggestionsDiv.classList.remove('hidden');
-          } else {
-            suggestionsDiv.classList.add('hidden');
-          }
-        } catch (error) {
-          console.error('Erro no autocomplete:', error);
-        }
-      }, 300);
-    });
-
-    function selectSuggestion(codigo) {
-      searchInput.value = codigo;
-      suggestionsDiv.classList.add('hidden');
-      searchPauta();
-    }
-
-    // Search Function
-    async function searchPauta(page = 1) {
-      const termo = searchInput.value.trim();
-      const resultsDiv = document.getElementById('results');
-      const loadingDiv = document.getElementById('loading');
-      
-      loadingDiv.classList.remove('hidden')
-      resultsDiv.innerHTML = '';
-      
-      try {
-        let url;
-        if (termo) {
-          if (/^[0-9\.]+$/.test(termo)) {
-            url = `${API_BASE}/pauta?codigo=${termo}&page=${page}`;
-          } else {
-            url = `${API_BASE}/pauta/busca?q=${encodeURIComponent(termo)}&tipo=descricao&limit=20`;
-          }
-        } else {
-          url = `${API_BASE}/pauta?page=${page}`;
-        }
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        loadingDiv.classList.add('hidden');
-        
-        if (data.success) {
-          displayResults(data);
-        } else {
-          resultsDiv.innerHTML = `
-            <div class="text-center py-12 text-gray-500">
-              <i class="fas fa-exclamation-circle text-5xl mb-4 text-red-400"></i>
-              <p class="text-lg">Erro ao carregar resultados</p>
-            </div>
-          `;
-        }
-      } catch (error) {
-        console.error('Erro na pesquisa:', error);
-        loadingDiv.classList.add('hidden');
-        resultsDiv.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <i class="fas fa-exclamation-triangle text-5xl mb-4 text-red-400"></i>
-            <p class="text-lg">Erro de ligação. Tente novamente.</p>
-          </div>
-        `;
-      }
-    }
-
-    // Display Results
-    function displayResults(data) {
-      const resultsDiv = document.getElementById('results');
-      
-      const items = data.data?.data || data.data || [];
-      
-      if (items.length === 0) {
-        resultsDiv.innerHTML = `
-          <div class="text-center py-12 text-gray-500">
-            <i class="fas fa-search text-5xl mb-4 text-gray-400"></i>
-            <p class="text-lg">Nenhum resultado encontrado</p>
-          </div>
-        `;
-        return;
-      }
-      
-      resultsDiv.innerHTML = `
-        <div class="space-y-4">
-          ${items.map(item => `
-            <div class="result-card" onclick="viewDetails('${item.codigo}')">
-              <div class="flex justify-between items-start mb-3">
-                <span class="text-2xl font-bold text-blue-600">${item.codigo}</span>
-                <span class="tax-tag">IVA ${item.iva || 0}%</span>
-              </div>
-              <p class="text-gray-700 mb-3">${item.descricao}</p>
-              <div class="flex items-center text-sm text-gray-500">
-                <i class="fas fa-chevron-right text-blue-500 mr-1"></i>
-                <span>Clique para ver detalhes</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-      
-      // Pagination
-      if (data.meta) {
-        displayPagination(data.meta);
-      }
-    }
-
-    // View Details
-    async function viewDetails(codigo) {
-      try {
-        const response = await fetch(`${API_BASE}/pauta/${codigo}`);
-        const data = await response.json();
-        
-        if (data.success) {
-          const item = data.data;
-          
-          document.getElementById('modalTitle').textContent = `Código: ${item.codigo}`;
-          document.getElementById('modalContent').innerHTML = `
-            <div class="space-y-6">
-              <div class="bg-gray-50 p-6 rounded-xl">
-                <h3 class="font-bold text-gray-900 mb-3">Descrição</h3>
-                <p class="text-gray-700">${item.descricao}</p>
-              </div>
-              
-              <div class="grid grid-cols-2 gap-4">
-                <div class="bg-gradient-to-br from-blue-50 to-white p-5 rounded-xl border border-blue-100">
-                  <div class="text-sm text-gray-500 mb-1">IVA</div>
-                  <div class="text-3xl font-bold text-blue-600">${item.impostos?.iva || 0}%</div>
-                </div>
-                <div class="bg-gradient-to-br from-purple-50 to-white p-5 rounded-xl border border-purple-100">
-                  <div class="text-sm text-gray-500 mb-1">IEQ</div>
-                  <div class="text-3xl font-bold text-purple-600">${item.impostos?.ieq || 0}%</div>
-                </div>
-              </div>
-              
-              ${item.unidade ? `
-                <div class="bg-gray-50 p-5 rounded-xl">
-                  <h3 class="font-bold text-gray-900 mb-2">Unidade</h3>
-                  <p class="text-gray-700">${item.unidade}</p>
-                </div>
-              ` : ''}
-              
-              ${item.requisitos ? `
-                <div class="bg-gray-50 p-5 rounded-xl">
-                  <h3 class="font-bold text-gray-900 mb-2">Requisitos</h3>
-                  <p class="text-gray-700">${item.requisitos}</p>
-                </div>
-              ` : ''}
-              
-              ${item.observacao ? `
-                <div class="bg-gray-50 p-5 rounded-xl">
-                  <h3 class="font-bold text-gray-900 mb-2">Observações</h3>
-                  <p class="text-gray-700">${item.observacao}</p>
-                </div>
-              ` : ''}
-              
-              <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                <div class="flex items-start">
-                  <i class="fas fa-info-circle text-yellow-600 mt-1 mr-3"></i>
-                  <div>
-                    <p class="text-sm text-yellow-800">
-                      <strong>Nota:</strong> As informações são baseadas na pauta aduaneira angolana vigente. 
-                      Consulte sempre um despachante oficial para validação.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-          
-          document.getElementById('detailModal').classList.add('active');
-        }
-      } catch (error) {
-        console.error('Erro ao carregar detalhes:', error);
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('detailModal').classList.remove('active');
-    }
-
-    // Pagination
-    function displayPagination(meta) {
-      const paginationDiv = document.getElementById('pagination');
-      let html = '';
-      
-      if (meta.current_page > 1) {
-        html += `<button onclick="searchPauta(${meta.current_page - 1})" class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50 transition">Anterior</button>`;
-      }
-      
-      html += `<span class="px-4 py-2 text-white">Página ${meta.current_page} de ${meta.last_page}</span>`;
-      
-      if (meta.current_page < meta.last_page) {
-        html += `<button onclick="searchPauta(${meta.current_page + 1})" class="px-4 py-2 bg-white rounded-lg shadow hover:bg-gray-50 transition">Próxima</button>`;
-      }
-      
-      paginationDiv.innerHTML = html;
-    }
-
-    // Event Listeners
-    document.getElementById('searchButton').addEventListener('click', () => searchPauta());
-    searchInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') searchPauta();
-    });
-
-    // Quick Filters
-    document.querySelectorAll('.filter-chip').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const capitulo = this.dataset.capitulo;
-        searchInput.value = capitulo;
-        searchPauta();
-        
-        // Update active state
-        document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
-
-    // Close suggestions when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#searchInput') && !e.target.closest('#suggestions')) {
-        suggestionsDiv.classList.add('hidden');
-      }
-    });
-
-    // Initialize
-    loadStatistics();
   </script>
 </body>
 </html>

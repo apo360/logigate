@@ -1,0 +1,85 @@
+/* Decorative motion belongs only to the standalone landing. */
+.lg-landing .button,
+.lg-landing .text-link,
+.lg-landing .desktop-nav a,
+.lg-landing .desktop-access a,
+.lg-landing .mobile-nav a,
+.lg-landing .menu-toggle,
+.lg-landing .demo-tabs a,
+.lg-landing .billing span,
+.lg-landing .faq-list summary::after {
+    transition: color 180ms ease-out, background-color 180ms ease-out,
+        border-color 180ms ease-out, transform 180ms ease-out;
+}
+
+.lg-landing .button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .lg-landing .button:hover:not(:disabled) {
+        transform: translateY(-1px);
+    }
+}
+
+/* No opacity animation on the hero: all principal content is always visible. */
+.lg-landing[data-lg-motion-ready] .hero-copy {
+    animation: lg-hero-enter 450ms ease-out both;
+}
+
+.lg-landing[data-lg-motion-ready] [data-lg-reveal] {
+    transition: opacity 500ms ease-out var(--lg-reveal-delay, 0ms),
+        transform 500ms ease-out var(--lg-reveal-delay, 0ms);
+}
+
+.lg-landing[data-lg-motion-ready] [data-lg-pending] {
+    opacity: 0;
+    transform: translateY(16px);
+}
+
+.lg-landing[data-lg-motion-ready] [data-lg-pending]:focus-within,
+.lg-landing[data-lg-motion-ready] [data-lg-reveal]:focus-within {
+    opacity: 1;
+    transform: none;
+    transition: none;
+}
+
+.lg-landing .mobile-nav.is-open {
+    animation: lg-control-enter 160ms ease-out;
+}
+
+.js .lg-landing .demo-panel:not([hidden]) {
+    animation: lg-control-enter 180ms ease-out;
+}
+
+.lg-landing .faq-list details[open] > p {
+    animation: lg-control-enter 180ms ease-out;
+}
+
+@keyframes lg-hero-enter {
+    from { transform: translateY(8px); }
+    to { transform: none; }
+}
+
+@keyframes lg-control-enter {
+    from { opacity: .92; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 599px) {
+    .lg-landing[data-lg-motion-ready] [data-lg-pending] {
+        transform: translateY(12px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .lg-landing[data-lg-motion-ready] [data-lg-pending] {
+        opacity: 1;
+        transform: none;
+    }
+    .lg-landing *, .lg-landing *::before, .lg-landing *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}

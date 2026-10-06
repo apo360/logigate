@@ -47,10 +47,11 @@ use App\Models\Processo;
     Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
     // Exibir o formulário de consulta da Pauta Aduaneira
-    Route::get('/consultar-pauta-aduaneira', [WelcomeController::class, 'consultarPauta'])->name('consultar.pauta');
+    Route::get('/consultar-pauta-aduaneira', [\App\Http\Controllers\WebPage\PublicPautaController::class, 'index'])->name('consultar.pauta');
 
     // MarketPlace
-    Route::get('/mercado', [WelcomeController::class, 'marketplace'])->name('marketplace');
+    Route::get('/mercado', [\App\Http\Controllers\WebPage\MarketplaceController::class, 'index'])->name('marketplace');
+    Route::get('/mercado/guia', [\App\Http\Controllers\WebPage\MarketplaceController::class, 'guide'])->middleware('throttle:60,1')->name('marketplace.guide');
 
     // Rotas de Checkout (Pagamento da Subscrição Rápida)
     Route::get('/cadastro-/{conta}/Confirmar-Pagamento', function(){return view('pagamentos.pagamento-quick');})->name('checkout');
