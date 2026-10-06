@@ -2,34 +2,6 @@ import { initLandingMotion } from './landing-motion';
 
 document.documentElement.classList.add('js');
 
-const toggle = document.querySelector('.menu-toggle');
-const menu = document.getElementById('mobile-menu');
-function closeMenu(returnFocus = false) {
-    menu?.classList.remove('is-open');
-    toggle?.setAttribute('aria-expanded', 'false');
-    toggle?.setAttribute('aria-label', 'Abrir menu');
-    if (returnFocus) toggle?.focus();
-}
-toggle?.addEventListener('click', () => {
-    const open = menu.classList.toggle('is-open');
-    toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu');
-    if (open) menu.querySelector('a')?.focus();
-});
-menu?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => closeMenu()));
-document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && menu?.classList.contains('is-open')) closeMenu(true);
-});
-document.addEventListener('click', event => {
-    if (!event.target.closest('.site-header')) closeMenu();
-});
-document.querySelector('.site-header')?.addEventListener('focusout', event => {
-    if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) closeMenu();
-});
-window.matchMedia('(min-width:1200px)').addEventListener('change', event => {
-    if (event.matches) closeMenu();
-});
-
 const tabs = [...document.querySelectorAll('.demo-tabs a')];
 const tablist = document.querySelector('.demo-tabs');
 tablist?.setAttribute('role', 'tablist');

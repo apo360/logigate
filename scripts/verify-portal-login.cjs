@@ -1,0 +1,53 @@
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE);
+(async () => {
+ const browser = await chromium.launch({headless:true,executablePath:process.env.LANDING_BROWSER});
+ const context = await browser.newContext({reducedMotion:'reduce'});
+ await context.route('**/*', route => {
+  const url=new URL(route.request().url());
+  if(url.hostname!=='127.0.0.1')return route.abort();
+  assert.equal(route.request().method(),'GET','No authentication/newsletter submissions');
+  return route.continue();
+ });
+ const page=await context.newPage();const errors=[],badAssets=[];
+ page.on('pageerror',error=>errors.push(error.message));
+ page.on('response',response=>{if(/\/(css|js|dist)\//.test(response.url())&&response.status()>=400)badAssets.push(response.url());});
+ const layouts=[];
+ for(const width of [320,360,390,768,1440]) {
+  await page.setViewportSize({width,height:1000});await page.goto('http://127.0.0.1:8128/portal-cliente/Acesso');
+  await page.waitForSelector('[data-portal-login][data-enhanced]');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Overflow ${width}`);
+  assert.equal(await page.locator('#website-navigation [aria-current=page]').textContent().then(x=>x.trim()),'Portal do cliente');
+  assert.equal(await page.locator('form[data-portal-login]').getAttribute('method'),'POST');
+  assert.ok((await page.locator('form[data-portal-login]').getAttribute('action')).endsWith('/portal-cliente/Acesso'));
+  assert.equal(await page.locator('[name=_token]').count(),2);
+  assert.equal(await page.locator('#login').getAttribute('autocomplete'),'username');
+  assert.equal(await page.locator('#password').getAttribute('autocomplete'),'current-password');
+  await page.locator('#login').focus();await page.keyboard.press('Tab');assert.equal(await page.getByRole('link',{name:'Precisa de ajuda?',exact:true}).evaluate(el=>el===document.activeElement),true);
+  await page.keyboard.press('Tab');assert.equal(await page.locator('#password').evaluate(el=>el===document.activeElement),true);
+  await page.keyboard.press('Tab');assert.equal(await page.locator('[data-password-toggle]').evaluate(el=>el===document.activeElement),true);
+  assert.equal(await page.locator('form[data-portal-login]').evaluate(form=>form.checkValidity()),false);
+  await page.locator('#login').fill('cliente@example.test');await page.locator('#password').fill('fixture-password');
+  assert.equal(await page.locator('form[data-portal-login]').evaluate(form=>form.checkValidity()),true);
+  await page.getByRole('button',{name:'Mostrar',exact:true}).click();assert.equal(await page.locator('#password').getAttribute('type'),'text');
+  await page.getByRole('button',{name:'Ocultar',exact:true}).click();assert.equal(await page.locator('#password').getAttribute('type'),'password');
+  await page.locator('#password').fill('');await page.locator('#login').fill('');
+  await page.screenshot({path:`storage/app/portal-login-qa/login-${width}.png`,fullPage:true});
+  await page.screenshot({path:`storage/app/portal-login-qa/login-top-${width}.png`});layouts.push(width);
+ }
+ await page.setViewportSize({width:390,height:1000});await page.goto('http://127.0.0.1:8128/portal-cliente/Acesso?state=error');
+ assert.equal(await page.locator('#login').inputValue(),'cliente@example.test');assert.equal(await page.locator('#password').inputValue(),'');
+ assert.equal(await page.locator('#login').getAttribute('aria-invalid'),'true');assert.equal(await page.locator('#password').getAttribute('aria-invalid'),'true');
+ assert.ok((await page.locator('#login').getAttribute('aria-describedby')).includes('login-error'));
+ assert.equal(await page.getByRole('alert').count(),1);assert.ok(!(await page.content()).includes('must-not-render'));
+ await page.screenshot({path:'storage/app/portal-login-qa/login-error.png',fullPage:true});
+ await page.getByRole('link',{name:'Precisa de ajuda?',exact:true}).click();assert.ok((await page.getByRole('status').first().textContent()).includes('contacte o seu despachante'));
+ await page.screenshot({path:'storage/app/portal-login-qa/login-reset.png',fullPage:true});
+ const staticContext=await browser.newContext({javaScriptEnabled:false});await staticContext.route('**/*',route=>new URL(route.request().url()).hostname==='127.0.0.1'?route.continue():route.abort());
+ const staticPage=await staticContext.newPage();await staticPage.setViewportSize({width:320,height:1000});await staticPage.goto('http://127.0.0.1:8128/portal-cliente/Acesso');
+ assert.equal(await staticPage.locator('[data-password-toggle]').isVisible(),false);assert.ok(await staticPage.locator('#login').isVisible());assert.ok(await staticPage.locator('.website-navigation').isVisible());await staticContext.close();
+ assert.deepEqual(errors,[]);assert.deepEqual(badAssets,[]);
+ fs.writeFileSync('storage/app/portal-login-qa/report.json',JSON.stringify({layouts,errors,badAssets,checks:['native POST/CSRF','autocomplete','validation','password visibility','old login/no password repopulation','errors','reset information','no JS','no submissions'],fixtures:true},null,2));
+ await browser.close();console.log('Portal login front-end checks passed.');
+})().catch(error=>{console.error(error);process.exit(1)});

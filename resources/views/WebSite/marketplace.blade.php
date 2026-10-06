@@ -11,29 +11,7 @@
 </head>
 <body class="marketplace-page">
     <a class="mp-skip" href="#conteudo">Saltar para o conteúdo</a>
-    <header class="mp-header">
-        <div class="mp-shell">
-            <div class="mp-header-row">
-                <a class="mp-logo" href="{{ route('home') }}" aria-label="LogiGate — página inicial"><img src="{{ asset('dist/img/LandingPage/logo-horizontal.webp') }}" width="720" height="201" alt="LOGIGATE"></a>
-                <nav class="mp-desktop-nav" aria-label="Navegação principal">
-                    <a href="{{ route('home') }}#plataforma">Plataforma</a>
-                    <a href="{{ route('marketplace') }}" aria-current="page">Encontrar despachante</a>
-                    <a href="{{ route('consultar.pauta') }}">Pauta Aduaneira</a>
-                    <a href="{{ route('home') }}#planos">Planos</a>
-                </nav>
-                <div class="mp-access"><a href="{{ route('cliente.portal.login') }}">Portal do cliente</a><a class="mp-button" href="{{ route('login') }}">Entrar na aplicação <span aria-hidden="true">↗</span></a></div>
-                <button class="mp-menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mp-mobile-menu"><span aria-hidden="true">☰</span></button>
-            </div>
-            <nav id="mp-mobile-menu" class="mp-mobile-nav" aria-label="Menu móvel">
-                <a href="{{ route('home') }}#plataforma">Plataforma</a>
-                <a href="{{ route('marketplace') }}" aria-current="page">Encontrar despachante</a>
-                <a href="{{ route('consultar.pauta') }}">Pauta Aduaneira</a>
-                <a href="{{ route('home') }}#planos">Planos</a>
-                <a class="mp-portal-link" href="{{ route('cliente.portal.login') }}">Portal do cliente</a>
-                <a class="mp-button" href="{{ route('login') }}">Entrar na aplicação</a>
-            </nav>
-        </div>
-    </header>
+    @include('WebSite.partials.menu_website')
     <main id="conteudo" tabindex="-1">
         <section class="mp-hero" aria-labelledby="marketplace-title">
             <div class="mp-shell">
@@ -54,10 +32,6 @@
             </div></div>
         </section>
     </main>
-    <footer class="mp-footer"><div class="mp-shell"><div class="mp-footer-grid">
-        <div><a class="mp-logo" href="{{ route('home') }}" aria-label="LogiGate — página inicial"><img src="{{ asset('dist/img/LandingPage/logo-light.webp') }}" width="720" height="182" loading="lazy" alt="LOGIGATE"></a><p>Gestão aduaneira para empresas e despachantes em Angola.</p></div>
-        <div><h2>Encontre o seu caminho</h2><nav aria-label="Ligações do rodapé"><a href="{{ route('home') }}">Página inicial</a><a href="{{ route('login') }}">Entrar na aplicação</a><a href="{{ route('cliente.portal.login') }}">Portal do cliente</a><a href="{{ route('consultar.pauta') }}">Pauta Aduaneira</a></nav></div>
-        <div><h2>Novidades do LogiGate</h2><form class="mp-newsletter" action="{{ route('newsletter.subscribe') }}" method="POST">@csrf<label for="newsletter-email">Email para a newsletter</label><div class="mp-newsletter-row"><input id="newsletter-email" name="email" type="email" autocomplete="email" maxlength="255" placeholder="O seu email" aria-describedby="newsletter-feedback" required><button type="submit" aria-label="Subscrever newsletter">→</button></div><p id="newsletter-feedback" class="mp-feedback" role="status" aria-live="polite" aria-atomic="true"></p></form></div>
-    </div><div class="mp-footer-bottom"><span>&copy; {{ date('Y') }} LogiGate by Hongayetu LDA. Todos os direitos reservados.</span><span>Luanda, Angola</span></div></div></footer>
+    @include('WebSite.partials.footer_website')
 </body>
 </html>
