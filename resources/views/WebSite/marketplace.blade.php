@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Marketplace Logigate - Encontre Despachantes</title>
     
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -133,6 +134,17 @@
   </nav>
 
     <main class="pt-24">
+        <section id="pautaMarketplaceContext" hidden class="container mx-auto px-4 py-6"
+                 data-consulta-url="{{ route('consultar.pauta') }}" data-pauta-api-base="{{ url('/api/v1') }}"
+                 aria-label="Contexto da consulta aduaneira">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <p class="text-sm text-blue-700 mb-2">Mercadoria selecionada na pauta aduaneira</p>
+                <h2 id="pautaMarketplaceCodigo" class="text-xl font-bold text-blue-800"></h2>
+                <p id="pautaMarketplaceDescricao" class="text-gray-700 mt-2"></p>
+                <p id="pautaMarketplaceEstado" class="text-sm text-gray-600 mt-3"></p>
+                <a id="pautaMarketplaceVoltar" href="{{ route('consultar.pauta') }}" class="inline-block text-blue-700 font-medium mt-4">← Voltar à mesma consulta</a>
+            </div>
+        </section>
         <!-- Hero Section -->
         <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
             <div class="container mx-auto px-4">
@@ -328,9 +340,11 @@
     </div>
   </footer>
 
+    <script src="{{ asset('js/website/pauta-core.js') }}"></script>
+    <script defer src="{{ asset('js/website/pauta-marketplace.js') }}"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init();
+        if (window.AOS) AOS.init();
 
         const API_BASE = '/api/v1/marketplace';
 
@@ -343,14 +357,23 @@
                 }
                 
                 const response = await fetch(url);
+                if (!response.ok) throw new Error('Diretório indisponível');
                 const data = await response.json();
                 
                 if (data.success) {
                     displayDespachantes(data.data);
+                } else {
+                    showMarketplaceUnavailable();
                 }
             } catch (error) {
-                console.error('Erro:', error);
+                showMarketplaceUnavailable();
             }
+        }
+
+        function showMarketplaceUnavailable() {
+            document.getElementById('despachantes').innerHTML =
+                '<div class="col-span-full bg-white border rounded-xl p-8 text-center"><h3 class="font-bold text-xl mb-3">Diretório de despachantes indisponível</h3><p class="text-gray-600">Não foi possível carregar os perfis públicos. A sua consulta foi preservada; tente novamente mais tarde.</p></div>';
+            document.getElementById('loadMore').classList.add('hidden');
         }
 
         function displayDespachantes(despachantes) {
@@ -422,11 +445,18 @@
             
             document.getElementById('despachanteId').value = id;
             document.getElementById('modalDespachanteNome').textContent = nome;
+            const contexto = window.logigatePautaMarketplaceContext;
+            if (contexto) {
+                document.getElementById('mensagem').value =
+                    'Pretendo obter apoio para a mercadoria ' + contexto.descricao + ' (código pautal ' + contexto.codigo + ').';
+            }
+            document.getElementById('contactModal').classList.remove('hidden');
             document.getElementById('contactModal').classList.add('flex');
         }
 
         function fecharModal() {
             document.getElementById('contactModal').classList.remove('flex');
+            document.getElementById('contactModal').classList.add('hidden');
         }
 
         // Filtros
@@ -445,10 +475,12 @@
             
             try {
                 const response = await fetch(`${API_BASE}/despachantes/busca?q=${encodeURIComponent(termo)}`);
+                if (!response.ok) throw new Error('Diretório indisponível');
                 const data = await response.json();
                 if (data.success) displayDespachantes(data.data);
+                else showMarketplaceUnavailable();
             } catch (error) {
-                console.error(error);
+                showMarketplaceUnavailable();
             }
         });
 
