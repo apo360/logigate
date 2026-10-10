@@ -1,12 +1,12 @@
 <!-- resources/ -->
 @php
     $children = $submenu['children'] ?? [];
-    $isActive = request()->routeIs($submenu['route']);
+    $isActive = \App\Support\MenuTree::active($submenu, request()->route()?->getName());
 @endphp
 
-<div x-data="{ open: {{ $isActive ? 'true' : 'false' }} }">
+<div wire:key="sidebar-child-{{ $submenu['id'] }}" x-data="{ open: {{ $isActive ? 'true' : 'false' }} }">
 
-    <a href="{{ $submenu['route'] !== '#' && \Illuminate\Support\Facades\Route::has($submenu['route']) ? route($submenu['route']) : '#' }}"
+    <a href="{{ $submenu['route'] && $submenu['route'] !== '#' && \Illuminate\Support\Facades\Route::has($submenu['route']) ? route($submenu['route']) : '#' }}"
        @if(count($children) > 0)
            @click.prevent="open = !open"
        @endif

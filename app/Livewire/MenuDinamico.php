@@ -2,27 +2,37 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
-use App\Models\PlanoModulo;
-use App\Models\Menu;
-use App\Models\Subscricao;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use App\Application\Integracoes\Services\IntegracaoResolverService;
+use App\Livewire\Concerns\RequiresActiveEmpresa;
+use App\Models\Menu;
+use App\Models\Module;
+use App\Models\PlanoModulo;
+use App\Models\Subscricao;
+use App\Support\MenuTree;
+use App\Support\TenantContext;
+use Illuminate\Support\Facades\Auth;
+use Livewire\Component;
 
 class MenuDinamico extends Component
 {
-    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+    use RequiresActiveEmpresa;
 
     public $modulosAtivos = [];
+
     public $menusPrincipais = [];
+
+    public $menusPorModulo = [];
+
+    public $nomesModulos = [];
+
     public $facturacaoHongayetuActiva = false;
 
     public function mount()
     {
-        $empresa = \App\Support\TenantContext::empresa();
-        if (!$empresa) {
+        $empresa = TenantContext::empresa();
+        if (! $empresa) {
             $this->menusPrincipais = [];
+
             return;
         }
 
@@ -37,6 +47,7 @@ class MenuDinamico extends Component
 
         // 2) Módulos ativos
         $this->modulosAtivos = PlanoModulo::whereIn('plano_id', $planosAtivos)
+            ->distinct()
             ->pluck('modulo_id')
             ->toArray();
 
@@ -44,63 +55,30 @@ class MenuDinamico extends Component
         $menus = Menu::whereIn('module_id', $this->modulosAtivos)
             ->orderBy('order_priority')
             ->get()->filter(function ($m) {
-                return !$m->permission || Auth::user()->can($m->permission);
+                return ! $m->permission || Auth::user()?->can($m->permission);
             });
 
         // 4) Converter para uma estrutura básica de array
         $menusArr = $menus->map(function ($menu) {
             return [
-                'id'        => $menu->id,
+                'id' => $menu->id,
                 'parent_id' => $menu->parent_id,
                 'module_id' => $menu->module_id,
                 'menu_name' => $menu->menu_name,
-                'route'     => $menu->route,
-                'icon'      => $menu->icon,
-                'children'  => [],
+                'route' => $menu->route,
+                'icon' => $menu->icon,
+                'children' => [],
             ];
         })->keyBy('id')->toArray();
 
-        // 5) Construção da árvore
-        $tree = [];
-
-        foreach ($menusArr as $id => &$menu) {
-
-            if ($menu['parent_id']) {
-                // Inserir no pai
-                $menusArr[$menu['parent_id']]['children'][] = &$menu;
-            } else {
-                // É menu principal
-                $tree[] = &$menu;
-            }
-        }
-
-        // 6) Atribuir ao componente
-        $this->menusPrincipais = $tree;
+        $this->menusPrincipais = MenuTree::build(array_values($menusArr));
+        $this->menusPorModulo = collect($this->menusPrincipais)->groupBy('module_id')->map->all()->all();
+        $this->nomesModulos = Module::whereIn('id', $this->modulosAtivos)->pluck('module_name', 'id')->all();
 
         // 7) Menus dinâmicos com integração Hongayetu Facturação
         $this->facturacaoHongayetuActiva = app(IntegracaoResolverService::class)->isFacturacaoHongayetuActiva($empresa?->id);
 
-        // 7) Cache para otimização de desempenho
-
-
-        //
-        $cacheKey = 'menus_user_' . Auth::id() . '_empresa_' . $empresa->id;
-
-        $tree = Cache::remember($cacheKey, now()->addHours(6), function () use ($menusArr) {
-
-            $tree = [];
-
-            foreach ($menusArr as $id => &$menu) {
-
-                if ($menu['parent_id']) {
-                    $menusArr[$menu['parent_id']]['children'][] = &$menu;
-                } else {
-                    $tree[] = &$menu;
-                }
-            }
-
-            return $tree;
-        });
+        // Permission-filtered trees are rebuilt against the current tenant, never cached.
     }
 
     public function render()

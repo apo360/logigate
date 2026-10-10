@@ -1,4 +1,4 @@
-<li class="p-2 bg-gray-50 rounded" data-id="{{ $node['id'] }}">
+<li wire:key="menu-node-{{ $node['id'] }}" class="p-2 bg-gray-50 rounded" data-id="{{ $node['id'] }}">
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 flex items-center justify-center rounded bg-logigate-primary/10 text-logigate-primary">
@@ -16,11 +16,9 @@
         </div>
     </div>
 
-    @if(!empty($node['children']))
-        <ul class="node-children mt-3 ml-6 space-y-2 sortable-list">
+        <ul class="node-children mt-3 ml-6 min-h-3 space-y-2 sortable-list">
             @foreach($node['children'] as $child)
                 @include('livewire.partials.menu-node', ['node' => $child])
             @endforeach
         </ul>
-    @endif
 </li>

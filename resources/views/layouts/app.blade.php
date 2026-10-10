@@ -131,7 +131,6 @@
 <body
     class="h-full overflow-hidden bg-gray-100 font-sans antialiased text-gray-900 dark:bg-gray-950 dark:text-gray-100"
     x-data="layoutState()"
-    x-init="init()"
     x-on:keydown.escape.window="closeSidebar()"
 >
     <!-- Overlay mobile -->
@@ -420,6 +419,8 @@
 
     <script>
         function registerLivewireToastBridge() {
+            if (window.logigateToastBridgeRegistered) return;
+            window.logigateToastBridgeRegistered = true;
             Livewire.on('toast', ({ type, message }) => {
                 window.dispatchEvent(new CustomEvent('toast', {
                     detail: { type, message }

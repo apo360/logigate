@@ -2,31 +2,34 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\RequiresActiveEmpresa;
 use App\Models\Subscricao;
-use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
+use App\Support\TenantContext;
 use Carbon\Carbon;
-
+use Livewire\Attributes\Locked;
+use Livewire\Component;
 
 class SubscriptionWidget extends Component
 {
-    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+    use RequiresActiveEmpresa;
 
-    public $empresa;
-    public $subscricao;
-    public ?int $subscricaoId = null;
+    #[Locked]
+    public ?Subscricao $subscricao = null;
+
+    #[Locked]
     public ?string $checkoutConta = null;
-    
+
     protected $listeners = ['subscricaoAtualizada' => 'carregarDados'];
-    
+
     public function mount()
     {
         $this->carregarDados();
     }
-    
+
     public function carregarDados()
     {
-        $empresa = \App\Support\TenantContext::empresa();
+        unset($this->dataInicio, $this->dataExpiracao, $this->diasRestantes, $this->percentualRestante, $this->expirada);
+        $empresa = TenantContext::empresa();
         $this->checkoutConta = $empresa?->conta;
 
         // Always prefer the active record, but safely fall back to the latest one
@@ -39,55 +42,51 @@ class SubscriptionWidget extends Component
             ->first();
     }
 
-    public function getDataInicioProperty(): Carbon
+    public function getDataInicioProperty(): ?Carbon
     {
         return $this->subscricao?->data_inicio
             ? Carbon::parse($this->subscricao->data_inicio)
-            : now();
+            : null;
     }
 
-    public function getDataExpiracaoProperty(): Carbon
+    public function getDataExpiracaoProperty(): ?Carbon
     {
         return $this->subscricao?->data_expiracao
             ? Carbon::parse($this->subscricao->data_expiracao)
-            : now();
+            : null;
     }
 
-    /* Computed property */
-    public function getSubscricaoProperty(): ?Subscricao
+    public function getExpiradaProperty(): bool
     {
-        return $this->subscricaoId
-            ? Subscricao::with('plano')->find($this->subscricaoId)
-            : null;
+        return $this->dataExpiracao !== null && $this->dataExpiracao->lessThanOrEqualTo(now());
     }
 
     public function getDiasRestantesProperty(): ?int
     {
-        if (!$this->subscricao) {
+        if (! $this->dataExpiracao) {
             return null;
         }
 
-        return now()->diffInDays($this->dataExpiracao, false);
-    }
+        $days = now()->diffInDays($this->dataExpiracao, false);
 
+        return (int) ($days > 0 ? ceil($days) : floor($days));
+    }
 
     public function getPercentualRestanteProperty(): int
     {
-        if (!$this->subscricao) {
+        if (! $this->dataInicio || ! $this->dataExpiracao) {
             return 0;
         }
 
-        $totalDays = max(
-            $this->dataInicio->diffInDays($this->dataExpiracao),
-            1
-        );
+        $totalSeconds = $this->dataInicio->diffInSeconds($this->dataExpiracao, false);
+        if ($totalSeconds <= 0) {
+            return 0;
+        }
+        $remaining = now()->diffInSeconds($this->dataExpiracao, false);
 
-        $diasRestantes = max($this->diasRestantes ?? 0, 0);
-
-        return (int) round(($diasRestantes / $totalDays) * 100);
+        return (int) round(max(0, min(100, ($remaining / $totalSeconds) * 100)));
     }
 
-    
     public function renovar()
     {
         return redirect()->route('billing.plans');
@@ -95,13 +94,14 @@ class SubscriptionWidget extends Component
 
     public function checkout()
     {
-        if (! $this->checkoutConta) {
+        $conta = TenantContext::empresa()?->conta;
+        if (! $conta) {
             return redirect()->route('billing.plans');
         }
 
-        return redirect()->route('checkout', ['conta' => $this->checkoutConta]);
+        return redirect()->route('checkout', ['conta' => $conta]);
     }
-    
+
     public function render()
     {
         return view('livewire.subscription-widget');

@@ -23,15 +23,16 @@
     @if(count($modulosAtivos) === 1 || count($menusPrincipais) <= 10)
 
         @foreach($menusPrincipais as $menu)
-            <div x-data="{ open: {{ request()->routeIs($menu['route']) ? 'true' : 'false' }} }">
+            @php $menuActive = \App\Support\MenuTree::active($menu, request()->route()?->getName()); @endphp
+            <div wire:key="sidebar-menu-{{ $menu['id'] }}" x-data="{ open: {{ $menuActive ? 'true' : 'false' }} }">
 
-                <a href="{{ $menu['route'] == '#' ? '#' : route($menu['route']) }}"
+                <a href="{{ $menu['route'] && $menu['route'] !== '#' && \Illuminate\Support\Facades\Route::has($menu['route']) ? route($menu['route']) : '#' }}"
                    @if(isset($menu['children']) && count($menu['children']) > 0)
                        @click.prevent="open = !open"
                    @endif
                    class="flex items-center p-2 rounded-lg 
                           text-white/80 hover:bg-white/10
-                          {{ request()->routeIs($menu['route']) ? 'bg-logigate-primary text-white' : '' }}">
+                          {{ $menuActive ? 'bg-logigate-primary text-white' : '' }}">
 
                     <i class="{{ $menu['icon'] }} text-logigate-secondary"></i>
                     <span class="ml-3">{{ $menu['menu_name'] }}</span>
@@ -58,15 +59,13 @@
         <!-- Agrupar por módulos -->
         @foreach($menusPorModulo as $moduleId => $menus)
             @php
-                $modulo = \App\Models\Modulo::find($moduleId);
-                $routes = array_column($menus, 'route');
-                $isActive = in_array(request()->route()->getName(), $routes);
+                $isActive = collect($menus)->contains(fn ($menu) => \App\Support\MenuTree::active($menu, request()->route()?->getName()));
             @endphp
 
-            <div x-data="{ open: {{ $isActive ? 'true' : 'false' }} }" class="text-xs uppercase text-logigate-tertiary font-bold mt-4 pl-2">
+            <div wire:key="sidebar-module-{{ $moduleId }}" x-data="{ open: {{ $isActive ? 'true' : 'false' }} }" class="text-xs uppercase text-logigate-tertiary font-bold mt-4 pl-2">
 
                 <button @click="open = !open" class="flex items-center p-2 w-full text-left rounded-lg text-white/80 hover:bg-white/10">
-                    <span class="ml-1 font-semibold">{{ $modulo->module_name }}</span>
+                    <span class="ml-1 font-semibold">{{ $nomesModulos[$moduleId] ?? 'Módulo' }}</span>
                     <i class="ml-auto fa text-white/50" :class="open ? 'fa-angle-down' : 'fa-angle-left'"></i>
                 </button>
 
@@ -133,4 +132,3 @@
     </a>
 
 </div>
-

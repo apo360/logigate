@@ -2,34 +2,48 @@
 
 namespace App\Livewire;
 
-use Livewire\Component;
 use App\Models\Menu;
 use App\Models\Module;
+use App\Support\MenuTree;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Livewire\Component;
 
 class MenuBuilder extends Component
 {
     public $menusTree = [];
+
     public $flatMenus = []; // for select parent
+
     public $modules = [];
 
     // form fields
     public $menuId;
+
     public $parent_id;
+
     public $module_id;
+
     public $menu_name;
+
     public $slug;
+
     public $order_priority = 0;
+
     public $route;
+
     public $icon;
+
     public $permission;
+
     public $description;
 
     public $showModal = false;
-    protected $listeners = ['saveOrder' => 'saveOrder', 'refreshMenus' => 'loadMenus'];
 
+    protected $listeners = ['saveOrder' => 'saveOrder', 'refreshMenus' => 'loadMenus'];
 
     public function mount()
     {
@@ -41,13 +55,14 @@ class MenuBuilder extends Component
     protected function authorizeUser()
     {
         // Ajusta conforme teu sistema de roles:
-        if (!Auth::user()->can('menus.manage')) {
+        if (! Auth::user()?->can('menus.manage')) {
             abort(403);
         }
     }
 
     public function loadMenus()
     {
+        $this->authorizeUser();
         // Carrega menus ordenados e monta árvore
         $menusRaw = Menu::orderBy('order_priority')->get();
 
@@ -68,39 +83,26 @@ class MenuBuilder extends Component
             ];
         })->keyBy('id')->toArray();
 
-        // build tree
-        $tree = [];
-        foreach ($menusArr as $id => &$item) {
-            if ($item['parent_id']) {
-                if (isset($menusArr[$item['parent_id']])) {
-                    $menusArr[$item['parent_id']]['children'][] = &$item;
-                } else {
-                    // parent not found -> push as root
-                    $tree[] = &$item;
-                }
-            } else {
-                $tree[] = &$item;
-            }
-        }
-
-        $this->menusTree = $tree;
-        $this->flatMenus = array_map(function($m){
+        $this->menusTree = MenuTree::build(array_values($menusArr), true);
+        $this->flatMenus = array_map(function ($m) {
             return [
                 'id' => $m['id'],
                 'menu_name' => $m['menu_name'],
-                'parent_id' => $m['parent_id']
+                'parent_id' => $m['parent_id'],
             ];
         }, array_values($menusArr));
     }
 
     public function create()
     {
+        $this->authorizeUser();
         $this->resetForm();
         $this->showModal = true;
     }
 
     public function edit($id)
     {
+        $this->authorizeUser();
         $menu = Menu::findOrFail($id);
         $this->menuId = $menu->id;
         $this->parent_id = $menu->parent_id;
@@ -134,23 +136,33 @@ class MenuBuilder extends Component
     {
         return [
             'menu_name' => ['required', 'string', 'max:191'],
-            'module_id' => ['nullable', 'exists:modulos,id'],
+            'module_id' => ['nullable', 'exists:modules,id'],
             'parent_id' => ['nullable', 'exists:menus,id'],
             'route' => ['nullable', 'string', 'max:191'],
             'icon' => ['nullable', 'string', 'max:191'],
             'permission' => ['nullable', 'string', 'max:191'],
             'description' => ['nullable', 'string'],
+            'order_priority' => ['required', 'integer', 'min:0'],
         ];
     }
 
     public function save()
     {
+        $this->authorizeUser();
         $this->validate();
+        if ($this->menuId) {
+            $parents = Menu::pluck('parent_id', 'id')->all();
+            $parents[$this->menuId] = $this->parent_id ?: null;
+            $this->validateParents($parents);
+        }
+        if ($this->route && $this->route !== '#' && ! Route::has($this->route)) {
+            throw ValidationException::withMessages(['route' => 'Seleccione uma rota existente.']);
+        }
 
         if ($this->menuId) {
             $menu = Menu::findOrFail($this->menuId);
         } else {
-            $menu = new Menu();
+            $menu = new Menu;
         }
 
         $menu->parent_id = $this->parent_id;
@@ -169,16 +181,17 @@ class MenuBuilder extends Component
 
         $this->showModal = false;
         $this->loadMenus();
-        $this->dispatchBrowserEvent('notify', ['type'=>'success','message'=>'Menu salvo.']);
+        $this->dispatch('toast', type: 'success', message: 'Menu salvo.');
     }
 
     public function delete($id)
     {
+        $this->authorizeUser();
         $menu = Menu::findOrFail($id);
         $menu->delete();
         Menu::clearMenuCacheForUser(auth()->id());
         $this->loadMenus();
-        $this->dispatchBrowserEvent('notify', ['type'=>'success','message'=>'Menu eliminado.']);
+        $this->dispatch('toast', type: 'success', message: 'Menu eliminado.');
     }
 
     /**
@@ -191,17 +204,41 @@ class MenuBuilder extends Component
      */
     public function saveOrder($nodes)
     {
-        foreach ($nodes as $node) {
-            // safe update
-            Menu::where('id', $node['id'])->update([
-                'parent_id' => $node['parent_id'] ?: null,
-                'order_priority' => $node['order'],
-            ]);
-        }
+        $this->authorizeUser();
+        $validated = Validator::make(['nodes' => $nodes], [
+            'nodes' => ['required', 'array', 'min:1'],
+            'nodes.*.id' => ['required', 'integer', 'distinct', 'exists:menus,id'],
+            'nodes.*.parent_id' => ['present', 'nullable', 'integer', 'exists:menus,id'],
+            'nodes.*.order' => ['required', 'integer', 'min:0'],
+        ])->validate();
+        DB::transaction(function () use ($validated) {
+            $parents = Menu::lockForUpdate()->pluck('parent_id', 'id')->all();
+            foreach ($validated['nodes'] as $node) {
+                $parents[$node['id']] = $node['parent_id'];
+            }
+            $this->validateParents($parents);
+            foreach ($validated['nodes'] as $node) {
+                Menu::whereKey($node['id'])->update(['parent_id' => $node['parent_id'], 'order_priority' => $node['order']]);
+            }
+        });
 
         Menu::clearMenuCacheForUser(auth()->id());
         $this->loadMenus();
-        $this->dispatchBrowserEvent('notify', ['type'=>'success','message'=>'Ordem atualizada.']);
+        $this->dispatch('toast', type: 'success', message: 'Ordem atualizada.');
+    }
+
+    private function validateParents(array $parents): void
+    {
+        foreach (array_keys($parents) as $id) {
+            $seen = [];
+            while ($id !== null && isset($parents[$id])) {
+                if (isset($seen[$id])) {
+                    throw ValidationException::withMessages(['parent_id' => 'Um menu não pode ser descendente de si próprio.']);
+                }
+                $seen[$id] = true;
+                $id = $parents[$id];
+            }
+        }
     }
 
     public function render()
