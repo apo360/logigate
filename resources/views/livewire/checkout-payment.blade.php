@@ -13,7 +13,9 @@
             <section class="rounded-lg bg-white p-6 shadow-sm">
                 @include('checkout.error')
 
-                @if(! $this->hasPayment)
+                @if(! $this->hasPayment && ! $canManage)
+                    <p class="rounded-lg bg-blue-50 p-4 text-blue-900">A contratação e o pagamento são geridos pelo Administrador ou Gestor Financeiro da empresa.</p>
+                @elseif(! $this->hasPayment)
                     <div class="mb-6">
                         <h2 class="text-lg font-semibold text-slate-900">Metodo de pagamento</h2>
                         <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -61,7 +63,10 @@
                         <span wire:loading wire:target="submit">Processando...</span>
                     </button>
                 @else
-                    @if($paymentStatus === 'paid')
+                    @if($paymentStatus === 'paid' && ($paymentView['activation_pending'] ?? false))
+                        <p class="rounded-lg bg-amber-50 p-4 text-amber-900">Pagamento confirmado. A activação está em processamento; não efectue outro pagamento.</p>
+                        <a href="{{ route('billing.plans') }}" class="mt-4 inline-block text-blue-700">Consultar subscrição</a>
+                    @elseif($paymentStatus === 'paid')
                         @include('checkout.success')
                     @elseif(($paymentView['method'] ?? null) === 'REF')
                         @include('checkout.ref')
@@ -89,7 +94,7 @@
                             <dd class="font-medium text-slate-900">{{ number_format($this->baseAmount, 0, ',', '.') }} AOA</dd>
                         </div>
                         <div class="mt-2 flex justify-between gap-4">
-                            <dt class="text-slate-600">IVA 14%</dt>
+                            <dt class="text-slate-600">IVA {{ number_format(($paymentView['vat_rate'] ?? 0) * 100, 2, ',', '.') }}%</dt>
                             <dd class="font-medium text-slate-900">{{ number_format($this->vatAmount, 0, ',', '.') }} AOA</dd>
                         </div>
                     </div>

@@ -23,7 +23,7 @@
                 @auth
                     <a class="website-access" href="{{ url('/dashboard') }}">@include('WebSite.partials.website-icon', ['icon' => 'login'])<span>Dashboard</span></a>
                 @else
-                    @if (Route::has('register'))<a href="{{ route('register') }}">@include('WebSite.partials.website-icon', ['icon' => 'user-plus'])<span>Registar</span></a>@endif
+                    @if (Route::has('register'))<a href="#planos">@include('WebSite.partials.website-icon', ['icon' => 'user-plus'])<span>Registar</span></a>@endif
                     <a class="website-access" href="{{ route('login') }}">@include('WebSite.partials.website-icon', ['icon' => 'login'])<span>Acesso</span></a>
                 @endauth
             @endif

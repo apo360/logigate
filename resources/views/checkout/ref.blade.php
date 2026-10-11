@@ -1,4 +1,12 @@
 <div class="space-y-5">
+    @if(in_array($paymentStatus, ['failed', 'expired'], true))
+        <p class="rounded-lg bg-red-50 p-4 text-red-800">Esta tentativa falhou ou expirou. Pode solicitar uma nova referência.</p>
+        @if($canManage)<button type="button" wire:click="switchToRef" wire:loading.attr="disabled" class="rounded-lg bg-blue-700 px-4 py-2 text-white">Gerar nova referência</button>@endif
+    @endif
+    @if($paymentView['message'] ?? null)
+        <p class="text-sm text-slate-700">{{ $paymentView['message'] }}</p>
+    @endif
+    <button type="button" wire:click="refreshPaymentStatus" wire:loading.attr="disabled" class="text-sm font-semibold text-blue-700">Actualizar estado do pagamento</button>
     @if($paymentView['fallback_applied'] ?? false)
         <div class="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
             O GPO nao ficou disponivel para este pagamento. Geramos uma referencia Multicaixa para continuar.

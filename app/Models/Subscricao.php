@@ -3,16 +3,17 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Services\ModuloAtivacaoService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscricao extends Model
 {
-    use SoftDeletes, BelongsToTenant;
+    use BelongsToTenant, SoftDeletes;
 
     protected $table = 'subscricoes';
-    
+
     // Mantendo campos existentes
     protected $fillable = [
         'empresa_id',
@@ -30,7 +31,7 @@ class Subscricao extends Model
         'renovacao_automatica',
         'dados_personalizados',
         'created_by',
-        'updated_by'
+        'updated_by', 'commercial_snapshot', 'renewal_notified_at',
     ];
 
     protected $casts = [
@@ -40,14 +41,20 @@ class Subscricao extends Model
         'data_expiracao' => 'datetime',
         'activated_at' => 'datetime',
         'renovacao_automatica' => 'boolean',
-        'dados_personalizados' => 'array'
+        'dados_personalizados' => 'array',
+        'commercial_snapshot' => 'array',
+        'renewal_notified_at' => 'datetime',
     ];
 
     // Status permitidos
     const STATUS_PENDENTE = 'pendente';
+
     const STATUS_ATIVA = 'ativa';
+
     const STATUS_EXPIRADA = 'expirada';
+
     const STATUS_CANCELADA = 'cancelada';
+
     const STATUS_SUSPENSA = 'suspensa';
 
     protected static function booted(): void
@@ -93,18 +100,25 @@ class Subscricao extends Model
     // Métodos de verificação
     public function isAtiva()
     {
-        return $this->hasStatus(self::STATUS_ATIVA) && !$this->isExpirada();
+        return $this->hasStatus(self::STATUS_ATIVA) && ! $this->isExpirada()
+            && (! $this->data_inicio || $this->data_inicio->lte(now()));
     }
 
     public function isExpirada()
     {
-        if (!$this->data_expiracao) return false;
-        return Carbon::now()->gt($this->data_expiracao);
+        if (! $this->data_expiracao) {
+            return false;
+        }
+
+        return Carbon::now()->gte($this->data_expiracao);
     }
 
     public function diasRestantes()
     {
-        if (!$this->data_expiracao) return null;
+        if (! $this->data_expiracao) {
+            return null;
+        }
+
         return Carbon::now()->diffInDays($this->data_expiracao, false);
     }
 
@@ -117,22 +131,30 @@ class Subscricao extends Model
     public function calcularDataExpiracao($dataInicio = null)
     {
         $dataInicio = $dataInicio ?? now();
-        
-        return match($this->modalidade_pagamento) {
+
+        return match (strtolower((string) $this->modalidade_pagamento)) {
             'monthly',
-            'mensal' => $dataInicio->copy()->addMonth(),
+            'mensal' => $dataInicio->copy()->addMonthNoOverflow(),
             'quarterly',
-            'trimestral' => $dataInicio->copy()->addMonths(3),
-            'semestral' => $dataInicio->copy()->addMonths(6),
+            'trimestral' => $dataInicio->copy()->addMonthsNoOverflow(3),
+            'semestral' => $dataInicio->copy()->addMonthsNoOverflow(6),
             'annual',
-            'anual' => $dataInicio->copy()->addYear(),
-            default => $dataInicio->copy()->addMonth()
+            'yearly',
+            'anual' => $dataInicio->copy()->addYearNoOverflow(),
+            default => $dataInicio->copy()->addMonthNoOverflow()
         };
     }
 
     public function scopeActive($query)
     {
         return $query->whereIn('status', self::activeStatuses());
+    }
+
+    public function scopeEffective($query)
+    {
+        return $query->active()
+            ->where(fn ($q) => $q->whereNull('data_inicio')->orWhere('data_inicio', '<=', now()))
+            ->where(fn ($q) => $q->whereNull('data_expiracao')->orWhere('data_expiracao', '>', now()));
     }
 
     public function scopePending($query)
@@ -162,46 +184,9 @@ class Subscricao extends Model
         };
     }
 
-    // Ativar módulos da subscrição
+    // One implementation for current and legacy callers.
     public function ativarModulos()
     {
-        if (!$this->plano) return;
-
-        $modulosParaAtivar = [];
-
-        // Módulos do plano
-        foreach ($this->plano->modulos()->wherePivot('incluido', true)->get() as $modulo) {
-            $modulosParaAtivar[] = [
-                'module_id' => $modulo->id,
-                'limite' => $modulo->pivot->limite
-            ];
-        }
-
-        // Módulos adicionais (do dados_personalizados)
-        if (isset($this->dados_personalizados['modulos_extra'])) {
-            foreach ($this->dados_personalizados['modulos_extra'] as $moduloId) {
-                $modulosParaAtivar[] = [
-                    'module_id' => $moduloId,
-                    'limite' => null
-                ];
-            }
-        }
-
-        // Criar activated_modules
-        foreach ($modulosParaAtivar as $modulo) {
-            ActivatedModule::updateOrCreate(
-                [
-                    'empresa_id' => $this->empresa_id,
-                    'module_id' => $modulo['module_id'],
-                    'menu_id'    => $this->menu_id,
-                    'subscricao_id' => $this->id
-                ],
-                [
-                    'activation_date' => now(),
-                    'data_expiracao' => $this->data_expiracao,
-                    'active' => true
-                ]
-            );
-        }
+        app(ModuloAtivacaoService::class)->ativarModulos($this);
     }
 }

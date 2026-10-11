@@ -17,7 +17,7 @@ enum BillingCycle: string
             'monthly', 'mensal' => self::Monthly,
             'trimestral', 'quarterly' => self::Trimestral,
             'semestral' => self::Semestral,
-            'annual', 'anual' => self::Annual,
+            'annual', 'anual', 'yearly' => self::Annual,
             default => throw new \InvalidArgumentException('Modalidade de pagamento invalida.'),
         };
     }

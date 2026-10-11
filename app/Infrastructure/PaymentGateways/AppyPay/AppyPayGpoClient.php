@@ -2,6 +2,7 @@
 
 namespace App\Infrastructure\PaymentGateways\AppyPay;
 
+use App\Application\Billing\Contracts\GpoPaymentGateway;
 use App\Application\Billing\DTOs\PaymentGatewayResult;
 use App\Domains\Billing\ValueObjects\MerchantTransactionId;
 use App\Domains\Billing\ValueObjects\Money;
@@ -9,7 +10,7 @@ use App\Domains\Billing\ValueObjects\PhoneNumberAO;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-final class AppyPayGpoClient
+final class AppyPayGpoClient implements GpoPaymentGateway
 {
     public function __construct(
         private readonly AppyPayAuthClient $auth,
@@ -24,6 +25,7 @@ final class AppyPayGpoClient
             $response = Http::withToken($this->auth->getToken())
                 ->acceptJson()
                 ->asJson()
+                ->connectTimeout(5)->timeout(20)
                 ->post($config->chargeUrl(), [
                     'amount' => $money->amount,
                     'currency' => $money->currency,
@@ -44,7 +46,7 @@ final class AppyPayGpoClient
                     'body' => $payload,
                 ]);
 
-                return $this->mapper->failure('HTTP_ERROR', 'Falha ao iniciar GPO.', $payload);
+                return $this->mapper->failure($response->serverError() || $response->status() === 429 ? 'REQUEST_UNCERTAIN' : 'HTTP_ERROR', 'Falha ao iniciar GPO.', $payload);
             }
 
             return $this->mapper->success($payload);

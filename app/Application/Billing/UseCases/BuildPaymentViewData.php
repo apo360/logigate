@@ -16,7 +16,13 @@ final class BuildPaymentViewData
     {
         $plan = $subscription->plano;
         $cycle = BillingCycle::fromInput($subscription->modalidade_pagamento);
-        $amount = $payment?->amount ?? round($cycle->priceFrom($plan) * 1.14, 2);
+        $snapshot = $subscription->commercial_snapshot ?? [];
+        $rate = (float) ($snapshot['vat_rate'] ?? config('billing.vat_rate'));
+        $base = (float) ($snapshot['base_amount'] ?? ($subscription->valor_pago > 0 ? $subscription->valor_pago : ($plan ? $cycle->priceFrom($plan) : 0)));
+        $amount = $payment?->amount ?? ($snapshot['total'] ?? round($base * (1 + $rate), 2));
+        if ($payment && ! $snapshot) {
+            $base = round($payment->amount / (1 + $rate), 2);
+        }
         $method = $payment ? PaymentMethod::fromInput($payment->method) : PaymentMethod::GPO;
         $status = $payment ? PaymentStatus::fromPersisted($payment->status) : PaymentStatus::Pending;
 
@@ -35,7 +41,7 @@ final class BuildPaymentViewData
             $status,
             (float) $amount,
             $payment?->currency ?? 'AOA',
-            (string) ($plan?->nome ?? 'Plano'),
+            (string) ($snapshot['plan_name'] ?? $plan?->nome ?? $subscription->tipo_plano ?? 'Plano'),
             $cycle,
             $payment?->merchant_transaction_id,
             $payment?->phone,
@@ -43,6 +49,10 @@ final class BuildPaymentViewData
             $message,
             $error,
             $fallback,
+            $base,
+            $rate,
+            $payment?->status === 'paid' && $subscription->activated_at === null,
+            $subscription->data_inicio?->toIso8601String(),
         );
     }
 }

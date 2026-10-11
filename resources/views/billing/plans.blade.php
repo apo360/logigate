@@ -4,6 +4,24 @@
     </x-slot>
 
     <div class="mx-auto max-w-6xl space-y-5">
+        @foreach($notices as $notice)
+            <p class="rounded-lg bg-amber-50 p-4 text-amber-900">{{ $notice->data['message'] ?? '' }}</p>
+        @endforeach
+        @if(session('success'))
+            <p role="status" class="rounded-lg bg-green-50 p-4 text-green-900">{{ session('success') }}</p>
+        @endif
+        @if($errors->any())
+            <div role="alert" class="rounded-lg bg-red-50 p-4 text-red-900">{{ $errors->first() }}</div>
+        @endif
+        @if(! $canManage)
+            <p class="rounded-lg bg-blue-50 p-4 text-blue-900">Pode consultar o plano e os pagamentos. A contratação, renovação e cancelamento são geridos pelo Administrador ou Gestor Financeiro da empresa.</p>
+        @endif
+        @if($futureSubscription)
+            <section class="rounded-lg bg-blue-50 p-5 text-blue-950">
+                <strong>Próximo período confirmado:</strong> {{ data_get($futureSubscription->commercial_snapshot, 'plan_name') ?? $futureSubscription->plano?->nome }}.
+                Início: {{ $futureSubscription->data_inicio?->format('d/m/Y') }}. O plano actual mantém-se até essa data.
+            </section>
+        @endif
         <section class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
             <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Plano</p>
             <div class="mt-1 flex flex-col justify-between gap-4 md:flex-row md:items-start">
@@ -43,7 +61,8 @@
                     </div>
                 </div>
             </section>
-        @elseif($pendingSubscription)
+        @endif
+        @if($pendingSubscription)
             <section class="rounded-lg border border-amber-200 bg-amber-50 p-5 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Pagamento pendente</p>
                 <div class="mt-2 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -52,19 +71,35 @@
                         <strong>{{ $pendingSubscription->plano->nome ?? 'o plano seleccionado' }}</strong>.
                         Continue para finalizar o checkout.
                     </div>
-                    <a href="{{ route('checkout', ['conta' => $empresa->conta]) }}"
+                    <a href="{{ route('billing.checkout') }}"
                        class="inline-flex items-center justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
                         <i class="fa fa-credit-card mr-2"></i>
                         Continuar pagamento
                     </a>
                 </div>
+                @if($canManage)
+                    <form method="POST" action="{{ route('billing.cancel-pending') }}" class="mt-4">
+                        @csrf
+                        <button type="submit" class="text-sm font-semibold text-amber-900">Cancelar contratação pendente</button>
+                        <p class="mt-1 text-xs text-amber-900">Disponível quando não existe pagamento por reconciliar.</p>
+                    </form>
+                @endif
             </section>
-        @else
+        @endif
+        @if(! $pendingSubscription && ! $futureSubscription && $canManage)
+            @if($activeSubscription)
+                <p class="text-sm text-slate-700 dark:text-slate-300">Renove ou escolha um plano para o próximo período. A alteração entra em vigor após o fim do período actual, sem retirar os acessos já pagos. A renovação requer confirmação de pagamento.</p>
+                <form method="POST" action="{{ route('billing.stop-renewal') }}">
+                    @csrf
+                    <button type="submit" class="text-sm font-semibold text-slate-700 dark:text-slate-300">Desactivar renovação automática</button>
+                </form>
+            @endif
             <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 @forelse($planos as $plano)
                     <form method="POST" action="{{ route('billing.start') }}" class="flex min-h-full flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                         @csrf
                         <input type="hidden" name="plano_id" value="{{ $plano->id }}">
+                        <input type="hidden" name="renew" value="{{ $activeSubscription ? 1 : 0 }}">
 
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -81,6 +116,9 @@
                             <div>Processos: <strong class="text-slate-900 dark:text-white">{{ $plano->limite_processos }}</strong></div>
                             <div>Armazenamento: <strong class="text-slate-900 dark:text-white">{{ $plano->limite_armazenamento_gb }} GB</strong></div>
                         </div>
+                        @if($plano->modulos->isNotEmpty())
+                            <p class="mt-3 text-sm text-slate-600 dark:text-slate-300">Módulos: {{ $plano->modulos->pluck('module_name')->unique()->join(', ') }}</p>
+                        @endif
 
                         <label for="modalidade-{{ $plano->id }}" class="mt-5 text-sm font-semibold text-slate-700 dark:text-slate-200">Modalidade</label>
                         <select id="modalidade-{{ $plano->id }}" name="modalidade_pagamento" class="mt-2 rounded-lg border-slate-300 text-sm focus:border-blue-500 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
@@ -91,7 +129,7 @@
                         </select>
 
                         <button type="submit" class="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            {{ (($plano->is_free ?? false) || (float) $plano->preco_mensal <= 0) ? 'Activar plano' : 'Continuar para checkout' }}
+                            {{ $activeSubscription ? 'Confirmar próximo período' : ($plano->isGratuito() ? 'Activar plano' : 'Continuar para checkout') }}
                         </button>
                     </form>
                 @empty
@@ -101,5 +139,26 @@
                 @endforelse
             </section>
         @endif
+        <section class="rounded-lg border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+            <h2 class="font-semibold text-slate-900 dark:text-white">Histórico de pagamentos</h2>
+            <div class="mt-4 overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+                    <thead><tr><th class="p-2">Data</th><th class="p-2">Transacção</th><th class="p-2">Método</th><th class="p-2">Total</th><th class="p-2">Estado</th><th class="p-2">Comprovativo</th></tr></thead>
+                    <tbody>
+                        @forelse($payments as $payment)
+                            <tr class="border-t border-slate-200 dark:border-slate-700">
+                                <td class="p-2">{{ $payment->created_at?->format('d/m/Y H:i') }}</td><td class="p-2 font-mono">{{ $payment->merchant_transaction_id }}</td><td class="p-2">{{ $payment->method }}</td>
+                                <td class="p-2">{{ number_format($payment->amount, 2, ',', '.') }} {{ $payment->currency }}</td>
+                                <td class="p-2">{{ ['paid' => 'Pago', 'pending' => 'Pendente', 'processing' => 'Em confirmação', 'failed' => 'Falhado', 'expired' => 'Expirado'][$payment->status] ?? $payment->status }}</td>
+                                <td class="p-2">@if($payment->status === 'paid')<a href="{{ route('billing.receipt', $payment->id) }}" class="text-blue-700">Ver comprovativo</a>@endif</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="6" class="p-2">Ainda não existem pagamentos registados.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4">{{ $payments->links() }}</div>
+        </section>
     </div>
 </x-app-layout>

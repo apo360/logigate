@@ -39,7 +39,7 @@ class AppyPayWebhookController extends BaseController
             return match ($result->result) {
                 'duplicate' => response()->json(['status' => 'duplicate'], 202),
                 'invalid_payload' => response()->json(['error' => 'invalid_payload'], 400),
-                'payment_not_found' => response()->json(['status' => 'ok']),
+                'payment_not_found' => response()->json(['status' => 'retry'], 503)->header('Retry-After', '30'),
                 default => response()->json(['status' => $result->result]),
             };
         } catch (\Throwable $e) {

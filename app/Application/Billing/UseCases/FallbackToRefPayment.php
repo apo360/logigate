@@ -12,11 +12,10 @@ final class FallbackToRefPayment
 
     public function execute(PagamentoOnline $failedPayment, string $reason): PaymentViewData
     {
-        $failedPayment->update([
-            'status' => 'failed',
-            'failure_reason' => $reason,
-            'failed_at' => now(),
-        ]);
+        $failedPayment->refresh();
+        if ($failedPayment->status === 'paid') {
+            return app(BuildPaymentViewData::class)->fromSubscription($failedPayment->subscription, $failedPayment);
+        }
 
         Log::warning('BILLING_GPO_FALLBACK_TO_REF', [
             'payment_id' => $failedPayment->id,

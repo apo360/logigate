@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
     // MIDDLEWARES
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [\App\Http\Middleware\SetCompanyPermissionTeam::class]);
+        $middleware->web(append: [\App\Http\Middleware\EnsureModuleEntitlement::class]);
         $middleware->prependToPriorityList(
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SetCompanyPermissionTeam::class,

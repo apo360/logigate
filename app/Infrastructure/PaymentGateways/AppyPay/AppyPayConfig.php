@@ -33,6 +33,6 @@ final readonly class AppyPayConfig
             throw new \RuntimeException('AppyPay gateway URL nao configurada.');
         }
 
-        return $this->gatewayUrl . '/v2.0/charges';
+        return $this->gatewayUrl.'/v2.0/charges';
     }
 }

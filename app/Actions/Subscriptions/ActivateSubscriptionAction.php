@@ -3,8 +3,10 @@
 namespace App\Actions\Subscriptions;
 
 use App\Http\Controllers\ArquivoController;
+use App\Models\Empresa;
 use App\Models\Subscricao;
 use App\Services\ModuloAtivacaoService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -13,12 +15,21 @@ class ActivateSubscriptionAction
     public function execute(Subscricao $subscription): void
     {
         DB::transaction(function () use ($subscription) {
+            Empresa::whereKey($subscription->empresa_id)->lockForUpdate()->firstOrFail();
+            $subscription = Subscricao::withoutGlobalScopes()->whereNull('deleted_at')->lockForUpdate()->findOrFail($subscription->id);
             // Idempotência explícita para evitar dupla ativação em callbacks repetidos.
             if ($subscription->activated_at !== null) {
                 return;
             }
+            if (! $subscription->plano_id && ! $subscription->commercial_snapshot) {
+                throw new \LogicException('Subscrição sem contrato comercial: requer revisão antes da activação.');
+            }
 
-            $inicio = now();
+            if (! $subscription->hasStatus(Subscricao::STATUS_PENDENTE) && ! $subscription->hasStatus(Subscricao::STATUS_ATIVA)) {
+                throw new \LogicException('Contrato cancelado ou suspenso: confirmação requer revisão financeira.');
+            }
+            $startsAt = data_get($subscription->commercial_snapshot, 'starts_at');
+            $inicio = $startsAt && Carbon::parse($startsAt)->gt(now()) ? Carbon::parse($startsAt) : now();
 
             $subscription->update([
                 'status' => Subscricao::STATUS_ATIVA,
@@ -28,13 +39,10 @@ class ActivateSubscriptionAction
             ]);
 
             app(ModuloAtivacaoService::class)
-                ->ativarModulos(
-                    $subscription->empresa_id,
-                    $subscription->plano_id
-                );
+                ->ativarModulos($subscription);
 
             Log::info('Subscrição ativada', [
-                'subscription_id' => $subscription->id
+                'subscription_id' => $subscription->id,
             ]);
 
             // 📧 Futuro: Enviar o e-mail de confirmação
@@ -52,7 +60,7 @@ class ActivateSubscriptionAction
                     'error' => $exception->getMessage(),
                 ]);
             }
-        
+
             // Emitir factura
 
             // Criar registo financeiro

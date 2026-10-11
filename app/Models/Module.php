@@ -13,18 +13,11 @@ class Module extends Model
         'module_name',
         'description',
         'price',
-        'codigo',
-        'tipo',
-        'icone',
         'parent_id',
-        'order_priority',
-        'ativo'
     ];
 
     protected $casts = [
         'price' => 'float',
-        'order_priority' => 'integer',
-        'ativo' => 'boolean'
     ];
 
     // Para compatibilidade
@@ -40,7 +33,7 @@ class Module extends Model
 
     public function children()
     {
-        return $this->hasMany(Module::class, 'parent_id')->orderBy('order_priority');
+        return $this->hasMany(Module::class, 'parent_id')->orderBy('id');
     }
 
     //Inverso de Menu::module()
@@ -52,19 +45,20 @@ class Module extends Model
 
     public function planos()
     {
-        return $this->belongsToMany(Plano::class, 'plano_modulo', 'module_id', 'plano_id')
-                    ->withPivot(['incluido', 'limite', 'preco_adicional']);
+        return $this->belongsToMany(Plano::class, 'plano_modulos', 'modulo_id', 'plano_id')->withTimestamps();
     }
 
     public function activatedForEmpresa($empresaId)
     {
         return $this->hasOne(ActivatedModule::class, 'module_id')
                 ->where('empresa_id', $empresaId)
+                ->whereIn('module_id', app(\App\Services\EffectiveModuleResolver::class)->ids((int) $empresaId))
                 ->where('active', true);
     }
 
     public function isAddon()
     {
-        return $this->tipo === 'addon';
+        // The catalogue has no addon type; extra rights are explicitly provisioned.
+        return false;
     }
 }

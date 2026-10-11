@@ -41,6 +41,8 @@ class MenuBuilder extends Component
 
     public $description;
 
+    public $group_code;
+
     public $showModal = false;
 
     protected $listeners = ['saveOrder' => 'saveOrder', 'refreshMenus' => 'loadMenus'];
@@ -114,6 +116,7 @@ class MenuBuilder extends Component
         $this->icon = $menu->icon;
         $this->permission = $menu->permission;
         $this->description = $menu->description;
+        $this->group_code = $menu->group_code;
         $this->showModal = true;
     }
 
@@ -129,6 +132,7 @@ class MenuBuilder extends Component
         $this->icon = null;
         $this->permission = null;
         $this->description = null;
+        $this->group_code = null;
         $this->resetValidation();
     }
 
@@ -142,6 +146,7 @@ class MenuBuilder extends Component
             'icon' => ['nullable', 'string', 'max:191'],
             'permission' => ['nullable', 'string', 'max:191'],
             'description' => ['nullable', 'string'],
+            'group_code' => ['nullable', \Illuminate\Validation\Rule::in(array_keys(config('navigation.groups')))],
             'order_priority' => ['required', 'integer', 'min:0'],
         ];
     }
@@ -174,6 +179,11 @@ class MenuBuilder extends Component
         $menu->icon = $this->icon;
         $menu->permission = $this->permission;
         $menu->description = $this->description;
+        if (\Illuminate\Support\Facades\Schema::hasColumn('menus', 'group_code')) {
+            $menu->group_code = $this->group_code ?: null;
+        } elseif ($this->group_code) {
+            throw ValidationException::withMessages(['group_code' => 'Aplique a migração dos grupos antes de guardar esta área.']);
+        }
         $menu->save();
 
         // limpar cache

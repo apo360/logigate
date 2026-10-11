@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
+use App\Services\EffectiveModuleResolver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use OwenIt\Auditing\Contracts\Auditable;
-use App\Models\ActivatedModule;
-use App\Models\Subscricao;
 
 class Empresa extends Model implements Auditable
 {
     use HasFactory;
     use \OwenIt\Auditing\Auditable;
 
-    protected $table = "empresas";
+    protected $table = 'empresas';
 
     protected $fillable = [
         'CodFactura',
@@ -53,22 +52,24 @@ class Empresa extends Model implements Auditable
         return (int) self::max('id') + 1;
     }
 
-     /**
+    /**
      * Relação N:N com clientes via tabela pivô customers_empresas
      */
     public function customers()
     {
         return $this->belongsToMany(Customer::class, 'customers_empresas')
-                    ->withPivot(['codigo_cliente', 'additional_info'])->withTimestamps();
+            ->withPivot(['codigo_cliente', 'additional_info'])->withTimestamps();
     }
+
     /**
      * Relação N:N com Exportadors via tabela pivô exportador_empresas
      */
     public function exportadors()
     {
         return $this->belongsToMany(Exportador::class, 'exportador_empresas')
-                    ->withPivot(['codigo_exportador', 'additional_info', 'status', 'data_associacao'])->withTimestamps();
+            ->withPivot(['codigo_exportador', 'additional_info', 'status', 'data_associacao'])->withTimestamps();
     }
+
     /**
      * Relação 1:N — Uma empresa pode ter vários representantes
      */
@@ -126,7 +127,7 @@ class Empresa extends Model implements Auditable
             // Excluir as subscrições associadas à empresa
             $empresa->subscricoes()->delete();
         });
-    } 
+    }
 
     /**
      * Obter a subscrição ativa
@@ -135,11 +136,22 @@ class Empresa extends Model implements Auditable
     {
         return $this->hasOne(Subscricao::class, 'empresa_id')
             ->whereIn('status', Subscricao::activeStatuses())
+            ->where(fn ($query) => $query->whereNull('data_inicio')->orWhere('data_inicio', '<=', now()))
             ->where(function ($query) {
                 $query->whereNull('data_expiracao')
                     ->orWhere('data_expiracao', '>', now());
             })
             ->latest('id');
+    }
+
+    public function temSubscricaoAtiva(): bool
+    {
+        return $this->subscricaoAtiva()->exists();
+    }
+
+    public function modulosAtivos()
+    {
+        return Module::whereIn('id', app(EffectiveModuleResolver::class)->ids((int) $this->id))->get();
     }
 
     /**
@@ -157,5 +169,4 @@ class Empresa extends Model implements Auditable
     {
         return $this->hasMany(Licenciamento::class, 'empresa_id');
     }
-
 }

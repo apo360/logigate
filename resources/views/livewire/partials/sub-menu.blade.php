@@ -6,15 +6,21 @@
 
 <div wire:key="sidebar-child-{{ $submenu['id'] }}" x-data="{ open: {{ $isActive ? 'true' : 'false' }} }">
 
+    @if(count($children) > 0)
+    <button type="button" @click="open = !open" :aria-expanded="open.toString()"
+       class="flex items-center p-2 w-full text-left rounded-lg text-white/80 hover:bg-white/10 {{ $isActive ? 'bg-logigate-primary text-white' : '' }}">
+        <i aria-hidden="true" class="{{ $submenu['icon'] }} text-logigate-secondary"></i>
+        <span class="ml-3">{{ $submenu['menu_name'] }}</span>
+        <i aria-hidden="true" class="ml-auto fa text-white/50" :class="open ? 'fa-angle-down' : 'fa-angle-left'"></i>
+    </button>
+    @else
     <a href="{{ $submenu['route'] && $submenu['route'] !== '#' && \Illuminate\Support\Facades\Route::has($submenu['route']) ? route($submenu['route']) : '#' }}"
-       @if(count($children) > 0)
-           @click.prevent="open = !open"
-       @endif
+       @if($isActive) aria-current="page" @endif
        class="flex items-center p-2 rounded-lg 
               text-white/80 hover:bg-white/10
               {{ $isActive ? 'bg-logigate-primary text-white' : '' }}">
        
-        <i class="{{ $submenu['icon'] }} text-logigate-secondary"></i>
+        <i aria-hidden="true" class="{{ $submenu['icon'] }} text-logigate-secondary"></i>
         <span class="ml-3">{{ $submenu['menu_name'] }}</span>
 
         @if(count($children) > 0)
@@ -22,6 +28,7 @@
                :class="open ? 'fa-angle-down' : 'fa-angle-left'"></i>
         @endif
     </a>
+    @endif
 
     @if(count($children) > 0)
         <div x-show="open" x-transition class="ml-6 mt-2 space-y-1">

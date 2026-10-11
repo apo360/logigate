@@ -130,18 +130,13 @@
 
 <body
     class="h-full overflow-hidden bg-gray-100 font-sans antialiased text-gray-900 dark:bg-gray-950 dark:text-gray-100"
-    x-data="layoutState()"
-    x-on:keydown.escape.window="closeSidebar()"
->
+    x-data="layoutState()" x-on:keydown.escape.window="closeSidebar()">
+
     <!-- Overlay mobile -->
-    <div
-        x-cloak
-        x-show="sidebarOpen"
-        x-transition.opacity
+    <div x-cloak x-show="sidebarOpen" x-transition.opacity
         class="fixed inset-0 z-40 bg-gray-950/60 backdrop-blur-sm lg:hidden"
-        aria-hidden="true"
-        x-on:click="closeSidebar()"
-    ></div>
+        aria-hidden="true" x-on:click="closeSidebar()">
+    </div>
 
     <div class="flex h-dvh min-h-dvh overflow-hidden bg-gray-100 dark:bg-gray-950">
         {{-- ======================== SIDEBAR ======================== --}}
@@ -149,8 +144,7 @@
             id="app-sidebar"
             class="fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 -translate-x-full flex-col bg-logigate-dark text-white shadow-xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0"
             x-bind:class="{ '!translate-x-0': sidebarOpen }"
-            aria-label="Menu principal"
-        >
+            aria-label="Menu principal">
             <!-- LOGO -->
             <div class="flex h-16 shrink-0 items-center border-b border-white/10 px-5">
                 <img
@@ -220,15 +214,21 @@
                             >
 
                             <div class="mt-3 grid gap-2 text-sm">
+                                @if(app(\App\Services\NavigationResolver::class)->allowsRoute(auth()->user(), 'processos.index'))
                                 <a href="{{ route('processos.index') }}" class="rounded-lg px-3 py-2 text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-logigate-primary/60 dark:text-gray-200 dark:hover:bg-gray-800">
                                     Processos
                                 </a>
+                                @endif
+                                @if(app(\App\Services\NavigationResolver::class)->allowsRoute(auth()->user(), 'customers.index'))
                                 <a href="{{ route('customers.index') }}" class="rounded-lg px-3 py-2 text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-logigate-primary/60 dark:text-gray-200 dark:hover:bg-gray-800">
                                     Clientes
                                 </a>
+                                @endif
+                                @if(app(\App\Services\NavigationResolver::class)->allowsRoute(auth()->user(), 'licenciamentos.index'))
                                 <a href="{{ route('licenciamentos.index') }}" class="rounded-lg px-3 py-2 text-gray-700 transition hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-logigate-primary/60 dark:text-gray-200 dark:hover:bg-gray-800">
                                     Licenciamentos
                                 </a>
+                                @endif
                             </div>
 
                             <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -333,21 +333,27 @@
                                 </a>
 
                                 @if($currentEmpresa)
+                                    @can('update', $currentEmpresa)
                                     <a href="{{ route('empresas.edit', $currentEmpresa->id) }}" class="{{ $dropdownBase }} {{ request()->routeIs('empresas.*') ? $dropdownActive : '' }}">
                                         <i class="fa fa-building w-4 text-logigate-primary dark:text-logigate-tertiary" aria-hidden="true"></i>
                                         {{ __('Empresa') }}
                                     </a>
+                                    @endcan
                                 @endif
 
+                                @can('manageUsers', $currentEmpresa)
                                 <a href="{{ route('usuarios.index') }}" class="{{ $dropdownBase }} {{ request()->routeIs('usuarios.*', 'users.*', 'roles.*', 'permissions.*') ? $dropdownActive : '' }}">
                                     <i class="fa fa-users-gear w-4 text-logigate-primary dark:text-logigate-tertiary" aria-hidden="true"></i>
                                     {{ __('Usuários e Permissões') }}
                                 </a>
+                                @endcan
 
+                                @can('manageIntegrations', $currentEmpresa)
                                 <a href="{{ route('admin.integracoes') }}" class="{{ $dropdownBase }} {{ request()->routeIs('admin.integracoes', 'integracoes.*') ? $dropdownActive : '' }}">
                                     <i class="fa fa-plug w-4 text-logigate-primary dark:text-logigate-tertiary" aria-hidden="true"></i>
                                     {{ __('Integrações') }}
                                 </a>
+                                @endcan
                             </div>
 
                             <div class="border-t border-gray-200 py-1 dark:border-gray-700">
@@ -407,13 +413,12 @@
         </div>
     </div>
 
-
     {{-- Modal global para Quick Create --}}
     <livewire:modals.quick-create-modal />
 
     <x-ui.toast />
 
-    @livewireScripts
+    @livewireScripts(['data-cfasync' => 'false'])
 
     @stack('scripts')
 
@@ -434,6 +439,5 @@
             document.addEventListener('livewire:init', registerLivewireToastBridge, { once: true });
         }
     </script>
-
 </body>
 </html>

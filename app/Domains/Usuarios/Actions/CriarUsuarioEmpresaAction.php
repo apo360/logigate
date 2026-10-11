@@ -7,6 +7,10 @@ use App\Domains\Usuarios\Repositories\UsuarioRepositoryInterface;
 use App\Models\Empresa;
 use App\Models\EmpresaUser;
 use App\Models\User;
+use App\Services\BillingQuota;
+use App\Support\BusinessAuthorization;
+use App\Support\CompanyRbac;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -15,21 +19,25 @@ final class CriarUsuarioEmpresaAction
 {
     public function __construct(
         private readonly UsuarioRepositoryInterface $usuarios,
-    ) {
-    }
+    ) {}
 
     public function execute(User $actor, Empresa $empresa, UsuarioEmpresaData $data): User
     {
         Gate::forUser($actor)->authorize('manageUsers', $empresa);
-        abort_unless(\App\Support\BusinessAuthorization::allows($actor, 'users.create'), 403);
-        $roles = \App\Support\CompanyRbac::roles($actor, array_filter([$data->role]));
-        $permissions = \App\Support\CompanyRbac::permissions($actor, $data->permissions);
+        abort_unless(BusinessAuthorization::allows($actor, 'users.create'), 403);
+        $roles = CompanyRbac::roles($actor, array_filter([$data->role]));
+        $permissions = CompanyRbac::permissions($actor, $data->permissions);
         $existing = User::where('email', $data->email)->first();
-        if ($existing && \App\Support\TenantContext::userBelongsToEmpresa($existing, (int) $empresa->id)) {
+        if ($existing && TenantContext::userBelongsToEmpresa($existing, (int) $empresa->id)) {
             Gate::forUser($actor)->authorize('manageUser', [$empresa, $existing]);
         }
 
         return DB::transaction(function () use ($empresa, $data, $roles, $permissions): User {
+            Empresa::whereKey($empresa->id)->lockForUpdate()->firstOrFail();
+            $existing = User::where('email', $data->email)->first();
+            if (! $existing || ! $empresa->users()->where('users.id', $existing->id)->exists()) {
+                app(BillingQuota::class)->assertAvailable($empresa->id, 'users');
+            }
             $user = User::where('email', $data->email)->first() ?? $this->usuarios->create([
                 'name' => $data->name,
                 'email' => $data->email,
@@ -47,7 +55,7 @@ final class CriarUsuarioEmpresaAction
 
             $user->syncRoles($roles);
             $user->syncPermissions($permissions);
-            \App\Support\CompanyRbac::forgetUser($user);
+            CompanyRbac::forgetUser($user);
 
             return $user->refresh();
         });

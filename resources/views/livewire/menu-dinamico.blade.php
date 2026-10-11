@@ -1,134 +1,18 @@
-<!-- resources/views/livewire/menu-dinamico.blade.php -->
-
-<div class="space-y-1">
-
-    <!-- ========== FIXED ITEMS ========== -->
-    <a href="{{ route('leander.dashboard') }}"
-       class="flex items-center p-2 rounded-lg 
-              text-white/80 hover:bg-white/10 mb-1
-              {{ request()->routeIs('leander.dashboard') ? 'bg-logigate-primary text-white' : '' }}">
-        <i class="fa fa-tasks text-logigate-secondary"></i>
-        <span class="ml-3">Tarefas</span>
-    </a>
-
-    <a href="{{ route('dashboard') }}"
-       class="flex items-center p-2 rounded-lg 
-              text-white/80 hover:bg-white/10 mb-4
-              {{ request()->routeIs('dashboard') ? 'bg-logigate-primary text-white' : '' }}">
-        <i class="fa fa-gauge text-logigate-secondary"></i>
-        <span class="ml-3">Dashboard</span>
-    </a>
-
-    <!-- ========== MENUS DINÂMICOS ========== -->
-    @if(count($modulosAtivos) === 1 || count($menusPrincipais) <= 10)
-
-        @foreach($menusPrincipais as $menu)
-            @php $menuActive = \App\Support\MenuTree::active($menu, request()->route()?->getName()); @endphp
-            <div wire:key="sidebar-menu-{{ $menu['id'] }}" x-data="{ open: {{ $menuActive ? 'true' : 'false' }} }">
-
-                <a href="{{ $menu['route'] && $menu['route'] !== '#' && \Illuminate\Support\Facades\Route::has($menu['route']) ? route($menu['route']) : '#' }}"
-                   @if(isset($menu['children']) && count($menu['children']) > 0)
-                       @click.prevent="open = !open"
-                   @endif
-                   class="flex items-center p-2 rounded-lg 
-                          text-white/80 hover:bg-white/10
-                          {{ $menuActive ? 'bg-logigate-primary text-white' : '' }}">
-
-                    <i class="{{ $menu['icon'] }} text-logigate-secondary"></i>
-                    <span class="ml-3">{{ $menu['menu_name'] }}</span>
-
-                    @if(isset($menu['children']) && count($menu['children']) > 0)
-                        <i class="ml-auto fa text-white/50"
-                           :class="open ? 'fa-angle-down' : 'fa-angle-left'"></i>
-                    @endif
-                </a>
-
-                @if(isset($menu['children']) && count($menu['children']) > 0)
-                    <div x-show="open" x-transition class="ml-6 mt-2 space-y-1">
-                        @foreach($menu['children'] as $child)
-                            @include('livewire.partials.sub-menu', ['submenu' => $child])
-                        @endforeach
-                    </div>
-                @endif
-
+<nav class="space-y-1" aria-label="Menu principal">
+    @php
+        // Compatibility for existing preview fixtures; normal requests use the resolver.
+        $groups = $navigationGroups ?? collect($menusPorModulo ?? [])->map(fn ($items, $id) => ['label' => $nomesModulos[$id] ?? 'Módulo', 'items' => $items])->all();
+    @endphp
+    @foreach($groups as $code => $group)
+        <section wire:key="navigation-group-{{ $code }}" class="pt-3">
+            @if(config('navigation.grouped'))
+                <h2 class="px-2 mb-2 text-xs font-semibold tracking-wider uppercase text-white/50">{{ $group['label'] }}</h2>
+            @endif
+            <div class="space-y-1">
+                @foreach($group['items'] as $menu)
+                    @include('livewire.partials.sub-menu', ['submenu' => $menu])
+                @endforeach
             </div>
-        @endforeach
-
-    @else
-
-        <!-- Agrupar por módulos -->
-        @foreach($menusPorModulo as $moduleId => $menus)
-            @php
-                $isActive = collect($menus)->contains(fn ($menu) => \App\Support\MenuTree::active($menu, request()->route()?->getName()));
-            @endphp
-
-            <div wire:key="sidebar-module-{{ $moduleId }}" x-data="{ open: {{ $isActive ? 'true' : 'false' }} }" class="text-xs uppercase text-logigate-tertiary font-bold mt-4 pl-2">
-
-                <button @click="open = !open" class="flex items-center p-2 w-full text-left rounded-lg text-white/80 hover:bg-white/10">
-                    <span class="ml-1 font-semibold">{{ $nomesModulos[$moduleId] ?? 'Módulo' }}</span>
-                    <i class="ml-auto fa text-white/50" :class="open ? 'fa-angle-down' : 'fa-angle-left'"></i>
-                </button>
-
-                <div x-show="open" x-transition class="ml-6 mt-2 space-y-1">
-                    @foreach($menus as $menu)
-                        @if($menu['parent_id'] === null)
-                            @include('livewire.partials.sub-menu', ['submenu' => $menu])
-                        @endif
-                    @endforeach
-                </div>
-
-            </div>
-        @endforeach
-
-    @endif
-
-    <!-- SEPARADOR -->
-    <hr class="border-white/10 my-4">
-
-                @if($facturacaoHongayetuActiva)
-                
-                    <li x-data="{ open: {{ request()->routeIs('integracoes.facturacao-hongayetu.*') ? 'true' : 'false' }} }">
-                        <a href="#" @click.prevent="open = !open" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.*') ? 'bg-gray-700' : '' }}">
-                            <i class="fas fa-file-invoice-dollar text-gray-400"></i>
-                            <span class="ml-3">Facturação Hongayetu</span>
-                            <i :class="open ? 'fas fa-angle-down' : 'fas fa-angle-left'" class="ml-auto text-gray-400 transition-all duration-200"></i>
-                        </a>
-                        <ul x-show="open" x-transition class="ml-6 mt-2 space-y-2">
-                            <li>
-                                <a href="{{ route('integracoes.facturacao-hongayetu.facturas') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.facturas') ? 'bg-gray-700' : '' }}">
-                                    <i class="fas fa-file-invoice text-gray-400"></i>
-                                    <span class="ml-3">Facturas</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('integracoes.facturacao-hongayetu.emitir-ft') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-700 transition duration-200 {{ request()->routeIs('integracoes.facturacao-hongayetu.emitir-ft') ? 'bg-gray-700' : '' }}">
-                                    <i class="fas fa-plus-circle text-gray-400"></i>
-                                    <span class="ml-3">Emitir FT Manual</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                @endif
-    <!-- RELATÓRIOS -->
-    <a href="{{ route('relatorio.licenciamento') }}"
-       class="flex items-center p-2 rounded-lg text-white/80 hover:bg-white/10">
-        <i class="fa fa-file-pdf text-logigate-secondary"></i>
-        <span class="ml-3">Relatórios</span>
-    </a>
-
-    <!-- ARQUIVOS -->
-    <a href="{{ route('arquivos.index') }}"
-       class="flex items-center p-2 rounded-lg text-white/80 hover:bg-white/10">
-        <i class="fa fa-file-alt text-logigate-secondary"></i>
-        <span class="ml-3">Arquivos</span>
-    </a>
-
-    <!-- CONFIGURAÇÕES -->
-    <a href="#">
-        <div class="flex items-center p-2 rounded-lg text-white/80 hover:bg-white/10">
-            <i class="fa fa-cog text-logigate-secondary"></i>
-            <span class="ml-3">Configurações</span>
-        </div>
-    </a>
-
-</div>
+        </section>
+    @endforeach
+</nav>

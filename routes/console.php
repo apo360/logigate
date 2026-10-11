@@ -1,9 +1,12 @@
 <?php
 
+use App\Console\Commands\DispatchDueTasks;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-use App\Console\Commands\DispatchDueTasks;
+
+Schedule::command('billing:maintain')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
+Schedule::command('billing:maintain --notices')->dailyAt('08:00')->withoutOverlapping()->onOneServer();
 
 /*
 |--------------------------------------------------------------------------

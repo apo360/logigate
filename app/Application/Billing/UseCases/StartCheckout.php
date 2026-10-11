@@ -5,47 +5,22 @@ namespace App\Application\Billing\UseCases;
 use App\Application\Billing\DTOs\PaymentViewData;
 use App\Application\Billing\DTOs\StartCheckoutData;
 use App\Domains\Billing\Enums\PaymentMethod;
-use App\Domains\Billing\Enums\PaymentStatus;
-use App\Models\Empresa;
-use Illuminate\Support\Facades\DB;
+use App\Models\Subscricao;
+use App\Services\BillingAccess;
 
 final class StartCheckout
 {
-    public function __construct(
-        private readonly StartGpoPayment $startGpoPayment,
-        private readonly StartRefPayment $startRefPayment,
-        private readonly BuildPaymentViewData $viewData,
-    ) {}
+    public function __construct(private readonly StartGpoPayment $gpo, private readonly StartRefPayment $ref) {}
 
     public function execute(StartCheckoutData $data): PaymentViewData
     {
-        return DB::transaction(function () use ($data) {
-            $empresa = Empresa::with(['subscricoes.plano', 'subscricoes.pagamentoOnline'])
-                ->whereKey($data->empresaId)
-                ->lockForUpdate()
-                ->firstOrFail();
+        app(BillingAccess::class)->authorize($data->empresaId, $data->userId);
+        $sub = Subscricao::where('empresa_id', $data->empresaId)->pending()->latest('id')->firstOrFail();
 
-            $subscription = $empresa->subscricoes()
-                ->with(['plano', 'pagamentoOnline'])
-                ->pending()
-                ->latest('id')
-                ->firstOrFail();
-
-            $existing = $subscription->pagamentoOnline()
-                ->whereIn('method', [PaymentMethod::GPO->value, PaymentMethod::REF->value])
-                ->whereIn('status', [PaymentStatus::Pending->value, PaymentStatus::Processing->value, PaymentStatus::Paid->value])
-                ->latest('id')
-                ->lockForUpdate()
-                ->first();
-
-            if ($existing) {
-                return $this->viewData->fromSubscription($subscription, $existing, 'Pagamento ja iniciado.');
-            }
-
-            return match ($data->method) {
-                PaymentMethod::GPO => $this->startGpoPayment->execute($subscription, (string) $data->phone),
-                PaymentMethod::REF => $this->startRefPayment->execute($subscription),
-            };
-        });
+        // Each client reserves and commits before contacting the provider.
+        return match ($data->method) {
+            PaymentMethod::GPO => $this->gpo->execute($sub, (string) $data->phone),
+            PaymentMethod::REF => $this->ref->execute($sub),
+        };
     }
 }

@@ -15,6 +15,9 @@ use App\Models\Empresa;
 use App\Models\Licenciamento;
 use App\Models\Processo;
 use App\Models\User;
+use App\Services\BillingQuota;
+use App\Support\TenantContext;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
@@ -25,10 +28,16 @@ final readonly class UploadDocumentoAction
         private S3PathBuilder $pathBuilder,
         private FileStorageService $storage,
         private FileAccessService $access,
-    ) {
-    }
+    ) {}
 
     public function execute(UploadDocumentoDTO $dto): DocumentoArquivo
+    {
+        [$empresaId] = $this->resolveContext($dto);
+
+        return Cache::lock('billing_storage_'.$empresaId, 180)->block(10, fn () => $this->performUpload($dto));
+    }
+
+    private function performUpload(UploadDocumentoDTO $dto): DocumentoArquivo
     {
         $user = User::query()->findOrFail($dto->uploadedBy);
         $metadata = FileMetadata::fromUploadedFile($dto->file);
@@ -37,6 +46,7 @@ final readonly class UploadDocumentoAction
         [$empresaId, $customerId, $processoId, $licenciamentoId, $documentable] = $this->resolveContext($dto);
         $this->access->assertUserCanAccessEmpresa($user, $empresaId);
         Gate::forUser($user)->authorize('upload', [DocumentoArquivo::class, Empresa::query()->findOrFail($empresaId)]);
+        app(BillingQuota::class)->assertAvailable($empresaId, 'storage_gb', $metadata->sizeBytes);
 
         $folder = $this->resolveFolder($dto->folderId, $empresaId);
         $path = $folder
@@ -113,7 +123,7 @@ final readonly class UploadDocumentoAction
     private function resolveCustomer(UploadDocumentoDTO $dto): array
     {
         $customer = Customer::query()->findOrFail($dto->entidadeId);
-        $empresaId = \App\Support\TenantContext::empresaId() ?? 0;
+        $empresaId = TenantContext::empresaId() ?? 0;
 
         if (! empty($customer->empresa_id) && (int) $customer->empresa_id === (int) $empresaId) {
             return [$empresaId, (int) $customer->id, null, null, $customer];

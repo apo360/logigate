@@ -2,12 +2,20 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class AppyPayWebhookSecurityTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (! getenv('V1_TEST_DATABASE')) {
+            throw new \RuntimeException('Use the disposable billing runner.');
+        }
+    }
 
     public function test_webhook_rejects_invalid_signature(): void
     {
@@ -45,7 +53,7 @@ class AppyPayWebhookSecurityTest extends TestCase
             ->assertStatus(405);
     }
 
-    public function test_webhook_replays_are_rejected_with_idempotency(): void
+    public function test_signed_early_webhooks_remain_reprocessable(): void
     {
         config([
             'services.appypay.webhook_secret' => 'test-secret',
@@ -71,9 +79,9 @@ class AppyPayWebhookSecurityTest extends TestCase
             $payload
         );
 
-        $firstResponse->assertOk()
+        $firstResponse->assertStatus(503)
             ->assertJson([
-                'status' => 'ok',
+                'status' => 'retry',
             ]);
 
         $this->assertDatabaseHas('webhook_events', [
@@ -94,9 +102,9 @@ class AppyPayWebhookSecurityTest extends TestCase
             $payload
         );
 
-        $duplicateResponse->assertStatus(202)
+        $duplicateResponse->assertStatus(503)
             ->assertJson([
-                'status' => 'duplicate',
+                'status' => 'retry',
             ]);
     }
 }

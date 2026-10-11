@@ -2,14 +2,16 @@
 
 namespace App\Providers;
 
-use App\Domains\Banco\Repositories\EmpresaBancoRepositoryInterface;
 use App\Application\Arquivo\Policies\DocumentoPolicy;
 use App\Application\Arquivo\Repositories\DocumentoRepositoryInterface;
 use App\Application\Arquivo\Repositories\EloquentDocumentoRepository;
+use App\Application\Billing\Contracts\GpoPaymentGateway;
+use App\Application\Billing\Contracts\RefPaymentGateway;
 use App\Application\Mercadoria\Repositories\EloquentMercadoriaRepository;
 use App\Application\Mercadoria\Repositories\MercadoriaRepositoryInterface;
 use App\Application\PautaAduaneira\IA\OpenAIPautaSuggestionProvider;
 use App\Application\PautaAduaneira\IA\PautaSuggestionProviderInterface;
+use App\Domains\Banco\Repositories\EmpresaBancoRepositoryInterface;
 use App\Domains\ClientePortal\Repositories\ClientePortalRepositoryInterface;
 use App\Domains\ClientePortal\Repositories\EloquentClientePortalRepository;
 use App\Domains\Customers\Repositories\CustomerRepositoryInterface;
@@ -17,47 +19,65 @@ use App\Domains\Customers\Repositories\EloquentCustomerRepository;
 use App\Domains\Empresa\Policies\EmpresaPolicy;
 use App\Domains\Empresa\Repositories\EloquentEmpresaRepository;
 use App\Domains\Empresa\Repositories\EmpresaRepositoryInterface;
+use App\Domains\Exportadores\Repositories\EloquentExportadorRepository;
+use App\Domains\Exportadores\Repositories\ExportadorRepositoryInterface;
 use App\Domains\FacturacaoIntegracao\Clients\HongayetuFacturacaoClientInterface;
 use App\Domains\Integracoes\Repositories\EloquentEmpresaIntegracaoRepository;
 use App\Domains\Integracoes\Repositories\EmpresaIntegracaoRepositoryInterface;
 use App\Domains\Licenciamento\Repositories\EloquentLicenciamentoRepository;
 use App\Domains\Licenciamento\Repositories\LicenciamentoRepositoryInterface;
-use App\Domains\Processo\Repositories\EloquentProcessoRepository;
-use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
-use App\Domains\Exportadores\Repositories\EloquentExportadorRepository;
-use App\Domains\Exportadores\Repositories\ExportadorRepositoryInterface;
-use App\Domains\Produtos\Repositories\EloquentProdutoRepository;
-use App\Domains\Produtos\Repositories\ProdutoRepositoryInterface;
 use App\Domains\PautaAduaneira\Repositories\EloquentPautaAduaneiraRepository;
 use App\Domains\PautaAduaneira\Repositories\PautaAduaneiraRepositoryInterface;
+use App\Domains\Processo\Repositories\EloquentProcessoRepository;
+use App\Domains\Processo\Repositories\ProcessoRepositoryInterface;
+use App\Domains\Produtos\Repositories\EloquentProdutoRepository;
+use App\Domains\Produtos\Repositories\ProdutoRepositoryInterface;
 use App\Domains\Usuarios\Policies\UsuarioEmpresaPolicy;
 use App\Domains\Usuarios\Repositories\EloquentUsuarioRepository;
 use App\Domains\Usuarios\Repositories\UsuarioRepositoryInterface;
+use App\Http\Middleware\EnsureModuleEntitlement;
 use App\Infrastructure\FacturacaoIntegracao\Hongayetu\HttpHongayetuFacturacaoClient;
+use App\Infrastructure\PaymentGateways\AppyPay\AppyPayGpoClient;
+use App\Infrastructure\PaymentGateways\AppyPay\AppyPayRefClient;
 use App\Infrastructure\Repositories\EloquentEmpresaBancoRepository;
+use App\Models\ContaCorrente;
 use App\Models\Customer;
 use App\Models\CustomerAvenca;
-use App\Models\ContaCorrente;
 use App\Models\DocumentoArquivo;
 use App\Models\Empresa;
+use App\Models\Exportador;
 use App\Models\Licenciamento;
+use App\Models\Mercadoria;
 use App\Models\Processo;
+use App\Models\ProductPrice;
 use App\Models\Produto;
 use App\Models\Subscricao;
 use App\Models\User;
-use App\Policies\CustomerPolicy;
-use App\Policies\CustomerAvencaPolicy;
+use App\Observers\ContaCorrenteObserver;
+use App\Observers\CustomerObserver;
+use App\Observers\ExportadorObserver;
+use App\Observers\OperationalAuditObserver;
+use App\Observers\ProcessoObserver;
+use App\Observers\ProductObserver;
+use App\Observers\ProductPriceObserver;
 use App\Policies\ContaCorrentePolicy;
+use App\Policies\CustomerAvencaPolicy;
+use App\Policies\CustomerPolicy;
+use App\Policies\ExportadorPolicy;
 use App\Policies\LicenciamentoPolicy;
+use App\Policies\MercadoriaPolicy;
 use App\Policies\ProcessoPolicy;
 use App\Policies\ProdutoPolicy;
+use App\Support\BusinessAuthorization;
+use App\Support\TenantContext;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -66,6 +86,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(GpoPaymentGateway::class, AppyPayGpoClient::class);
+        $this->app->bind(RefPaymentGateway::class, AppyPayRefClient::class);
         $this->app->bind(ProcessoRepositoryInterface::class, EloquentProcessoRepository::class);
         $this->app->bind(LicenciamentoRepositoryInterface::class, EloquentLicenciamentoRepository::class);
         $this->app->bind(EmpresaBancoRepositoryInterface::class, EloquentEmpresaBancoRepository::class);
@@ -88,6 +110,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Livewire::addPersistentMiddleware([EnsureModuleEntitlement::class]);
         if (app()->environment('production')) {
             URL::forceScheme('https');
         }
@@ -100,8 +123,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Licenciamento::class, LicenciamentoPolicy::class);
         Gate::policy(Processo::class, ProcessoPolicy::class);
         Gate::policy(Produto::class, ProdutoPolicy::class);
-        Gate::policy(\App\Models\Exportador::class, \App\Policies\ExportadorPolicy::class);
-        Gate::policy(\App\Models\Mercadoria::class, \App\Policies\MercadoriaPolicy::class);
+        Gate::policy(Exportador::class, ExportadorPolicy::class);
+        Gate::policy(Mercadoria::class, MercadoriaPolicy::class);
 
         Gate::define('manageEmpresaUser', function (User $actor, Empresa $empresa, User $managed) {
             return app(UsuarioEmpresaPolicy::class)->manageUser($actor, $empresa, $managed);
@@ -138,21 +161,21 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::define('manageIntegrations', function (User $user, Empresa $empresa): bool {
-            if (\App\Support\TenantContext::empresaId($user) !== (int) $empresa->id) {
+            if (TenantContext::empresaId($user) !== (int) $empresa->id) {
                 return false;
             }
 
-            return \App\Support\BusinessAuthorization::allows($user, 'empresas.update');
+            return BusinessAuthorization::allows($user, 'empresas.update');
         });
 
         // Security: explicit tenant-aware route model binding prevents cross-tenant IDOR.
         Route::bind('customer', function ($value) {
-            $empresaId = \App\Support\TenantContext::empresaId();
-            abort_if(!$empresaId, 404);
+            $empresaId = TenantContext::empresaId();
+            abort_if(! $empresaId, 404);
 
             $query = Customer::query();
 
-            if (!Schema::hasColumn('customers', 'deleted_at')) {
+            if (! Schema::hasColumn('customers', 'deleted_at')) {
                 $query->withoutGlobalScope(SoftDeletingScope::class);
             }
 
@@ -169,12 +192,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('processo', function ($value) {
-            $empresaId = \App\Support\TenantContext::empresaId();
-            abort_if(!$empresaId, 404);
+            $empresaId = TenantContext::empresaId();
+            abort_if(! $empresaId, 404);
 
             $query = Processo::query();
 
-            if (!Schema::hasColumn('processos', 'deleted_at')) {
+            if (! Schema::hasColumn('processos', 'deleted_at')) {
                 $query->withoutGlobalScope(SoftDeletingScope::class);
             }
 
@@ -185,8 +208,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('licenciamento', function ($value) {
-            $empresaId = \App\Support\TenantContext::empresaId();
-            abort_if(!$empresaId, 404);
+            $empresaId = TenantContext::empresaId();
+            abort_if(! $empresaId, 404);
 
             return Licenciamento::query()
                 ->whereKey($value)
@@ -195,8 +218,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('produto', function ($value) {
-            $empresaId = \App\Support\TenantContext::empresaId();
-            abort_if(!$empresaId, 404);
+            $empresaId = TenantContext::empresaId();
+            abort_if(! $empresaId, 404);
 
             return Produto::query()
                 ->whereKey($value)
@@ -205,8 +228,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('subscricao', function ($value) {
-            $empresaId = \App\Support\TenantContext::empresaId();
-            abort_if(!$empresaId, 404);
+            $empresaId = TenantContext::empresaId();
+            abort_if(! $empresaId, 404);
 
             return Subscricao::query()
                 ->whereKey($value)
@@ -215,8 +238,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Route::bind('documentoArquivo', function ($value) {
-            $empresaId = \App\Support\TenantContext::empresaId();
-            abort_if(!$empresaId, 404);
+            $empresaId = TenantContext::empresaId();
+            abort_if(! $empresaId, 404);
 
             return DocumentoArquivo::query()->whereKey($value)->where('empresa_id', $empresaId)->firstOrFail();
         });
@@ -224,7 +247,7 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('empresa', function ($value) {
             $user = Auth::user();
 
-            if (!$user) {
+            if (! $user) {
                 abort(404);
             }
 
@@ -234,14 +257,14 @@ class AppServiceProvider extends ServiceProvider
                 ->firstOrFail();
         });
 
-        \App\Models\ProductPrice::observe(\App\Observers\ProductPriceObserver::class);
-        \App\Models\Produto::observe(\App\Observers\ProductObserver::class);
-        \App\Models\ContaCorrente::observe(\App\Observers\ContaCorrenteObserver::class);
-        \App\Models\Customer::observe(\App\Observers\CustomerObserver::class);
-        \App\Models\Exportador::observe(\App\Observers\ExportadorObserver::class);
-        \App\Models\Processo::observe(\App\Observers\ProcessoObserver::class);
-        foreach ([\App\Models\Customer::class, \App\Models\Exportador::class, \App\Models\Processo::class, \App\Models\Licenciamento::class, \App\Models\Mercadoria::class] as $model) {
-            $model::observe(\App\Observers\OperationalAuditObserver::class);
+        ProductPrice::observe(ProductPriceObserver::class);
+        Produto::observe(ProductObserver::class);
+        ContaCorrente::observe(ContaCorrenteObserver::class);
+        Customer::observe(CustomerObserver::class);
+        Exportador::observe(ExportadorObserver::class);
+        Processo::observe(ProcessoObserver::class);
+        foreach ([Customer::class, Exportador::class, Processo::class, Licenciamento::class, Mercadoria::class] as $model) {
+            $model::observe(OperationalAuditObserver::class);
         }
     }
 }

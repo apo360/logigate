@@ -3,7 +3,8 @@
         $dias = $this->diasRestantes;
         $percent = $this->percentualRestante;
         $pendente = $subscricao?->hasStatus(\App\Models\Subscricao::STATUS_PENDENTE);
-        $ativa = $subscricao?->hasStatus(\App\Models\Subscricao::STATUS_ATIVA);
+        $ativa = $subscricao?->isAtiva();
+        $futura = $subscricao?->hasStatus(\App\Models\Subscricao::STATUS_ATIVA) && $this->dataInicio?->isFuture();
     @endphp
     <div class="relative h-10 w-10 shrink-0" aria-hidden="true">
         <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.9155" fill="none" stroke="currentColor" stroke-width="3" class="text-gray-200 dark:text-gray-700"/><circle cx="18" cy="18" r="15.9155" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="{{ $ativa ? $percent : 0 }}, 100" class="text-logigate-primary"/></svg>
@@ -15,6 +16,8 @@
             <span class="text-gray-500 dark:text-gray-400">Nenhuma subscrição activa</span>
         @elseif($pendente)
             <span class="text-amber-700 dark:text-amber-400">Pagamento pendente</span>
+        @elseif($futura)
+            <span class="text-blue-700 dark:text-blue-400">Começa {{ $this->dataInicio->format('d/m/Y') }}</span>
         @elseif($subscricao->hasStatus(\App\Models\Subscricao::STATUS_CANCELADA))
             <span class="text-gray-500 dark:text-gray-400">Cancelada</span>
         @elseif($subscricao->hasStatus(\App\Models\Subscricao::STATUS_SUSPENSA))

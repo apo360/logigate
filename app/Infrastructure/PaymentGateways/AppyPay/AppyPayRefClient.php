@@ -2,13 +2,14 @@
 
 namespace App\Infrastructure\PaymentGateways\AppyPay;
 
+use App\Application\Billing\Contracts\RefPaymentGateway;
 use App\Application\Billing\DTOs\PaymentGatewayResult;
 use App\Domains\Billing\ValueObjects\MerchantTransactionId;
 use App\Domains\Billing\ValueObjects\Money;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-final class AppyPayRefClient
+final class AppyPayRefClient implements RefPaymentGateway
 {
     public function __construct(
         private readonly AppyPayAuthClient $auth,
@@ -35,6 +36,7 @@ final class AppyPayRefClient
             $response = Http::withToken($this->auth->getToken())
                 ->acceptJson()
                 ->asJson()
+                ->connectTimeout(5)->timeout(20)
                 ->post($config->chargeUrl(), $payload);
 
             $responsePayload = $response->json() ?? [];
@@ -46,7 +48,7 @@ final class AppyPayRefClient
                     'body' => $responsePayload,
                 ]);
 
-                return $this->mapper->failure('HTTP_ERROR', 'Falha ao gerar referencia.', $responsePayload);
+                return $this->mapper->failure($response->serverError() || $response->status() === 429 ? 'REQUEST_UNCERTAIN' : 'HTTP_ERROR', 'Falha ao gerar referencia.', $responsePayload);
             }
 
             return $this->mapper->success($responsePayload);

@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivatedModule;
 use App\Models\Empresa;
-use App\Models\MetodoPagamento;
 use App\Models\Module;
 use App\Models\Pagamento;
 use App\Models\Subscricao;
+use App\Support\TenantContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ModuleSubscriptionController extends AuthenticatedController
 {
@@ -18,17 +17,16 @@ class ModuleSubscriptionController extends AuthenticatedController
     public function index()
     {
         $modules = Module::all();
-        $empresa = \App\Support\TenantContext::empresa(); // Supondo que o usuário está associado a uma empresa
+        $empresa = TenantContext::empresa(); // Supondo que o usuário está associado a uma empresa
 
         return view('modules.index', compact('modules', 'empresa'));
     }
 
     public function show(Empresa $empresa)
     {
-        abort_unless(\App\Support\TenantContext::empresaId() === (int) $empresa->id, 403);
-        $modulos = Module::all();
-        $metodosPagamento = MetodoPagamento::all();
-        return view('empresa.subscricao', compact('empresa', 'modulos', 'metodosPagamento'));
+        abort_unless(TenantContext::empresaId() === (int) $empresa->id, 403);
+
+        return redirect()->route('billing.plans');
     }
 
     /*public function pay(Request $request)

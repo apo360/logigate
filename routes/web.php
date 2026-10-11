@@ -1,96 +1,106 @@
 <?php
 
-use App\Http\Controllers\Admin\UserRoleController;
-use App\Http\Controllers\OtpController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EmpresaController;
-use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ActivatedModuleController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\Roles;
+use App\Http\Controllers\Admin\UserRoleController;
 use App\Http\Controllers\ArquivoController;
-use App\Http\Controllers\CedulaController;
+use App\Http\Controllers\AsycudaController;
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\BillingPlanController;
+use App\Http\Controllers\CedulaController;
+use App\Http\Controllers\ContabilidadeController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentoArquivoController;
+use App\Http\Controllers\EmpresaContextController;
+use App\Http\Controllers\EmpresaController;
 use App\Http\Controllers\ExportadorController;
 use App\Http\Controllers\IbanController;
 use App\Http\Controllers\LicenciamentoController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MercadoriaController;
 use App\Http\Controllers\MigracaoController;
+use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ModuleSubscriptionController;
+use App\Http\Controllers\OtpController;
 use App\Http\Controllers\PaisController;
+use App\Http\Controllers\PautaAduaneiraController;
+use App\Http\Controllers\PortoController;
 use App\Http\Controllers\ProcessoController;
 use App\Http\Controllers\ProdutoController;
 use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\ScheduledTaskController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ContabilidadeController;
+use App\Http\Controllers\WebPage\MarketplaceController;
+use App\Http\Controllers\WebPage\PublicPautaController;
+use App\Http\Controllers\WebPage\RastreamentoController;
+use App\Http\Controllers\WebPage\WelcomeController;
+use App\Livewire\Processo\ImportarDeclaracaoAsycuda;
+use App\Models\Customer;
+use App\Models\Processo;
+use App\Support\TenantContext;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
-use App\Http\Controllers\Auth\PasswordController;
-use App\Http\Controllers\WebPage\RastreamentoController;
-use App\Http\Controllers\PautaAduaneiraController;
-use App\Http\Controllers\PortoController;
-use Illuminate\Http\Request;
-use App\Http\Controllers\AsycudaController;
-use App\Http\Controllers\PagamentoController;
-use App\Http\Controllers\ScheduledTaskController;
-use App\Http\Controllers\WebPage\WelcomeController;
-use App\Http\Controllers\AppyPayWebhookController;
-use App\Models\Customer;
-use App\Livewire\Processo\ImportarDeclaracaoAsycuda;
-use App\Models\Processo;
+use Illuminate\Support\Facades\Route;
 
-    /** Rotas WEB */
-    Route::get('/', [WelcomeController::class, 'index'])->name('home');
+/** Rotas WEB */
+Route::get('/', [WelcomeController::class, 'index'])->name('home');
 
-    // Exibir o formulário de consulta da Pauta Aduaneira
-    Route::get('/consultar-pauta-aduaneira', [\App\Http\Controllers\WebPage\PublicPautaController::class, 'index'])->name('consultar.pauta');
+// Exibir o formulário de consulta da Pauta Aduaneira
+Route::get('/consultar-pauta-aduaneira', [PublicPautaController::class, 'index'])->name('consultar.pauta');
 
-    // MarketPlace
-    Route::get('/mercado', [\App\Http\Controllers\WebPage\MarketplaceController::class, 'index'])->name('marketplace');
-    Route::get('/mercado/guia', [\App\Http\Controllers\WebPage\MarketplaceController::class, 'guide'])->middleware('throttle:60,1')->name('marketplace.guide');
+// MarketPlace
+Route::get('/mercado', [MarketplaceController::class, 'index'])->name('marketplace');
+Route::get('/mercado/guia', [MarketplaceController::class, 'guide'])->middleware('throttle:60,1')->name('marketplace.guide');
 
-    // Rotas de Checkout (Pagamento da Subscrição Rápida)
-    Route::get('/cadastro-/{conta}/Confirmar-Pagamento', function(){return view('pagamentos.pagamento-quick');})->name('checkout');
+// Rotas de Checkout (Pagamento da Subscrição Rápida)
+Route::get('/cadastro-/{conta}/Confirmar-Pagamento', function (string $conta) {
+    $empresa = TenantContext::empresa();
+    abort_unless($empresa && $empresa->conta === $conta, 403);
 
-    // Bloco Teste FIM AppPay
+    return redirect()->route('billing.checkout');
+})->middleware(['auth:sanctum', config('jetstream.auth_session'), 'empresa.active'])->name('checkout');
 
-    // Exibir o formulário de consulta
-    Route::get('/consultar-licenciamento', [RastreamentoController::class, 'consultarLicenciamento'])->name('consultar.licenciamento');
+// Bloco Teste FIM AppPay
 
-    // Processar a pesquisa do código
-    Route::post('/consultar-licenciamento', [RastreamentoController::class, 'resultadoConsulta'])->name('resultado.consulta');
+// Exibir o formulário de consulta
+Route::get('/consultar-licenciamento', [RastreamentoController::class, 'consultarLicenciamento'])->name('consultar.licenciamento');
 
-    Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
-    Route::get('Registo', function(){ return view('auth.register_manual'); })->name('verificar.manual');
-    Route::post('Verificar-Cedula', [CedulaController::class, 'validarCedulaLocal'])->name('cedula.verificar');
+// Processar a pesquisa do código
+Route::post('/consultar-licenciamento', [RastreamentoController::class, 'resultadoConsulta'])->name('resultado.consulta');
 
-    Route::get('/verify-otp', [OtpController::class, 'showVerifyOtpForm'])->middleware('auth');
-    Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('confirmaOtp')->middleware('auth');
-    Route::post('/resend-otp', [OtpController::class, 'sendOtp'])->middleware('auth');
+Route::get('Verificar-Cedula', [CedulaController::class, 'create'])->name('cedula');
+Route::get('Registo', function () {
+    return view('auth.register_manual');
+})->name('verificar.manual');
+Route::post('Verificar-Cedula', [CedulaController::class, 'validarCedulaLocal'])->name('cedula.verificar');
 
-    Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change')->middleware('check.password.changed');
-    Route::post('re/password/change', [PasswordController::class, 'changePassword'])->name('password.change.store')->middleware('check.password.changed');
+Route::get('/verify-otp', [OtpController::class, 'showVerifyOtpForm'])->middleware('auth');
+Route::post('/verify-otp', [OtpController::class, 'verifyOtp'])->name('confirmaOtp')->middleware('auth');
+Route::post('/resend-otp', [OtpController::class, 'sendOtp'])->middleware('auth');
 
-    Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(function () {
+Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change')->middleware('check.password.changed');
+Route::post('re/password/change', [PasswordController::class, 'changePassword'])->name('password.change.store')->middleware('check.password.changed');
 
-        Route::get('/empresa-contexto', [\App\Http\Controllers\EmpresaContextController::class, 'index'])->name('empresa-context.index');
-        Route::post('/empresa-contexto', [\App\Http\Controllers\EmpresaContextController::class, 'update'])->name('empresa-context.update');
+Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(function () {
 
-        Route::post('/logout', function (Request $request) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect('/login');
-        })->name('logout');
+    Route::get('/empresa-contexto', [EmpresaContextController::class, 'index'])->name('empresa-context.index');
+    Route::post('/empresa-contexto', [EmpresaContextController::class, 'update'])->name('empresa-context.update');
 
-        Route::middleware('empresa.active')->group(function () {
-        
+    Route::post('/logout', function (Request $request) {
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login');
+    })->name('logout');
+
+    Route::middleware('empresa.active')->group(function () {
+
         // ------------- Rotas para os despachantes ------------ //
-        // Sistema de Controlle de usuarios. 
+        // Sistema de Controlle de usuarios.
         // State-changing user management routes must be non-GET so they stay
         // behind CSRF protection and cannot be triggered by crawlers/links.
         Route::post('/usuarios/block/{id}', [UserController::class, 'block'])->name('usuarios.block');
@@ -99,6 +109,10 @@ use App\Models\Processo;
 
         Route::get('/billing/plans', [BillingPlanController::class, 'index'])->name('billing.plans');
         Route::post('/billing/plans', [BillingPlanController::class, 'start'])->name('billing.start');
+        Route::view('/billing/checkout', 'pagamentos.pagamento-quick')->name('billing.checkout');
+        Route::post('/billing/cancel-pending', [BillingPlanController::class, 'cancelPending'])->name('billing.cancel-pending');
+        Route::post('/billing/stop-renewal', [BillingPlanController::class, 'stopRenewal'])->name('billing.stop-renewal');
+        Route::get('/billing/payments/{payment}/receipt', [BillingPlanController::class, 'receipt'])->whereNumber('payment')->name('billing.receipt');
         Route::view('/admin/integracoes', 'admin.integracoes')->name('admin.integracoes');
         Route::view('/integracoes', 'admin.integracoes')->name('integracoes.index');
         Route::view('/integracoes/facturacao-hongayetu', 'integracoes.facturacao-hongayetu')->name('integracoes.facturacao-hongayetu');
@@ -111,7 +125,9 @@ use App\Models\Processo;
 
         Route::middleware('check.subscription')->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-            Route::get('/dashboard-RH', function () {return view('dashboard_rh'); })->name('dashboard.rh');
+            Route::get('/dashboard-RH', function () {
+                return view('dashboard_rh');
+            })->name('dashboard.rh');
             Route::get('/dashboard-Licenciamento', [DashboardController::class, 'licenciamentoEstatisticas'])->name('licenciamento.estatistica');
             Route::get('/dashboard-Processos', [DashboardController::class, 'ProcessosEstatisticas'])->name('processos.estatistica');
             Route::get('/dashboard-Factura', [DashboardController::class, 'FacturaEstatisticas'])->name('factura.estatistica');
@@ -147,7 +163,7 @@ use App\Models\Processo;
         // =========================
         // Routes example (routes/api.php)
         // =========================
-        Route::prefix('scheduled-tasks')->group(function() {
+        Route::prefix('scheduled-tasks')->group(function () {
             Route::get('/', [ScheduledTaskController::class, 'index']);
             Route::post('/', [ScheduledTaskController::class, 'store']);
             Route::get('/{id}', [ScheduledTaskController::class, 'show']);
@@ -156,9 +172,6 @@ use App\Models\Processo;
             Route::post('/{id}/run-now', [ScheduledTaskController::class, 'runNow']);
         });
 
-        /**
-         *  
-         */
         Route::get('/Tarefas', [ScheduledTaskController::class, 'index'])->name('leander.dashboard');
 
         // Arquivos no S3
@@ -167,7 +180,6 @@ use App\Models\Processo;
         Route::get('/arquivo/pasta-view', [ArquivoController::class, 'PastaView'])->name('PastaAbrir');
         Route::post('/arquivo/criar-pasta', [ArquivoController::class, 'criarPasta'])->name('arquivos.criarPasta');
         Route::get('/arquivo/visualizar/{key}', [ArquivoController::class, 'visualizar'])->where('key', '.*')->name('arquivos.visualizar');
-
 
         Route::get('relatorios/licenciamento/{tipo}', [RelatorioController::class, 'RelatorioLicenciamento'])->name('relatorio.visualizar');
         Route::get('licenciamento/relatorio', [RelatorioController::class, 'SelecionarRelatorio'])->name('relatorio.licenciamento');
@@ -181,11 +193,10 @@ use App\Models\Processo;
         Route::post('/licenciamentos/import', [LicenciamentoController::class, 'import'])->name('licenciamentos.import');
         Route::get('licenciamentos/listas/pice', [LicenciamentoController::class, 'pice'])->name('licenciamentos.pice');
 
-
         // Rota para Inserir Grupo/Categoria de Produtos
         Route::post('/produto/grupo/insert', [ProdutoController::class, 'InsertGrupo'])->name('insert.grupo.produto');
         // toggle.produto
-        Route::post('/produto/toggle/{id}', [ProdutoController::class, 'updateStatus'])->name('toggle.produto'); //updateStatus
+        Route::post('/produto/toggle/{id}', [ProdutoController::class, 'updateStatus'])->name('toggle.produto'); // updateStatus
         // Rota para Atualizar Preço do Produto
         Route::post('/produto/{produto}/actualizar-preço', [ProdutoController::class, 'updatePrice'])->name('produtos.updatePrice');
         // Rota para pegar a view de atualização de preço
@@ -264,6 +275,6 @@ use App\Models\Processo;
         Route::get('processos/importar-asycuda', ImportarDeclaracaoAsycuda::class)->name('processos.importar-asycuda');
         Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
 
-        });
-
     });
+
+});

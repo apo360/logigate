@@ -8,27 +8,44 @@ use App\Application\Billing\UseCases\StartCheckout;
 use App\Domains\Billing\Enums\BillingCycle;
 use App\Domains\Billing\Enums\PaymentMethod;
 use App\Domains\Billing\Enums\PaymentStatus;
+use App\Livewire\Concerns\RequiresActiveEmpresa;
 use App\Models\PagamentoOnline;
 use App\Models\Subscricao;
+use App\Services\BillingAccess;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class CheckoutPayment extends Component
 {
-    use \App\Livewire\Concerns\RequiresActiveEmpresa;
+    use RequiresActiveEmpresa;
 
     public string $method = 'GPO';
+
     public ?string $phone = null;
-    #[\Livewire\Attributes\Locked]
+
+    #[Locked]
     public ?int $empresaId = null;
+
+    #[Locked]
     public ?int $subscriptionId = null;
+
+    #[Locked]
     public ?int $paymentId = null;
+
+    #[Locked]
     public ?string $paymentStatus = null;
+
     public ?string $merchantTransactionId = null;
+
     public ?string $error = null;
+
     public bool $processing = false;
+
+    #[Locked]
     public array $paymentView = [];
 
     protected function rules(): array
@@ -46,7 +63,7 @@ class CheckoutPayment extends Component
 
     public function hydrate(): void
     {
-        $activeId = \App\Support\TenantContext::empresaId();
+        $activeId = TenantContext::empresaId();
         abort_unless($activeId !== null && $this->empresaId === $activeId, 403);
     }
 
@@ -56,13 +73,15 @@ class CheckoutPayment extends Component
 
         if (! $user) {
             redirect()->route('login');
+
             return;
         }
 
-        $empresa = \App\Support\TenantContext::empresa($user);
+        $empresa = TenantContext::empresa($user);
 
         if (! $empresa) {
             redirect()->route('home')->with('error', 'Nenhuma empresa encontrada.');
+
             return;
         }
 
@@ -91,6 +110,7 @@ class CheckoutPayment extends Component
     public function retryGpo(StartCheckout $startCheckout): void
     {
         $this->method = PaymentMethod::GPO->value;
+        $this->validate();
         $this->startPayment($startCheckout, PaymentMethod::GPO);
     }
 
@@ -108,9 +128,9 @@ class CheckoutPayment extends Component
             return;
         }
 
-        $payment = PagamentoOnline::with('subscription.plano')->find($this->paymentId);
+        $payment = PagamentoOnline::with('subscription.plano')->where('empresa_id', $this->empresaId)->find($this->paymentId);
 
-        if (! $payment || ! $payment->subscription) {
+        if (! $payment || ! $payment->subscription || (int) $payment->subscription->empresa_id !== $this->empresaId) {
             return;
         }
 
@@ -121,13 +141,17 @@ class CheckoutPayment extends Component
     {
         if (! $this->empresaId) {
             $this->error = 'Empresa nao encontrada.';
+
             return;
         }
 
-        $lock = Cache::lock('checkout_' . Auth::id(), 10);
+        app(BillingAccess::class)->authorize($this->empresaId);
+
+        $lock = Cache::lock('checkout_'.Auth::id(), 10);
 
         if (! $lock->get()) {
             $this->error = 'Processamento ja em andamento.';
+
             return;
         }
 
@@ -169,8 +193,13 @@ class CheckoutPayment extends Component
             ->first();
 
         if (! $subscription) {
-            redirect()->route('home')->with('error', 'Nenhuma subscricao pendente encontrada.');
-            return;
+            $paid = PagamentoOnline::where('empresa_id', $this->empresaId)->where('status', 'paid')->with('subscription.plano')->latest('id')->first();
+            $subscription = $paid?->subscription;
+            if (! $subscription || (int) $subscription->empresa_id !== $this->empresaId) {
+                $this->redirectRoute('billing.plans');
+
+                return;
+            }
         }
 
         $this->subscriptionId = $subscription->id;
@@ -197,6 +226,7 @@ class CheckoutPayment extends Component
         $this->paymentId = $this->paymentView['payment_id'];
         $this->paymentStatus = $this->paymentView['status'];
         $this->merchantTransactionId = $this->paymentView['merchant_transaction_id'];
+        $this->error = $this->paymentView['error'];
 
         if (($this->paymentView['phone'] ?? null) && str_starts_with($this->paymentView['phone'], '244')) {
             $this->phone = substr($this->paymentView['phone'], 3);
@@ -205,8 +235,8 @@ class CheckoutPayment extends Component
 
     public function getShouldPollProperty(): bool
     {
-        return ($this->paymentView['method'] ?? null) === PaymentMethod::GPO->value
-            && in_array($this->paymentStatus, [PaymentStatus::Pending->value, PaymentStatus::Processing->value], true);
+        return $this->paymentId !== null && (in_array($this->paymentStatus, [PaymentStatus::Pending->value, PaymentStatus::Processing->value], true)
+            || ($this->paymentStatus === 'paid' && ($this->paymentView['activation_pending'] ?? false)));
     }
 
     public function getHasPaymentProperty(): bool
@@ -216,7 +246,7 @@ class CheckoutPayment extends Component
 
     public function getBaseAmountProperty(): float
     {
-        return round(((float) ($this->paymentView['amount'] ?? 0)) / 1.14, 2);
+        return (float) ($this->paymentView['base_amount'] ?? 0);
     }
 
     public function getVatAmountProperty(): float
@@ -227,6 +257,7 @@ class CheckoutPayment extends Component
     public function render()
     {
         return view('livewire.checkout-payment', [
+            'canManage' => $this->empresaId && app(BillingAccess::class)->canManage(auth()->user(), $this->empresaId),
             'statusEnum' => $this->paymentStatus ? PaymentStatus::fromPersisted($this->paymentStatus) : PaymentStatus::Pending,
             'cycleEnum' => isset($this->paymentView['cycle']) ? BillingCycle::fromInput($this->paymentView['cycle']) : BillingCycle::Monthly,
         ]);

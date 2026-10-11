@@ -1,4 +1,7 @@
 <div class="space-y-5">
+    @if($paymentView['message'] ?? null)
+        <p class="text-sm text-slate-700">{{ $paymentView['message'] }}</p>
+    @endif
     <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
         <h2 class="font-semibold text-blue-950">GPO aguardando autorizacao</h2>
         <p class="mt-1 text-sm text-blue-800">
@@ -16,6 +19,7 @@
             O pedido GPO nao foi confirmado. Pode tentar novamente ou gerar uma referencia Multicaixa.
         </div>
 
+        @if($canManage)
         <div class="flex flex-wrap gap-3">
             <button type="button" wire:click="retryGpo" class="rounded-lg bg-blue-700 px-4 py-2 font-semibold text-white hover:bg-blue-800">
                 Tentar GPO
@@ -24,6 +28,7 @@
                 Usar referencia
             </button>
         </div>
+        @endif
     @else
         <div class="flex items-center gap-2 text-sm text-slate-600">
             <span class="h-2 w-2 rounded-full bg-blue-600"></span>

@@ -11,7 +11,7 @@ final class AppyPayAuthClient
     {
         $config = AppyPayConfig::fromConfig();
 
-        $response = Http::asForm()->post($config->oauthUrl, [
+        $response = Http::asForm()->connectTimeout(5)->timeout(15)->post($config->oauthUrl, [
             'grant_type' => 'client_credentials',
             'client_id' => $config->clientId,
             'client_secret' => $config->clientSecret,
@@ -40,5 +40,4 @@ final class AppyPayAuthClient
 
         return (string) $json['access_token'];
     }
-
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Responses;
 
+use App\Application\Empresa\Actions\EstabelecerEmpresaAposAutenticacaoAction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
@@ -12,10 +13,11 @@ class LoginResponse implements LoginResponseContract
     {
         $user = Auth::user();
 
-        $empresa = app(\App\Application\Empresa\Actions\EstabelecerEmpresaAposAutenticacaoAction::class)->execute($user);
+        $empresa = app(EstabelecerEmpresaAposAutenticacaoAction::class)->execute($user);
 
         if (! $empresa) {
             Log::warning('User without company', ['user_id' => $user->id]);
+
             return redirect()->route('empresa-context.index');
         }
 
@@ -26,7 +28,7 @@ class LoginResponse implements LoginResponseContract
                 ->first();
 
             if ($pendingSubscription) {
-                return redirect()->route('checkout', ['conta' => $empresa->conta]);
+                return redirect()->route('billing.checkout');
             }
 
             return redirect()->route('billing.plans');
@@ -43,7 +45,7 @@ class LoginResponse implements LoginResponseContract
                 return redirect()->route('agente_carga.dashboard');
 
             default:
-                Log::warning('Unknown designation', ['designacao' => $empresa->Designacao,]);
+                Log::warning('Unknown designation', ['designacao' => $empresa->Designacao]);
 
                 return redirect('/dashboard');
         }

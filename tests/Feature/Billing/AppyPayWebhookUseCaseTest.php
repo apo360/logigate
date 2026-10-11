@@ -3,16 +3,27 @@
 namespace Tests\Feature\Billing;
 
 use App\Application\Billing\UseCases\HandleAppyPayWebhook;
-use App\Models\Empresa;
+use App\Http\Controllers\ArquivoController;
 use App\Models\PagamentoOnline;
 use App\Models\Plano;
 use App\Models\Subscricao;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Tests\Feature\Processo\ProcessoTestFixtures;
 use Tests\TestCase;
 
 class AppyPayWebhookUseCaseTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
+    use ProcessoTestFixtures;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        if (! getenv('V1_TEST_DATABASE')) {
+            throw new \RuntimeException('Use the disposable billing runner.');
+        }
+        $this->mock(ArquivoController::class)->shouldReceive('createMasterFolder')->andReturnNull();
+    }
 
     public function test_success_webhook_marks_payment_paid(): void
     {
@@ -53,10 +64,7 @@ class AppyPayWebhookUseCaseTest extends TestCase
 
     private function makePendingPayment(): array
     {
-        $empresa = Empresa::create([
-            'Empresa' => 'Empresa Teste',
-            'Designacao' => 'Despachante Oficial',
-        ]);
+        [, $empresa] = $this->createTenant('WEBHOOK');
 
         $plano = Plano::create([
             'nome' => 'Plano Teste',

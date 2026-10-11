@@ -11,7 +11,7 @@ class Menu extends Model
     use HasFactory;
 
     protected $fillable = [
-        'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'description', 'permission'
+        'parent_id', 'module_id', 'menu_name', 'slug', 'order_priority', 'route', 'icon', 'description', 'permission', 'group_code'
     ];
 
     public static function clearMenuCacheForUser(?int $userId): void

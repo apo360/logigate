@@ -13,7 +13,9 @@ use App\Domains\Arquivo\ValueObjects\FileMetadata;
 use App\Models\ClientePortal;
 use App\Models\Customer;
 use App\Models\DocumentoArquivo;
+use App\Services\BillingQuota;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
@@ -24,10 +26,15 @@ final readonly class UploadDocumentoClientePortalAction
         private S3PathBuilder $pathBuilder,
         private FileStorageService $storage,
         private FileAccessService $access,
-    ) {
-    }
+    ) {}
 
     public function execute(ClientePortal $portal, UploadedFile $file, DocumentoCategoriaEnum $categoria, ?string $observacao = null): DocumentoArquivo
+    {
+        return Cache::lock('billing_storage_'.$portal->empresa_id, 180)
+            ->block(10, fn () => $this->performUpload($portal, $file, $categoria, $observacao));
+    }
+
+    private function performUpload(ClientePortal $portal, UploadedFile $file, DocumentoCategoriaEnum $categoria, ?string $observacao): DocumentoArquivo
     {
         /** @var Customer $customer */
         $customer = $portal->customer()->firstOrFail();
@@ -37,6 +44,7 @@ final readonly class UploadDocumentoClientePortalAction
 
         $metadata = FileMetadata::fromUploadedFile($file);
         $this->access->assertValidUpload($file, $categoria);
+        app(BillingQuota::class)->assertAvailable($empresaId, 'storage_gb', $metadata->sizeBytes);
 
         $path = $this->pathBuilder->forUpload(DocumentoContextoEnum::CUSTOMER, $categoria, (int) $customer->id, $metadata->extension ?: 'bin', $empresaId);
         $this->storage->put($path, $file);

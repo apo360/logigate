@@ -23,6 +23,10 @@ final readonly class PaymentViewData
         public ?string $message = null,
         public ?string $error = null,
         public bool $fallbackApplied = false,
+        public float $baseAmount = 0,
+        public float $vatRate = 0,
+        public bool $activationPending = false,
+        public ?string $startsAt = null,
     ) {}
 
     public function toArray(): array
@@ -42,6 +46,10 @@ final readonly class PaymentViewData
             'message' => $this->message,
             'error' => $this->error,
             'fallback_applied' => $this->fallbackApplied,
+            'base_amount' => $this->baseAmount,
+            'vat_rate' => $this->vatRate,
+            'activation_pending' => $this->activationPending,
+            'starts_at' => $this->startsAt,
         ];
     }
 }

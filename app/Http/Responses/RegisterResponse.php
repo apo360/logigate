@@ -3,6 +3,8 @@
 namespace App\Http\Responses;
 
 use App\Actions\Subscriptions\ActivateSubscriptionAction;
+use App\Application\Empresa\Actions\EstabelecerEmpresaAposAutenticacaoAction;
+use App\Services\SubscriptionQuote;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
@@ -17,10 +19,11 @@ class RegisterResponse implements RegisterResponseContract
             return redirect()->route('login');
         }
 
-        $empresa = app(\App\Application\Empresa\Actions\EstabelecerEmpresaAposAutenticacaoAction::class)->execute($user);
+        $empresa = app(EstabelecerEmpresaAposAutenticacaoAction::class)->execute($user);
 
         if (! $empresa) {
             Log::warning('RegisterResponse without empresa', ['user_id' => $user->id]);
+
             return redirect()->route('empresa-context.index');
         }
 
@@ -31,11 +34,13 @@ class RegisterResponse implements RegisterResponseContract
 
         if (! $subscription) {
             Log::warning('RegisterResponse without subscription', ['empresa_id' => $empresa->id]);
+
             return redirect()->route('home');
         }
 
         // Free plans are activated immediately so the onboarding can end on the dashboard.
-        if ((bool) ($subscription->plano?->is_free ?? false)) {
+        $quote = app(SubscriptionQuote::class)->forSubscription($subscription);
+        if ($quote['is_free'] && $quote['total'] == 0) {
             app(ActivateSubscriptionAction::class)
                 ->execute($subscription);
 
@@ -43,6 +48,6 @@ class RegisterResponse implements RegisterResponseContract
         }
 
         // Paid plans must complete checkout before dashboard access is allowed.
-        return redirect()->route('checkout', ['conta' => $empresa->conta]);
+        return redirect()->route('billing.checkout');
     }
 }

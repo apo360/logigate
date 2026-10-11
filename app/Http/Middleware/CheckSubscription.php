@@ -2,9 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\EffectiveModuleResolver;
+use App\Support\TenantContext;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckSubscription
@@ -12,11 +13,11 @@ class CheckSubscription
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, $modulo = null)
     {
-        $empresa = \App\Support\TenantContext::empresa();
+        $empresa = TenantContext::empresa();
 
         if (! $empresa) {
             abort(403, 'Nenhuma empresa associada');
@@ -24,16 +25,10 @@ class CheckSubscription
 
         // Resolve the subscription explicitly so dashboard access does not depend on
         // brittle helper macros or legacy uppercase status values.
-        $activeSubscription = $empresa->subscricoes()
-            ->active()
-            ->where(function ($query) {
-                $query->whereNull('data_expiracao')
-                    ->orWhere('data_expiracao', '>', now());
-            })
-            ->latest('id')
-            ->first();
+        $resolver = app(EffectiveModuleResolver::class);
+        $hasSubscription = $resolver->hasSubscription((int) $empresa->id);
 
-        if (! $activeSubscription) {
+        if (! $hasSubscription) {
             $pendingSubscription = $empresa->subscricoes()
                 ->pending()
                 ->latest('id')
@@ -41,7 +36,7 @@ class CheckSubscription
 
             if ($pendingSubscription) {
                 return redirect()
-                    ->route('checkout', ['conta' => $empresa->conta])
+                    ->route('billing.checkout')
                     ->with('warning', 'Complete o pagamento para ativar a sua subscrição.');
             }
 
@@ -52,14 +47,8 @@ class CheckSubscription
 
         // Verificar módulo específico
         if ($modulo) {
-            $moduloAtivo = $activeSubscription->activatedModules()
-                ->with('module')
-                ->where('active', true)
-                ->get()
-                ->pluck('module')
-                ->firstWhere('codigo', $modulo);
-
-            if (! $moduloAtivo) {
+            $moduleId = $resolver->moduleId((string) $modulo);
+            if (! $moduleId || ! in_array($moduleId, $resolver->ids((int) $empresa->id), true)) {
                 abort(403, 'Módulo não disponível na sua subscrição');
             }
         }

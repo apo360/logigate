@@ -15,7 +15,7 @@ final readonly class MerchantTransactionId
 
     public static function generate(PaymentMethod $method): self
     {
-        return new self($method->value . now()->format('ymdHis'));
+        return new self($method->value.strtoupper(bin2hex(random_bytes(6))));
     }
 
     public function __toString(): string

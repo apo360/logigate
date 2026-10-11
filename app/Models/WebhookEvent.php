@@ -12,9 +12,11 @@ class WebhookEvent extends Model
         'provider',
         'event_id',
         'processed_at',
+        'payload', 'status', 'attempts', 'last_error', 'received_at',
     ];
 
     protected $casts = [
         'processed_at' => 'datetime',
+        'payload' => 'array', 'received_at' => 'datetime', 'attempts' => 'integer',
     ];
 }

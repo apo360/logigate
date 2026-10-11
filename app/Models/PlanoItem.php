@@ -12,6 +12,6 @@ class PlanoItem extends Model
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        
+        'plano_id', 'item', 'text_color', 'icon', 'observacao',
     ];
 }

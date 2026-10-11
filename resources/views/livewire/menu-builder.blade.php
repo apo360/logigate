@@ -66,6 +66,17 @@
                 <h3 class="text-lg font-semibold mb-4">{{ $menuId ? 'Editar menu' : 'Novo menu' }}</h3>
 
                 <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2">
+                        <label for="menu-group" class="text-sm">Área de trabalho</label>
+                        <select id="menu-group" wire:model="group_code" class="w-full px-3 py-2 border rounded mt-1">
+                            <option value="">Automática pelo módulo</option>
+                            @foreach(config('navigation.groups') as $code => $label)
+                                <option value="{{ $code }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500">Organização visual; não concede permissões nem módulos.</p>
+                        @error('group_code') <div class="text-xs text-red-600">{{ $message }}</div> @enderror
+                    </div>
                     <div>
                         <label class="text-sm">Nome</label>
                         <input type="text" wire:model.defer="menu_name" class="w-full px-3 py-2 border rounded mt-1" />

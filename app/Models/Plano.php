@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domains\Billing\Enums\BillingCycle;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -10,7 +11,7 @@ class Plano extends Model
     use SoftDeletes;
 
     protected $table = 'planos';
-    
+
     protected $fillable = [
         'nome',
         'codigo',
@@ -24,7 +25,7 @@ class Plano extends Model
         'limite_processos',
         'status',
         'ordem',
-        'destaque'
+        'destaque', 'is_free', 'trial_days', 'is_popular',
     ];
 
     protected $casts = [
@@ -35,14 +36,14 @@ class Plano extends Model
         'limite_utilizadores' => 'integer',
         'limite_armazenamento_gb' => 'integer',
         'limite_processos' => 'integer',
-        'destaque' => 'boolean'
+        'destaque' => 'boolean', 'is_free' => 'boolean',
     ];
 
     // Relacionamento com módulos (mantendo compatibilidade)
     public function modulos()
     {
         return $this->belongsToMany(Module::class, 'plano_modulos', 'plano_id', 'modulo_id')
-                    ->withTimestamps();
+            ->withTimestamps();
     }
 
     public function subscricoes()
@@ -53,12 +54,7 @@ class Plano extends Model
     // Método para obter preço conforme modalidade
     public function getPreco($modalidade)
     {
-        return match($modalidade) {
-            'mensal' => $this->preco_mensal,
-            'semestral' => $this->preco_semestral,
-            'anual' => $this->preco_anual,
-            default => $this->preco_mensal
-        };
+        return BillingCycle::fromInput(strtolower($modalidade))->priceFrom($this);
     }
 
     public function itemplano()
@@ -69,7 +65,7 @@ class Plano extends Model
     // Verificar se plano é gratuito
     public function isGratuito()
     {
-        return $this->preco_mensal == 0;
+        return (bool) $this->is_free || ($this->preco_mensal !== null && $this->preco_mensal == 0 && $this->preco_trimestral == 0 && $this->preco_semestral == 0 && $this->preco_anual == 0);
     }
 
     /**
@@ -77,6 +73,7 @@ class Plano extends Model
      */
     public const MODALIDADES_PAGAMENTO = [
         'monthly' => 'Mensal',
+        'trimestral' => 'Trimestral',
         'semestral' => 'Semestral',
         'annual' => 'Anual',
     ];
