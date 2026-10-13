@@ -7,6 +7,8 @@ use App\Models\Licenciamento;
 use App\Models\Processo;
 use App\Models\SalesDocTotal;
 use App\Models\SalesInvoice;
+use App\Services\Dashboard\OperationalAnalytics;
+use App\Services\Dashboard\OperationalFilters;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -86,154 +88,14 @@ class DashboardQueryService
         });
     }
 
-    public function licenciamentoStats(int $empresaId): array
+    public function licenciamentoStats(int $empresaId, ?OperationalFilters $filters = null): array
     {
-        return Cache::remember("dashboard:licenciamento:{$empresaId}", now()->addMinutes(5), function () use ($empresaId) {
-            $licenciamentos = Licenciamento::where('empresa_id', $empresaId)->get();
-            $totalLicenciamentos = $licenciamentos->count();
-            $importacaoCount = $licenciamentos->where('tipo_declaracao', 11)->count();
-            $exportacaoCount = $licenciamentos->where('tipo_declaracao', 21)->count();
-            $mediaPesoBruto = $licenciamentos->avg('peso_bruto');
-            $mediaFobTotal = $licenciamentos->avg('fob_total');
-            $mediaFrete = $licenciamentos->avg('frete');
-            $mediaSeguro = $licenciamentos->avg('seguro');
-            $mediaCif = $licenciamentos->avg('cif');
-            $varianciaPesoBruto = $licenciamentos->map(fn ($item) => pow($item->peso_bruto - $mediaPesoBruto, 2))->avg();
-            $desvioPadraoPesoBruto = sqrt($varianciaPesoBruto);
-            $somaStatus = $licenciamentos->groupBy('status_fatura')->map->sum('fob_total');
-            $distribuicaoTransporte = $licenciamentos->groupBy('tipo_transporte')->map->count();
-            $nacionalidadeTransporteGrouped = $licenciamentos->groupBy('nacionalidade_transporte')->map->count();
-            $mediaVolume = $licenciamentos->avg('qntd_volume');
-            $tempoMedioProcessamento = $licenciamentos->map(function ($item) {
-                $entrada = Carbon::parse($item->data_entrada);
-                $criado = Carbon::parse($item->created_at);
-                return $entrada->diffInDays($criado);
-            })->avg();
-            $distribuicaoPortoEntrada = $licenciamentos->groupBy('porto_entrada')->map->count();
-            $distribuicaoPortoOrigem = $licenciamentos->groupBy('porto_origem')->map->count();
-            $licenciamentosFormaPagamento = $licenciamentos->groupBy('forma_pagamento')->map->count();
-            $statusFaturaPercentual = $licenciamentos->groupBy('status_fatura')->map->count()->map(fn ($count) => $totalLicenciamentos > 0 ? ($count / $totalLicenciamentos) * 100 : 0);
-            $licencasPorMesGrouped = $licenciamentos->groupBy(fn ($item) => Carbon::parse($item->created_at)->format('Y-m'))->map->count();
-            $tempoMedioProcessamentos = [
-                'importacao' => Licenciamento::where('empresa_id', $empresaId)->where('tipo_declaracao', 11)->selectRaw('AVG(DATEDIFF(created_at, data_entrada)) as tempo_medio')->first()->tempo_medio,
-                'exportacao' => Licenciamento::where('empresa_id', $empresaId)->where('tipo_declaracao', 21)->selectRaw('AVG(DATEDIFF(created_at, data_entrada)) as tempo_medio')->first()->tempo_medio,
-            ];
-            $nacionalidadeTransporte = Licenciamento::select('nacionalidade_transporte', 'tipo_declaracao')
-                ->where('empresa_id', $empresaId)
-                ->selectRaw('COUNT(*) as total')
-                ->groupBy('nacionalidade_transporte', 'tipo_declaracao')
-                ->get();
-            $pesoBrutoMedio = Licenciamento::select('tipo_transporte')
-                ->where('empresa_id', $empresaId)
-                ->selectRaw('AVG(peso_bruto) as peso_medio')
-                ->groupBy('tipo_transporte')
-                ->get();
-            $cifMedio = Licenciamento::select('forma_pagamento')
-                ->where('empresa_id', $empresaId)
-                ->selectRaw('AVG(cif) as cif_medio')
-                ->groupBy('forma_pagamento')
-                ->get();
-            $licencasPorMes = Licenciamento::where('empresa_id', $empresaId)
-                ->selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
-                ->groupBy('mes')
-                ->orderBy('mes')
-                ->get();
-            $exportacoesPorMes = Licenciamento::where('empresa_id', $empresaId)
-                ->where('tipo_declaracao', 21)
-                ->selectRaw('MONTH(created_at) as mes, COUNT(*) as total')
-                ->groupBy('mes')
-                ->orderBy('mes')
-                ->get();
-            $statusFatura = Licenciamento::select('forma_pagamento', 'status_fatura')
-                ->where('empresa_id', $empresaId)
-                ->selectRaw('COUNT(*) as total')
-                ->groupBy('forma_pagamento', 'status_fatura')
-                ->get();
-            $atrasoPorPaisOrigem = Licenciamento::where('empresa_id', $empresaId)
-                ->where('status_fatura', 'pendente')
-                ->select('pais_origem')
-                ->selectRaw('COUNT(*) as total')
-                ->groupBy('pais_origem')
-                ->get();
-            $tempoMedioPortoEntrada = Licenciamento::select('porto_entrada')
-                ->where('empresa_id', $empresaId)
-                ->selectRaw('AVG(DATEDIFF(created_at, data_entrada)) as tempo_medio')
-                ->groupBy('porto_entrada')
-                ->get();
-            $pesoBrutoPortoEntrada = Licenciamento::select('porto_entrada')
-                ->where('empresa_id', $empresaId)
-                ->selectRaw('AVG(peso_bruto) as peso_medio, COUNT(*) as total')
-                ->groupBy('porto_entrada')
-                ->orderByDesc('total')
-                ->get();
-
-            return [
-                'totalLicenciamentos' => $totalLicenciamentos,
-                'importacaoCount' => $importacaoCount,
-                'exportacaoCount' => $exportacaoCount,
-                'distribuicaoTransporte' => $distribuicaoTransporte,
-                'nacionalidadeTransporte' => $nacionalidadeTransporte,
-                'somaStatus' => $somaStatus,
-                'mediaPesoBruto' => $mediaPesoBruto,
-                'mediaFobTotal' => $mediaFobTotal,
-                'mediaFrete' => $mediaFrete,
-                'mediaSeguro' => $mediaSeguro,
-                'mediaCif' => $mediaCif,
-                'varianciaPesoBruto' => $varianciaPesoBruto,
-                'desvioPadraoPesoBruto' => $desvioPadraoPesoBruto,
-                'mediaVolume' => $mediaVolume,
-                'tempoMedioProcessamento' => $tempoMedioProcessamento,
-                'distribuicaoPortoEntrada' => $distribuicaoPortoEntrada,
-                'distribuicaoPortoOrigem' => $distribuicaoPortoOrigem,
-                'licenciamentosFormaPagamento' => $licenciamentosFormaPagamento,
-                'statusFaturaPercentual' => $statusFaturaPercentual,
-                'licencasPorMes' => $licencasPorMes,
-                'tempoMedioProcessamentos' => $tempoMedioProcessamentos,
-                'pesoBrutoMedio' => $pesoBrutoMedio,
-                'cifMedio' => $cifMedio,
-                'exportacoesPorMes' => $exportacoesPorMes,
-                'statusFatura' => $statusFatura,
-                'atrasoPorPaisOrigem' => $atrasoPorPaisOrigem,
-                'tempoMedioPortoEntrada' => $tempoMedioPortoEntrada,
-                'pesoBrutoPortoEntrada' => $pesoBrutoPortoEntrada,
-            ];
-        });
+        return app(OperationalAnalytics::class)->snapshot('licenses', $empresaId, $filters ?? OperationalFilters::fromRequest(request()));
     }
 
-    public function processoStats(int $empresaId): array
+    public function processoStats(int $empresaId, ?OperationalFilters $filters = null): array
     {
-        return Cache::remember("dashboard:processos:{$empresaId}", now()->addMinutes(5), function () use ($empresaId) {
-            $processos = Processo::where('empresa_id', $empresaId)
-                ->whereYear('created_at', now()->year)
-                ->get();
-
-            $totalProcessos = $processos->count();
-            $tipoProcessosCount = $processos->groupBy(fn ($processo) => $processo->tipoProcesso->descricao ?? 'Desconhecido')->map->count();
-            $mediaValorTotal = $processos->avg('valor_total');
-            $mediaPesoBruto = $processos->avg('peso_bruto');
-            $mediaVolume = $processos->avg('volume');
-            $varianciaValorTotal = $processos->map(fn ($item) => pow($item->valor_total - $mediaValorTotal, 2))->avg();
-            $desvioPadraoValorTotal = sqrt($varianciaValorTotal);
-            $somaEstado = $processos->groupBy('Estado')->map->sum('valor_total');
-            $distribuicaoPaisOrigem = $processos->groupBy('pais_origem')->map->count();
-            $distribuicaoPaisDestino = $processos->groupBy('pais_destino')->map->count();
-            $varianciaPesoBruto = $processos->map(fn ($item) => pow($item->peso_bruto - $mediaPesoBruto, 2))->avg();
-            $desvioPadraoPesoBruto = sqrt($varianciaPesoBruto);
-            $tempoMedioProcessamento = $processos->map(function ($item) {
-                $entrada = Carbon::parse($item->data_entrada);
-                $criado = Carbon::parse($item->created_at);
-                return $entrada->diffInDays($criado);
-            })->avg();
-            $distribuicaoCliente = $processos->groupBy(fn ($item) => $item->customer->CompanyName ?? 'Desconhecido')->map->count();
-            $estadoPercentual = $processos->groupBy('Estado')->map->count()->map(fn ($count) => $totalProcessos > 0 ? ($count / $totalProcessos) * 100 : 0);
-
-            return compact(
-                'processos', 'totalProcessos', 'tipoProcessosCount', 'mediaValorTotal', 'mediaPesoBruto',
-                'mediaVolume', 'varianciaValorTotal', 'desvioPadraoValorTotal', 'somaEstado',
-                'distribuicaoPaisOrigem', 'distribuicaoPaisDestino', 'varianciaPesoBruto',
-                'desvioPadraoPesoBruto', 'tempoMedioProcessamento', 'distribuicaoCliente', 'estadoPercentual'
-            );
-        });
+        return app(OperationalAnalytics::class)->snapshot('processes', $empresaId, $filters ?? OperationalFilters::fromRequest(request()));
     }
 
     public function facturaStats(int $empresaId, int $ano): array
@@ -314,6 +176,7 @@ class DashboardQueryService
                     for ($i = 1; $i < $datas->count(); $i++) {
                         $intervalos[] = $datas[$i]->diffInDays($datas[$i - 1]);
                     }
+
                     return count($intervalos) ? array_sum($intervalos) / count($intervalos) : null;
                 })->filter()->avg();
             $faturacaoMensal = $this->salesTotalsForEmpresa($empresaId)

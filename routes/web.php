@@ -130,6 +130,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(fun
             })->name('dashboard.rh');
             Route::get('/dashboard-Licenciamento', [DashboardController::class, 'licenciamentoEstatisticas'])->name('licenciamento.estatistica');
             Route::get('/dashboard-Processos', [DashboardController::class, 'ProcessosEstatisticas'])->name('processos.estatistica');
+            Route::get('/dashboard-Processos/reports/{report}/{format}', \App\Http\Controllers\OperationalReportController::class)->defaults('kind', 'processes')->name('processos.analytics-report');
+            Route::get('/dashboard-Licenciamento/reports/{report}/{format}', \App\Http\Controllers\OperationalReportController::class)->defaults('kind', 'licenses')->name('licenciamentos.analytics-report');
             Route::get('/dashboard-Factura', [DashboardController::class, 'FacturaEstatisticas'])->name('factura.estatistica');
         });
 

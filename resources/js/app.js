@@ -1,5 +1,6 @@
 import './bootstrap';
 import './menu-builder';
+import './operational-analytics';
 import toastr from 'toastr';
 
 window.toastr = toastr;
