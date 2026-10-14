@@ -190,8 +190,99 @@ class DespesasLivewireTest extends TestCase
         $this->assertNull($tarifa->guia_fiscal);
     }
 
+    public function test_invalid_money_is_rejected_without_overwriting_saved_values(): void
+    {
+        $processo = $this->expenseScenario('INVALID');
+        $tarifa = EmolumentoTarifa::query()->create(['processo_id' => $processo->id, 'porto' => 125]);
+
+        Livewire::test(Despesas::class, ['processo' => $processo])
+            ->set('form.porto', 'valor inválido')
+            ->call('save')
+            ->assertHasErrors(['form.porto' => 'numeric'])
+            ->assertSee('Taxa de Porto');
+
+        $this->assertSame(125.0, (float) $tarifa->refresh()->porto);
+    }
+
+    public function test_repeated_save_updates_one_record_and_displays_success(): void
+    {
+        $processo = $this->expenseScenario('REPEAT');
+
+        Livewire::test(Despesas::class, ['processo' => $processo])
+            ->set('form.porto', '1.234,56')
+            ->set('form.terminal', '')
+            ->call('save')->assertHasNoErrors()
+            ->assertSee('Despesas gravadas com sucesso.')
+            ->set('form.porto', '2.345,67')
+            ->call('save')->assertHasNoErrors();
+
+        $this->assertSame(1, EmolumentoTarifa::query()->where('processo_id', $processo->id)->count());
+        $tarifa = EmolumentoTarifa::query()->where('processo_id', $processo->id)->sole();
+        $this->assertSame(2345.67, (float) $tarifa->porto);
+        $this->assertSame(0.0, (float) $tarifa->terminal);
+    }
+
+    public function test_expenses_reject_another_company_process(): void
+    {
+        $processo = $this->expenseScenario('OWNER');
+        [$otherUser] = $this->createTenant('OTHER-DESP');
+        $this->grantTenantPermissions($otherUser, ['processos.update']);
+        $this->signInTenant($otherUser);
+
+        $this->expectException(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        Livewire::test(Despesas::class, ['processo' => $processo]);
+    }
+
+    public function test_save_rechecks_permission_after_mount(): void
+    {
+        $processo = $this->expenseScenario('REVOKE');
+        $component = Livewire::test(Despesas::class, ['processo' => $processo]);
+        $user = auth()->user();
+        \App\Support\CompanyRbac::within((int) $processo->empresa_id, fn () => $user->revokePermissionTo('processos.update'));
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $component->set('form.porto', '10')->call('save')->assertForbidden();
+        $this->assertSame(0, EmolumentoTarifa::query()->where('processo_id', $processo->id)->count());
+    }
+
+    public function test_two_open_forms_do_not_create_duplicate_tariffs(): void
+    {
+        $processo = $this->expenseScenario('TWO-FORMS');
+        $first = Livewire::test(Despesas::class, ['processo' => $processo]);
+        $second = Livewire::test(Despesas::class, ['processo' => $processo]);
+
+        $first->set('form.porto', '10,00')->call('save')->assertHasNoErrors();
+        $second->set('form.porto', '20,00')->call('save')->assertHasNoErrors();
+
+        $this->assertSame(1, EmolumentoTarifa::query()->where('processo_id', $processo->id)->count());
+        $this->assertSame(20.0, (float) EmolumentoTarifa::query()->where('processo_id', $processo->id)->sole()->porto);
+    }
+
+    public function test_negative_money_and_invalid_grouping_are_rejected(): void
+    {
+        $processo = $this->expenseScenario('MONEY-ERROR');
+        Livewire::test(Despesas::class, ['processo' => $processo])
+            ->set('form.porto', '-10,00')
+            ->set('form.terminal', '12.34,56')
+            ->call('save')
+            ->assertHasErrors(['form.porto' => 'min', 'form.terminal' => 'numeric']);
+
+        $this->assertSame(0, EmolumentoTarifa::query()->where('processo_id', $processo->id)->count());
+    }
+
+    private function expenseScenario(string $suffix): Processo
+    {
+        [$user, $empresa] = $this->createTenant('DESP-' . $suffix);
+        [$estancia, $tipo] = $this->createLookupData();
+        return $this->createProcessoWithoutEvents($empresa, $user,
+            $this->createCustomer($empresa, $user, $suffix),
+            $this->createExportador($empresa, $user, $suffix), $estancia, $tipo);
+    }
+
     private function createProcessoWithoutEvents(...$arguments): Processo
     {
+        $this->grantTenantPermissions($arguments[1], ['processos.update', 'processos.view']);
+        $this->signInTenant($arguments[1]);
         return Processo::withoutEvents(fn () => $this->createProcesso(...$arguments));
     }
 }

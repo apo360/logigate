@@ -24,7 +24,7 @@ final class ProcessoCreate extends Component
     // customer_id vindo da URL
     public ?int $customerId = null;
 
-    // Propriedades do formulário (todas dentro de $rules ou com validação individual)
+    // Propriedades validadas pelas regras centrais de ProcessoFormSupport.
 
     public ?int $customer_id = null;
 
@@ -32,121 +32,83 @@ final class ProcessoCreate extends Component
 
     public ?int $estancia_id = null;
 
-    #[Rule('required|string|max:50')]
     public ?string $vinheta = null;
 
     public string $TipoProcesso = '11';
 
-    #[Rule('required|string')]
     public string $Estado = 'Aberto';
 
-    #[Rule('nullable|string|max:200')]
     public ?string $RefCliente = null;
 
-    #[Rule('nullable|string|max:1000')]
     public ?string $Descricao = null;
 
-    #[Rule('nullable|date')]
     public ?string $DataAbertura = null;
 
-    #[Rule('nullable|date')]
     public ?string $DataPartida = null;
 
-    #[Rule('nullable|date')]
     public ?string $DataChegada = null;
 
-    #[Rule('nullable|string|size:3')]
     public ?string $Moeda = 'USD';
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $Cambio = 1.0;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $fob_total = 0;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $frete = 0;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $seguro = 0;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $cif = 0;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $ValorAduaneiro = 0;
 
-    #[Rule('nullable|string')]
     public $TipoTransporte = null;
 
-    #[Rule('nullable|string|max:100')]
     public ?string $registo_transporte = null;
 
-    #[Rule('nullable|exists:paises,id')]
     public ?int $nacionalidade_transporte = null;
 
-    #[Rule('nullable|string|max:20')]
     public ?string $NrDU = null;
 
-    #[Rule('nullable|integer|min:0')]
     public $NrDAR = null;
 
-    #[Rule('nullable|string|max:50')]
     public ?string $NrMarcaFiscal = null;
 
-    #[Rule('nullable|string|max:50')]
     public ?string $BLC_Porte = null;
 
-    #[Rule('nullable|exists:paises,id')]
     public ?int $Pais_origem = null;
 
-    #[Rule('nullable|exists:paises,id')]
     public ?int $Pais_destino = null;
 
-    #[Rule('nullable|string|max:100')]
     public ?string $PortoOrigem = null;
 
-    #[Rule('nullable|exists:portos,id')]
     public $porto_desembarque_id = null;
 
-    #[Rule('nullable|exists:mercadoria_localizacaos,id')]
     public ?int $localizacao_mercadoria_id = null;
 
-    #[Rule('nullable|in:Tr,CK,RD,Ou')]
     public ?string $forma_pagamento = null;
 
-    #[Rule('nullable|string|max:10')]
     public ?string $codigo_banco = null;
 
-    #[Rule('nullable|exists:condicao_pagamentos,id')]
     public ?int $condicao_pagamento_id = null;
 
-    #[Rule('nullable|string|max:500')]
     public ?string $observacoes = null;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $peso_bruto = null;
 
     // Campos específicos de exportação (CRUD petróleo)
-    #[Rule('nullable|date')]
     public ?string $data_carregamento = null;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $quantidade_barris = null;
 
-    #[Rule('nullable|numeric|min:0')]
     public ?float $valor_barril_usd = null;
 
-    #[Rule('nullable|integer|min:0')]
-    public ?int $num_deslocacoes = null;
+    public ?string $num_deslocacoes = null;
 
-    #[Rule('nullable|string|max:50')]
     public ?string $rsm_num = null;
 
-    #[Rule('nullable|string|max:50')]
     public ?string $certificado_origem = null;
 
-    #[Rule('nullable|string|max:50')]
     public ?string $guia_exportacao = null;
 
     // Controle de exibição da secção de exportação
@@ -227,7 +189,9 @@ final class ProcessoCreate extends Component
         $this->seguro = 0;
         $this->cif = 0;
         $this->ValorAduaneiro = 0;
-        $this->showCrudExportFields = ($this->TipoProcesso === TipoDeclaracao::EXPORTACAO->value); // 21 = Exportação
+        $importacao = $this->tipoProcessoOptions->firstWhere('codigo', TipoDeclaracao::IMPORTACAO->value);
+        $this->TipoProcesso = $importacao ? (string) $importacao->id : '';
+        $this->showCrudExportFields = $this->isExportacao($this->TipoProcesso);
 
         $this->nacionalidade_transporte = $this->paises->firstWhere('pais', 'Angola')?->id
             ?? $this->paises->first()?->id
@@ -249,8 +213,15 @@ final class ProcessoCreate extends Component
 
         // Mostrar/esconder campos de exportação conforme o tipo de processo
         if ($field === 'TipoProcesso') {
-            $this->showCrudExportFields = ($value === '21');
+            $this->showCrudExportFields = $this->isExportacao((string) $value);
         }
+    }
+
+    private function isExportacao(string $tipoProcesso): bool
+    {
+        $tipo = $this->tipoProcessoOptions->firstWhere('id', $tipoProcesso);
+
+        return $tipo && (string) $tipo->codigo === TipoDeclaracao::EXPORTACAO->value;
     }
 
     private function recalcularValorAduaneiro(): void
@@ -284,6 +255,7 @@ final class ProcessoCreate extends Component
     public function save(CriarProcessoAction $action)
     {
         $this->authorize('create', Processo::class);
+        $this->resetErrorBag('save');
 
         $validated = $this->validate();
 
@@ -305,7 +277,7 @@ final class ProcessoCreate extends Component
             session()->flash('success', 'Processo criado com sucesso!');
             return redirect()->route('processos.show', $processo);
         } catch (\Exception $e) {
-            session()->flash('error', 'Erro ao criar processo: ' . $e->getMessage());
+            $this->addError('save', 'Erro ao criar processo: ' . $e->getMessage());
             return null;
         }
     }

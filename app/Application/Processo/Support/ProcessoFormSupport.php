@@ -119,8 +119,8 @@ final class ProcessoFormSupport
             'localizacao_mercadoria_id' => Schema::hasTable('mercadoria_localizacaos')
                 ? ['nullable', 'exists:mercadoria_localizacaos,id']
                 : ['nullable'],
-            'forma_pagamento' => ['nullable', Rule::enum(FormaPagamentoEnum::class)],
-            'codigo_banco' => ['nullable', 'string', Rule::in(array_keys(BancoListService::getOptions()))],
+            'forma_pagamento' => ['required', Rule::enum(FormaPagamentoEnum::class)],
+            'codigo_banco' => ['required', 'string', Rule::in(array_keys(BancoListService::getOptions()))],
             'condicao_pagamento_id' => Schema::hasTable('condicao_pagamentos')
                 ? ['nullable', 'exists:condicao_pagamentos,id']
                 : ['nullable'],

@@ -13,9 +13,12 @@
             name="despesa_{{ $field }}"
             type="text"
             wire:model.blur="form.{{ $field }}"
+            inputmode="decimal"
+            autocomplete="off"
+            aria-invalid="{{ $errors->has('form.' . $field) ? 'true' : 'false' }}"
+            @if ($errors->has('form.' . $field)) aria-describedby="despesa-erro-{{ $field }}" @endif
             class="w-full px-3 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             placeholder="{{ $placeholder }}"
-            x-mask:dynamic="$money($input, '.', ',', 2)"
         >
 
         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -24,6 +27,6 @@
     </div>
 
     @error("form.{$field}")
-        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+        <p id="despesa-erro-{{ $field }}" class="mt-1 text-sm text-red-600">{{ $message }}</p>
     @enderror
 </div>

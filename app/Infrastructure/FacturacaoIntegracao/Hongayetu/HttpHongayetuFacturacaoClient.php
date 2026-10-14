@@ -147,6 +147,7 @@ class HttpHongayetuFacturacaoClient implements HongayetuFacturacaoClientInterfac
 
         return Http::acceptJson()
             ->asJson()
+            ->withOptions(['verify' => false])
             ->withToken($token)
             ->timeout(max(1, (int) ($config['timeout'] ?? 15)))
             ->retry(

@@ -15,12 +15,15 @@ use Carbon\CarbonInterface;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\Attributes\Locked;
+use Illuminate\Validation\ValidationException;
 
 final class ProcessoEdit extends Component
 {
     use AuthorizesRequests;
 
     public Processo $processo;
+    #[Locked]
     public int $processoId;
 
     public ?int $customer_id = null;
@@ -117,13 +120,15 @@ final class ProcessoEdit extends Component
         }
 
         if ($field === 'TipoProcesso') {
-            $this->showCrudExportFields = ((string) $value === '21');
+            $this->showCrudExportFields = $this->isExportacao((string) $value);
         }
     }
 
     public function update(AtualizarProcessoAction $action)
     {
+        $this->processo = app(ProcessoTenantAccessService::class)->findForUserOrFail(Auth::user(), $this->processoId);
         $this->authorize('update', $this->processo);
+        $this->resetErrorBag('processo');
 
         $validated = $this->validate();
         $this->recalcularValores();
@@ -141,9 +146,14 @@ final class ProcessoEdit extends Component
             session()->flash('success', 'Processo atualizado com sucesso.');
 
             return redirect()->route('processos.show', $processo);
-        } catch (\Throwable $e) {
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\InvalidArgumentException $e) {
             $this->addError('processo', $e->getMessage());
-            session()->flash('error', 'Erro ao atualizar processo: ' . $e->getMessage());
+            return null;
+        } catch (\Throwable $e) {
+            report($e);
+            $this->addError('processo', 'Não foi possível actualizar o processo. Os dados preenchidos foram mantidos. Tente novamente.');
             return null;
         }
     }
@@ -227,7 +237,14 @@ final class ProcessoEdit extends Component
         $this->rsm_num = $this->nullableString($processo->rsm_num);
         $this->certificado_origem = $this->nullableString($processo->certificado_origem);
         $this->guia_exportacao = $this->nullableString($processo->guia_exportacao);
-        $this->showCrudExportFields = ((string) $this->TipoProcesso === '21');
+        $this->showCrudExportFields = $this->isExportacao((string) $this->TipoProcesso);
+    }
+
+    private function isExportacao(string $tipoProcesso): bool
+    {
+        $tipo = $this->tipoProcessoOptions->firstWhere('id', $tipoProcesso);
+
+        return $tipo && (string) $tipo->codigo === '21';
     }
 
     private function recalcularValores(): void

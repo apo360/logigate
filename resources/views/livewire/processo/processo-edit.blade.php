@@ -1,15 +1,9 @@
 <div>
     <div class="py-6">
-        @if (session('error'))
-            <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div class="lg:col-span-3 space-y-6">
+            <form id="form-processo-edit" wire:submit="update" novalidate class="lg:col-span-3 space-y-6">
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                    <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 flex justify-between items-center">
+                    <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
                         <div>
                             <h2 class="text-xl font-bold text-blue-800">
                                 Editar Processo: {{ $processo->NrProcesso ?? '' }}
@@ -20,14 +14,24 @@
                             <a href="{{ route('processos.show', $processo->id) }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
                                 Cancelar
                             </a>
-                            <button type="submit" form="form-processo-edit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                                Actualizar Processo
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50">
+                                <span wire:loading.remove wire:target="update">Actualizar Processo</span>
+                                <span wire:loading wire:target="update">A actualizar...</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <form id="form-processo-edit" wire:submit.prevent="update" class="space-y-6">
+                    @if ($errors->any())
+                        <div role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                            <p class="font-semibold">Não foi possível actualizar o processo.</p>
+                            <ul class="mt-2 list-inside list-disc">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <div class="bg-white rounded-lg shadow-md overflow-hidden">
                         <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
                             <h3 class="text-lg font-semibold text-blue-800">Informações do Processo</h3>
@@ -70,7 +74,7 @@
 
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Declaração *</label>
-                                    <select wire:model="TipoProcesso" class="w-full rounded-md border-gray-300 shadow-sm @error('TipoProcesso') border-red-500 @enderror">
+                                    <select wire:model.live="TipoProcesso" class="w-full rounded-md border-gray-300 shadow-sm @error('TipoProcesso') border-red-500 @enderror">
                                         <option value="">Selecione</option>
                                         @foreach($tipoProcessoOptions as $tipo)
                                             <option value="{{ $tipo->id }}">{{ $tipo->descricao }}</option>
@@ -307,7 +311,6 @@
                         </div>
                     </div>
                 </form>
-            </div>
 
             <div class="lg:col-span-1 space-y-6">
                 <div class="bg-white rounded-lg shadow-md overflow-hidden sticky top-6">

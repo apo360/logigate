@@ -2,7 +2,7 @@
     <div class="py-6">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
             {{-- COLUNA PRINCIPAL (FORMULÁRIO) --}}
-            <div class="lg:col-span-3 space-y-6">
+            <form id="form-processo" wire:submit="save" novalidate class="lg:col-span-3 space-y-6">
                 {{-- Cabeçalho com título e botões --}}
                 <div class="bg-white rounded-lg shadow-md overflow-hidden">
                     <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200 flex justify-between items-center">
@@ -18,14 +18,25 @@
                             <a href="{{ route('processos.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">
                                 Cancelar
                             </a>
-                            <button type="submit" form="form-processo" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
-                                {{ $mode === 'create' ? 'Criar Processo' : 'Actualizar' }}
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition disabled:opacity-50">
+                                <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Criar Processo' : 'Actualizar' }}</span>
+                                <span wire:loading wire:target="save">A gravar...</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <form id="form-processo" wire:submit.prevent="save">
+                    @if ($errors->any())
+                        <div role="alert" class="rounded-md border border-red-200 bg-red-50 p-4 text-red-800">
+                            <p class="font-semibold">Não foi possível gravar o processo.</p>
+                            <ul class="mt-2 list-disc list-inside text-sm">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     @csrf
                     @if($mode === 'edit')
                         @method('PUT')
@@ -42,7 +53,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {{-- Vinheta --}}
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Vinheta *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Vinheta</label>
                                     <input type="text" wire:model="vinheta" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('vinheta') border-red-500 @enderror">
                                     @error('vinheta') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
@@ -86,7 +97,7 @@
                                 {{-- Tipo de Declaração --}}
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Declaração</label>
-                                    <select wire:model="TipoProcesso" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model.live="TipoProcesso" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         <option value="">Selecione</option>
                                         @foreach($tipoProcessoOptions as $tipo)
                                             <option value="{{ $tipo->id }}">{{ $tipo->descricao }}</option>
@@ -167,7 +178,7 @@
                             {{-- Descrição e peso --}}
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição *</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                                     <textarea wire:model="Descricao" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('Descricao') border-red-500 @enderror"></textarea>
                                     @error('Descricao') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
@@ -360,22 +371,24 @@
                         <div class="p-6">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Forma de Pagamento *</label>
                                     <select wire:model="forma_pagamento" class="w-full rounded-md border-gray-300 shadow-sm">
                                         <option value="">Selecione</option>
                                         @foreach($formaPagamentoOptions as $option)
                                             <option value="{{ $option->value }}">{{ $option->name }}</option>
                                         @endforeach
                                     </select>
+                                    @error('forma_pagamento') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Código Banco</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Código Banco *</label>
                                     <select wire:model="codigo_banco" class="w-full rounded-md border-gray-300 shadow-sm">
                                         <option value="">Selecione</option>
                                         @foreach($listaBancos as $codigo => $nomeBanco)
                                             <option value="{{ $codigo }}">{{ $nomeBanco }}</option>
                                         @endforeach
                                     </select>
+                                    @error('codigo_banco') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Condição de Pagamento</label>
@@ -403,7 +416,6 @@
                     </div>
 
                 </form>
-            </div>
 
             {{-- COLUNA LATERAL (RESUMO) --}}
             <div class="lg:col-span-1 space-y-6">

@@ -5,14 +5,25 @@ namespace App\Livewire\Processo;
 use Livewire\Component;
 use App\Models\Processo;
 use App\Models\EmolumentoTarifa;
+use App\Application\Processo\Services\ProcessoTenantAccessService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Locked;
 
 class Despesas extends Component
 {
+    use AuthorizesRequests;
+
+    #[Locked]
+    public int $processoId;
     public Processo $processo;
     public EmolumentoTarifa $tarifa;
     public array $form = [];
     public array $totais = [];
     public float $totalGeral = 0;
+    public ?string $feedback = null;
+    public bool $hasUnsavedChanges = false;
 
     protected function rules(): array
     {
@@ -42,10 +53,11 @@ class Despesas extends Component
 
     public function mount(Processo $processo): void
     {
-        $this->processo = $processo;
+        $this->processoId = (int) $processo->id;
+        $this->processo = $this->authorizedProcesso();
         
         $this->tarifa = EmolumentoTarifa::firstOrNew([
-            'processo_id' => $processo->id
+            'processo_id' => $this->processoId
         ]);
 
         $this->loadFormData();
@@ -98,22 +110,26 @@ class Despesas extends Component
         }
     }
 
-    private function normalizeMoney(mixed $value): float
+    private function normalizeMoney(mixed $value): mixed
     {
         if ($value === null || $value === '') {
             return 0.0;
         }
 
         if (is_numeric($value)) {
-            return (float) $value;
+            return round((float) $value, 2);
         }
 
-        $value = trim((string) $value);
-        $value = str_replace(' ', '', $value);
-        $value = str_replace('.', '', $value);
-        $value = str_replace(',', '.', $value);
+        if (! is_string($value)) {
+            return $value;
+        }
 
-        return is_numeric($value) ? (float) $value : 0.0;
+        $normalized = str_replace([' ', "\u{00A0}", "\u{202F}"], '', trim($value));
+        if (! preg_match('/^[+-]?(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/', $normalized)) {
+            return $value;
+        }
+
+        return round((float) str_replace(',', '.', str_replace('.', '', $normalized)), 2);
     }
 
     public function updatedForm($value, $field): void
@@ -123,6 +139,9 @@ class Despesas extends Component
         }
 
         $this->form[$field] = $this->normalizeMoney($value);
+        $this->feedback = null;
+        $this->hasUnsavedChanges = true;
+        $this->resetValidation('form.' . $field);
 
         $this->calculateTotals();
     }
@@ -155,7 +174,7 @@ class Despesas extends Component
 
             foreach ($fields as $field) {
                 if (in_array($field, $this->fields(), true)) {
-                    $this->totais[$category] += (float) ($this->form[$field] ?? 0);
+                    $this->totais[$category] += is_numeric($this->form[$field] ?? null) ? (float) $this->form[$field] : 0;
                 }
             }
         }
@@ -163,8 +182,10 @@ class Despesas extends Component
         $this->totalGeral = 0.0;
 
         foreach ($this->fields() as $field) {
-            $this->totalGeral += (float) ($this->form[$field] ?? 0);
+            $this->totalGeral += is_numeric($this->form[$field] ?? null) ? (float) $this->form[$field] : 0;
         }
+        $this->totais = array_map(fn ($total) => round($total, 2), $this->totais);
+        $this->totalGeral = round($this->totalGeral, 2);
     }
 
     public function getTotaisPorCategoriaProperty(): array
@@ -209,38 +230,53 @@ class Despesas extends Component
 
     public function save(): void
     {
+        $this->processo = $this->authorizedProcesso();
+        $this->resetErrorBag('save');
+        $this->feedback = null;
         $this->normalizeFormMoneyValues();
         $this->calculateTotals();
-        $this->validate();
+        $validated = $this->validate();
         
         try {
-            $dataToSave = collect($this->form)
+            $dataToSave = collect($validated['form'])
                 ->only($this->fields())
                 ->toArray();
             
-            $this->tarifa->fill($dataToSave);
-            $this->tarifa->processo_id = $this->processo->id;
-            $this->tarifa->save();
+            $this->tarifa = DB::transaction(function () use ($dataToSave) {
+                Processo::query()->whereKey($this->processoId)->lockForUpdate()->firstOrFail();
+                $tarifa = EmolumentoTarifa::firstOrNew(['processo_id' => $this->processoId]);
+                $tarifa->fill($dataToSave);
+                $tarifa->save();
+
+                return $tarifa->refresh();
+            });
+            $this->feedback = 'Despesas gravadas com sucesso.';
+            $this->hasUnsavedChanges = false;
             
             $this->dispatch('despesas-atualizadas');
             
             $this->dispatch('toast',
                 type: 'success',
-                message: 'Despesas atualizadas com sucesso!'
+                message: $this->feedback
             );
             
         } catch (\Throwable $e) {
             report($e);
+            $this->addError('save', 'Não foi possível gravar as despesas. Os valores preenchidos foram mantidos. Tente novamente.');
 
             $this->dispatch('toast',
                 type: 'error',
-                message: 'Erro ao salvar despesas.'
+                message: 'Não foi possível gravar as despesas.'
             );
         }
     }
 
     public function resetToDefaults(): void
     {
+        $this->authorizedProcesso();
+        $this->resetValidation();
+        $this->feedback = 'Valores limpos no formulário. Grave as despesas para aplicar a alteração.';
+        $this->hasUnsavedChanges = true;
         foreach ($this->fields() as $field) {
             $this->form[$field] = 0.0;
         }
@@ -249,7 +285,7 @@ class Despesas extends Component
         
         $this->dispatch('toast',
             type: 'info',
-            message: 'Formulário resetado para valores padrão'
+            message: $this->feedback
         );
     }
 
@@ -260,5 +296,38 @@ class Despesas extends Component
             'totalGeral' => $this->totalGeral,
             'totaisPorCategoria' => $this->totaisPorCategoria,
         ]);
+    }
+
+    public function messages(): array
+    {
+        return [
+            'numeric' => 'O campo :attribute deve conter um valor válido em Kz.',
+            'min' => 'O campo :attribute não pode ser negativo.',
+        ];
+    }
+
+    public function validationAttributes(): array
+    {
+        return [
+            'form.porto' => 'Taxa de Porto', 'form.terminal' => 'Taxa de Terminal',
+            'form.carga_descarga' => 'Carga e Descarga', 'form.frete' => 'Frete Internacional',
+            'form.navegacao' => 'Taxa de Navegação', 'form.deslocacao' => 'Deslocação',
+            'form.direitos' => 'Direitos Aduaneiros', 'form.iec' => 'IEC', 'form.selos' => 'Selos',
+            'form.emolumentos' => 'Emolumentos', 'form.juros_mora' => 'Juros de Mora', 'form.multas' => 'Multas',
+            'form.lmc' => 'LMC', 'form.honorario' => 'Honorário do Despachante',
+            'form.inerentes' => 'Despesas Inerentes', 'form.caucao' => 'Caução',
+            'form.orgaos_ofiais' => 'Órgãos Oficiais', 'form.iva_aduaneiro' => 'IVA Aduaneiro',
+            'form.impostoEstatistico' => 'Imposto Estatístico', 'form.honorario_iva' => 'IVA sobre Honorário',
+        ];
+    }
+
+    private function authorizedProcesso(): Processo
+    {
+        $user = Auth::user();
+        abort_unless($user, 403);
+        $processo = app(ProcessoTenantAccessService::class)->findForUserOrFail($user, $this->processoId);
+        $this->authorize('update', $processo);
+
+        return $processo;
     }
 }
