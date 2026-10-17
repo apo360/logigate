@@ -14,6 +14,9 @@
             $tabs['mercadoria'] = 'Mercadorias';
         }
         $tabs['despesas'] = 'Despesas e imposições';
+        if (auth()->user()->can('simulate', $processo) && strtoupper((string) $processo->tipoDeclaracao?->abrev) === 'IM' && !$processo->isExportacaoCrude()) {
+            $tabs['simulacao'] = 'Simulação tributária';
+        }
         if (auth()->user()->can('view', $processo)) {
             $tabs['docs'] = 'Documentos';
         }
@@ -42,6 +45,9 @@
                     <p class="mt-1 text-sm text-gray-500">Actualize os dados, confira as despesas e organize os documentos do processo.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    @can('view', $processo)
+                    <a href="{{ route('processos.tarifa', ['processo' => $processo->id]) }}" class="rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-700">Controlo de custos</a>
+                    @endcan
                     <a href="{{ route('processos.index') }}" class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">Pesquisar</a>
                     <a href="{{ route('processos.show', $processo->id) }}" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700">Visualizar processo</a>
                     <div x-data="{ open: false }" class="relative" @keydown.escape.stop.prevent="open = false; $refs.optionsButton.focus()">
@@ -101,6 +107,11 @@
         <section id="processo-panel-despesas" role="tabpanel" aria-labelledby="processo-tab-despesas" x-show="tab === 'despesas'" x-cloak>
             <livewire:processo.despesas :processo="$processo" />
         </section>
+        @if (isset($tabs['simulacao']))
+        <section id="processo-panel-simulacao" role="tabpanel" aria-labelledby="processo-tab-simulacao" x-show="tab === 'simulacao'" x-cloak>
+            <livewire:pauta-aduaneira.simulador-processo :processo-id="$processo->id" />
+        </section>
+        @endif
         @if (isset($tabs['docs']))
         <section id="processo-panel-docs" role="tabpanel" aria-labelledby="processo-tab-docs" x-show="tab === 'docs'" x-cloak>
             <livewire:arquivo.documentos-do-modulo contexto="processo" :entidade-id="$processo->id" />

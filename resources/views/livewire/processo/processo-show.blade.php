@@ -1,4 +1,7 @@
 <div x-data="{ tab: 'detalhes' }" class="space-y-6">
+    @php
+        $canSimulate = auth()->user()->can('simulate', $processo) && strtoupper((string) $processo->tipoDeclaracao?->abrev) === 'IM' && !$processo->isExportacaoCrude();
+    @endphp
     {{-- Cabeçalho com breadcrumb e ações (já existente fora deste componente) --}}
     {{-- O breadcrumb deve estar na view mãe (ex: recursos/views/processos/show.blade.php) --}}
 
@@ -29,9 +32,11 @@
                         <button @click="tab = 'mercadoria'" :class="{ 'border-blue-500 text-blue-600': tab === 'mercadoria', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'mercadoria' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                             📦 Mercadorias
                         </button>
+                        @if ($canSimulate)
                         <button @click="tab = 'simulacao'" :class="{ 'border-blue-500 text-blue-600': tab === 'simulacao', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'simulacao' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                             🧮 Simulação
                         </button>
+                        @endif
                         <button @click="tab = 'documentos'" :class="{ 'border-blue-500 text-blue-600': tab === 'documentos', 'border-transparent text-gray-500 hover:text-gray-700': tab !== 'documentos' }" class="py-3 px-1 border-b-2 font-medium text-sm transition">
                             📎 Documentos
                         </button>
@@ -312,9 +317,11 @@
                     </div>
 
                     {{-- ABA SIMULAÇÃO --}}
+                    @if ($canSimulate)
                     <div x-show="tab === 'simulacao'" x-cloak>
                         <livewire:pauta-aduaneira.simulador-processo :processo-id="$processo->id" />
                     </div>
+                    @endif
 
                     {{-- ABA DOCUMENTOS --}}
                     <div x-show="tab === 'documentos'" x-cloak>

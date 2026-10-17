@@ -1,4 +1,13 @@
 <div class="space-y-6">
+    <div class="rounded-lg border bg-white p-4">
+        <p class="text-sm text-gray-600">Previsão pelos dados e taxas cadastrados. Guarde uma versão para a comparar com os valores documentados no controlo de custos.</p>
+        <div class="mt-3 flex flex-wrap gap-3">
+            <button type="button" wire:click="guardarVersao" wire:loading.attr="disabled" class="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50">Guardar versão da simulação</button>
+            <a class="rounded-lg border px-4 py-2 text-sm text-blue-700" href="{{ route('processos.tarifa', ['processo' => $processoId]) }}">Conferir custos e tributos</a>
+        </div>
+        @if ($mensagem)<p role="status" class="mt-3 text-sm text-green-800">{{ $mensagem }}</p>@endif
+        @if ($errors->any())<ul role="alert" class="mt-3 text-sm text-red-700">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>@endif
+    </div>
     <div class="rounded-lg border bg-white p-5">
         <div class="grid gap-4 md:grid-cols-4">
             <div>

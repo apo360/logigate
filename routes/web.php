@@ -230,7 +230,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(fun
         Route::get('processos/{processo}/simulador-pauta', function (Processo $processo) {
             Gate::authorize('simulate', $processo);
 
-            return redirect()->route('processos.edit', ['processo' => $processo->id, 'tab' => 'simulacao']);
+            return view('processos.simulador-pauta', compact('processo'));
         })->name('processos.simulador-pauta');
         Route::post('/processo/finalizar/{processoID}', [ProcessoController::class, 'processoFinalizar'])->name('processo.finalizar');
         Route::get('/processo/nao-finalizados', [ProcessoController::class, 'processosNaoFinalizados']);
