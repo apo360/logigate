@@ -60,6 +60,7 @@ final readonly class AtualizarProcessoDTO
         public ?string $cambioOrigem = null,
         public ?string $cambioData = null,
         public ?bool $cambioConfirmado = null,
+        public ?string $naturezaOperacao = null,
     ) {
     }
 
@@ -118,7 +119,7 @@ final readonly class AtualizarProcessoDTO
             observacoes: self::nullableString($data['observacoes'] ?? null),
             vinheta: self::nullableString($data['vinheta'] ?? null),
             dataPartida: self::nullableString($data['DataPartida'] ?? null),
-            quantidadeBarris: self::nullableInt($data['quantidade_barris'] ?? null),
+            quantidadeBarris: \App\Application\Processo\Support\ExportacaoCrudeFormSupport::barrelCount($data['quantidade_barris'] ?? null),
             dataCarregamento: self::nullableString($data['data_carregamento'] ?? null),
             valorBarrilUsd: self::nullableFloat($data['valor_barril_usd'] ?? null),
             numDeslocacoes: self::nullableString($data['num_deslocacoes'] ?? null),
@@ -129,6 +130,7 @@ final readonly class AtualizarProcessoDTO
             cambioOrigem: self::nullableString($data['cambio_origem'] ?? null),
             cambioData: self::nullableString($data['cambio_data'] ?? null),
             cambioConfirmado: array_key_exists('cambio_confirmado', $data) ? filter_var($data['cambio_confirmado'], FILTER_VALIDATE_BOOLEAN) : null,
+            naturezaOperacao: self::nullableString($data['natureza_operacao'] ?? null),
         );
     }
 
@@ -141,6 +143,7 @@ final readonly class AtualizarProcessoDTO
             'DataAbertura' => $this->dataAbertura,
             'DataFecho' => $this->dataFecho,
             'TipoProcesso' => $this->tipoProcesso,
+            'natureza_operacao' => $this->naturezaOperacao,
             'Estado' => $this->estado?->value,
             'customer_id' => $this->customerId,
             'exportador_id' => $this->exportadorId,

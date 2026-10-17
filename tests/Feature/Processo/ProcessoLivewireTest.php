@@ -4,6 +4,7 @@ namespace Tests\Feature\Processo;
 
 use App\Livewire\Processo\ProcessoCreate;
 use App\Livewire\Processo\ProcessoEdit;
+use App\Livewire\Processo\ExportacaoCrudeCreate;
 use App\Livewire\Processo\ProcessoShow;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +64,7 @@ class ProcessoLivewireTest extends TestCase
         $this->assertSame('0040', $processo->refresh()->codigo_banco);
     }
 
-    public function test_edit_export_section_uses_declaration_code_instead_of_id(): void
+    public function test_legacy_edit_preserves_export_fields_without_classifying_process(): void
     {
         [$user, $empresa] = $this->createTenant('EDIT-EXPORT');
         [$estancia, $tipo] = $this->createLookupData();
@@ -71,7 +72,7 @@ class ProcessoLivewireTest extends TestCase
             $this->createCustomer($empresa, $user, 'EDIT-EXPORT'),
             $this->createExportador($empresa, $user, 'EDIT-EXPORT'), $estancia, $tipo);
         $id = DB::table('regiao_aduaneiras')->insertGetId([
-            'codigo' => '21', 'abrev' => 'EX', 'descricao' => 'Exportacao edicao',
+            'codigo' => '1', 'abrev' => 'EX', 'descricao' => 'Exportacao edicao',
             'created_at' => now(), 'updated_at' => now(),
         ]);
         $this->grantTenantPermissions($user, ['processos.update']);
@@ -79,7 +80,7 @@ class ProcessoLivewireTest extends TestCase
 
         Livewire::test(ProcessoEdit::class, ['processo' => $processo])
             ->set('TipoProcesso', (string) $id)
-            ->assertSet('showCrudExportFields', true)
+            ->assertDontSee('Dados de exportação CRUD')
             ->set('codigo_banco', '0040')
             ->set('rsm_num', 'EDIT-RSM')
             ->call('update')->assertHasNoErrors()
@@ -117,6 +118,7 @@ class ProcessoLivewireTest extends TestCase
 
         $processo = DB::table('processos')->where('empresa_id', $empresa->id)->sole();
         $this->assertSame($customer->id, $processo->customer_id);
+        $this->assertSame('geral', $processo->natureza_operacao);
         $this->assertSame(230.0, (float) $processo->cif);
         $this->assertSame(460.0, (float) $processo->ValorAduaneiro);
         $this->assertNotEmpty($processo->NrProcesso);
@@ -160,24 +162,17 @@ class ProcessoLivewireTest extends TestCase
         $this->assertSame(0, DB::table('processos')->where('empresa_id', $empresa->id)->count());
     }
 
-    public function test_export_fields_follow_declaration_code_and_bind_rsm_property(): void
+    public function test_general_export_does_not_show_petroleum_fields(): void
     {
         [$user] = $this->createTenant('EXPORT');
-        $id = DB::table('regiao_aduaneiras')->insertGetId([
-            'codigo' => '21', 'abrev' => 'EX', 'descricao' => 'Exportacao teste',
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
         $this->grantTenantPermissions($user, ['processos.create']);
         $this->signInTenant($user);
-
-        Livewire::test(ProcessoCreate::class)
-            ->set('TipoProcesso', (string) $id)
-            ->assertSet('showCrudExportFields', true)
-            ->assertSeeHtml('wire:model="rsm_num"')
-            ->set('rsm_num', 'RSM-001')
-            ->assertSet('rsm_num', 'RSM-001');
+        $component = Livewire::test(ProcessoCreate::class, ['exportacao' => true]);
+        $component->assertDontSeeHtml('wire:model="rsm_num"');
+        $tipo = $component->get('tipoProcessoOptions')->firstWhere('id', $component->get('TipoProcesso'));
+        $this->assertSame('EX', $tipo->abrev);
+        $this->assertSame('1', (string) $tipo->codigo);
     }
-
     public function test_create_saves_export_fields_with_central_validation(): void
     {
         [$user, $empresa] = $this->createTenant('EXPORT-SAVE');
@@ -185,13 +180,13 @@ class ProcessoLivewireTest extends TestCase
         $customer = $this->createCustomer($empresa, $user, 'EXPORT-SAVE');
         $exportador = $this->createExportador($empresa, $user, 'EXPORT-SAVE');
         $tipoId = DB::table('regiao_aduaneiras')->insertGetId([
-            'codigo' => '21', 'abrev' => 'EX', 'descricao' => 'Exportacao gravacao',
+            'codigo' => '1', 'abrev' => 'EX', 'descricao' => 'Exportacao gravacao',
             'created_at' => now(), 'updated_at' => now(),
         ]);
         $this->grantTenantPermissions($user, ['processos.create', 'processos.view']);
         $this->signInTenant($user);
 
-        $component = Livewire::test(ProcessoCreate::class)
+        $component = Livewire::test(ExportacaoCrudeCreate::class)
             ->set('customer_id', $customer->id)
             ->set('exportador_id', $exportador->id)
             ->set('estancia_id', $estanciaId)

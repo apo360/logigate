@@ -5,6 +5,7 @@ namespace App\Application\Processo\DTOs;
 use App\Domains\Licenciamento\ValueObjects\ValorData;
 use App\Domains\Licenciamento\ValueObjects\ValorMonetario;
 use App\Domains\Processo\Enums\EstadoProcessoEnum;
+use App\Domains\Processo\Enums\NaturezaOperacaoProcesso;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ class CriarProcessoDTO
         public readonly ?string $rsmNum,
         public readonly ?string $certificadoOrigem,
         public readonly ?string $guiaExploracao,
+        public readonly NaturezaOperacaoProcesso $naturezaOperacao = NaturezaOperacaoProcesso::GERAL,
     ) {}
 
     /**
@@ -173,7 +175,7 @@ class CriarProcessoDTO
             condicaoPagamentoId: self::nullableInt($data['condicao_pagamento_id'] ?? null),
             observacoes: $data['observacoes'] ?? null,
             vinheta: $data['vinheta'] ?? null,
-            quantidadeBarris: self::nullableInt($data['quantidade_barris'] ?? null),
+            quantidadeBarris: \App\Application\Processo\Support\ExportacaoCrudeFormSupport::barrelCount($data['quantidade_barris'] ?? null),
             dataCarregamento: $dataCarregamento,
             valorBarrilUSD: $valorBarrilUSD,
             valorBarrilLocal: $valorBarrilLocal,
@@ -181,6 +183,9 @@ class CriarProcessoDTO
             rsmNum: $data['rsm_num'] ?? null,
             certificadoOrigem: $data['certificado_origem'] ?? null,
             guiaExploracao: $data['guia_exportacao'] ?? $data['guia_exploracao'] ?? null,
+            naturezaOperacao: ($data['natureza_operacao'] ?? null) instanceof NaturezaOperacaoProcesso
+                ? $data['natureza_operacao']
+                : NaturezaOperacaoProcesso::from($data['natureza_operacao'] ?? NaturezaOperacaoProcesso::GERAL->value),
         );
     }
 
@@ -252,6 +257,7 @@ class CriarProcessoDTO
             'DataAbertura' => $this->dataAbertura->__toString(),
             'DataFecho' => $this->dataFecho?->__toString(),
             'TipoProcesso' => $this->tipoProcesso,
+            'natureza_operacao' => $this->naturezaOperacao->value,
             'Estado' => $this->estado->value,
             'customer_id' => $this->customerId,
             'user_id' => $this->userId,
@@ -292,7 +298,7 @@ class CriarProcessoDTO
             'num_deslocacoes' => $this->numDeslocacoes,
             'rsm_num' => $this->rsmNum,
             'certificado_origem' => $this->certificadoOrigem,
-            'guia_exploracao' => $this->guiaExploracao,
+            'guia_exportacao' => $this->guiaExploracao,
         ], static fn ($value): bool => $value !== null);
     }
 

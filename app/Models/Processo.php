@@ -41,6 +41,7 @@ class Processo extends Model implements Auditable
         'DataAbertura',
         'DataFecho',
         'TipoProcesso',
+        'natureza_operacao',
         'Estado',
         'customer_id',
         'user_id',
@@ -97,6 +98,25 @@ class Processo extends Model implements Auditable
     public function totaisMercadorias(): array
     {
         return app(\App\Application\Mercadoria\Services\MercadoriaParentTotalsService::class)->calculatedTotals($this);
+    }
+
+    public function isExportacaoCrude(): bool
+    {
+        return $this->natureza_operacao === \App\Domains\Processo\Enums\NaturezaOperacaoProcesso::EXPORTACAO_CRUDE->value;
+    }
+
+    public function hasLegacyExportData(): bool
+    {
+        if ($this->natureza_operacao !== null) {
+            return false;
+        }
+        foreach (\App\Application\Processo\Support\ExportacaoCrudeFormSupport::FIELDS as $field) {
+            if ($this->getAttribute($field) !== null && $this->getAttribute($field) !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

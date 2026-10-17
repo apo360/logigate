@@ -43,6 +43,7 @@
                 @can('create', \App\Models\Processo::class)
                     <a href="{{ route('processos.importar-asycuda') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Importar ASYCUDA</a>
                     <a href="{{ route('processos.create') }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Novo Processo</a>
+                    <a href="{{ route('processos.exportacao') }}" class="rounded-md border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50">Exportação</a>
                 @endcan
                 @can('create', \App\Models\Licenciamento::class)
                     <a href="{{ route('licenciamentos.create') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Novo Licenciamento</a>

@@ -7,7 +7,7 @@
 
     <div class="py-8"> 
         <div class="max-w-8xl mx-auto sm:px-6 lg:px-8">
-            <livewire:processo.processo-create :customer_id="$customer_id ?? null" mode="create"  />
+            <livewire:processo.processo-create :customer_id="$customer_id ?? null" :exportacao="$exportacao ?? false" mode="create" />
         </div>
     </div>
 </x-app-layout>

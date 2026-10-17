@@ -27,6 +27,7 @@ final readonly class AtualizarProcessoAction
             \Illuminate\Support\Facades\Gate::authorize('update', $processo);
 
             $attributes = $dto->toArray();
+            app(\App\Application\Processo\Services\ProcessoNaturezaService::class)->assertUpdate($processo, $attributes);
             $this->rules->assertEdicaoComum($processo, $attributes);
             $this->rules->assertPodeTransicionar($processo, $dto->estado);
             if (\Illuminate\Support\Facades\Schema::hasColumn('processos', 'cambio_confirmado')) {

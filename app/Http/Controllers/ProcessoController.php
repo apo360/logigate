@@ -127,8 +127,23 @@ class ProcessoController extends AuthenticatedController
 
         // Retornar uma view com o formulário para criar um novo processo
         return view('processos.create', [
-            'customer_id' => $request->query('customer_id')
+            'customer_id' => $request->query('customer_id'),
+            'exportacao' => $request->query('regime') === 'exportacao',
         ]);
+    }
+
+    public function exportacao()
+    {
+        $this->authorize('create', Processo::class);
+
+        return view('processos.exportacao.index');
+    }
+
+    public function createCrude(Request $request)
+    {
+        $this->authorize('create', Processo::class);
+
+        return view('processos.exportacao-crude.create', ['customer_id' => $request->query('customer_id')]);
     }
 
     /**

@@ -43,6 +43,7 @@ return [
     'permissions' => [
         'processes.index' => 'processos.view', 'processes.create' => 'processos.create',
         'processos.index' => 'processos.view', 'processos.create' => 'processos.create',
+        'processos.exportacao' => 'processos.create', 'processos.exportacao-crude.create' => 'processos.create',
         'processos.tarifa' => 'processos.view', 'licences.index' => 'licenciamentos.view',
         'licences.create' => 'licenciamentos.create', 'licenciamentos.pice' => 'licenciamentos.view',
         'licenciamentos.index' => 'licenciamentos.view', 'licenciamentos.create' => 'licenciamentos.create',

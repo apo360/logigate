@@ -6,16 +6,15 @@ use App\Application\Processo\Actions\CriarProcessoAction;
 use App\Application\Processo\DTOs\CriarProcessoDTO;
 use App\Application\Processo\Services\ProcessoTenantAccessService;
 use App\Application\Processo\Support\ProcessoFormSupport;
-use App\Domains\Licenciamento\Enums\TipoDeclaracao;
+use App\Domains\Processo\Enums\NaturezaOperacaoProcesso;
+use App\Application\Processo\Support\ExportacaoCrudeFormSupport;
 use App\Models\Empresa;
 use App\Models\Processo;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Rule;
 use Livewire\Component;
 
-final class ProcessoCreate extends Component
+class ProcessoCreate extends Component
 {
     use AuthorizesRequests;
 
@@ -34,7 +33,7 @@ final class ProcessoCreate extends Component
 
     public ?string $vinheta = null;
 
-    public string $TipoProcesso = '11';
+    public string $TipoProcesso = '';
 
     public string $Estado = 'Aberto';
 
@@ -111,9 +110,6 @@ final class ProcessoCreate extends Component
 
     public ?string $guia_exportacao = null;
 
-    // Controle de exibição da secção de exportação
-    public bool $showCrudExportFields = false;
-
     // Listas para selects
     public $tipoProcessoOptions = [];
     public $clientes = [];
@@ -158,7 +154,7 @@ final class ProcessoCreate extends Component
         $this->dispatch('abrirModalExportador');
     }
 
-    public function mount(?int $customer_id = null): void
+    public function mount(?int $customer_id = null, bool $exportacao = false): void
     {
         $this->authorize('create', Processo::class);
 
@@ -189,9 +185,14 @@ final class ProcessoCreate extends Component
         $this->seguro = 0;
         $this->cif = 0;
         $this->ValorAduaneiro = 0;
-        $importacao = $this->tipoProcessoOptions->firstWhere('codigo', TipoDeclaracao::IMPORTACAO->value);
-        $this->TipoProcesso = $importacao ? (string) $importacao->id : '';
-        $this->showCrudExportFields = $this->isExportacao($this->TipoProcesso);
+        if ($this->naturezaOperacao() === NaturezaOperacaoProcesso::EXPORTACAO_CRUDE) {
+            $this->tipoProcessoOptions = app(ExportacaoCrudeFormSupport::class)->options();
+            $exportacao = true;
+        }
+        $tipo = $this->tipoProcessoOptions->first(fn ($tipo) =>
+            $tipo->abrev === ($exportacao ? 'EX' : 'IM') && (string) $tipo->codigo === ($exportacao ? '1' : '4')
+        );
+        $this->TipoProcesso = $tipo ? (string) $tipo->id : '';
 
         $this->nacionalidade_transporte = $this->paises->firstWhere('pais', 'Angola')?->id
             ?? $this->paises->first()?->id
@@ -211,17 +212,6 @@ final class ProcessoCreate extends Component
             $this->recalcularValorAduaneiro();
         }
 
-        // Mostrar/esconder campos de exportação conforme o tipo de processo
-        if ($field === 'TipoProcesso') {
-            $this->showCrudExportFields = $this->isExportacao((string) $value);
-        }
-    }
-
-    private function isExportacao(string $tipoProcesso): bool
-    {
-        $tipo = $this->tipoProcessoOptions->firstWhere('id', $tipoProcesso);
-
-        return $tipo && (string) $tipo->codigo === TipoDeclaracao::EXPORTACAO->value;
     }
 
     private function recalcularValorAduaneiro(): void
@@ -239,7 +229,9 @@ final class ProcessoCreate extends Component
 
     public function rules(): array
     {
-        return app(ProcessoFormSupport::class)->rules($this->empresa()->id);
+        $specific = app(ExportacaoCrudeFormSupport::class);
+        return array_replace(app(ProcessoFormSupport::class)->rules($this->empresa()->id),
+            $this->naturezaOperacao() === NaturezaOperacaoProcesso::EXPORTACAO_CRUDE ? $specific->rules() : $specific->generalRules());
     }
 
     public function messages(): array
@@ -269,13 +261,16 @@ final class ProcessoCreate extends Component
             'ValorAduaneiro' => $this->ValorAduaneiro,
             'N_Dar' => $this->NrDAR,
             'MarcaFiscal' => $this->NrMarcaFiscal,
+            'natureza_operacao' => $this->naturezaOperacao()->value,
         ]);
 
         try {
-            $processo = $action->execute(CriarProcessoDTO::fromArray($data));
+            $processo = $this->persist(CriarProcessoDTO::fromArray($data), $action);
 
             session()->flash('success', 'Processo criado com sucesso!');
             return redirect()->route('processos.show', $processo);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             $this->addError('save', 'Erro ao criar processo: ' . $e->getMessage());
             return null;
@@ -284,7 +279,17 @@ final class ProcessoCreate extends Component
 
     public function render()
     {
-        return view('livewire.processo.processo-create');
+        return view('livewire.processo.processo-create', ['isCrude' => false]);
+    }
+
+    protected function naturezaOperacao(): NaturezaOperacaoProcesso
+    {
+        return NaturezaOperacaoProcesso::GERAL;
+    }
+
+    protected function persist(CriarProcessoDTO $dto, CriarProcessoAction $action): Processo
+    {
+        return $action->execute($dto);
     }
 
     private function empresa(): Empresa

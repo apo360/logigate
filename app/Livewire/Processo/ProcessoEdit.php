@@ -9,6 +9,7 @@ use App\Application\Processo\DTOs\AtualizarProcessoDTO;
 use App\Application\Processo\Services\ProcessoTenantAccessService;
 use App\Application\Processo\Support\ProcessoFormSupport;
 use App\Domains\Processo\Enums\EstadoProcessoEnum;
+use App\Application\Processo\Support\ExportacaoCrudeFormSupport;
 use App\Models\Empresa;
 use App\Models\Processo;
 use Carbon\CarbonInterface;
@@ -18,7 +19,7 @@ use Livewire\Component;
 use Livewire\Attributes\Locked;
 use Illuminate\Validation\ValidationException;
 
-final class ProcessoEdit extends Component
+class ProcessoEdit extends Component
 {
     use AuthorizesRequests;
 
@@ -75,7 +76,6 @@ final class ProcessoEdit extends Component
     public ?string $certificado_origem = null;
     public ?string $guia_exportacao = null;
 
-    public bool $showCrudExportFields = false;
     public bool $hasDataPartida = false;
 
     public $clientes;
@@ -94,6 +94,7 @@ final class ProcessoEdit extends Component
     public function mount(Processo $processo): void
     {
         $this->authorize('update', $processo);
+        abort_unless($processo->isExportacaoCrude() === $this->isCrude(), 404);
 
         $this->processo = $processo;
         $this->processoId = (int) $processo->id;
@@ -102,6 +103,9 @@ final class ProcessoEdit extends Component
 
         foreach (app(ProcessoFormSupport::class)->options($this->empresa()) as $property => $value) {
             $this->{$property} = $value;
+        }
+        if ($this->isCrude()) {
+            $this->tipoProcessoOptions = app(ExportacaoCrudeFormSupport::class)->options();
         }
 
         $this->fillFromProcesso($processo);
@@ -119,15 +123,13 @@ final class ProcessoEdit extends Component
             $this->recalcularValores();
         }
 
-        if ($field === 'TipoProcesso') {
-            $this->showCrudExportFields = $this->isExportacao((string) $value);
-        }
     }
 
     public function update(AtualizarProcessoAction $action)
     {
         $this->processo = app(ProcessoTenantAccessService::class)->findForUserOrFail(Auth::user(), $this->processoId);
         $this->authorize('update', $this->processo);
+        abort_unless($this->processo->isExportacaoCrude() === $this->isCrude(), 404);
         $this->resetErrorBag('processo');
 
         $validated = $this->validate();
@@ -142,7 +144,7 @@ final class ProcessoEdit extends Component
         ]);
 
         try {
-            $processo = $action->execute(AtualizarProcessoDTO::fromArray($payload));
+            $processo = $this->persist(AtualizarProcessoDTO::fromArray($payload), $action);
             session()->flash('success', 'Processo atualizado com sucesso.');
 
             return redirect()->route('processos.show', $processo);
@@ -161,6 +163,12 @@ final class ProcessoEdit extends Component
     public function rules(): array
     {
         $rules = app(ProcessoFormSupport::class)->rules($this->empresa()->id, $this->processoId);
+        $specific = app(ExportacaoCrudeFormSupport::class);
+        if ($this->isCrude()) {
+            $rules = array_replace($rules, $specific->rules());
+        } elseif ($this->processo->natureza_operacao !== null) {
+            $rules = array_replace($rules, $specific->generalRules());
+        }
         if (! \Illuminate\Support\Facades\Schema::hasColumn('processos', 'DataPartida')) {
             unset($rules['DataPartida']);
         }
@@ -184,7 +192,7 @@ final class ProcessoEdit extends Component
 
     public function render()
     {
-        return view('livewire.processo.processo-edit');
+        return view('livewire.processo.processo-edit', ['isCrude' => false, 'legacyExportData' => $this->processo->hasLegacyExportData()]);
     }
 
     private function fillFromProcesso(Processo $processo): void
@@ -237,14 +245,16 @@ final class ProcessoEdit extends Component
         $this->rsm_num = $this->nullableString($processo->rsm_num);
         $this->certificado_origem = $this->nullableString($processo->certificado_origem);
         $this->guia_exportacao = $this->nullableString($processo->guia_exportacao);
-        $this->showCrudExportFields = $this->isExportacao((string) $this->TipoProcesso);
     }
 
-    private function isExportacao(string $tipoProcesso): bool
+    protected function isCrude(): bool
     {
-        $tipo = $this->tipoProcessoOptions->firstWhere('id', $tipoProcesso);
+        return false;
+    }
 
-        return $tipo && (string) $tipo->codigo === '21';
+    protected function persist(AtualizarProcessoDTO $dto, AtualizarProcessoAction $action): Processo
+    {
+        return $action->execute($dto);
     }
 
     private function recalcularValores(): void

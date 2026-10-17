@@ -34,6 +34,7 @@ final readonly class CriarProcessoAction
     {
         abort_unless(TenantContext::empresaId() === $dto->empresaId, 403);
         Gate::authorize('create', Processo::class);
+        app(\App\Application\Processo\Services\ProcessoNaturezaService::class)->assertCreate($dto->toArray());
         if ($dto->estado === EstadoProcessoEnum::FINALIZADO
             || $dto->contaDespacho !== null || $dto->dataFecho !== null) {
             throw new \InvalidArgumentException('Crie o processo aberto e utilize o comando de finalização.');

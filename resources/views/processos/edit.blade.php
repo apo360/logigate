@@ -33,6 +33,9 @@
                 <div class="min-w-0">
                     <div class="mb-2 flex flex-wrap items-center gap-2 text-xs font-medium">
                         <span class="rounded-full bg-blue-50 px-3 py-1 text-blue-700">Processo aduaneiro</span>
+                        @if ($processo->isExportacaoCrude())
+                            <span class="rounded-full bg-yellow-50 px-3 py-1 text-yellow-800">Exportação CRUD</span>
+                        @endif
                         <span class="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{{ $processo->Estado }}</span>
                     </div>
                     <h1 class="break-words text-2xl font-bold text-gray-900">{{ $processo->NrProcesso }}</h1>
@@ -84,7 +87,11 @@
         </div>
 
         <section id="processo-panel-info" role="tabpanel" aria-labelledby="processo-tab-info" x-show="tab === 'info'" x-cloak>
-            <livewire:processo.processo-edit :processo="$processo" />
+            @if ($processo->isExportacaoCrude())
+                <livewire:processo.exportacao-crude-edit :processo="$processo" />
+            @else
+                <livewire:processo.processo-edit :processo="$processo" />
+            @endif
         </section>
         @if (isset($tabs['mercadoria']))
         <section id="processo-panel-mercadoria" role="tabpanel" aria-labelledby="processo-tab-mercadoria" x-show="tab === 'mercadoria'" x-cloak>

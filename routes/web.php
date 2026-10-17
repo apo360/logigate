@@ -275,6 +275,8 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(fun
         Route::resource('customers', CustomerController::class)->except(['store', 'update']);
         Route::resource('licenciamentos', LicenciamentoController::class)->except(['store', 'update']);
         Route::get('processos/importar-asycuda', ImportarDeclaracaoAsycuda::class)->name('processos.importar-asycuda');
+        Route::get('processos/exportacao', [ProcessoController::class, 'exportacao'])->name('processos.exportacao');
+        Route::get('processos/exportacao-crude/create', [ProcessoController::class, 'createCrude'])->name('processos.exportacao-crude.create');
         Route::resource('processos', ProcessoController::class)->except(['store', 'update']);
 
     });

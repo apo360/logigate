@@ -152,6 +152,7 @@ final class ProcessoFormSupport
             'after_or_equal' => 'O campo :attribute deve ser igual ou posterior à data de abertura.',
             'enum' => 'O campo :attribute selecionado não é válido.',
             'in' => 'O campo :attribute selecionado não é válido.',
+            'prohibited' => 'O campo :attribute está disponível apenas no formulário de exportação CRUD.',
         ];
     }
 

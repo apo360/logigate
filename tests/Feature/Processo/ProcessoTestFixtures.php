@@ -83,7 +83,7 @@ trait ProcessoTestFixtures
 
         if (Schema::hasTable('regiao_aduaneiras')) {
             $tipoProcessoId = (string) DB::table('regiao_aduaneiras')->insertGetId([
-                'codigo' => '11',
+                'codigo' => '4',
                 'abrev' => 'IM',
                 'descricao' => 'Importacao Teste',
                 'created_at' => now(),
